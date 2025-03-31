@@ -1,0 +1,96 @@
+:root {
+  /* 新的 Happy Hues 調色板 */
+  --clr-bg-primary: #16161a;     /* 主要背景 */
+  --clr-bg-secondary: #242629;   /* 次要背景 */
+  --clr-headline: #fffffe;       /* 標題 */
+  --clr-paragraph: #94a1b2;      /* 段落/次要文字 */
+  --clr-button: #7f5af0;         /* 按鈕/高亮 */
+  --clr-button-text: #fffffe;    /* 按鈕文字 */
+  --clr-stroke: #010101;         /* 描邊/深色文字 */
+  --clr-secondary: #72757e;      /* 次要元素灰 */
+  --clr-tertiary: #2cb67d;       /* 第三點綴綠 */
+  --clr-white: #fffffe;          /* 白色 (與標題/按鈕文字同) */
+  --clr-light-gray: #f8f9fa;     /* 暫時保留，可能不再需要 */
+
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  /* color: rgba(255, 255, 255, 0.87); */ /* 註解掉，讓各元件控制顏色 */
+  /* background-color: #242424; */ /* 註解掉，讓各元件控制背景 */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 新增：移除預設邊距，設定基本高度 */
+html {
+  /* scroll-snap-type: y mandatory; */ /* 移除滾動吸附 */
+  overflow-y: scroll; /* 確保垂直滾動條存在 */
+  scroll-behavior: smooth; /* 添加平滑滾動效果 */
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box; /* 統一 box-sizing */
+}
+
+/* 新增：確保所有元素繼承 box-sizing */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* 註解或移除 body 的預設樣式，讓 App 控制 */
+/* body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+} */
+
+/* 註解或移除 h1 的預設樣式 */
+/* h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+} */
+
+/* 註解或移除 button 的預設樣式 */
+/* button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+} */
+
+/* @media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+} */

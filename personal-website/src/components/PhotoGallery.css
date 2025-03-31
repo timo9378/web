@@ -1,0 +1,158 @@
+.photo-gallery-section {
+  padding: 80px 50px; /* 上下內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  box-sizing: border-box;
+  min-height: 100vh; /* 確保內容至少佔滿一屏 */
+  position: relative; /* 為了固定返回按鈕 */
+}
+
+/* 返回按鈕樣式 */
+.back-button {
+  position: fixed; /* 固定定位 */
+  top: 25px; /* 距離頂部 */
+  left: 30px; /* 距離左側 */
+  z-index: 100; /* 確保在最上層 */
+  padding: 8px 15px;
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+}
+
+.back-button:hover {
+  transform: translateY(-2px); /* 懸停時上移 */
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+}
+
+.photo-gallery-header {
+  text-align: center;
+  margin-bottom: 60px; /* 與下方網格的間距 */
+}
+
+.photo-gallery-header h2 {
+  font-size: 2.8em; /* 標題字體大小 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 10px;
+}
+
+.photo-gallery-header p {
+  font-size: 1.1em;
+  color: var(--clr-paragraph); /* 使用段落色 */
+  font-style: italic;
+}
+
+/* --- Grid 佈局樣式 (從 Portfolio.css 複製並修改) --- */
+
+.photo-grid { /* 修改 class name */
+  display: grid;
+  grid-template-columns: 1fr; /* 單列佈局 */
+  gap: 0; /* 移除網格間距，由 item 內部控制 */
+  max-width: 1200px; /* 可稍微增加最大寬度 */
+  margin: 0 auto;
+}
+
+.photo-grid-item { /* 修改 class name */
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 創建兩欄 */
+  align-items: center; /* 垂直居中 */
+  min-height: 400px; /* 設定最小高度 */
+  box-shadow: 0 8px 25px rgba(1, 1, 1, 0.12); /* 使用描邊色的 RGBA */
+  border-radius: 8px; /* 給整個 item 加圓角 */
+  overflow: hidden; /* 確保內容不溢出圓角 */
+  margin-bottom: 40px; /* 增加項目之間的垂直間距 */
+}
+
+.photo-image-block { /* 修改 class name */
+  height: 100%; /* 佔滿父元素高度 */
+  overflow: hidden; /* 隱藏溢出 */
+}
+
+.photo-image-block img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 圖片填滿區塊 */
+  transition: transform 0.4s ease;
+}
+
+.photo-image-block:hover img {
+  transform: scale(1.03); /* 滑鼠懸停時稍微放大 */
+}
+
+.photo-text-block { /* 修改 class name */
+  padding: 40px 50px; /* 文字區塊內距 */
+  text-align: center; /* 文字居中 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* 佔滿父元素高度 */
+  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+}
+
+/* 移除 h3 樣式，或根據需要調整 */
+/* .photo-text-block h3 { ... } */
+
+.photo-text-block .photo-date { /* MM/DD 樣式 */
+  font-size: 1.8em; /* 放大日期 */
+  font-weight: bold; /* 加粗 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 5px; /* 與年份間距 */
+  line-height: 1.2;
+}
+
+.photo-text-block .photo-year { /* YYYY 樣式 */
+  font-size: 1.1em; /* 年份文字大小 */
+  color: var(--clr-paragraph); /* 使用段落色 */
+  line-height: 1.2;
+}
+
+/* 響應式設計 */
+@media (max-width: 992px) {
+  .photo-grid-item { /* 修改 class name */
+    grid-template-columns: 1fr; /* 中等螢幕變為單欄 */
+    min-height: auto; /* 取消最小高度 */
+  }
+
+  /* 在單欄佈局中，奇數項圖片在上，偶數項圖片在下 */
+  .photo-grid-item:nth-child(odd) .photo-image-block { /* 修改 class name */
+    order: 1; /* 圖片區塊在前 */
+  }
+  .photo-grid-item:nth-child(odd) .photo-text-block { /* 修改 class name */
+    order: 2; /* 文字區塊在後 */
+  }
+  .photo-grid-item:nth-child(even) .photo-image-block { /* 修改 class name */
+    order: 2; /* 圖片區塊在後 */
+  }
+   .photo-grid-item:nth-child(even) .photo-text-block { /* 修改 class name */
+    order: 1; /* 文字區塊在前 */
+  }
+
+  .photo-image-block { /* 修改 class name */
+     max-height: 400px; /* 限制圖片高度 */
+  }
+
+  .photo-text-block { /* 修改 class name */
+    padding: 30px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .photo-gallery-section {
+    padding: 60px 20px;
+  }
+
+  .photo-gallery-header h2 {
+    font-size: 2.2em;
+  }
+
+  /* 調整小螢幕下的日期和年份大小 */
+   .photo-text-block .photo-date {
+    font-size: 1.6em;
+  }
+   .photo-text-block .photo-year {
+    font-size: 1em;
+  }
+}

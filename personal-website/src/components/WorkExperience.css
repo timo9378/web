@@ -1,0 +1,105 @@
+.work-experience-section {
+  /* height: 100vh; */ /* 移除固定高度 */
+  /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
+  padding: 60px 50px; /* 上下 60px，左右 50px 的內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* display: flex; */ /* 移除 Flexbox */
+  /* flex-direction: column; */ /* 移除垂直排列 */
+  /* justify-content: center; */ /* 移除垂直居中 */
+  box-sizing: border-box; /* 確保 padding 不會增加高度 */
+}
+
+.work-experience-section h2 {
+  font-size: 2.5em; /* 標題字體大小 */
+  text-align: center; /* 標題居中 */
+  margin-bottom: 50px; /* 與下方內容的間距 */
+  color: var(--clr-headline); /* 使用標題色 */
+}
+
+.experience-list {
+  max-width: 900px; /* 限制最大寬度 */
+  margin: 0 auto; /* 水平居中 */
+  display: flex; /* 使用 Flexbox */
+  flex-direction: column; /* 垂直排列 */
+  gap: 40px; /* 項目間距 */
+}
+
+.experience-item {
+  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  padding: 25px 30px; /* 內距 */
+  border-radius: 8px; /* 圓角 */
+  border-left: 5px solid var(--clr-button); /* 使用按鈕/高亮色 */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* 細微陰影 */
+}
+
+.experience-header {
+  display: flex; /* 使用 Flexbox */
+  justify-content: space-between; /* 兩端對齊 */
+  align-items: baseline; /* 基線對齊 */
+  margin-bottom: 15px; /* 與下方列表間距 */
+  flex-wrap: wrap; /* 允許換行 */
+  gap: 10px; /* 標題和日期之間的間距 */
+}
+
+.experience-header h3 {
+  font-size: 1.4em; /* 職位/公司標題大小 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin: 0; /* 移除預設邊距 */
+}
+
+.experience-header .role {
+  font-size: 0.9em; /* 角色文字稍小 */
+  font-weight: normal; /* 正常字重 */
+  color: var(--clr-secondary); /* 使用次要元素灰 */
+}
+
+.experience-header .period {
+  font-size: 0.9em; /* 日期文字大小 */
+  color: var(--clr-secondary); /* 使用次要元素灰 */
+  font-style: italic; /* 斜體 */
+  white-space: nowrap; /* 防止日期換行 */
+}
+
+.details-list {
+  list-style: none; /* 移除預設列表樣式 */
+  padding-left: 0; /* 移除左側內距 */
+  margin: 0;
+}
+
+.details-list li {
+  font-size: 1em; /* 細節文字大小 */
+  color: var(--clr-paragraph); /* 使用段落色 */
+  margin-bottom: 8px; /* 項目間距 */
+  line-height: 1.5; /* 行高 */
+  padding-left: 20px; /* 左側內距 */
+  position: relative; /* 為了自訂項目符號 */
+}
+
+/* 自訂項目符號 */
+.details-list li::before {
+  content: '•'; /* 使用圓點符號 */
+  position: absolute;
+  left: 0;
+  color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  font-size: 1.2em; /* 符號大小 */
+  line-height: 1; /* 對齊 */
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .work-experience-section {
+    padding: 40px 20px;
+  }
+
+  .work-experience-section h2 {
+    font-size: 2em;
+  }
+
+  .experience-header {
+    align-items: flex-start; /* 頂部對齊 */
+  }
+
+  .experience-header h3 {
+    font-size: 1.2em;
+  }
+}

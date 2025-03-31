@@ -1,0 +1,72 @@
+/* 沿用 Education.css 的區塊樣式，並更新 class name */
+.school-clubs-section {
+  padding: 60px 50px;
+  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.school-clubs-section h2 {
+  font-size: 2.5em;
+  margin-bottom: 40px;
+  color: var(--clr-headline); /* 使用標題色 */
+}
+
+/* 新的容器樣式，使用 Flexbox 水平排列社團 */
+.clubs-container {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  gap: 40px; /* 社團之間的間距 */
+  flex-wrap: wrap; /* 允許換行 */
+  max-width: 900px; /* 限制最大寬度 */
+  margin: 0 auto; /* 水平居中 */
+}
+
+/* 每個社團項目的樣式 */
+.club-item {
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  padding: 20px 25px; /* 內距 */
+  border-radius: 8px; /* 圓角 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 180px; /* 設定最小寬度 */
+  text-align: center; /* 文字居中 */
+}
+
+.club-item h3 {
+  font-size: 1.4em; /* 社團名稱大小 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 5px; /* 與下方角色間距 */
+}
+
+.club-item p {
+  font-size: 1.1em; /* 角色文字大小 */
+  color: var(--clr-paragraph); /* 使用段落色 */
+  margin: 0;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .school-clubs-section {
+    padding: 40px 20px;
+  }
+
+  .school-clubs-section h2 {
+    font-size: 2em;
+  }
+
+  .clubs-container {
+    gap: 25px; /* 縮小間距 */
+  }
+
+  .club-item {
+    min-width: 150px; /* 縮小最小寬度 */
+  }
+
+  .club-item h3 {
+    font-size: 1.2em;
+  }
+
+  .club-item p {
+    font-size: 1em;
+  }
+}

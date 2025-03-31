@@ -1,0 +1,55 @@
+.app-header {
+  display: flex; /* 使用 Flexbox 排列 */
+  justify-content: space-between; /* 兩端對齊 */
+  align-items: center; /* 垂直居中 */
+  padding: 15px 30px; /* 上下 15px，左右 30px 的內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  color: var(--clr-headline); /* 使用標題色 */
+  position: fixed; /* 固定在頂部 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box; /* padding 不會影響寬度 */
+  z-index: 1000; /* 確保在最上層 */
+}
+
+.logo {
+  font-size: 1.5em; /* 稍大的字體 */
+  font-weight: bold; /* 粗體 */
+}
+
+.app-header nav ul {
+  list-style: none; /* 移除列表樣式 */
+  display: flex; /* 水平排列 */
+  gap: 25px; /* 項目間距 */
+  margin: 0;
+  padding: 0;
+}
+
+.app-header nav ul li a {
+  color: var(--clr-headline); /* 使用標題色 */
+  text-decoration: none; /* 移除底線 */
+  font-size: 1em;
+  transition: color 0.3s ease; /* 平滑顏色過渡 */
+}
+
+.app-header nav ul li a:hover,
+.app-header nav ul li a.active {
+  color: var(--clr-button); /* 使用按鈕/高亮色 */
+}
+
+.download-button {
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  border: none; /* 無邊框 */
+  padding: 8px 15px; /* 內距 */
+  border-radius: 8px; /* 圓角，參考 Figma */
+  cursor: pointer; /* 滑鼠指標設為手形 */
+  font-size: 0.9em;
+  transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+}
+
+.download-button:hover {
+  transform: translateY(-2px); /* 懸停時上移 */
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠作為懸停色 */
+}

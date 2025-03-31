@@ -1,0 +1,156 @@
+.portfolio-section {
+  padding: 80px 50px; /* 增加上下內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  box-sizing: border-box;
+}
+
+.portfolio-header {
+  text-align: center;
+  margin-bottom: 60px; /* 與下方網格的間距 */
+}
+
+.portfolio-header h2 {
+  font-size: 2.8em; /* 標題字體大小 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 10px;
+}
+
+.portfolio-header p {
+  font-size: 1.1em;
+  color: var(--clr-paragraph); /* 使用段落色 */
+  font-style: italic;
+}
+
+/* --- 恢復為舊的卡片式 Grid 佈局樣式 --- */
+
+.portfolio-grid {
+  display: grid; /* 使用 Grid 佈局 */
+  /* grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); */ /* 自動調整列數，暫時註解，先用單列 */
+  grid-template-columns: 1fr; /* 預設單列 */
+  gap: 60px; /* 項目間距 */
+  max-width: 1100px; /* 限制最大寬度 */
+  margin: 0 auto; /* 水平居中 */
+}
+
+.portfolio-item {
+  display: flex; /* 使用 Flexbox 排列圖片和內容 */
+  gap: 30px; /* 圖片和內容間距 */
+  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  border-radius: 10px; /* 圓角 */
+  overflow: hidden; /* 隱藏溢出內容 */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* 稍微明顯的陰影 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 加入過渡效果 */
+}
+
+/* 讓圖片和文字左右交錯顯示 */
+.portfolio-item:nth-child(even) {
+  flex-direction: row-reverse; /* 偶數項目反轉排列 */
+}
+
+.portfolio-item:hover {
+  transform: translateY(-5px); /* 滑鼠懸停時稍微上移 */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12); /* 懸停時陰影加深 */
+}
+
+.portfolio-image-container {
+  flex: 1; /* 佔用可用空間 */
+  min-width: 40%; /* 最小寬度 */
+  overflow: hidden; /* 確保圖片不溢出 */
+}
+
+.portfolio-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 填滿容器 */
+  transition: transform 0.4s ease; /* 圖片縮放過渡 */
+}
+
+.portfolio-item:hover .portfolio-image {
+  transform: scale(1.05); /* 滑鼠懸停時圖片稍微放大 */
+}
+
+.portfolio-content {
+  flex: 1.2; /* 內容區域佔更多空間 */
+  padding: 30px 40px; /* 內容內距 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 垂直居中內容 */
+}
+
+.portfolio-category {
+  display: inline-block;
+  font-size: 0.9em;
+  color: var(--clr-secondary); /* 使用次要元素灰 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--clr-bg-secondary); /* 使用次要背景色邊框 */
+  margin-bottom: 15px;
+  align-self: flex-start; /* 左對齊 */
+}
+
+.portfolio-content h3 {
+  font-size: 1.8em;
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 10px;
+}
+
+.portfolio-content p {
+  font-size: 1em;
+  color: var(--clr-paragraph); /* 使用段落色 */
+  line-height: 1.6;
+  margin-bottom: 20px;
+  flex-grow: 1; /* 讓描述填滿剩餘空間 */
+}
+
+.portfolio-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+  align-self: flex-start; /* 左對齊 */
+}
+
+.portfolio-link:hover {
+  transform: translateY(-2px); /* 懸停時上移 */
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+}
+
+/* 響應式設計 */
+@media (max-width: 992px) {
+  .portfolio-item,
+  .portfolio-item:nth-child(even) {
+    flex-direction: column; /* 小螢幕時強制垂直排列 */
+  }
+
+  .portfolio-image-container {
+    min-width: 100%; /* 圖片寬度佔滿 */
+    max-height: 300px; /* 限制圖片高度 */
+  }
+
+  .portfolio-content {
+    padding: 25px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .portfolio-section {
+    padding: 60px 20px;
+  }
+
+  .portfolio-header h2 {
+    font-size: 2.2em;
+  }
+
+  .portfolio-grid {
+    gap: 40px;
+  }
+
+  .portfolio-content h3 {
+    font-size: 1.5em;
+  }
+}

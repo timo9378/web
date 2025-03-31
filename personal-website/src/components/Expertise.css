@@ -1,0 +1,88 @@
+.expertise-section {
+  /* height: 100vh; */ /* 移除固定高度 */
+  /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
+  padding: 60px 50px; /* 上下 60px，左右 50px 的內距 */
+  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  text-align: center; /* 內容居中 */
+  /* display: flex; */ /* 移除 Flexbox */
+  /* flex-direction: column; */ /* 移除垂直排列 */
+  /* justify-content: center; */ /* 移除垂直居中 */
+  box-sizing: border-box; /* 確保 padding 不會增加高度 */
+}
+
+.expertise-section h2 {
+  font-size: 2.5em; /* 標題字體大小 */
+  margin-bottom: 40px; /* 與下方內容的間距 */
+  color: var(--clr-headline); /* 使用標題色 */
+}
+
+.skills-container {
+  display: flex; /* 使用 Flexbox 排列 */
+  justify-content: space-around; /* 平均分配空間 */
+  flex-wrap: wrap; /* 允許換行 */
+  gap: 30px; /* 區塊間距 */
+  max-width: 1000px; /* 限制最大寬度 */
+  margin: 0 auto; /* 水平居中 */
+}
+
+.skill-category {
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  padding: 25px; /* 內距 */
+  border-radius: 8px; /* 圓角 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
+  min-width: 250px; /* 最小寬度 */
+  text-align: left; /* 類別內文字靠左 */
+}
+
+.skill-category h3 {
+  font-size: 1.5em; /* 類別標題大小 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 15px; /* 與列表間距 */
+  border-bottom: 2px solid var(--clr-button); /* 使用按鈕/高亮色 */
+  padding-bottom: 5px; /* 底線與文字間距 */
+  display: inline-block; /* 讓底線寬度自適應文字 */
+}
+
+.skill-category ul {
+  list-style: none; /* 移除列表樣式 */
+  padding: 0;
+  margin: 0;
+}
+
+.skill-category ul li {
+  font-size: 1.1em; /* 技能項目文字大小 */
+  color: var(--clr-paragraph); /* 使用段落色 */
+  margin-bottom: 8px; /* 項目間距 */
+  padding-left: 15px; /* 左側內距 */
+  position: relative; /* 為了自訂項目符號 */
+}
+
+/* 自訂項目符號 */
+.skill-category ul li::before {
+  content: '▹'; /* 使用三角形符號 */
+  position: absolute;
+  left: 0;
+  color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  font-weight: bold;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .expertise-section {
+    padding: 40px 20px;
+  }
+
+  .expertise-section h2 {
+    font-size: 2em;
+  }
+
+  .skills-container {
+    flex-direction: column; /* 垂直排列 */
+    align-items: center; /* 居中對齊 */
+  }
+
+  .skill-category {
+    width: 80%; /* 調整寬度 */
+    min-width: unset; /* 取消最小寬度 */
+  }
+}

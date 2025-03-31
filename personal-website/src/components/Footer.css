@@ -1,0 +1,19 @@
+.app-footer {
+  padding: 20px 50px; /* 上下 20px，左右 50px 的內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  color: var(--clr-secondary); /* 使用次要元素灰 */
+  text-align: center; /* 文字居中 */
+  font-size: 0.9em; /* 稍小字體 */
+}
+
+.app-footer p {
+  margin: 0; /* 移除段落預設邊距 */
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .app-footer {
+    padding: 15px 20px;
+    font-size: 0.8em;
+  }
+}

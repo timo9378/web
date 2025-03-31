@@ -1,0 +1,221 @@
+.hero-section {
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  justify-content: space-around; /* 內容間隔 */
+  min-height: calc(100vh - 80px); /* 恢復：至少佔滿視窗高度減去 Header 高度 (假設 Header 高 80px) */
+  /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
+  padding: 40px 50px; /* 內距 */
+  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  color: var(--clr-headline); /* 預設文字顏色 */
+  box-sizing: border-box;
+  overflow: hidden; /* 隱藏可能溢出的內容 */
+  position: relative; /* 為了背景文字定位 */
+}
+
+.hero-content {
+  max-width: 50%; /* 限制文字內容寬度 */
+  z-index: 2; /* 確保在背景文字之上 */
+}
+
+.hero-content h1 {
+  /* 參考 Figma style_1VOWPE */
+  font-family: 'HarmonyOS Sans SC', sans-serif; /* 優先使用指定字體 */
+  font-size: 3em; /* 調整大小 */
+  font-weight: 400; /* 正常字重 */
+  line-height: 1.2; /* 行高 */
+  margin-bottom: 15px;
+}
+
+.hero-content .tagline {
+  /* 參考履歷 Software Engineer */
+  font-size: 1.5em;
+  font-weight: bold;
+  color: var(--clr-button); /* 使用按鈕/高亮色 */
+  margin-bottom: 10px;
+}
+
+.hero-content .description {
+  /* 參考 Figma style_9RS2T9 和履歷 Profile */
+  font-family: 'HarmonyOS Sans SC', sans-serif;
+  font-size: 1.1em; /* 調整大小 */
+  line-height: 1.6; /* 行高 */
+  color: var(--clr-paragraph); /* 使用段落色 */
+  max-width: 600px; /* 限制段落寬度 */
+  margin-bottom: 30px; /* 與下方按鈕/連結間距 */
+}
+
+/* 新增：社群連結與 CTA 按鈕容器 */
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 30px; /* 連結和按鈕間距 */
+  margin-top: 20px; /* 與上方描述間距 */
+}
+
+.social-links {
+  display: flex;
+  gap: 20px; /* 連結間距 */
+}
+
+.social-links a {
+  color: var(--clr-paragraph); /* 使用段落色 */
+  text-decoration: none;
+  font-size: 1.1em; /* 可以調整大小 */
+  transition: color 0.3s ease;
+}
+
+.social-links a:hover {
+  color: var(--clr-button); /* 使用按鈕/高亮色 */
+  transform: translateY(-2px); /* 懸停時上移 */
+}
+
+/* CTA 按鈕樣式 (類似 Header 中的下載按鈕) */
+.cta-button {
+  display: inline-block; /* 使 padding 生效 */
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  padding: 10px 20px; /* 調整內距 */
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500; /* 加粗一點 */
+  transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+}
+
+.cta-button:hover {
+  transform: translateY(-2px); /* 懸停時上移 */
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+}
+
+
+.hero-image-container {
+  /* max-width: 40%; */ /* 移除 max-width，改用固定尺寸 */
+  width: 300px; /* 設定固定寬度 */
+  height: 300px; /* 設定固定高度 */
+  border-radius: 50%; /* 使容器本身變圓 */
+  overflow: hidden; /* 隱藏超出容器的圖片部分 */
+  display: flex; /* 保持 flex 以便內部對齊 (雖然現在只有 img) */
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  flex-shrink: 0; /* 防止容器在 flex 佈局中縮小 */
+}
+
+.hero-image { /* 新增 img 的樣式 */
+  display: block; /* 移除圖片底部可能的空隙 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 保持圖片比例，填滿容器 */
+  transform: scale(1.2); /* 將圖片放大 20% */
+  transform: scale(1.2); /* 將圖片放大 20% */
+}
+
+/* 可選：加入背景文字樣式 */
+.background-text {
+  position: absolute; /* 絕對定位 */
+  bottom: 10%; /* 調整垂直位置 */
+  left: 50%; /* 水平居中 */
+  transform: translateX(-50%); /* 精確水平居中 */
+  font-family: 'Inter', sans-serif; /* 使用較粗的字體 */
+  font-weight: 900; /* 最粗字重 */
+  font-size: 18vw; /* 根據視窗寬度調整大小 */
+  color: rgba(1, 1, 1, 0.08); /* 使用描邊色的 RGBA */
+  z-index: 1; /* 確保在主要內容之下 */
+  text-transform: uppercase; /* 大寫 */
+  white-space: nowrap; /* 防止換行 */
+  user-select: none; /* 防止選取 */
+  pointer-events: none; /* 防止干擾滑鼠事件 */
+}
+
+/* 新增：裝飾元素樣式 */
+.hero-decoration {
+  position: absolute;
+  border-radius: 50%; /* 可以是圓形或其他形狀 */
+  z-index: 0; /* 在背景文字和主要內容之間 */
+  opacity: 0.08; /* 稍微降低透明度 */
+  pointer-events: none; /* 防止干擾滑鼠事件 */
+  animation: pulse 10s infinite alternate ease-in-out; /* 添加脈衝動畫 */
+}
+
+/* 定義脈衝動畫 */
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.06;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0.1;
+  }
+}
+
+.hero-decoration-1 {
+  animation-delay: 0s; /* 錯開動畫開始時間 */
+  width: 400px;
+  height: 400px;
+  background-color: var(--clr-button); /* 使用按鈕/高亮色 */
+  top: 10%;
+  right: 5%;
+  transform: translate(20%, -20%); /* 調整位置 */
+}
+
+.hero-decoration-2 {
+  animation-delay: -5s; /* 錯開動畫開始時間 */
+  width: 250px;
+  height: 250px;
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  bottom: 15%;
+  right: 25%;
+  /* transform: translate(10%, 10%); */ /* 移除靜態 transform，讓動畫控制 */
+}
+
+/* 新增：粒子背景樣式 */
+.particles-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* 確保在內容之下，但在背景色之上 */
+  /* background-color: var(--clr-bg-primary); */ /* 確保粒子畫布本身背景透明 */
+}
+
+
+/* 響應式設計：小螢幕調整 */
+@media (max-width: 768px) {
+  .hero-section {
+    flex-direction: column; /* 垂直排列 */
+    text-align: center; /* 文字居中 */
+    padding: 30px 20px;
+    min-height: auto; /* 取消最小高度限制 */
+  }
+
+  .hero-content,
+  .hero-image-container {
+    max-width: 90%; /* 增加寬度 */
+    margin-bottom: 30px;
+  }
+
+  .hero-content h1 {
+    font-size: 2.5em;
+  }
+
+  .hero-content .description {
+     font-size: 1em;
+  }
+
+  .hero-image-container { /* 更新容器在小螢幕的尺寸 */
+    width: 200px;
+    height: 200px;
+    /* max-width: 90%; */ /* 繼承自上方，但固定尺寸優先 */
+  }
+
+  .background-text { /* 調整小螢幕下的背景文字 */
+    font-size: 22vw; /* 可以稍微大一點 */
+    bottom: 5%; /* 調整垂直位置 */
+  }
+
+  /* 隱藏或調整小螢幕下的裝飾元素 */
+  .hero-decoration {
+    display: none; /* 預設在小螢幕隱藏 */
+  }
+}
