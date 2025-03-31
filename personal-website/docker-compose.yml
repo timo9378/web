@@ -1,0 +1,18 @@
+version: '3.8' # 指定 Compose 檔案格式版本
+
+services:
+  personal-website: # 服務名稱，您可以自訂
+    build: . # 指定 Dockerfile 的位置 (目前目錄)
+    image: personal-website-app # 指定映像檔名稱 (與之前建置的相同)
+    container_name: personal-website-container # 指定容器名稱
+    ports:
+      - "13579:13579" # 映射主機與容器的連接埠
+    volumes:
+      # 將主機的憑證檔案掛載到容器內的 /etc/certs/
+      # 注意：Compose 會自動處理 Windows 路徑轉換
+      - ./privkey.pem:/etc/certs/privkey.pem:ro # :ro 表示唯讀掛載 (建議)
+      - ./fullchain.pem:/etc/certs/fullchain.pem:ro # :ro 表示唯讀掛載 (建議)
+      # (可選) 掛載原始碼以實現熱重載 (若 Vite 設定支援)
+      # - .:/app
+      # - /app/node_modules # 避免覆蓋容器內的 node_modules
+    restart: unless-stopped # 設定容器重啟策略
