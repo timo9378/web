@@ -1,11 +1,11 @@
 .contact-section {
-  /* height: 100vh; */ /* 移除固定高度 */
-  /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
   padding: 60px 50px; /* 上下 60px，左右 50px 的內距 */
-  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  /* 背景：完全透明 */
+  background-color: transparent; /* 設置為透明 */
+  /* backdrop-filter: blur(12px); */ /* 移除模糊效果 */
+  /* -webkit-backdrop-filter: blur(12px); */ /* 移除 Safari 支援 */
+  /* border-top: 1px solid rgba(255, 255, 255, 0.1); */ /* 移除頂部邊框 */
   text-align: center; /* 內容居中 */
-  /* display: flex; */ /* 移除 Flexbox */
-  /* flex-direction: column; */ /* 移除垂直排列 */
   /* justify-content: center; */ /* 移除垂直居中 */
   box-sizing: border-box; /* 確保 padding 不會增加高度 */
 }
@@ -14,6 +14,16 @@
   font-size: 2.5em; /* 標題字體大小 */
   margin-bottom: 40px; /* 與下方內容的間距 */
   color: var(--clr-headline); /* 使用標題色 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 新增文字陰影 */
+}
+
+.contact-cta { /* CTA 樣式 */
+  color: var(--clr-slate); /* 使用較柔和的顏色 */
+  font-size: 1.1em;
+  margin-bottom: 30px; /* 與下方聯絡資訊的間距 */
+  max-width: 500px; /* 限制寬度 */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .contact-info-container {
@@ -28,31 +38,45 @@
 .contact-item {
   display: flex; /* 使用 Flexbox 排列 */
   align-items: center; /* 垂直居中 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
-  padding: 15px 20px; /* 內距 */
-  border-radius: 8px; /* 圓角 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 細微陰影 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除背景色 */
+  padding: 15px 0; /* 調整內距，移除左右內距 */
+  /* border-radius: 8px; */ /* 移除圓角 */
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); */ /* 移除陰影 */
   width: 100%; /* 佔滿容器寬度 */
   box-sizing: border-box;
+  /* border-bottom: 1px solid rgba(255, 255, 255, 0.1); */ /* 移除底線分隔 */
+}
+
+.contact-item:last-child {
+  border-bottom: none; /* 最後一個項目移除底線 */
 }
 
 .contact-item .icon {
   font-size: 1.5em; /* 圖標大小 */
   margin-right: 15px; /* 圖標與文字間距 */
-  color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  color: var(--clr-accent); /* 使用主題點綴色 */
+  width: 30px; /* 固定寬度讓文字對齊 */
+  text-align: center;
 }
 
 .contact-item a,
 .contact-item span:not(.icon) {
   font-size: 1.1em; /* 文字大小 */
-  color: var(--clr-headline); /* 使用標題色 */
+  color: var(--clr-light); /* 使用淺色文字 */
   text-decoration: none; /* 移除連結底線 */
   word-break: break-all; /* 長字串換行 */
 }
 
 .contact-item a:hover {
-  color: var(--clr-button); /* 使用按鈕/高亮色 */
+  color: var(--clr-accent); /* 使用主題點綴色 */
   text-decoration: underline; /* 滑鼠懸停時加底線 */
+}
+
+.copyright {
+  margin-top: 50px; /* 與上方內容的間距 */
+  font-size: 0.9em; /* 稍小字體 */
+  color: var(--clr-slate); /* 使用較暗的灰色 */
+  text-align: center; /* 置中 */
 }
 
 /* 響應式設計 */

@@ -3,7 +3,10 @@
   justify-content: space-between; /* 兩端對齊 */
   align-items: center; /* 垂直居中 */
   padding: 15px 30px; /* 上下 15px，左右 30px 的內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除原本的背景色 */
+  background-color: rgba(13, 17, 23, 0.6); /* 半透明深色背景 (基於 --clr-bg-primary 的近似值) */
+  backdrop-filter: blur(10px); /* 玻璃模糊效果 */
+  -webkit-backdrop-filter: blur(10px); /* Safari 支援 */
   color: var(--clr-headline); /* 使用標題色 */
   position: fixed; /* 固定在頂部 */
   top: 0;
@@ -11,6 +14,8 @@
   width: 100%;
   box-sizing: border-box; /* padding 不會影響寬度 */
   z-index: 1000; /* 確保在最上層 */
+  /* 微妙的底部光暈效果 */
+  box-shadow: 0 1px 5px rgba(255, 255, 255, 0.1);
 }
 
 .logo {
@@ -30,12 +35,52 @@
   color: var(--clr-headline); /* 使用標題色 */
   text-decoration: none; /* 移除底線 */
   font-size: 1em;
+  position: relative; /* 為了 ::after 偽元素定位 */
   transition: color 0.3s ease; /* 平滑顏色過渡 */
+  padding-bottom: 5px; /* 為底線留出空間 */
+  display: inline-flex; /* 讓圖標和文字在同一行並能垂直對齊 */
+  align-items: center; /* 垂直居中對齊圖標和文字 */
+  gap: 6px; /* 圖標和文字之間的間距 */
 }
 
-.app-header nav ul li a:hover,
+.nav-icon {
+  /* 可以根據需要微調圖標大小或樣式 */
+  font-size: 1.1em; /* 稍微放大圖標 */
+  line-height: 1; /* 確保圖標垂直居中 */
+}
+
+/* 彗星尾巴底線效果 - 初始狀態 */
+.app-header nav ul li a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--clr-button); /* 使用按鈕/高亮色 */
+  transform: scaleX(0); /* 初始隱藏 */
+  transform-origin: left; /* 從左側展開 */
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1); /* 平滑過渡，帶有彈性效果 */
+}
+
+/* 滑鼠懸停效果 */
+.app-header nav ul li a:hover {
+  color: var(--clr-button); /* 文字變色 */
+}
+
+.app-header nav ul li a:hover::after {
+  transform: scaleX(1); /* 展開底線 */
+  transform-origin: left; /* 確保從左側滑入 */
+}
+
+/* 當前活動連結效果 */
 .app-header nav ul li a.active {
-  color: var(--clr-button); /* 使用按鈕/高亮色 */
+  color: var(--clr-button); /* 文字變色 */
+}
+
+.app-header nav ul li a.active::after {
+  transform: scaleX(1); /* 保持底線顯示 */
+  background-color: var(--clr-tertiary); /* 可以用不同的顏色或保持一致 */
 }
 
 .download-button {

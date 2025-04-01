@@ -1,6 +1,6 @@
 .portfolio-section {
   padding: 80px 50px; /* 增加上下內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除背景色 */
   box-sizing: border-box;
 }
 
@@ -13,6 +13,7 @@
   font-size: 2.8em; /* 標題字體大小 */
   color: var(--clr-headline); /* 使用標題色 */
   margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 新增文字陰影 */
 }
 
 .portfolio-header p {
@@ -30,16 +31,22 @@
   gap: 60px; /* 項目間距 */
   max-width: 1100px; /* 限制最大寬度 */
   margin: 0 auto; /* 水平居中 */
+  perspective: 1000px; /* 加入 perspective 以啟用 3D 效果 */
 }
 
 .portfolio-item {
   display: flex; /* 使用 Flexbox 排列圖片和內容 */
   gap: 30px; /* 圖片和內容間距 */
-  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  /* background-color: var(--clr-bg-secondary); */ /* 註解掉原本的背景色 */
+  background-color: rgba(22, 22, 26, 0.6); /* 降低透明度以增強模糊效果 */
   border-radius: 10px; /* 圓角 */
   overflow: hidden; /* 隱藏溢出內容 */
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* 稍微明顯的陰影 */
   transition: transform 0.3s ease, box-shadow 0.3s ease; /* 加入過渡效果 */
+  /* --- 玻璃擬態效果 --- */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari 支援 */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* 細微亮色邊框 */
 }
 
 /* 讓圖片和文字左右交錯顯示 */

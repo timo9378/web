@@ -1,0 +1,20 @@
+.transition-container {
+  position: relative; /* 相對定位容器 */
+  width: 100%;
+  height: 50px; /* 給動畫一些垂直空間，可以調整 */
+  overflow: hidden; /* 隱藏超出容器的動畫元素 */
+  margin: 40px 0; /* 在區塊之間增加一些間距 */
+}
+
+.shooting-star {
+  position: absolute;
+  top: 0; /* 從頂部開始 */
+  left: 0; /* 從左側開始 */
+  width: 120px; /* 增加流星寬度 */
+  height: 3px; /* 增加流星高度 */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9) 80%, rgba(255, 255, 255, 0.95)); /* 調整漸變，讓亮部更長更亮 */
+  border-radius: 2px; /* 配合高度調整 */
+  transform: rotate(-45deg); /* 傾斜角度 */
+  transform-origin: left top; /* 旋轉基點 */
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); /* 增強發光效果 */
+}

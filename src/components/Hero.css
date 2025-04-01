@@ -3,14 +3,19 @@
   align-items: center; /* 垂直居中 */
   justify-content: space-around; /* 內容間隔 */
   min-height: calc(100vh - 80px); /* 恢復：至少佔滿視窗高度減去 Header 高度 (假設 Header 高 80px) */
-  /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
   padding: 40px 50px; /* 內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除單色背景，改用漸層 */
   color: var(--clr-headline); /* 預設文字顏色 */
   box-sizing: border-box;
   overflow: hidden; /* 隱藏可能溢出的內容 */
-  position: relative; /* 為了背景文字定位 */
+  /* --- 移除 Hero 區塊自身的背景樣式 --- */
+  /* background-image: ... */
+  /* background-blend-mode: ... */
+  position: relative; /* 為了子元素定位 */
+  background-color: transparent; /* 明確設定背景為透明 */
 }
+
+/* 移除 ::before 偽元素 */
 
 .hero-content {
   max-width: 50%; /* 限制文字內容寬度 */
@@ -23,15 +28,19 @@
   font-size: 3em; /* 調整大小 */
   font-weight: 400; /* 正常字重 */
   line-height: 1.2; /* 行高 */
-  margin-bottom: 15px;
+  margin-bottom: 25px; /* 增加標題下方間距 */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* 新增文字陰影 */
 }
 
 .hero-content .tagline {
   /* 參考履歷 Software Engineer */
-  font-size: 1.5em;
+  font-size: 1.8em; /* 稍微增大字號 */
+  font-style: italic; /* 使用斜體 */
   font-weight: bold;
   color: var(--clr-button); /* 使用按鈕/高亮色 */
-  margin-bottom: 10px;
+  margin-top: 10px; /* 增加上方間距 */
+  margin-bottom: 30px; /* 增加座右銘下方間距 */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* 新增文字陰影 */
 }
 
 .hero-content .description {
@@ -40,9 +49,42 @@
   font-size: 1.1em; /* 調整大小 */
   line-height: 1.6; /* 行高 */
   color: var(--clr-paragraph); /* 使用段落色 */
-  max-width: 600px; /* 限制段落寬度 */
-  margin-bottom: 30px; /* 與下方按鈕/連結間距 */
+  max-width: 65ch; /* 限制行長以提高可讀性 (約 65 個字符寬) */
+  margin-bottom: 40px; /* 增加描述下方間距 */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* 新增文字陰影 */
 }
+
+/* Typing effect styles */
+.typing-text::after {
+  content: '|'; /* Blinking cursor */
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 0.7s infinite;
+  opacity: 1;
+  font-weight: bold; /* Make cursor bolder */
+}
+
+.typing-text.typing-complete::after {
+  content: ''; /* Hide cursor when complete */
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Fade-in animation for description and actions */
+.description, .hero-actions {
+  opacity: 0; /* Start hidden */
+  transition: opacity 0.5s ease-in 0.2s; /* Smooth fade-in transition with slight delay */
+}
+
+.description.fade-in, .hero-actions.fade-in {
+  opacity: 1; /* Fade in when class is added */
+}
+
 
 /* 新增：社群連結與 CTA 按鈕容器 */
 .hero-actions {
@@ -78,13 +120,28 @@
   border-radius: 8px;
   text-decoration: none;
   font-weight: 500; /* 加粗一點 */
-  transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+  position: relative; /* 為了可能的偽元素效果 */
+  overflow: hidden; /* 配合可能的內部動畫 */
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease; /* 加入 box-shadow 過渡 */
 }
 
 .cta-button:hover {
-  transform: translateY(-2px); /* 懸停時上移 */
+  transform: translateY(-3px); /* 懸停時上移更多 */
   background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  color: var(--clr-button-text); /* 明確指定懸停時的文字顏色 */
+  /* 新增：懸停發光效果 */
+  box-shadow: 0 0 15px 2px rgba(var(--clr-button-rgb), 0.7);
 }
+
+/* 新增：點擊效果 */
+.cta-button:active {
+  transform: translateY(-1px) scale(0.98); /* 點擊時稍微下壓並縮小 */
+  box-shadow: 0 0 8px 1px rgba(var(--clr-button-rgb), 0.5); /* 點擊時光暈減弱 */
+  background-color: var(--clr-button); /* 可以恢復或使用更深的顏色 */
+}
+
+/* 移除不再需要的動畫定義 */
+/* @keyframes move-gradient { ... } */
 
 
 .hero-image-container {
@@ -92,18 +149,93 @@
   width: 300px; /* 設定固定寬度 */
   height: 300px; /* 設定固定高度 */
   border-radius: 50%; /* 使容器本身變圓 */
-  overflow: hidden; /* 隱藏超出容器的圖片部分 */
+  /* overflow: hidden; */ /* 移除 overflow: hidden 以顯示偽元素邊框 */
   display: flex; /* 保持 flex 以便內部對齊 (雖然現在只有 img) */
   justify-content: center;
   align-items: center;
   z-index: 2;
   flex-shrink: 0; /* 防止容器在 flex 佈局中縮小 */
+  position: relative; /* 為了定位偽元素 */
+  /* 移除舊的 box-shadow */
+  /* box-shadow: 0 0 15px 3px rgba(var(--clr-button-rgb), 0.6); */
+  transition: transform 0.3s ease; /* 添加 transform 過渡 */
 }
 
+/* 新增：漸層邊框偽元素 */
+.hero-image-container::before {
+  content: '';
+  position: absolute;
+  inset: -4px; /* 邊框寬度 */
+  border-radius: 50%; /* 保持圓形 */
+  background: linear-gradient(45deg, var(--clr-button), var(--clr-tertiary), var(--clr-accent)); /* 使用主題顏色創建漸層 */
+  /* background-size: 200% 200%; */ /* 移除 background-size */
+  z-index: 1; /* 調整 z-index，使其在容器之上但在圖片之下 */
+  transition: filter 0.5s ease, opacity 0.5s ease; /* 恢復 transition */
+  filter: blur(3px); /* 恢復並稍微增加初始模糊 */
+  opacity: 0.9; /* 稍微提高初始透明度 */
+  /* 新增：外發光效果 (極度增強) */
+  box-shadow: 0 0 25px 8px rgba(var(--clr-button-rgb), 0.75); /* 大幅加大基礎光暈 */
+  /* 新增：持續脈衝光暈動畫 和 背景旋轉動畫 */
+  animation:
+    pulse-glow 2.8s infinite alternate ease-in-out, /* 調整脈衝速度 */
+    rotate-gradient 12s linear infinite; /* 調整背景旋轉速度 */
+  background-size: 300% 300%; /* 增加背景尺寸以獲得更平滑的漸變 */
+}
+
+/* 定義脈衝光暈動畫 (色彩呼吸 + 模擬尾跡) */
+@keyframes pulse-glow {
+  0% {
+    /* 模擬輕微向右下拖尾 */
+    box-shadow: 2px 2px 25px 8px rgba(var(--clr-button-rgb), 0.75);
+    filter: blur(5px);
+    opacity: 0.9;
+  }
+  50% {
+    /* 模擬輕微向左上拖尾，顏色變換 */
+    box-shadow: -2px -2px 45px 18px rgba(var(--clr-tertiary-rgb), 0.85); /* 增強並變色 */
+    filter: blur(8px); /* 增加模糊 */
+    opacity: 1;
+  }
+  100% {
+    /* 回到初始狀態附近，顏色再次變換 */
+    box-shadow: 1px 1px 20px 6px rgba(var(--clr-accent-rgb), 0.7); /* 變回收斂的強調色 */
+    filter: blur(4px);
+    opacity: 0.95;
+  }
+}
+
+/* 新增：定義背景旋轉動畫 */
+@keyframes rotate-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+} /* 修正：移除多餘的括號 */
+
+
+.hero-image-container:hover { /* 懸停時容器稍微放大 */
+  transform: scale(1.03);
+  /* 移除舊的 box-shadow 增強效果 */
+  /* box-shadow: 0 0 25px 5px rgba(var(--clr-button-rgb), 0.8); */
+}
+
+/* 懸停時偽元素效果 - 熾熱的靜態光暈 */
+.hero-image-container:hover::before {
+  filter: blur(12px); /* 懸停時更模糊 */
+  opacity: 1; /* 懸停時完全不透明 */
+  /* 變為熾熱的黃白色光暈 */
+  box-shadow: 0 0 70px 25px rgba(255, 255, 220, 0.95); /* 熾熱的淺黃色 */
+  /* 懸停時移除所有動畫，顯示最強的靜態效果 */
+  animation: none;
+}
+
+
 .hero-image { /* 新增 img 的樣式 */
+  position: relative; /* 確保 z-index 生效 */
+  z-index: 2; /* 確保圖片在邊框之上 */
   display: block; /* 移除圖片底部可能的空隙 */
   width: 100%;
   height: 100%;
+  border-radius: 50%; /* 將圖片本身也裁切成圓形 */
   object-fit: cover; /* 保持圖片比例，填滿容器 */
   transform: scale(1.2); /* 將圖片放大 20% */
   transform: scale(1.2); /* 將圖片放大 20% */
@@ -112,14 +244,14 @@
 /* 可選：加入背景文字樣式 */
 .background-text {
   position: absolute; /* 絕對定位 */
-  bottom: 10%; /* 調整垂直位置 */
+  bottom: 15%; /* 向上移動浮水印 (原為 10%) */
   left: 50%; /* 水平居中 */
   transform: translateX(-50%); /* 精確水平居中 */
   font-family: 'Inter', sans-serif; /* 使用較粗的字體 */
   font-weight: 900; /* 最粗字重 */
   font-size: 18vw; /* 根據視窗寬度調整大小 */
   color: rgba(1, 1, 1, 0.08); /* 使用描邊色的 RGBA */
-  z-index: 1; /* 確保在主要內容之下 */
+  z-index: 1; /* 調整 z-index，因為背景層移到 App.jsx */
   text-transform: uppercase; /* 大寫 */
   white-space: nowrap; /* 防止換行 */
   user-select: none; /* 防止選取 */
@@ -130,7 +262,7 @@
 .hero-decoration {
   position: absolute;
   border-radius: 50%; /* 可以是圓形或其他形狀 */
-  z-index: 0; /* 在背景文字和主要內容之間 */
+  z-index: 1; /* 調整 z-index */
   opacity: 0.08; /* 稍微降低透明度 */
   pointer-events: none; /* 防止干擾滑鼠事件 */
   animation: pulse 10s infinite alternate ease-in-out; /* 添加脈衝動畫 */
@@ -168,16 +300,7 @@
   /* transform: translate(10%, 10%); */ /* 移除靜態 transform，讓動畫控制 */
 }
 
-/* 新增：粒子背景樣式 */
-.particles-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0; /* 確保在內容之下，但在背景色之上 */
-  /* background-color: var(--clr-bg-primary); */ /* 確保粒子畫布本身背景透明 */
-}
+/* 移除粒子背景樣式 */
 
 
 /* 響應式設計：小螢幕調整 */

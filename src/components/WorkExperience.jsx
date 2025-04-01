@@ -41,16 +41,27 @@ function WorkExperience() {
       id="work-experience"
       className="work-experience-section"
     >
-      <h2>工作經歷</h2>
-      <motion.div // 將動畫應用於 experience-list
+      <motion.h2 // 為標題添加動畫
+        initial={{ opacity: 0, scale: 0.8 }} // 改為縮小
+        whileInView={{ opacity: 1, scale: 1 }} // 改為放大
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true }}
+      >
+        工作經歷
+      </motion.h2>
+      <div // 移除外層 motion.div，改為普通 div
         className="experience-list"
-        initial={{ opacity: 0, y: 50 }} // 初始狀態
-        whileInView={{ opacity: 1, y: 0 }} // 進入視圖時的狀態
-        transition={{ duration: 0.8, ease: "easeOut" }} // 動畫效果
-        viewport={{ once: true }} // 動畫只觸發一次
+        // 移除外層動畫屬性
       >
         {experiences.map((exp, index) => (
-          <div key={index} className="experience-item">
+          <motion.div // 為每個項目添加動畫
+            key={index}
+            className="experience-item"
+            initial={{ opacity: 0, scale: 0.8 }} // 改為縮小
+            whileInView={{ opacity: 1, scale: 1 }} // 改為放大
+            transition={{ duration: 0.5, delay: index * 0.15, ease: "easeOut" }} // 錯開動畫，延遲稍長
+            viewport={{ once: true }}
+          >
             <div className="experience-header">
               <h3>{exp.title} <span className="role">({exp.role})</span></h3>
               <span className="period">{exp.period}</span>
@@ -60,9 +71,9 @@ function WorkExperience() {
                 <li key={i}>{detail}</li>
               ))}
             </ul>
-          </div>
+          </motion.div> // 結束 motion.div
         ))}
-      </motion.div> 
+      </div> // 結束普通 div
     </section> // 結束 section
   );
 }

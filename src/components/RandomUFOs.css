@@ -1,0 +1,37 @@
+/* RandomUFOs.css - UFO 樣式 */
+
+.ufo {
+  position: absolute;
+  /* UFO 的基礎大小 */
+  width: 15px;
+  height: 5px; /* 扁平的橢圓形 */
+  /* UFO 顏色和光暈 */
+  background-color: #a0e0ff; /* 淡藍色或淡綠色 */
+  border-radius: 50%; /* 使其成為橢圓 */
+  box-shadow: 0 0 8px 3px rgba(160, 224, 255, 0.7), /* 主光暈 */
+              inset 0 0 3px 1px rgba(255, 255, 255, 0.8); /* 內部亮點 */
+  /* 添加輕微的閃爍動畫 */
+  animation: ufo-pulse 3s infinite alternate ease-in-out;
+}
+
+/* UFO 閃爍/脈衝動畫 */
+@keyframes ufo-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+    box-shadow: 0 0 6px 2px rgba(160, 224, 255, 0.6),
+                inset 0 0 2px 1px rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    transform: scale(1.1); /* 稍微放大 */
+    opacity: 0.9; /* 更亮 */
+    box-shadow: 0 0 10px 4px rgba(160, 224, 255, 0.8),
+                inset 0 0 4px 1px rgba(255, 255, 255, 0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+    box-shadow: 0 0 6px 2px rgba(160, 224, 255, 0.6),
+                inset 0 0 2px 1px rgba(255, 255, 255, 0.7);
+  }
+}

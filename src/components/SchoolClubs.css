@@ -1,7 +1,7 @@
 /* 沿用 Education.css 的區塊樣式，並更新 class name */
 .school-clubs-section {
   padding: 60px 50px;
-  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  /* background-color: var(--clr-bg-secondary); */ /* 移除背景色 */
   text-align: center;
   box-sizing: border-box;
 }
@@ -10,38 +10,93 @@
   font-size: 2.5em;
   margin-bottom: 40px;
   color: var(--clr-headline); /* 使用標題色 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 新增文字陰影 */
 }
 
 /* 新的容器樣式，使用 Flexbox 水平排列社團 */
 .clubs-container {
   display: flex;
   justify-content: center; /* 水平居中 */
-  gap: 40px; /* 社團之間的間距 */
+  gap: 60px; /* 增加社團之間的間距 */
   flex-wrap: wrap; /* 允許換行 */
-  max-width: 900px; /* 限制最大寬度 */
+  align-items: flex-start; /* 讓卡片頂部對齊，減少擠壓感 */
+  /* max-width: 900px; */ /* 移除最大寬度限制，讓容器變寬 */
   margin: 0 auto; /* 水平居中 */
+  padding: 0 20px; /* 可以加一點左右 padding 避免貼邊 */
 }
 
 /* 每個社團項目的樣式 */
 .club-item {
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除原本背景色 */
+  background-color: rgba(22, 22, 26, 0.6); /* 使用主要背景色的半透明版本 */
   padding: 20px 25px; /* 內距 */
-  border-radius: 8px; /* 圓角 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  min-width: 180px; /* 設定最小寬度 */
-  text-align: center; /* 文字居中 */
+  border-radius: 12px; /* 增加圓角 */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* 稍微加深陰影 */
+  min-width: 220px; /* 調整最小寬度以容納更多內容 */
+  text-align: left; /* 改為靠左對齊 */
+  /* --- 玻璃擬態效果 --- */
+  backdrop-filter: blur(10px); /* 稍微增加模糊度 */
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1); /* 稍微加亮邊框 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* 加入過渡效果 */
+  cursor: pointer; /* 添加指針樣式表示可點擊 */
+  overflow: hidden; /* 隱藏超出內容，配合 layout 動畫 */
+}
+
+/* --- 互動效果 --- */
+.club-item:hover {
+  transform: scale(1.03); /* 微幅放大 */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 懸停時陰影加深 */
+  border-color: rgba(255, 255, 255, 0.2); /* 懸停時邊框變亮 */
+}
+
+/* --- 新增樣式 --- */
+.club-header {
+  display: flex;
+  align-items: center; /* 垂直居中圖標和標題 */
+  gap: 10px; /* 圖標和標題間距 */
+  margin-bottom: 8px; /* 與下方角色間距 */
+}
+
+.club-icon {
+  font-size: 1.5em; /* 圖標大小 */
+  color: var(--clr-accent); /* 使用強調色 */
+  flex-shrink: 0; /* 防止圖標被壓縮 */
 }
 
 .club-item h3 {
-  font-size: 1.4em; /* 社團名稱大小 */
+  font-size: 1.3em; /* 調整社團名稱大小 */
   color: var(--clr-headline); /* 使用標題色 */
-  margin-bottom: 5px; /* 與下方角色間距 */
+  margin: 0; /* 移除預設 margin */
+  line-height: 1.3; /* 調整行高 */
 }
 
 .club-item p {
-  font-size: 1.1em; /* 角色文字大小 */
+  font-size: 1.05em; /* 調整角色文字大小 */
   color: var(--clr-paragraph); /* 使用段落色 */
+  margin: 0 0 15px 0; /* 增加下方間距 */
+  padding-left: calc(1.5em + 10px); /* 與標題對齊 (圖標寬度 + gap) */
+}
+
+/* 活動列表樣式 */
+.club-activities {
+  margin-top: 15px;
+  padding-left: calc(1.5em + 10px); /* 與標題對齊 */
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* 分隔線 */
+  padding-top: 15px;
+}
+
+.club-activities ul {
+  list-style: disc; /* 使用圓點列表 */
+  padding-left: 20px; /* 列表內縮 */
   margin: 0;
+  color: var(--clr-paragraph); /* 列表文字顏色 */
+}
+
+.club-activities li {
+  margin-bottom: 8px; /* 列表項間距 */
+  font-size: 0.95em; /* 列表項文字大小 */
+  line-height: 1.5; /* 列表項行高 */
 }
 
 /* 響應式設計 */
@@ -55,18 +110,52 @@
   }
 
   .clubs-container {
-    gap: 25px; /* 縮小間距 */
+    gap: 20px; /* 縮小間距 */
+    max-width: 100%; /* 移除最大寬度限制 */
   }
 
   .club-item {
-    min-width: 150px; /* 縮小最小寬度 */
+    min-width: 200px; /* 調整最小寬度 */
+    padding: 15px 20px; /* 調整內距 */
+  }
+
+  .club-icon {
+    font-size: 1.3em;
   }
 
   .club-item h3 {
-    font-size: 1.2em;
+    font-size: 1.15em;
   }
 
   .club-item p {
     font-size: 1em;
+    padding-left: calc(1.3em + 10px);
+  }
+
+  .club-activities {
+    padding-left: calc(1.3em + 10px);
+  }
+
+  .club-activities li {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .school-clubs-section {
+    padding: 30px 15px;
+  }
+  .school-clubs-section h2 {
+    font-size: 1.8em;
+    margin-bottom: 30px;
+  }
+  .clubs-container {
+    flex-direction: column; /* 垂直堆疊 */
+    align-items: center; /* 居中對齊 */
+    gap: 20px;
+  }
+  .club-item {
+    width: 90%; /* 佔滿寬度 */
+    min-width: unset; /* 移除最小寬度 */
   }
 }

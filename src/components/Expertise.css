@@ -2,7 +2,7 @@
   /* height: 100vh; */ /* 移除固定高度 */
   /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
   padding: 60px 50px; /* 上下 60px，左右 50px 的內距 */
-  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  /* background-color: var(--clr-bg-secondary); */ /* 移除背景色 */
   text-align: center; /* 內容居中 */
   /* display: flex; */ /* 移除 Flexbox */
   /* flex-direction: column; */ /* 移除垂直排列 */
@@ -14,6 +14,7 @@
   font-size: 2.5em; /* 標題字體大小 */
   margin-bottom: 40px; /* 與下方內容的間距 */
   color: var(--clr-headline); /* 使用標題色 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 新增文字陰影 */
 }
 
 .skills-container {
@@ -26,12 +27,17 @@
 }
 
 .skill-category {
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除原本背景色 */
+  background-color: rgba(22, 22, 26, 0.6); /* 使用主要背景色的半透明版本 */
   padding: 25px; /* 內距 */
   border-radius: 8px; /* 圓角 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
   min-width: 250px; /* 最小寬度 */
   text-align: left; /* 類別內文字靠左 */
+  /* --- 玻璃擬態效果 --- */
+  backdrop-filter: blur(8px); /* 模糊程度可以稍低 */
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* 邊框透明度可以更低 */
 }
 
 .skill-category h3 {
@@ -43,28 +49,68 @@
   display: inline-block; /* 讓底線寬度自適應文字 */
 }
 
-.skill-category ul {
-  list-style: none; /* 移除列表樣式 */
-  padding: 0;
-  margin: 0;
+/* --- 新的技能項目佈局 --- */
+.skill-items-wrapper {
+  display: flex; /* 使用 Flexbox 實現橫向排列 */
+  flex-wrap: wrap; /* 允許換行 */
+  gap: 20px; /* 技能項目之間的間距 */
+  margin-top: 15px; /* 與標題的間距 */
 }
 
-.skill-category ul li {
-  font-size: 1.1em; /* 技能項目文字大小 */
-  color: var(--clr-paragraph); /* 使用段落色 */
-  margin-bottom: 8px; /* 項目間距 */
-  padding-left: 15px; /* 左側內距 */
-  position: relative; /* 為了自訂項目符號 */
+.skill-item {
+  display: flex; /* 使用 Flexbox 排列圖示和箭頭 */
+  flex-direction: column; /* 垂直排列 */
+  align-items: center; /* 水平居中對齊 */
+  min-width: 60px; /* 給每個項目一個最小寬度，避免擠在一起 */
+  text-align: center; /* 確保文字（如果有的話）也居中 */
 }
 
-/* 自訂項目符號 */
-.skill-category ul li::before {
-  content: '▹'; /* 使用三角形符號 */
-  position: absolute;
-  left: 0;
+/* 移除舊的 ul, li, li::before 樣式 */
+/* .skill-category ul { ... } */
+/* .skill-category ul li { ... } */
+/* .skill-category ul li::before { ... } */
+/* .skill-category ul li:has(.skill-icon) { ... } */
+/* .skill-category ul li:has(.skill-icon)::before { ... } */
+
+
+/* 更新：技能圖示樣式 */
+.skill-icon {
+  display: block; /* 改為 block 以便在 flex column 中正常顯示 */
+  font-size: 1.8em; /* 稍微放大圖示 */
+  color: var(--clr-headline); /* 使用標題色 */
+  margin-bottom: 5px; /* 與下方箭頭的間距 */
+  line-height: 1;
+}
+
+/* 新增：技能文字樣式 (如果沒有圖示) */
+.skill-text {
+  font-size: 1em;
+  color: var(--clr-paragraph);
+  margin-bottom: 5px; /* 與下方箭頭的間距 */
+}
+
+/* 新增：技能箭頭樣式 */
+.skill-arrow {
+  display: block; /* 確保獨佔一行 */
   color: var(--clr-tertiary); /* 使用第三點綴綠 */
   font-weight: bold;
+  font-size: 1.2em; /* 調整箭頭大小 */
 }
+
+/* 新增：技能提示框樣式 */
+.skill-tooltip {
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  white-space: nowrap; /* 防止換行 */
+  z-index: 1010; /* 確保在 Header 之上 (Header 是 1000) */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  /* 可以添加一個小箭頭 */
+  /* &::after { ... } */
+}
+
 
 /* 響應式設計 */
 @media (max-width: 768px) {

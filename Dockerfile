@@ -22,9 +22,9 @@ COPY . .
 # 暴露 Vite 開發伺服器使用的端口 (根據 vite.config.js)
 EXPOSE 13579
 
-# 執行 Vite 開發伺服器
-# 注意：這裡使用 --host 來確保伺服器可以從容器外部訪問
-CMD ["npm", "run", "dev", "--", "--host"]
+# 執行 Vite 預覽伺服器 (會先執行 build，並在生產模式下提供服務)
+# host 和 port 已在 vite.config.js 中配置
+CMD ["npm", "run", "dev"]
 
 # --- Production Stage (Optional Example) ---
 # 如果您想建立一個更小的生產映像檔，可以考慮多階段建置

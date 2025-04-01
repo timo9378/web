@@ -17,10 +17,10 @@ const portfolioItems = [
   {
     id: 2,
     category: '網頁開發',
-    title: '專案標題二',
-    description: '另一個專案的描述，可以更詳細地介紹使用的技術或成果。',
-    imageUrl: 'https://via.placeholder.com/600x400/cccccc/888888?text=Project+Image+2', // 佔位圖片
-    link: '#'
+    title: '個人形象網站 (本站)',
+    description: '使用 React、Vite 和 CSS 打造的個人作品集網站，展示我的技能、經歷與作品。運用 Framer Motion 製作動態效果，並以 tsparticles 實現互動式背景。',
+    imageUrl: 'https://via.placeholder.com/600x400/cccccc/888888?text=Project+Image+2', // 佔位圖片 (可替換)
+    link: 'https://github.com/timo9378/web' // GitHub 連結
   },
   {
     id: 3,
@@ -37,8 +37,8 @@ function Portfolio() {
     <section id="portfolio" className="portfolio-section">
       <motion.div
         className="portfolio-header"
-        initial={{ opacity: 0, y: -30 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.8 }} // 改為縮小
+        whileInView={{ opacity: 1, scale: 1 }} // 改為放大
         transition={{ duration: 0.6, ease: "easeOut" }}
         viewport={{ once: true }}
       >
@@ -52,9 +52,9 @@ function Portfolio() {
           <motion.div
             key={item.id}
             className="portfolio-item" // 使用舊的 class name
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }} // 錯開動畫時間
+            initial={{ opacity: 0, scale: 0.8 }} // 移除 y 和 rotateY，調整 scale
+            whileInView={{ opacity: 1, scale: 1 }} // 移除 y 和 rotateY
+            transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }} // 稍微調整 duration 和 delay
             viewport={{ once: true }}
           >
             <div className="portfolio-image-container"> {/* 使用舊的 class name */}
@@ -72,7 +72,7 @@ function Portfolio() {
                   </Link>
                 ) : (
                   <a href={item.link} target="_blank" rel="noopener noreferrer" className="portfolio-link"> {/* 外部連結仍用 a */}
-                    查看詳情
+                    {item.id === 2 ? '查看原始碼' : '查看詳情'} {/* 根據 ID 顯示不同文字 */}
                   </a>
                 )
               )}

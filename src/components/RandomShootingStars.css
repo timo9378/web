@@ -1,0 +1,15 @@
+@keyframes shooting-star-glow {
+  0%, 100% {
+    /* 初始和結束狀態的陰影 */
+    filter: drop-shadow(0 0 4px rgba(180, 140, 255, 0.5));
+  }
+  50% {
+    /* 中間狀態的陰影，更亮或更擴散 */
+    filter: drop-shadow(0 0 8px rgba(200, 160, 255, 0.8));
+  }
+}
+
+/* 可以保留一個基本樣式類，雖然目前主要用 inline style */
+.shooting-star {
+  /* 基本樣式可以在這裡定義，但目前都在 JSX 中 */
+}

@@ -2,7 +2,7 @@
   /* height: 100vh; */ /* 移除固定高度 */
   /* scroll-snap-align: start; */ /* 移除滾動吸附對齊點 */
   padding: 60px 50px; /* 上下 60px，左右 50px 的內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除背景色 */
   /* display: flex; */ /* 移除 Flexbox */
   /* flex-direction: column; */ /* 移除垂直排列 */
   /* justify-content: center; */ /* 移除垂直居中 */
@@ -14,6 +14,7 @@
   text-align: center; /* 標題居中 */
   margin-bottom: 50px; /* 與下方內容的間距 */
   color: var(--clr-headline); /* 使用標題色 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 新增文字陰影 */
 }
 
 .experience-list {
@@ -25,11 +26,16 @@
 }
 
 .experience-item {
-  background-color: var(--clr-bg-secondary); /* 使用次要背景色 */
+  /* background-color: var(--clr-bg-secondary); */ /* 移除原本背景色 */
+  background-color: rgba(34, 39, 46, 0.6); /* 使用次要背景色 (#22272e) 的半透明版本 */
   padding: 25px 30px; /* 內距 */
   border-radius: 8px; /* 圓角 */
-  border-left: 5px solid var(--clr-button); /* 使用按鈕/高亮色 */
+  /* border-left: 5px solid var(--clr-button); */ /* 移除左側實色邊框，改用細邊框 */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* 細微陰影 */
+  /* --- 玻璃擬態效果 --- */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* 細微亮色邊框 */
 }
 
 .experience-header {

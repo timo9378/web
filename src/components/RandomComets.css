@@ -1,0 +1,41 @@
+/* RandomComets.css - 樣式基於 RandomShootingStars.css 修改 */
+
+.comet {
+  position: absolute;
+  /* 顯著增加寬度，使其更長 */
+  width: 400px; /* 可以根據需要調整 */
+  /* 可以稍微加粗一點 */
+  height: 2px;
+  /* 修改漸層以模擬彗星頭部和尾巴 */
+  /* 頭部更亮，尾巴逐漸變淡 */
+  background: linear-gradient(to right,
+    rgba(220, 220, 255, 0), /* 尾巴末端完全透明 (淡藍色調) */
+    rgba(200, 200, 255, 0.3) 60%, /* 尾巴主體半透明 */
+    rgba(255, 255, 255, 0.9) 95%, /* 接近頭部的部分更亮 */
+    rgb(255, 255, 255) 100% /* 頭部最亮 (白色) */
+  );
+  border-radius: 2px; /* 稍微圓角 */
+  /* 可以保留或調整呼吸動畫 */
+  animation: comet-glow 2.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 5px rgba(200, 200, 255, 0.6)); /* 添加柔和的光暈 */
+}
+
+/* 調整呼吸動畫以匹配彗星外觀 */
+@keyframes comet-glow {
+  from {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 3px rgba(200, 200, 255, 0.4));
+  }
+  to {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(220, 220, 255, 0.8));
+  }
+}
+
+/* 移除不再需要的 shooting-star-glow 動畫 */
+/*
+@keyframes shooting-star-glow {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+*/

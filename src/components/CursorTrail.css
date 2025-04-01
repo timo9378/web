@@ -1,0 +1,9 @@
+.cursor-trail-canvas {
+  position: fixed; /* 固定在視窗上 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999; /* 確保在大部分內容之上，但可能需要調整以避免覆蓋 Header 或其他彈出視窗 */
+  pointer-events: none; /* 讓滑鼠事件穿透 Canvas，不影響下方元素的互動 */
+}

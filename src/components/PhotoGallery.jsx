@@ -21,7 +21,6 @@ const portfolioImages = Object.entries(imageModules).map(([path, module], index)
     displayDate = `${month}/${day}`; // MM/DD
   } else {
     // 如果檔名不是日期開頭，可以保留原始檔名作為標題
-    // title = fileName;
   }
 
   // 如果檔名是日期開頭，標題可以設為更有意義的文字或留空

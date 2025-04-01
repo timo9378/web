@@ -1,0 +1,43 @@
+.back-to-top-button {
+  position: fixed; /* 固定位置 */
+  bottom: 30px; /* 距離底部 30px */
+  right: 30px; /* 距離右側 30px */
+  background-color: var(--clr-accent); /* 使用主題點綴色 */
+  color: var(--clr-bg-primary); /* 使用主要背景色作為文字/圖標顏色 */
+  border: none; /* 移除邊框 */
+  border-radius: 50%; /* 圓形按鈕 */
+  width: 50px; /* 寬度 */
+  height: 50px; /* 高度 */
+  font-size: 1.5em; /* 圖標大小 */
+  cursor: pointer; /* 滑鼠指標 */
+  opacity: 0; /* 初始隱藏 */
+  visibility: hidden; /* 初始不可見 */
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.3s ease-in-out; /* 過渡效果 */
+  z-index: 1000; /* 確保在頂層 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加陰影 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.back-to-top-button.show {
+  opacity: 1; /* 顯示 */
+  visibility: visible; /* 可見 */
+}
+
+.back-to-top-button:hover {
+  background-color: var(--clr-light); /* 滑鼠懸停時變亮 */
+  color: var(--clr-accent); /* 圖標顏色變為點綴色 */
+  transform: scale(1.1); /* 輕微放大 */
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .back-to-top-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    bottom: 20px;
+    right: 20px;
+  }
+}
