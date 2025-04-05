@@ -8,7 +8,28 @@
 .App {
   position: relative; /* 為了讓 fixed 定位的子元素正確 */
   overflow-x: hidden; /* 防止流星導致水平滾動條 */
+  background-color: #000010; /* 深藍黑色背景 */
+  /* 將塵埃帶加回背景 */
+  background-image:
+    /* 塵埃帶 (使用之前檔案中的值) */
+    linear-gradient(135deg, /* 對角線方向 */
+      transparent 35%,
+      rgba(76, 76, 170, 0.253) 45%, /* 之前調整過的透明度 */
+      rgba(60, 60, 175, 0.356) 55%,
+      transparent 65%
+    ),
+    /* 現有的星雲效果 */
+    radial-gradient(ellipse at 70% 30%, rgba(100, 80, 150, 0.15) 0%, transparent 70%), /* 深紫 */
+    radial-gradient(ellipse at 30% 70%, rgba(200, 80, 120, 0.1) 0%, transparent 60%),  /* 暗粉 */
+    radial-gradient(ellipse at 50% 50%, rgba(80, 150, 180, 0.12) 0%, transparent 80%), /* 薄藍綠 */
+    linear-gradient(to bottom right, rgba(50, 30, 80, 0.1) 0%, transparent 100%); /* 對角線漸層 */
+  background-blend-mode: screen; /* 使用 screen 混合模式 */
+  background-attachment: fixed; /* 固定背景，防止閃爍/移動 */
+  min-height: 100vh; /* 確保背景至少填滿視窗高度 */
 }
+
+/* 移除獨立的塵埃帶圖層規則 */
+
 
 /* Removed animation styles for main-content-container as it's now controlled by conditional rendering */
 .main-content-container {

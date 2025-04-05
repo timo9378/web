@@ -1,9 +1,14 @@
 .app-footer {
   padding: 20px 50px; /* 上下 20px，左右 50px 的內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
-  color: var(--clr-secondary); /* 使用次要元素灰 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除原本的背景色 */
+  background-color: rgba(13, 17, 23, 0.6); /* 套用與 Header 相同的半透明背景 */
+  backdrop-filter: blur(10px); /* 套用與 Header 相同的玻璃模糊效果 */
+  -webkit-backdrop-filter: blur(10px); /* Safari 支援 */
+  color: var(--clr-headline); /* 改用標題色，與 Header 一致 */
   text-align: center; /* 文字居中 */
   font-size: 0.9em; /* 稍小字體 */
+  /* 可以考慮添加一個微妙的頂部光暈，與 Header 的底部光暈呼應 */
+  box-shadow: 0 -1px 5px rgba(255, 255, 255, 0.1);
 }
 
 .app-footer p {

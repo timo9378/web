@@ -73,7 +73,7 @@ function WorkExperience() {
             </ul>
           </motion.div> // 結束 motion.div
         ))}
-      </div> // 結束普通 div
+      </div> 
     </section> // 結束 section
   );
 }

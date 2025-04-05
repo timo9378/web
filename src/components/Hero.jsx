@@ -88,10 +88,7 @@ function Hero() {
             {displayedTagline}
           </p>
         </Parallax>
-        {/* Animate description fade-in after tagline finishes */}
-        <p className={`description ${taglineComplete ? 'fade-in' : ''}`}>
-          國立台灣科技大學資訊管理系三年級學生，具備 <strong>C++</strong>、<strong>Python</strong>、<strong>Java</strong> 等程式語言基礎，以及一年以上的 <strong>Android</strong> 與 <strong>Flutter</strong> App 開發經驗。熟悉 <strong>Figma</strong> UI/UX 設計，並善用 <strong>GitHub</strong> 與 <strong>Notion</strong> 進行版本控制與專案管理。
-        </p>
+        {/* Description removed and moved to AboutMe component */}
         {/* 可以考慮加入 Figma 中的 "A brave climber..." 或其他標語 */}
 
         {/* Animate actions fade-in after tagline finishes */}

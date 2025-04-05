@@ -1,8 +1,9 @@
 import React, { useRef, Suspense, useEffect, useLayoutEffect, useState } from 'react'; // 引入 useState
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useTexture } from '@react-three/drei'; // 移除 Html, Line
+import { OrbitControls, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import { EffectComposer, Bloom } from '@react-three/postprocessing'; // 引入後處理效果
+// 引入 ChromaticAberration
+import { EffectComposer, Bloom, ChromaticAberration } from '@react-three/postprocessing';
 
 // 衛星元件
 function Satellite({ position, speed, size = 0.05 }) {
@@ -169,7 +170,11 @@ function Saturn3D({ animate }) {
           intensity={0.15} // 進一步降低光暈強度
           luminanceThreshold={0.7} // 提高亮度閾值，使更亮的區域才產生光暈
           luminanceSmoothing={0.9} // 進一步提高平滑度
-          mipmapBlur // 使用 mipmap 進行模糊，效果更好但可能稍慢
+          mipmapBlur
+        />
+        {/* 添加輕微的色差效果模擬透鏡 */}
+        <ChromaticAberration
+          offset={new THREE.Vector2(0.0005, 0.0005)} // 非常小的偏移量，產生微妙效果
         />
       </EffectComposer>
     </>

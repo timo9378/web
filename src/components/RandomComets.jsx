@@ -29,25 +29,20 @@ const createComet = () => {
   };
 };
 
-const RandomComets = ({ count = 2 }) => { // 彗星數量減少為 2
+const RandomComets = ({ count = 1 }) => { // Reduce default comet count to 1
   const [comets, setComets] = useState(() =>
     Array.from({ length: count }, createComet)
   );
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setComets(prevComets => {
-        const newComets = [...prevComets];
-        const randomIndex = Math.floor(Math.random() * newComets.length);
-        newComets[randomIndex] = createComet();
-        // 確保新彗星的 delay
-        newComets[randomIndex].delay = getRandomValue(5, 20); // 更長的延遲
-        return newComets;
-      });
-    }, 12000); // 每 12 秒嘗試更新一顆 (頻率更低)
+  // Remove useEffect with setInterval
 
-    return () => clearInterval(interval);
-  }, [count]);
+  const handleAnimationComplete = (id) => {
+    setComets(prevComets =>
+      prevComets.map(comet =>
+        comet.id === id ? createComet() : comet
+      )
+    );
+  };
 
    return (
      <div style={{
@@ -68,29 +63,30 @@ const RandomComets = ({ count = 2 }) => { // 彗星數量減少為 2
             style={{
               position: 'absolute', // Ensure position is absolute
               transformOrigin: 'left center',
-              left: comet.startX, // Set initial position using left/top
+              left: comet.startX, // Revert to using left/top for initial position
               top: comet.startY,
               rotate: `${comet.rotate}deg`, // Apply initial rotation via style
               scale: comet.sizeScale, // Apply initial scale via style
             }}
             initial={{
               opacity: 0,
-              x: 0, // Initial relative position is 0
+              x: 0, // Initial relative transform offset
               y: 0,
             }}
             animate={{
-              x: comet.endX, // Animate relative position using x/y
+              x: comet.endX, // Animate relative transform offset
               y: comet.endY,
-              opacity: [0, 0.8, 0.8, 0], // Keep opacity animation
+              opacity: [0, 0.8, 0.8, 0], // Restore full opacity cycle
             }}
             transition={{
               delay: comet.delay,
               duration: comet.duration,
-              x: { duration: comet.duration, ease: 'linear' }, // Animate x linearly
-              y: { duration: comet.duration, ease: 'linear' }, // Animate y linearly
-              opacity: { duration: comet.duration, times: [0, 0.15, 0.9, 1] } // Keep opacity timing
+              x: { duration: comet.duration, ease: 'linear' },
+              y: { duration: comet.duration, ease: 'linear' },
+              opacity: { duration: comet.duration, times: [0, 0.15, 0.9, 1] } // Restore times array
             }}
-            exit={{ opacity: 0, x: comet.endX, y: comet.endY }} // Ensure exit animation starts from the end state if interrupted
+            onAnimationComplete={() => handleAnimationComplete(comet.id)} // Trigger replacement on completion
+            exit={{ opacity: 0 }} // Keep exit for AnimatePresence handling if needed
           />
         ))}
       </AnimatePresence>

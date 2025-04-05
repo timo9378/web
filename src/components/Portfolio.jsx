@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; // 導入 Link 元件
 import photoMainImage from '../assets/Photo-main.jpg'; // 導入攝影集封面圖片
+// 移除影片導入，因為它在 public 資料夾中
 import './Portfolio.css'; // 引入對應的 CSS 檔案
 
 // 恢復為之前的假資料
@@ -19,7 +20,7 @@ const portfolioItems = [
     category: '網頁開發',
     title: '個人形象網站 (本站)',
     description: '使用 React、Vite 和 CSS 打造的個人作品集網站，展示我的技能、經歷與作品。運用 Framer Motion 製作動態效果，並以 tsparticles 實現互動式背景。',
-    imageUrl: 'https://via.placeholder.com/600x400/cccccc/888888?text=Project+Image+2', // 佔位圖片 (可替換)
+    videoUrl: '/videos/Web_video.mkv', // 直接使用 public 資料夾中的路徑
     link: 'https://github.com/timo9378/web' // GitHub 連結
   },
   {
@@ -57,8 +58,12 @@ function Portfolio() {
             transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }} // 稍微調整 duration 和 delay
             viewport={{ once: true }}
           >
-            <div className="portfolio-image-container"> {/* 使用舊的 class name */}
-              <img src={item.imageUrl} alt={item.title} className="portfolio-image" /> {/* 使用舊的 class name */}
+            <div className="portfolio-media-container"> {/* 更新 class name 以反映內容 */}
+              {item.videoUrl ? (
+                <video src={item.videoUrl} className="portfolio-video" controls autoPlay muted loop playsInline /> // 添加 video 標籤
+              ) : (
+                <img src={item.imageUrl} alt={item.title} className="portfolio-image" />
+              )}
             </div>
             <div className="portfolio-content"> {/* 使用舊的 class name */}
               <span className="portfolio-category">{item.category}</span> {/* 使用舊的 class name */}

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import { ParallaxProvider } from 'react-scroll-parallax';
+import { useInView } from 'react-intersection-observer'; // Import useInView
 import LoadingScreen from './components/LoadingScreen'; // Import LoadingScreen
 import Saturn3D from './components/Saturn3D';
 import IntroAnimation from './components/IntroAnimation';
 import Header from './components/Header';
 import Hero from './components/Hero';
+import AboutMe from './components/AboutMe'; // <-- 引入 AboutMe
 import Expertise from './components/Expertise';
 import WorkExperience from './components/WorkExperience';
 import SchoolClubs from './components/SchoolClubs';
@@ -20,37 +22,71 @@ import RandomComets from './components/RandomComets'; // 導入彗星元件
 import RandomUFOs from './components/RandomUFOs'; // 導入 UFO 元件
 import BackToTopButton from './components/BackToTopButton'; // 導入回到頂部按鈕
 import TwinklingStars from './components/TwinklingStars'; // <--- 導入閃爍星星元件
+import ForegroundStars from './components/ForegroundStars'; // <--- 導入前景星星元件
 import { ScrollControls, Scroll, Stars, useScroll, Points, PointMaterial } from '@react-three/drei'; // Import Points and PointMaterial
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Suspense, useRef, useMemo } from 'react'; // Add useMemo
 import * as THREE from 'three'; // Import THREE
 import './App.css';
 
-// 主頁元件 (保持不變)
-function MainPage() {
+// --- Section Wrapper Component ---
+// This component wraps each section and uses useInView to track visibility
+function SectionWrapper({ id, children, onInViewChange }) {
+  const { ref, inView } = useInView({
+    threshold: 0.5, // Trigger when 50% of the section is visible
+    // rootMargin: '-50% 0px -50% 0px', // Adjust root margin if needed, e.g., only trigger when near center
+    triggerOnce: false, // Keep observing
+  });
+
+  useEffect(() => {
+    if (inView) {
+      onInViewChange(id);
+    }
+  }, [inView, id, onInViewChange]);
+
+  return (
+    <section id={id} ref={ref}>
+      {children}
+    </section>
+  );
+}
+
+
+// 主頁元件 - Modified to use SectionWrapper
+function MainPage({ onSectionChange }) { // Accept callback prop
   return (
     <>
-      {/* Header is now outside MainPage, rendered within Scroll html */}
+      {/* Header is now outside MainPage */}
       <main>
-        <section id="home"> {/* <--- 加入 section 並設定 ID */}
+        <SectionWrapper id="home" onInViewChange={onSectionChange}>
           <Hero />
-        </section>
+        </SectionWrapper>
         <TransitionAnimation />
-        <Expertise />
+        <SectionWrapper id="about-me" onInViewChange={onSectionChange}>
+          <AboutMe />
+        </SectionWrapper>
         <TransitionAnimation />
-        <WorkExperience />
+        <SectionWrapper id="expertise" onInViewChange={onSectionChange}>
+          <Expertise />
+        </SectionWrapper>
         <TransitionAnimation />
-        <SchoolClubs />
+        <SectionWrapper id="work-experience" onInViewChange={onSectionChange}>
+          <WorkExperience />
+        </SectionWrapper>
         <TransitionAnimation />
-        <section id="portfolio"> {/* <--- 加入 section 並設定 ID */}
+        <SectionWrapper id="school-clubs" onInViewChange={onSectionChange}>
+          <SchoolClubs />
+        </SectionWrapper>
+        <TransitionAnimation />
+        <SectionWrapper id="portfolio" onInViewChange={onSectionChange}>
           <Portfolio />
-        </section>
+        </SectionWrapper>
         <TransitionAnimation />
-        <section id="contact"> {/* <--- 這個 ID 之前已加 */}
+        <SectionWrapper id="contact" onInViewChange={onSectionChange}>
           <Contact />
-        </section>
+        </SectionWrapper>
       </main>
-      {/* Footer is now outside MainPage, rendered within Scroll html */}
+      {/* Footer is now outside MainPage */}
     </>
   );
 }
@@ -234,7 +270,15 @@ function App() {
   const [saturnZIndex, setSaturnZIndex] = useState(1);
   const [introVisible, setIntroVisible] = useState(true);
   const introCompleteTimeoutRef = useRef(null);
-  const sharedRotationRef = useRef(); // <--- 新增共享旋轉的 ref
+  const sharedRotationRef = useRef(); // Shared rotation ref
+  const [activeSection, setActiveSection] = useState('home'); // State for active section
+
+  // Callback function to update active section
+  const handleSectionChange = useCallback((sectionId) => {
+    // console.log("Section in view:", sectionId); // For debugging
+    setActiveSection(sectionId);
+  }, []); // Empty dependency array means this function is created once
+
 
   // Handler for when the intro explosion starts
   const handleExplosionStart = () => {
@@ -306,24 +350,7 @@ function App() {
             />
           )}
 
-          {/* Fixed Gradient Background */}
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: `
-              radial-gradient(circle at 20% 30%, hsla(270, 50%, 40%, 0.15) 0%, transparent 40%),
-              radial-gradient(circle at 80% 70%, hsla(180, 40%, 50%, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 50% 50%, hsla(330, 45%, 55%, 0.12) 0%, transparent 45%),
-              radial-gradient(circle at 30% 80%, hsla(240, 50%, 60%, 0.1) 0%, transparent 35%),
-              linear-gradient(170deg, hsl(230, 45%, 5%) 0%, hsl(260, 50%, 10%) 50%, hsl(280, 40%, 15%) 100%)
-            `,
-            backgroundBlendMode: 'screen', // Blend the gradients for a softer look
-            zIndex: -1, // Keep it behind content
-            pointerEvents: 'none'
-          }} />
+          {/* Removed Dust Band Layer div - effect is now back in .App background */}
 
           {/* Fixed Canvas Background Layer */}
           <Canvas
@@ -351,6 +378,9 @@ function App() {
             </Suspense>
           </Canvas>
 
+          {/* Foreground Stars Layer (Fixed) */}
+          <ForegroundStars count={15} /> {/* z-index is 1 (defined in component CSS) */}
+
           {/* Random Shooting Stars (Fixed Layer) */}
           <RandomShootingStars /> {/* z-index is 4 (defined in component) */}
 
@@ -368,10 +398,12 @@ function App() {
               className="main-content-container" // Removed animate-in class logic
               style={{ position: 'relative', zIndex: 10 }}
             >
-              <Header style={{ position: 'sticky', top: 0, zIndex: 20 }} />
+              {/* Pass activeSection to Header */}
+              <Header activeSection={activeSection} style={{ position: 'sticky', top: 0, zIndex: 20 }} />
               <main>
                 <Routes>
-                  <Route path="/" element={<MainPage />} />
+                  {/* Pass onSectionChange callback to MainPage */}
+                  <Route path="/" element={<MainPage onSectionChange={handleSectionChange} />} />
                   <Route path="/photos" element={<PhotoGallery />} />
                 </Routes>
               </main>

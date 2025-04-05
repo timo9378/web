@@ -20,7 +20,15 @@
   /* position: relative; */ /* REMOVED - No longer needed for pseudo-element */
   /* clip-path removed from container */
   /* Container itself will fade out later */
+  /* Add animation for screen shake */
 }
+
+/* Apply screen shake on explode */
+.intro-animation-container.explode {
+  animation: screen-shake 0.3s cubic-bezier(.36,.07,.19,.97) both, screen-flash 0.2s ease-out forwards; /* Add flash */
+  /* animation-delay: 0s, 0s; */ /* Shake and flash start immediately on explode */
+}
+
 
 /* Container needs pointer-events none when complete */
 .intro-animation-container.complete {
@@ -49,8 +57,8 @@
   opacity: 1; /* SVG animateMotion handles initial appearance */
   /* box-shadow is replaced by SVG filter */
   /* Removed animation property */
-  /* Add transition for explosion effect */
-  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+  /* Add transition for explosion effect - Make it faster and more drastic */
+  transition: transform 0.15s ease-in, opacity 0.15s ease-in; /* Faster transition */
 }
 
 .star-1 {
@@ -61,80 +69,122 @@
 .star-2 {
   fill: #d8bfff; /* Slightly deeper lavender - use fill for SVG */
   /* Removed background-color */
-  /* Add animation for the trail effect */
-  animation: star-trail-glow 3s infinite alternate ease-in-out;
+  /* Removed animation property */
 }
 
-.star-2 {
-  fill: #d8bfff; /* Slightly deeper lavender - use fill for SVG */
-  /* Removed background-color */
-  /* Add animation for the trail effect with a slight delay */
-  animation: star-trail-glow 3s 0.1s infinite alternate ease-in-out; /* Add 0.1s delay */
-}
+/* Removed duplicate .star-2 rule */
 
-/* Keyframes for the trail glow animation */
-@keyframes star-trail-glow {
-  0% {
-    /* Start with a base trail */
-    /* Multiple shadows create the trail length and fade */
-    box-shadow:
-      0 0 8px 2px rgba(240, 228, 255, 0.9), /* Inner glow */
-      /* Trail segments */
-      /* Note: SVG doesn't have a natural 'back', so offsets are tricky. */
-      /* We'll rely on the glow spreading. */
-      /* Using multiple faint glows might simulate a trail better than offsets */
-      0 0 15px 5px rgba(220, 200, 255, 0.5),
-      0 0 25px 10px rgba(200, 180, 240, 0.3),
-      0 0 40px 15px rgba(180, 160, 220, 0.15);
-  }
-  50% {
-    /* Brighter, slightly warmer glow in the middle */
-    box-shadow:
-      0 0 10px 3px rgba(255, 245, 230, 1), /* Warmer inner glow */
-      0 0 20px 7px rgba(255, 230, 200, 0.6),
-      0 0 35px 12px rgba(240, 210, 180, 0.4),
-      0 0 50px 18px rgba(220, 190, 160, 0.2);
-  }
-  100% {
-    /* Return to a slightly different base trail */
-    box-shadow:
-      0 0 9px 2.5px rgba(210, 230, 255, 0.9), /* Cooler inner glow */
-      0 0 18px 6px rgba(190, 210, 255, 0.5),
-      0 0 30px 11px rgba(170, 190, 230, 0.3),
-      0 0 45px 16px rgba(150, 170, 210, 0.15);
-  }
-}
+/* Removed @keyframes star-trail-glow */
 
 
 /* Star explosion animation (applied when 'explode' class is added) */
 /* Target SVG circles directly with CSS transforms/opacity */
 .intro-animation-container.explode .star {
   /* Removed animation: star-explode */
-  animation: none; /* Stop the trail animation during explosion */
-  box-shadow: none; /* Remove trail during explosion */
+  /* Removed animation: none; and box-shadow: none; as they are no longer needed */
   opacity: 0 !important; /* Force fade out */
   /* Apply scaling transform directly */
   /* Note: transform-origin is center for SVG elements by default */
-  transform: scale(5);
+  transform: scale(15); /* Scale much larger for a more explosive disappearance */
+  /* Adjacent sibling selector removed as it was incorrect */
+}
+
+/* Hide trails immediately when exploding */
+.intro-animation-container.explode .star-trail {
+  opacity: 0;
+  transition: opacity 0.1s ease-out; /* Quick fade out */
+}
+
+/* Remove styles for the old .star-trail polyline */
+/* .star-trail { ... } */
+
+/* Styles for the new trail particles (SVG circles) */
+.trail-particle {
+  fill: rgba(220, 200, 255, 0.7); /* Light lavender, slightly transparent */
+  /* Apply the fade and shrink animation */
+  /* Animation duration should match PARTICLE_LIFETIME in JS (500ms) */
+  animation: trail-particle-fade 0.5s linear forwards;
+  /* Optional: Add blur */
+  /* filter: url(#trailBlur); */ /* Re-enable if desired, might impact performance */
+}
+
+/* Keyframes for particle fade and shrink */
+@keyframes trail-particle-fade {
+  from {
+    opacity: 0.7; /* Start slightly transparent */
+    r: 3; /* Initial radius */
+  }
+  to {
+    opacity: 0;
+    r: 0; /* Shrink to nothing */
+  }
+}
+
+/* Ensure particles are hidden when animation completes (redundant due to forwards but safe) */
+.intro-animation-container.complete .trail-particle {
+  opacity: 0;
+}
+
+
+/* Styles and animation for the gravitational lens effect */
+.gravitational-lens-effect {
+  /* Transition for potential future interactive effects, not strictly needed for keyframes */
+  transition: r 0.5s ease-out, opacity 0.5s ease-out, stroke-width 0.5s ease-out;
+}
+
+.intro-animation-container.explode .gravitational-lens-effect {
+  /* Trigger the burst animation */
+  animation: lens-burst 0.6s ease-out forwards;
+  /* Delay slightly after explosion starts */
+  animation-delay: 0.1s;
+}
+
+@keyframes lens-burst {
+  0% {
+    r: 0;
+    opacity: 0;
+    stroke-width: 5; /* Start thicker */
+    stroke: rgba(255, 255, 220, 0.9); /* Brighter, slightly yellow start */
+  }
+  20% { /* Expand faster */
+    r: 150; /* Expand larger */
+    opacity: 1;
+    stroke-width: 3;
+    stroke: rgba(220, 200, 255, 0.7);
+  }
+  100% {
+    r: 250; /* Expand even further */
+    opacity: 0; /* Fade out completely */
+    stroke-width: 0.5; /* Fade out stroke */
+    stroke: rgba(180, 160, 220, 0);
+  }
 }
 
 
 .particle {
   position: absolute;
-  width: 2px; /* Reduced size */
-  height: 2px; /* Reduced size */
-  background-color: #fff;
+  width: 3px; /* Slightly larger base size */
+  height: 2px; /* Revert size */
+  background-color: #fff; /* Revert to white */
   border-radius: 50%;
   opacity: 0;
-  box-shadow: 0 0 2px 0.5px #fff; /* Reduced glow */
+  /* Revert glow */
+  box-shadow: 0 0 2px 0.5px #fff;
   z-index: 2; /* Ensure particles are above the pseudo-element */
   /* Variables set in JSX: --angle, --distance, --duration, --base-delay */
+  /* Removed color variation and blend mode */
 }
 
+/* Remove color variations for some particles */
+/* .particle.middle-particle { ... } */
+/* .particle.inner-particle { ... } */
+
+
 .intro-animation-container.explode .particle {
-  /* Revert to ease-out for a more natural explosion deceleration */
-  /* Use base-delay calculated from JSX, starting when explode happens */
-  animation: particle-explode var(--duration) ease-out calc(var(--base-delay) * 1s) forwards;
+  /* Use a custom cubic-bezier for faster start and slower end */
+  /* Example: Fast out, slow in -> cubic-bezier(0.25, 1, 0.5, 1) */
+  /* Example: More aggressive start -> cubic-bezier(0.6, 0.04, 0.98, 0.335) */
+  animation: particle-explode var(--duration) cubic-bezier(0.3, 0.8, 0.2, 1) calc(var(--base-delay) * 1s) forwards;
 }
 
 /* Apply background fade animation when exploding */ /* Comment remains, but no animation here */
@@ -153,15 +203,17 @@
 @keyframes particle-explode {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.1); /* Start smaller and invisible */
+    transform: translate(0, 0) scale(0.2); /* Start slightly larger but invisible */
+    filter: brightness(1.5); /* Start brighter */
   }
-  10% {
-     opacity: 1; /* Appear very quickly */
-     transform: translate(0, 0) scale(0.5); /* Still small, before major movement */
+  5% { /* Appear faster */
+     opacity: 1;
+     transform: translate(0, 0) scale(0.6);
   }
-  /* Let ease-out handle the main movement and slowdown */
-  80% { /* Start fading before the end */
+  /* Let cubic-bezier handle the main movement */
+  70% { /* Start fading earlier */
     opacity: 1;
+    filter: brightness(1);
     transform:
       rotate(var(--angle))
       translateX(var(--distance))
@@ -173,7 +225,34 @@
     transform:
       rotate(var(--angle))
       translateX(var(--distance))
-      scale(1);
+      scale(0.8); /* Slightly shrink at the end */
+    filter: brightness(0.5); /* Fade to darker */
+  }
+}
+
+/* Screen Shake Animation */
+@keyframes screen-shake {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translate(-2px, 2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translate(2px, -2px);
+  }
+}
+
+/* Screen Flash Animation */
+@keyframes screen-flash {
+  0% {
+    box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0); /* Start transparent */
+  }
+  10% {
+    box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0.9); /* Bright white flash */
+  }
+  100% {
+    box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0); /* Fade out */
   }
 }
 
@@ -228,14 +307,14 @@
 }
 
 /* Apply expansion animation to the pseudo-elements when exploding */
-/* Layer 1 (::before) - Starts when explode class is added */
+/* Layer 1 (::before) - Starts when explode class is added - Faster */
 .intro-animation-container.explode::before {
-  animation: expand-background-layer1 1.3s ease-out forwards; /* Removed delay */
+  animation: expand-background-layer1 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards; /* Faster, custom curve */
 }
 
-/* Layer 2 (::after) - Starts slightly after ::before */
+/* Layer 2 (::after) - Starts slightly after ::before - Faster */
 .intro-animation-container.explode::after {
-  animation: expand-background 1.1s ease-out 0.15s forwards; /* Short delay relative to explode start */
+  animation: expand-background 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards; /* Faster, custom curve, shorter delay */
 }
 
 /* Fade out both pseudo-elements along with the container */

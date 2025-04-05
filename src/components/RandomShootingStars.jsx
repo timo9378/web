@@ -30,26 +30,21 @@ const createShootingStar = () => {
   };
 };
 
-const RandomShootingStars = ({ count = 10 }) => {
+const RandomShootingStars = ({ count = 5 }) => { // Reduce default shooting star count to 5
   const [stars, setStars] = useState(() =>
     Array.from({ length: count }, createShootingStar)
   );
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStars(prevStars => {
-        const newStars = [...prevStars];
-        const randomIndex = Math.floor(Math.random() * newStars.length);
-        newStars[randomIndex] = createShootingStar();
-        // 確保新星的 delay 不會太小
-        newStars[randomIndex].delay = getRandomValue(0.5, 6);
-        return newStars;
-      });
-    }, 3000); // 每 3 秒嘗試更新一顆
+  // Remove useEffect with setInterval
 
-    return () => clearInterval(interval);
-  }, [count]);
- 
+  const handleAnimationComplete = (id) => {
+    setStars(prevStars =>
+      prevStars.map(star =>
+        star.id === id ? createShootingStar() : star
+      )
+    );
+  };
+
    return (
      <div style={{
        position: 'fixed',
@@ -75,29 +70,31 @@ const RandomShootingStars = ({ count = 10 }) => {
               // Consider moving animation to CSS if preferred
               // animation: 'shooting-star-glow 1.5s ease-in-out infinite',
               transformOrigin: 'left center',
-              left: star.startX, // Set initial position
+              // Revert to using left/top for initial position
+              left: star.startX,
               top: star.startY,
               rotate: `${star.rotate}deg`, // Apply initial rotation
               scale: star.sizeScale, // Apply initial scale
             }}
             initial={{
               opacity: 0,
-              x: 0, // Initial relative position
+              x: 0, // Initial relative transform offset
               y: 0,
             }}
             animate={{
-              x: star.endX, // Animate relative position
+              x: star.endX, // Animate relative transform offset
               y: star.endY,
-              opacity: [0, 1, 1, 0], // Fade in -> stay -> fade out
+              opacity: [0, 1, 1, 0], // Restore full opacity cycle
             }}
             transition={{
               delay: star.delay,
-              duration: star.duration,
-              x: { duration: star.duration, ease: 'linear' }, // Linear movement for x
-              y: { duration: star.duration, ease: 'linear' }, // Linear movement for y
-              opacity: { duration: star.duration, times: [0, 0.3, 0.95, 1] } // Opacity timing
+              duration: star.duration, // Keep one duration
+              x: { duration: star.duration, ease: 'linear' }, // Keep one x transition
+              y: { duration: star.duration, ease: 'linear' },
+              opacity: { duration: star.duration, times: [0, 0.3, 0.95, 1] } // Restore times array
             }}
-            exit={{ opacity: 0, x: star.endX, y: star.endY }} // Exit from end state
+            onAnimationComplete={() => handleAnimationComplete(star.id)} // Trigger replacement on completion
+            exit={{ opacity: 0 }} // Keep exit for AnimatePresence handling if needed
           />
         ))}
       </AnimatePresence>

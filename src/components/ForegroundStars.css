@@ -1,0 +1,20 @@
+.foreground-stars-container {
+  position: fixed; /* 固定在視窗上 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 允許滑鼠事件穿透到下方元素 */
+  z-index: 0; /* 移到 Canvas 背景之後，但在 CSS 背景之上 */
+  overflow: hidden; /* 確保星星不會溢出 */
+}
+
+.foreground-star {
+  position: absolute;
+  background-color: #add8e6; /* 淺藍色 */
+  border-radius: 50%;
+  box-shadow: 0 0 6px 2px rgba(173, 216, 230, 0.6); /* 淺藍色光暈 */
+  /* 平滑過渡，用於視差效果 */
+  transition: transform 0.1s linear; /* 調整過渡時間以獲得所需效果 */
+  will-change: transform; /* 提示瀏覽器優化 transform */
+}

@@ -59,7 +59,7 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12); /* 懸停時陰影加深 */
 }
 
-.portfolio-image-container {
+.portfolio-media-container { /* 更新選擇器 */
   flex: 1; /* 佔用可用空間 */
   min-width: 40%; /* 最小寬度 */
   overflow: hidden; /* 確保圖片不溢出 */
@@ -73,8 +73,18 @@
   transition: transform 0.4s ease; /* 圖片縮放過渡 */
 }
 
-.portfolio-item:hover .portfolio-image {
-  transform: scale(1.05); /* 滑鼠懸停時圖片稍微放大 */
+/* 為影片添加樣式 */
+.portfolio-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 填滿容器 */
+  transition: transform 0.4s ease; /* 影片縮放過渡 */
+}
+
+.portfolio-item:hover .portfolio-image,
+.portfolio-item:hover .portfolio-video { /* 更新選擇器以包含影片 */
+  transform: scale(1.05); /* 滑鼠懸停時圖片/影片稍微放大 */
 }
 
 .portfolio-content {
@@ -112,19 +122,25 @@
 }
 
 .portfolio-link {
-  display: inline-block;
-  padding: 10px 20px;
+  display: inline-flex; /* 改為 inline-flex 以便未來可能加入圖標 */
+  align-items: center; /* 垂直居中 (與 download-button 一致) */
+  gap: 6px; /* 圖標與文字間距 (與 download-button 一致) */
+  padding: 8px 15px; /* 調整內距 (與 download-button 一致) */
   background-color: var(--clr-button); /* 使用按鈕色 */
   color: var(--clr-button-text); /* 使用按鈕文字色 */
   text-decoration: none;
-  border-radius: 5px;
+  border: none; /* 移除邊框 (與 download-button 一致) */
+  border-radius: 8px; /* 調整圓角 (與 download-button 一致) */
+  font-size: 0.9em; /* 調整字體大小 (與 download-button 一致) */
+  cursor: pointer; /* 添加手形指標 (與 download-button 一致) */
   transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
-  align-self: flex-start; /* 左對齊 */
+  align-self: flex-start; /* 加回此行，使按鈕寬度自適應內容 */
 }
 
 .portfolio-link:hover {
   transform: translateY(-2px); /* 懸停時上移 */
   background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  color: var(--clr-button-text); /* 確保懸停時文字顏色仍然可見 */
 }
 
 /* 響應式設計 */
@@ -134,9 +150,9 @@
     flex-direction: column; /* 小螢幕時強制垂直排列 */
   }
 
-  .portfolio-image-container {
-    min-width: 100%; /* 圖片寬度佔滿 */
-    max-height: 300px; /* 限制圖片高度 */
+  .portfolio-media-container { /* 更新選擇器 */
+    min-width: 100%; /* 圖片/影片寬度佔滿 */
+    max-height: 300px; /* 限制圖片/影片高度 */
   }
 
   .portfolio-content {

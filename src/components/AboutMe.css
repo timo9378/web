@@ -1,0 +1,59 @@
+/* AboutMe.css - Consistent Styling */
+.about-me-section {
+  padding: 60px 50px; /* 與 Expertise/WorkExperience 統一 */
+  /* background: none; */ /* 移除特定背景，依賴全局背景 */
+  color: var(--clr-paragraph); /* 使用段落顏色 */
+  text-align: center;
+  position: relative;
+  overflow: hidden; /* 保持 overflow hidden */
+  /* border-top: 1px solid rgba(0, 242, 255, 0.3); */ /* 移除邊框，讓 TransitionAnimation 處理 */
+  /* border-bottom: 1px solid rgba(0, 242, 255, 0.3); */
+}
+
+/* 移除 ::before 偽元素，避免與玻璃效果衝突 */
+/* .about-me-section::before { ... } */
+
+
+.about-me-section h2 {
+  font-size: 2.5em; /* 與 Expertise/WorkExperience 統一 */
+  margin-bottom: 40px; /* 與 Expertise/WorkExperience 統一 */
+  color: var(--clr-headline); /* 使用標題色 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* 與 Expertise/WorkExperience 統一 */
+  /* font-family: 'Orbitron', sans-serif; */ /* 移除特定字體，使用全局 */
+  letter-spacing: normal; /* 恢復正常字距 */
+  position: relative;
+  z-index: 1;
+}
+
+.about-me-content {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.1rem; /* 調整字體大小 */
+  line-height: 1.7; /* 調整行高 */
+  background-color: rgba(22, 22, 26, 0.65); /* 參考 Expertise 的半透明背景，稍調整透明度 */
+  padding: 30px 40px; /* 調整內邊距 */
+  border-radius: 8px; /* 與 Expertise/WorkExperience 統一 */
+  /* box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); */ /* 移除特定陰影 */
+  /* --- 玻璃擬態效果 --- */
+  backdrop-filter: blur(8px); /* 與 Expertise/WorkExperience 統一 */
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08); /* 與 Expertise/WorkExperience 統一 */
+  position: relative;
+  z-index: 1;
+  text-align: left; /* 內容靠左對齊 */
+}
+
+.about-me-content p {
+    margin-bottom: 15px; /* 段落間距 */
+}
+
+.about-me-content p:last-child {
+    margin-bottom: 0; /* 最後一段移除底部間距 */
+}
+
+.about-me-content strong {
+    color: var(--clr-tertiary); /* 強調文字使用第三點綴色 */
+    font-weight: 600; /* 稍粗字重 */
+}
+
+/* education-info 樣式已移除 */

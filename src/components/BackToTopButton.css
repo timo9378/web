@@ -2,8 +2,9 @@
   position: fixed; /* 固定位置 */
   bottom: 30px; /* 距離底部 30px */
   right: 30px; /* 距離右側 30px */
-  background-color: var(--clr-accent); /* 使用主題點綴色 */
-  color: var(--clr-bg-primary); /* 使用主要背景色作為文字/圖標顏色 */
+  /* background-color: var(--clr-accent); */ /* 移除舊的背景色 */
+  background: linear-gradient(145deg, #2a2a72, #009ffd); /* 深藍色漸層 */
+  color: white; /* 圖標顏色改為白色 */
   border: none; /* 移除邊框 */
   border-radius: 50%; /* 圓形按鈕 */
   width: 50px; /* 寬度 */
@@ -12,9 +13,9 @@
   cursor: pointer; /* 滑鼠指標 */
   opacity: 0; /* 初始隱藏 */
   visibility: hidden; /* 初始不可見 */
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.3s ease-in-out; /* 過渡效果 */
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* 添加 box-shadow 過渡 */
   z-index: 1000; /* 確保在頂層 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 添加陰影 */
+  box-shadow: 0 0 15px 5px rgba(0, 159, 253, 0.5); /* 添加藍色光暈效果 */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -26,9 +27,11 @@
 }
 
 .back-to-top-button:hover {
-  background-color: var(--clr-light); /* 滑鼠懸停時變亮 */
-  color: var(--clr-accent); /* 圖標顏色變為點綴色 */
+  /* background-color: var(--clr-light); */ /* 移除舊的懸停背景色 */
+  background: linear-gradient(145deg, #009ffd, #2a2a72); /* 反轉漸層方向 */
+  color: white; /* 保持白色圖標 */
   transform: scale(1.1); /* 輕微放大 */
+  box-shadow: 0 0 25px 8px rgba(42, 42, 114, 0.7); /* 增強懸停光暈 */
 }
 
 /* 響應式設計 */

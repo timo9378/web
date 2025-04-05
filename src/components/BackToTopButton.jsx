@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons'; // 使用向上箭頭圖標
+import { faRocket } from '@fortawesome/free-solid-svg-icons'; // 改用火箭圖標
 import './BackToTopButton.css';
 
 function BackToTopButton() {
@@ -36,7 +36,7 @@ function BackToTopButton() {
       onClick={scrollToTop}
       aria-label="回到頂部"
     >
-      <FontAwesomeIcon icon={faArrowUp} />
+      <FontAwesomeIcon icon={faRocket} />
     </button>
   );
 }

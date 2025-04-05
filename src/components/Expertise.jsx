@@ -113,7 +113,7 @@ function Expertise() {
             </div>
           </motion.div> // 結束 motion.div
         ))}
-      </div> // 結束普通 div
+      </div> 
 
       {/* Tooltip 元件 */}
       {tooltip.visible && (

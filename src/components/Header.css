@@ -8,7 +8,7 @@
   backdrop-filter: blur(10px); /* 玻璃模糊效果 */
   -webkit-backdrop-filter: blur(10px); /* Safari 支援 */
   color: var(--clr-headline); /* 使用標題色 */
-  position: fixed; /* 固定在頂部 */
+  position: fixed; /* 改為 fixed 以確保始終固定 */
   top: 0;
   left: 0;
   width: 100%;
@@ -40,14 +40,18 @@
   padding-bottom: 5px; /* 為底線留出空間 */
   display: inline-flex; /* 讓圖標和文字在同一行並能垂直對齊 */
   align-items: center; /* 垂直居中對齊圖標和文字 */
-  gap: 6px; /* 圖標和文字之間的間距 */
+  gap: 8px; /* 稍微增加圖標和文字之間的間距 */
 }
 
+/* 導覽列圖標樣式 */
 .nav-icon {
-  /* 可以根據需要微調圖標大小或樣式 */
+  /* display: inline; - 已由 inline-flex 處理 */
   font-size: 1.1em; /* 稍微放大圖標 */
-  line-height: 1; /* 確保圖標垂直居中 */
+  /* line-height: 1; - 已由 align-items 處理 */
+  vertical-align: middle; /* 再次確保垂直對齊 */
+  margin-right: 4px; /* 輕微調整右邊距，gap 屬性已處理大部分間距 */
 }
+
 
 /* 彗星尾巴底線效果 - 初始狀態 */
 .app-header nav ul li a::after {
@@ -92,7 +96,17 @@
   cursor: pointer; /* 滑鼠指標設為手形 */
   font-size: 0.9em;
   transition: background-color 0.3s ease, transform 0.3s ease; /* 加入 transform 過渡 */
+  display: inline-flex; /* 讓圖標和文字在同一行 */
+  align-items: center; /* 垂直居中 */
+  gap: 6px; /* 圖標和文字間距 */
 }
+
+/* 下載按鈕圖標樣式 */
+.download-icon {
+  font-size: 1em; /* 圖標大小與文字接近 */
+  vertical-align: middle; /* 確保垂直對齊 */
+}
+
 
 .download-button:hover {
   transform: translateY(-2px); /* 懸停時上移 */
