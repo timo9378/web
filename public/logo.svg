@@ -1,0 +1,32 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .k-letter {
+      font-family: 'Arial Black', Gadget, sans-serif; /* 粗體字型 */
+      font-size: 75px; /* 字體大小 */
+      fill: #00AEEF; /* 藍色 */
+      dominant-baseline: central;
+      text-anchor: middle;
+    }
+    .orbit {
+      fill: none;
+      stroke: #FFEB3B; /* 亮黃色 */
+      stroke-width: 2.5; /* 線條寬度 */
+    }
+    .star {
+      fill: #FFEB3B; /* 亮黃色 */
+      stroke: #FBC02D; /* 深黃色邊框 */
+      stroke-width: 0.5;
+    }
+  </style>
+
+  <!-- 軌道橢圓 - 調整旋轉和位置 -->
+  <ellipse class="orbit" cx="50" cy="50" rx="45" ry="25" transform="rotate(-35 50 50)" />
+
+  <!-- 字母 K - 置中 -->
+  <text x="50" y="52" class="k-letter">K</text>
+
+  <!-- 星星 - 根據旋轉後的橢圓視覺調整位置 -->
+  <!-- 星星多邊形，先在 (0,0) 繪製，再平移和縮放 -->
+  <polygon class="star" points="0,-10 2.9,-3.1 9.5,-3.1 4.8,1.9 5.9,8.1 0,5 -5.9,8.1 -4.8,1.9 -9.5,-3.1 -2.9,-3.1" transform="translate(85, 35) scale(1.2)" />
+
+</svg>
