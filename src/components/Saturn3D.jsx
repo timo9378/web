@@ -87,8 +87,8 @@ function SaturnModel({ animate }) {
   });
 
   const [planetMap, ringsMap] = useTexture([
-    '/textures/saturn_texture.jpg', // 星球紋理
-      '/textures/saturn_rings_texture.png' // 光環紋理 (PNG 帶透明通道)
+    '/textures/saturn_texture.webp', // 星球紋理 (更新為 webp)
+      '/textures/saturn_rings_texture.webp' // 光環紋理 (更新為 webp)
     ]);
 
   const planetMaterial = new THREE.MeshStandardMaterial({

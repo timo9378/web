@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react'; // Import useCallback, lazy, Suspense
 import { ParallaxProvider } from 'react-scroll-parallax';
 import { useInView } from 'react-intersection-observer'; // Import useInView
 import LoadingScreen from './components/LoadingScreen'; // Import LoadingScreen
@@ -6,17 +6,18 @@ import Saturn3D from './components/Saturn3D';
 import IntroAnimation from './components/IntroAnimation';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import AboutMe from './components/AboutMe'; // <-- 引入 AboutMe
-import Expertise from './components/Expertise';
-import WorkExperience from './components/WorkExperience';
-import SchoolClubs from './components/SchoolClubs';
-import Portfolio from './components/Portfolio';
-import Contact from './components/Contact';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Import BrowserRouter here
-import Footer from './components/Footer';
-import PhotoGallery from './components/PhotoGallery';
+// import AboutMe from './components/AboutMe'; // <-- Lazy load
+// import Expertise from './components/Expertise'; // <-- Lazy load
+// import WorkExperience from './components/WorkExperience'; // <-- Lazy load
+// import SchoolClubs from './components/SchoolClubs'; // <-- Lazy load
+// import Portfolio from './components/Portfolio'; // <-- Lazy load
+// import Contact from './components/Contact'; // <-- Lazy load
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// import Footer from './components/Footer'; // <-- Lazy load
+// import PhotoGallery from './components/PhotoGallery'; // <-- Lazy load
 import CursorTrail from './components/CursorTrail';
-import TransitionAnimation from './components/TransitionAnimation';
+import ScrollToTop from './components/ScrollToTop'; // <--- 導入 ScrollToTop 元件
+// import TransitionAnimation from './components/TransitionAnimation'; // <-- Lazy load
 import RandomShootingStars from './components/RandomShootingStars';
 import RandomComets from './components/RandomComets'; // 導入彗星元件
 import RandomUFOs from './components/RandomUFOs'; // 導入 UFO 元件
@@ -25,9 +26,25 @@ import TwinklingStars from './components/TwinklingStars'; // <--- 導入閃爍�
 import ForegroundStars from './components/ForegroundStars'; // <--- 導入前景星星元件
 import { ScrollControls, Scroll, Stars, useScroll, Points, PointMaterial } from '@react-three/drei'; // Import Points and PointMaterial
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Suspense, useRef, useMemo } from 'react'; // Add useMemo
+// import { Suspense, useRef, useMemo } from 'react'; // Suspense is imported above
+import { useRef, useMemo } from 'react'; // Add useMemo
 import * as THREE from 'three'; // Import THREE
 import './App.css';
+
+// --- Lazy Loaded Components ---
+const LazyAboutMe = lazy(() => import('./components/AboutMe'));
+const LazyExpertise = lazy(() => import('./components/Expertise'));
+const LazyWorkExperience = lazy(() => import('./components/WorkExperience'));
+const LazySchoolClubs = lazy(() => import('./components/SchoolClubs'));
+const LazyPortfolio = lazy(() => import('./components/Portfolio'));
+const LazyContact = lazy(() => import('./components/Contact'));
+const LazyFooter = lazy(() => import('./components/Footer'));
+const LazyPhotoGallery = lazy(() => import('./components/PhotoGallery'));
+const LazyTransitionAnimation = lazy(() => import('./components/TransitionAnimation'));
+
+// --- Loading Fallback ---
+const LoadingFallback = () => <div style={{ height: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>載入中...</div>;
+
 
 // --- Section Wrapper Component ---
 // This component wraps each section and uses useInView to track visibility
@@ -61,29 +78,29 @@ function MainPage({ onSectionChange }) { // Accept callback prop
         <SectionWrapper id="home" onInViewChange={onSectionChange}>
           <Hero />
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="about-me" onInViewChange={onSectionChange}>
-          <AboutMe />
+          <Suspense fallback={<LoadingFallback />}><LazyAboutMe /></Suspense>
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="expertise" onInViewChange={onSectionChange}>
-          <Expertise />
+          <Suspense fallback={<LoadingFallback />}><LazyExpertise /></Suspense>
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="work-experience" onInViewChange={onSectionChange}>
-          <WorkExperience />
+          <Suspense fallback={<LoadingFallback />}><LazyWorkExperience /></Suspense>
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="school-clubs" onInViewChange={onSectionChange}>
-          <SchoolClubs />
+          <Suspense fallback={<LoadingFallback />}><LazySchoolClubs /></Suspense>
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="portfolio" onInViewChange={onSectionChange}>
-          <Portfolio />
+          <Suspense fallback={<LoadingFallback />}><LazyPortfolio /></Suspense>
         </SectionWrapper>
-        <TransitionAnimation />
+        <Suspense fallback={<LoadingFallback />}><LazyTransitionAnimation /></Suspense>
         <SectionWrapper id="contact" onInViewChange={onSectionChange}>
-          <Contact />
+          <Suspense fallback={<LoadingFallback />}><LazyContact /></Suspense>
         </SectionWrapper>
       </main>
       {/* Footer is now outside MainPage */}
@@ -339,6 +356,7 @@ function App() {
   // Render the main app content when loading is complete
   return (
     <BrowserRouter>
+      <ScrollToTop /> {/* <--- 在 BrowserRouter 內部渲染 ScrollToTop */}
       <ParallaxProvider>
         <div className="App">
 
@@ -367,6 +385,7 @@ function App() {
              }}
           >
             {/* Restore StarfieldScene first */}
+            {/* Use React.Suspense for React components, keep original Suspense for Three.js if needed */}
             <Suspense fallback={null}>
               {/* 將 sharedRotationRef 傳遞給 StarfieldScene */}
               <StarfieldScene mainStarsRef={sharedRotationRef} />
@@ -404,10 +423,16 @@ function App() {
                 <Routes>
                   {/* Pass onSectionChange callback to MainPage */}
                   <Route path="/" element={<MainPage onSectionChange={handleSectionChange} />} />
-                  <Route path="/photos" element={<PhotoGallery />} />
+                  <Route path="/photos" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyPhotoGallery />
+                    </Suspense>
+                  } />
                 </Routes>
               </main>
-              <Footer style={{ zIndex: 20 }}/>
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyFooter style={{ zIndex: 20 }}/>
+              </Suspense>
             </div>
           )}
           {/* Closing curly brace for conditional rendering is back */}

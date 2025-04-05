@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; // 導入 Link 元件
-import photoMainImage from '../assets/Photo-main.jpg'; // 導入攝影集封面圖片
+import photoMainImage from '../assets/Photo-main.webp'; // 導入攝影集封面圖片 (更新為 webp)
 // 移除影片導入，因為它在 public 資料夾中
 import './Portfolio.css'; // 引入對應的 CSS 檔案
 

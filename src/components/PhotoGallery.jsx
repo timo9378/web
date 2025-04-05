@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; // 導入 Link
 import './PhotoGallery.css'; // 引入對應的 CSS 檔案
 
-// 使用 Vite 的 import.meta.glob 動態導入圖片
-const imageModules = import.meta.glob('../assets/Portfolio/*.{jpg,jpeg,png,gif,svg}', { eager: true });
+// 使用 Vite 的 import.meta.glob 動態導入圖片，優先載入 webp
+const imageModules = import.meta.glob('../assets/Portfolio/*.{webp,jpg,jpeg,png,gif,svg}', { eager: true });
 
 // 將導入的模組轉換為圖片資訊陣列
 const portfolioImages = Object.entries(imageModules).map(([path, module], index) => {
@@ -97,6 +97,18 @@ function PhotoGallery() {
             )}
           </motion.div>
         ))}
+      </div>
+
+      {/* 新增 Instagram 連結 */}
+      <div className="instagram-link-container">
+        <a
+          href="https://www.instagram.com/koimsurai.23/?hl=zh-tw"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="instagram-link"
+        >
+          想看更多請點我
+        </a>
       </div>
     </section>
   );

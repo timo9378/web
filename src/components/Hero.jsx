@@ -4,7 +4,7 @@ import { Parallax } from 'react-scroll-parallax'; // 引入 Parallax
 // Remove unused particle imports
 import { FaGithub, FaLinkedin, FaInstagram, FaFacebook, FaBriefcase } from 'react-icons/fa'; // 引入圖示
 import './Hero.css';
-import mainImage from '../assets/Main.JPG';
+import mainImage from '../assets/Main.webp'; // 更新為 webp
 
 // Helper function for typing effect
 const useTypingEffect = (text, speed = 100, startDelay = 0) => {

@@ -1,6 +1,6 @@
 .photo-gallery-section {
   padding: 80px 50px; /* 上下內距 */
-  background-color: var(--clr-bg-primary); /* 使用主要背景色 */
+  /* background-color: var(--clr-bg-primary); */ /* 移除背景色以顯示 Canvas */
   box-sizing: border-box;
   min-height: 100vh; /* 確保內容至少佔滿一屏 */
   position: relative; /* 為了固定返回按鈕 */
@@ -9,9 +9,9 @@
 /* 返回按鈕樣式 */
 .back-button {
   position: fixed; /* 固定定位 */
-  top: 25px; /* 距離頂部 */
+  top: 100px; /* 再次增加距離頂部的值，提供更多間距 */
   left: 30px; /* 距離左側 */
-  z-index: 100; /* 確保在最上層 */
+  z-index: 1001; /* 提高層級，使其高於 Header (z-index: 1000) */
   padding: 8px 15px;
   background-color: var(--clr-button); /* 使用按鈕色 */
   color: var(--clr-button-text); /* 使用按鈕文字色 */
@@ -24,6 +24,7 @@
 .back-button:hover {
   transform: translateY(-2px); /* 懸停時上移 */
   background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  color: var(--clr-button-text); /* 確保懸停時文字顏色仍然可見 */
 }
 
 .photo-gallery-header {
@@ -155,4 +156,31 @@
    .photo-text-block .photo-year {
     font-size: 1em;
   }
+}
+
+/* Instagram 連結樣式 */
+.instagram-link-container {
+  text-align: center; /* 文字居中 */
+  margin-top: 60px; /* 與上方內容的間距 */
+  padding-bottom: 40px; /* 底部留白 */
+}
+
+.instagram-link {
+  display: inline-block; /* 行內區塊元素 */
+  padding: 12px 25px; /* 內距 */
+  background-color: var(--clr-button); /* 使用按鈕色 */
+  color: var(--clr-button-text); /* 使用按鈕文字色 */
+  text-decoration: none;
+  border-radius: 8px; /* 圓角 */
+  font-size: 1.1em; /* 字體大小 */
+  font-weight: bold; /* 加粗 */
+  transition: background-color 0.3s ease, transform 0.3s ease; /* 過渡效果 */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
+}
+
+.instagram-link:hover {
+  transform: translateY(-3px); /* 懸停時上移 */
+  background-color: var(--clr-tertiary); /* 使用第三點綴綠 */
+  color: var(--clr-button-text); /* 確保懸停時文字顏色仍然可見 */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* 懸停時陰影加深 */
 }
