@@ -13,6 +13,15 @@
 /* 移除 ::before 偽元素，避免與玻璃效果衝突 */
 /* .about-me-section::before { ... } */
 
+/* 新增：外層容器樣式 */
+.about-me-container {
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  gap: 320px; /* 加大文字和圖片間距 */
+  max-width: 1250px; /* 限制最大寬度 */
+  margin: 0 auto; /* 水平居中 */
+  text-align: left; /* 確保內部元素預設靠左 */
+}
 
 .about-me-section h2 {
   font-size: 2.5em; /* 與 Expertise/WorkExperience 統一 */
@@ -40,10 +49,24 @@
   border: 1px solid rgba(255, 255, 255, 0.08); /* 與 Expertise/WorkExperience 統一 */
   position: relative;
   z-index: 1;
-  text-align: left; /* 內容靠左對齊 */
+  /* text-align: left; */ /* 移除 text-align: left，由父容器控制 */
 }
 
-.about-me-content p {
+/* 修改：文字內容容器樣式 */
+.about-me-text-content {
+  flex: 1.5; /* 文字佔更多空間 */
+  background-color: rgba(22, 22, 26, 0.65);
+  padding: 30px 40px;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+
+.about-me-text-content p { /* 將 p 的樣式移到 text-content 下 */
     margin-bottom: 15px; /* 段落間距 */
 }
 
@@ -51,9 +74,98 @@
     margin-bottom: 0; /* 最後一段移除底部間距 */
 }
 
-.about-me-content strong {
+.about-me-text-content strong { /* 將 strong 的樣式移到 text-content 下 */
     color: var(--clr-tertiary); /* 強調文字使用第三點綴色 */
     font-weight: 600; /* 稍粗字重 */
 }
 
+/* 新增：圖片容器樣式 */
+.about-me-image-container {
+  flex: 1; /* 圖片佔較少空間 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 沿用 Hero Section 的圖片容器樣式，稍作調整 */
+  width: 280px; /* 調整大小 */
+  height: 280px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.about-me-image-container::before {
+  content: '';
+  position: absolute;
+  inset: -3px; /* 調整邊框寬度 */
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--clr-button), var(--clr-tertiary), var(--clr-accent));
+  z-index: 1;
+  transition: filter 0.5s ease, opacity 0.5s ease;
+  filter: blur(2px); /* 調整模糊度 */
+  opacity: 0.8; /* 調整透明度 */
+  box-shadow: 0 0 18px 5px rgba(var(--clr-button-rgb), 0.6); /* 調整光暈 */
+  animation:
+    pulse-glow 3s infinite alternate ease-in-out, /* 調整動畫速度 */
+    rotate-gradient 15s linear infinite;
+  background-size: 300% 300%;
+}
+
+.about-me-image-container:hover {
+  transform: scale(1.03);
+}
+
+.about-me-image-container:hover::before {
+  filter: blur(8px); /* 調整懸停模糊度 */
+  opacity: 1;
+  box-shadow: 0 0 50px 15px rgba(255, 255, 220, 0.85); /* 調整懸停光暈 */
+  animation: none;
+}
+
+.about-me-image {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transform: scale(1.2);
+}
+
+
 /* education-info 樣式已移除 */
+
+/* 響應式設計調整 */
+@media (max-width: 992px) {
+  .about-me-container {
+    flex-direction: column; /* 小螢幕時改為垂直排列 */
+    gap: 30px;
+  }
+  .about-me-text-content {
+    flex: none; /* 取消 flex 比例 */
+    width: 100%; /* 文字佔滿寬度 */
+  }
+  .about-me-image-container {
+    flex: none; /* 取消 flex 比例 */
+    width: 250px; /* 調整圖片大小 */
+    height: 250px;
+    margin-top: 20px; /* 與文字間隔 */
+  }
+}
+
+@media (max-width: 768px) {
+  .about-me-section {
+    padding: 40px 20px; /* 調整內距 */
+  }
+  .about-me-section h2 {
+    font-size: 2.2em; /* 調整標題大小 */
+  }
+  .about-me-text-content {
+    padding: 25px 30px; /* 調整內距 */
+  }
+  .about-me-image-container {
+    width: 200px;
+    height: 200px;
+  }
+}

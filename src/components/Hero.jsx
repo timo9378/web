@@ -4,7 +4,7 @@ import { Parallax } from 'react-scroll-parallax'; // 引入 Parallax
 // Remove unused particle imports
 import { FaGithub, FaLinkedin, FaInstagram, FaFacebook, FaBriefcase } from 'react-icons/fa'; // 引入圖示
 import './Hero.css';
-import mainImage from '../assets/Main.webp'; // 更新為 webp
+// import mainImage from '../assets/Main.webp'; // 移除圖片導入
 
 // Helper function for typing effect
 const useTypingEffect = (text, speed = 100, startDelay = 0) => {
@@ -59,7 +59,7 @@ const useTypingEffect = (text, speed = 100, startDelay = 0) => {
 
 function Hero() {
   const fullHeading = "你好👋\n我是楊泰和";
-  const fullTagline = "技術是畫筆，想像力是我的星雲。";
+  const fullTagline = "\"I want to put a ding in the universe.\"\n– Steve Jobs"; // 更新標語並加入換行
 
   // Apply typing effect hook
   const { displayedText: displayedHeading, isTypingComplete: headingComplete } = useTypingEffect(fullHeading, 100, 1000); // Start heading after 1000ms (Increased delay)
@@ -84,7 +84,8 @@ function Hero() {
         </Parallax>
         {/* Apply Parallax, but remove motion from p */}
         <Parallax speed={5}> {/* 比標題慢一點，比背景快 */}
-          <p className={`tagline typing-text ${taglineComplete ? 'typing-complete' : ''}`}>
+          {/* Use pre-wrap to handle newline characters in tagline */}
+          <p className={`tagline typing-text ${taglineComplete ? 'typing-complete' : ''}`} style={{ whiteSpace: 'pre-wrap' }}>
             {displayedTagline}
           </p>
         </Parallax>
@@ -113,12 +114,7 @@ function Hero() {
           <a href="#contact" className="cta-button">聯絡我</a>
         </div>
       </div> {/* Close hero-content div */}
-      <div className="hero-image-container"> {/* 圖片容器移到 motion.div 外部 */}
-        {/* 這裡可以放置 Figma 中的圖片或個人照片 */}
-        {/* Figma 圖片 ID: 20:6 (画形态) 和 24:70 (截屏...) */}
-        {/* 將佔位符替換為圖片 */}
-        <img src={mainImage} alt="楊泰和" className="hero-image" />
-      </div>
+      {/* 移除圖片容器 */}
       {/* 新增：裝飾性元素 */}
       <div className="hero-decoration hero-decoration-1"></div>
       <div className="hero-decoration hero-decoration-2"></div>

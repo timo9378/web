@@ -1,7 +1,7 @@
 .hero-section {
   display: flex;
   align-items: center; /* 垂直居中 */
-  justify-content: space-around; /* 內容間隔 */
+  justify-content: flex-start; /* 改為靠左對齊 */
   min-height: calc(100vh - 80px); /* 恢復：至少佔滿視窗高度減去 Header 高度 (假設 Header 高 80px) */
   padding: 40px 50px; /* 內距 */
   /* background-color: var(--clr-bg-primary); */ /* 移除單色背景，改用漸層 */
@@ -19,7 +19,10 @@
 
 .hero-content {
   max-width: 50%; /* 限制文字內容寬度 */
+  /* width: 50%; */ /* 移除固定寬度 */
   z-index: 2; /* 確保在背景文字之上 */
+  /* 移除 transform 和 margin */
+  margin-left: 15%; /* 添加一些左邊距，將內容稍微推離左邊緣 */
 }
 
 .hero-content h1 {
@@ -102,7 +105,7 @@
 .social-links a {
   color: var(--clr-paragraph); /* 使用段落色 */
   text-decoration: none;
-  font-size: 1.1em; /* 可以調整大小 */
+  font-size: 1.5em; /* 放大圖示 */
   transition: color 0.3s ease;
 }
 
