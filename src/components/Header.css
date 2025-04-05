@@ -112,3 +112,97 @@
   transform: translateY(-2px); /* 懸停時上移 */
   background-color: var(--clr-tertiary); /* 使用第三點綴綠作為懸停色 */
 }
+
+/* Download Modal Styles */
+.download-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black overlay */
+  /* display: flex; Removed flex properties */
+  /* justify-content: center; */
+  /* align-items: center; */
+  z-index: 1000; /* Ensure it's above other content */
+  backdrop-filter: blur(5px); /* Optional: blur background */
+  opacity: 0; /* Start hidden for animation */
+  animation: fadeIn 0.3s ease forwards; /* Fade in animation */
+}
+
+.download-modal-content {
+  background-color: var(--clr-bg-secondary); /* Use secondary background color */
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 400px; /* Limit modal width */
+  width: 90%; /* Responsive width */
+  position: absolute; /* Keep absolute positioning */
+  top: 70px; /* Position below the header */
+  right: 30px; /* Position near the right edge/button */
+  transform-origin: top right; /* Set transform origin for potential animations */
+  /* animation: scaleUp 0.3s ease forwards; */ /* Keep animation commented out or adjust as needed */
+}
+
+/* Add speech bubble arrow */
+.download-modal-content::after {
+  content: '';
+  position: absolute;
+  top: -10px; /* Position the arrow above the modal */
+  right: 25px; /* Adjust horizontal position to point towards the button */
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid var(--clr-bg-secondary); /* Arrow color matches modal background */
+  filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.1)); /* Optional: subtle shadow for depth */
+}
+
+.download-modal-content h2 {
+  color: var(--clr-headline);
+  margin-bottom: 25px;
+  font-size: 1.5em;
+}
+
+.modal-download-link {
+  display: block;
+  background-color: var(--clr-button);
+  color: var(--clr-button-text);
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 15px; /* Space between links */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-download-link:hover {
+  background-color: var(--clr-tertiary);
+  transform: translateY(-2px);
+}
+
+.modal-close-button {
+  background-color: var(--clr-paragraph); /* Use a less prominent color */
+  color: var(--clr-bg-primary);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 10px; /* Space above close button */
+  transition: background-color 0.3s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #555; /* Darker grey on hover */
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Remove scaleUp animation */
+/* @keyframes scaleUp { ... } */
