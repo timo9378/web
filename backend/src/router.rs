@@ -107,6 +107,9 @@ pub fn build_router(state: AppState) -> Router {
             get(handlers::posts::post_reactions)
                 .post(handlers::posts::post_reaction)
         )
+        // 文章內嵌投票（公開；防重複投票在 client 端做）
+        .route("/api/polls/{id}", get(handlers::polls::get_poll))
+        .route("/api/polls/{id}/vote", post(handlers::polls::vote_poll))
         .route(
             "/api/posts/{id}/comments",
             get(handlers::posts::post_comments)

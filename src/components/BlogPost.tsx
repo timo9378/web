@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react';
 import { useParams, useRouterState, useNavigate, ClientOnly } from '@tanstack/react-router';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { LocaleLink } from '../locale-link';
@@ -340,6 +340,11 @@ function downloadMermaidPng(ref: ReactZoomPanPinchRef | null): void {
 /* ── MermaidDiagram (shared renderer used in inline + fullscreen) ── */
 const MermaidDiagram = ({ code, theme, look, layout, direction, onError, onRendered }: { code: string; theme: string; look: string; layout: string; direction: string; onError?: (err: string | null) => void; onRendered?: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  // mermaid.render(id) 會用這個 id 在 DOM 插暫存節點：同頁多張圖若拿到相同 id，
+  // 併發 render 會互相踩（症狀＝有的框空白、有的框疊了兩張圖）。原本用
+  // `Date.now()-idRef` 產 id，但 idRef 是「每個實例各自從 0 開始」的，同一毫秒
+  // 掛載的多張圖就會撞成同一個 id。改用 useId()：每個實例唯一且 SSR 安全。
+  const reactId = useId();
   const idRef = useRef(0);
   // 以 ref 存 onRendered，避免它進 effect deps 而重跑渲染（與既有 onError 同慣例）。
   const onRenderedRef = useRef(onRendered);
@@ -349,7 +354,8 @@ const MermaidDiagram = ({ code, theme, look, layout, direction, onError, onRende
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const id = `mermaid-${Date.now()}-${idRef.current++}`;
+    // useId 產出形如 ":r3:"，冒號在 CSS/querySelector 選擇器裡不合法 → 清成安全字元。
+    const id = `mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}-${idRef.current++}`;
 
     let body = parsed.body;
     body = body.replace(/((?:flowchart|graph)\s+)(?:TB|BT|LR|RL)/, `$1${direction}`);
@@ -399,7 +405,7 @@ const MermaidDiagram = ({ code, theme, look, layout, direction, onError, onRende
       }
     };
     void render();
-  }, [code, theme, look, layout, direction, parsed.body]);
+  }, [code, theme, look, layout, direction, parsed.body, reactId]);
 
   return <div className="mermaid-render" ref={containerRef} />;
 };

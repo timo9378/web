@@ -23,6 +23,7 @@ use koimsurai_web_backend::handlers::posts::{
     CommentRow, CommentsResponse, Pagination, PostDetailResponse, PostListItem, PostsListResponse, ReactionRow,
     ReactionsResponse,
 };
+use koimsurai_web_backend::handlers::polls::{PollOptionRow, PollResponse};
 use specta_typescript::Typescript;
 
 fn main() {
@@ -40,6 +41,8 @@ fn main() {
         .register::<CommentsResponse>()
         .register::<ReactionRow>()
         .register::<ReactionsResponse>()
+        .register::<PollOptionRow>()
+        .register::<PollResponse>()
         // posts（admin）
         .register::<AdminPostFull>()
         .register::<AdminPostsResponse>()

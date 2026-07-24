@@ -296,6 +296,16 @@ export type Pagination = {
 	totalPages: number,
 };
 
+export type PollOptionRow = {
+	option_key: string,
+	count: number,
+};
+
+export type PollResponse = {
+	options: PollOptionRow[],
+	total: number,
+};
+
 /**
  *  `GET /api/posts/:id` 成功回應。欄位序對齊舊 `json!` 的 key 序。
  *  404 路徑（找不到 / 該語系無內容）仍是各自的錯誤 JSON，不走這個型別。

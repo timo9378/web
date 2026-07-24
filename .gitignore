@@ -69,3 +69,6 @@ stats.html
 
 # MCP server 編譯輸出（.mcp.json 走 tsx 跑源碼，dist 不入庫）
 packages/mcp-server/dist/
+
+# playwright 產物
+.playwright-mcp/

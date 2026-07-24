@@ -19,6 +19,7 @@ import CodeTabsBlock from './CodeTabsBlock';
 import DiffImpl from './DiffBlock';
 import InstallImpl from './InstallBlock';
 import RefsImpl from './RefsBlock';
+import PollImpl from './PollBlock';
 
 // 影片 block（Video 自架、YouTube facade）直接重新匯出 → 一併在 MdxContent scope 註冊。
 export { Video, YouTube } from './MediaEmbed';
@@ -32,17 +33,15 @@ const InteractiveChartImpl = lazy(() => import('./InteractiveChartBlock'));
 const ImageCompareImpl = lazy(() => import('./ImageCompareBlock'));
 const chartFallback = <div className="mdx-chart-loading" aria-hidden />;
 
-/** 作者註卡：段落長度的站長旁白，在內文流裡的卡片（跟一般 alert 區隔）。 */
+/** 作者註：段落長度的站長旁白。極簡左側線條風（引號圖標），跟彩色 alert 明確區隔。 */
 export function Note({ children, title }: { children?: ReactNode; title?: string }) {
   return (
     <aside className="mdx-note">
-      <div className="mdx-note-mark" aria-hidden>
-        ✎
+      <div className="mdx-note-label">
+        <span className="mdx-note-quote" aria-hidden>❝</span>
+        {title ?? '站長註'}
       </div>
-      <div className="mdx-note-body">
-        <div className="mdx-note-label">{title ?? '站長註'}</div>
-        <div className="mdx-note-content">{children}</div>
-      </div>
+      <div className="mdx-note-content">{children}</div>
     </aside>
   );
 }
@@ -62,17 +61,22 @@ export function Annot({ children, note }: { children?: ReactNode; note?: ReactNo
   useIsoLayoutEffect(() => {
     const el = ref.current;
     if (!show || !el) return;
-    const r = el.getBoundingClientRect();
+    // 註解文字若跨行，getBoundingClientRect() 會 union 兩行 → left 變成整段最左、上下也含另一行，
+    // 卡片會飄到離被註解的詞很遠的地方。改用逐行的 client rects：對齊「第一行」的起點，
+    // 放下方時則對齊「最後一行」的底 → 卡片永遠貼著文字本身。
+    const rects = el.getClientRects();
+    const first = rects.item(0) ?? el.getBoundingClientRect();
+    const last = rects.item(rects.length - 1) ?? first;
     const pad = 8;
     const vw = window.innerWidth;
     // ⚠ 本模組 export 了名為 Math 的元件（KaTeX），會遮蔽全域 Math → 不能用 Math.min。
     const cardW = 304 < vw - pad * 2 ? 304 : vw - pad * 2;
-    let left = r.left;
+    let left = first.left;
     if (left + cardW > vw - pad) left = vw - pad - cardW;
     if (left < pad) left = pad;
-    const below = r.top < 170; // 太靠視窗頂 → 卡片放下方
+    const below = first.top < 170; // 太靠視窗頂 → 卡片放下方
     // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setPos({ left, top: below ? r.bottom + 9 : r.top - 9, below });
+    setPos({ left, top: below ? last.bottom + 9 : first.top - 9, below });
   }, [show]);
 
   return (
@@ -318,6 +322,17 @@ export function Diff(props: { code?: string; lang?: string; title?: string }) {
 /** 套件安裝指令分頁（npm/pnpm/yarn/bun）。<Install pkg="react-compare-slider" />；dev 為開發依賴。 */
 export function Install(props: { pkg?: string; dev?: boolean }) {
   return <InstallImpl {...props} />;
+}
+
+/** 文章內嵌投票（真投票，票數存後端；localStorage 防重複）。id 要全站唯一、之後別改（改了票數歸零）。
+ *  <Poll id="ssr-strategy" question="你會怎麼渲染?" options={[{key:'ssr',label:'單次 SSR'},{key:'csr',label:'CSR'}]} /> */
+export function Poll(props: {
+  id?: string;
+  question?: string;
+  options?: { key?: string; label?: string }[];
+  showTotal?: boolean;
+}) {
+  return <PollImpl {...props} />;
 }
 
 /** 文末參考連結區（每列標籤 + 連結，依網域自動帶品牌 icon，不觸發 hover 卡）。

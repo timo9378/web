@@ -12,6 +12,7 @@ pub mod newsletter;
 pub mod oauth;
 pub mod og;
 pub mod opencc;
+pub mod polls;
 pub mod posts;
 pub mod quote;
 pub mod rss;
