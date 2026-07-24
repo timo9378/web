@@ -578,11 +578,13 @@ const MermaidBlock = ({ code }: { code: string }) => {
     (typeof initCfg === 'object' && typeof initCfg[key] === 'string') ? initCfg[key] : null;
   const initLayout = cfgStr('layout') ?? 'dagre';
   const initTheme = cfgStr('theme') ?? 'dark';
+  // look 也吃 frontmatter（作者可預設 handDrawn 手繪風，不必讀者自己去工具列切）。
+  const initLook = cfgStr('look') ?? 'classic';
   const dirMatch = /(?:flowchart|graph)\s+(TB|BT|LR|RL)/.exec(parsed.body);
   const initDir = dirMatch ? dirMatch[1] : 'TB';
 
   const [theme, setTheme] = useState(initTheme);
-  const [look, setLook] = useState('classic');
+  const [look, setLook] = useState(initLook);
   const [layout, setLayout] = useState(initLayout);
   const [direction, setDirection] = useState(initDir);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);

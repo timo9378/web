@@ -174,10 +174,10 @@ export const BLOCKS: BlockDef[] = [
     name: 'Sketch',
     category: 'media',
     summary: 'Excalidraw 手繪風靜態圖（吃 mermaid 定義）',
-    whenToUse: '想要手繪草圖感的流程／架構圖。',
+    whenToUse: '**概念草圖／比喻／心智模型**——像在白板上隨手畫的示意圖。節點少（≤6）、不需要讀者操作時用它。',
     props: 'chart（mermaid 定義，單行用 ; 分隔）、title',
-    example: '<Sketch chart="graph TD; A[使用者] --> B[前端]; B --> C[後端]" title="流程圖" />',
-    note: '需要可切 theme/layout 的互動圖仍用 ```mermaid``` 圍籬（有工具列、可下載）。',
+    example: '<Sketch chart="graph TD; A[想法] --> B[草稿]; B --> C[成品]" title="心智模型" />',
+    note: '**精確的技術圖用 ```mermaid 圍籬，不要用這個**：流程／時序／狀態／ER／架構、節點多、讀者可能想放大細看或下載時——mermaid 有工具列（可切 theme/look/layout/方向、縮放平移、下載 SVG/PNG），Sketch 是靜態的、寬度上限 440px。',
   },
   {
     name: 'Video',

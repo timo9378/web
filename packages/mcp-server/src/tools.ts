@@ -137,7 +137,8 @@ const AUTHORING_GUIDE = `# koimsurai 文章撰寫指南（給 AI）
 ${renderBlocksForGuide()}
 
 其他：行內算式（在文章裡求值，少用）\`今天 {new Date().getFullYear()} 年\`。
-互動 mermaid 圖用 \`\`\`mermaid 圍籬（有工具列、可切 theme/layout、可下載 SVG/PNG）。
+**圖表怎麼挑**：精確的技術圖（流程／時序／狀態／ER／架構）一律用 \`\`\`mermaid 圍籬——有工具列（切 theme/look/layout/方向、縮放平移、下載 SVG/PNG）。只有「概念草圖／比喻」且節點少時才用 <Sketch>。
+mermaid 可用 frontmatter 預設外觀，例如手繪風：\`\`\`mermaid 後接 \`---\` / \`config:\` / \`  look: handDrawn\` / \`  theme: dark\` / \`---\`。
 
 ## 5. ⚠️ MDX 的坑（format='mdx' 一定遵守，寫錯會編譯失敗）
 在**一般段落文字**裡，\`<\` 和 \`{\` 會被當成 JSX/表達式 → 編譯失敗（會退回醜醜的純文字）。
