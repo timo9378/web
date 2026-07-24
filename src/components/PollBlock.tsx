@@ -90,7 +90,7 @@ export default function PollBlock({ id, question, options = [], showTotal = true
               >
                 {revealed && <span className="mdx-poll-bar" style={{ width: `${pct}%` }} aria-hidden />}
                 <span className="mdx-poll-opt-label">
-                  {mine ? <span className="mdx-poll-check" aria-hidden>✓</span> : null}
+                  {mine ? <span className="mdx-poll-check" aria-hidden /> : null}
                   {label}
                 </span>
                 {revealed && <span className="mdx-poll-pct">{pct}%</span>}

@@ -827,21 +827,23 @@
 /* icon 顏色由元件 inline style（品牌色）決定，這裡不設 color */
 .mdx-refs-icon { flex: 0 0 auto; font-size: 1em; }
 
-/* ── Poll 內嵌投票（票數存後端，localStorage 防重複）── */
+/* ── Poll 內嵌投票（票數存後端，localStorage 防重複）──
+   刻意收斂：不做「盒中盒」（選項不再各自描邊，改用淡軌道），填色低飽和、無光暈，
+   讓百分比與勾選點承載資訊，不跟站上其他卡片撞風格。 */
 .mdx-poll {
   margin: 1.75rem 0;
-  padding: 1.1rem 1.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.015);
 }
 .mdx-poll-q {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  margin-bottom: 0.8rem;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 0.75rem;
 }
-.mdx-poll-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.mdx-poll-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .mdx-poll-opt {
   position: relative;
   display: flex;
@@ -849,58 +851,65 @@
   justify-content: space-between;
   gap: 0.7rem;
   width: 100%;
-  min-height: 2.6rem;
-  padding: 0.55rem 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 9px;
-  background: transparent;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.8rem;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035); /* 淡軌道取代描邊 */
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.87rem;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .mdx-poll-opt:hover:not(:disabled),
 .mdx-poll-opt:focus-visible:not(:disabled) {
-  background: rgba(196, 181, 253, 0.08);
-  border-color: rgba(196, 181, 253, 0.45);
+  background: rgba(255, 255, 255, 0.06);
   box-shadow: none;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.95);
   outline: none;
 }
 .mdx-poll-opt:disabled { cursor: default; }
-.mdx-poll-opt--mine { border-color: rgba(196, 181, 253, 0.6); color: #fff; }
-/* 結果長條：鋪在選項底層 */
+.mdx-poll-opt--mine { color: rgba(255, 255, 255, 0.95); }
+/* 結果長條：低飽和、鋪在底層，不搶字 */
 .mdx-poll-bar {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  background: rgba(139, 124, 246, 0.22);
+  background: rgba(167, 139, 250, 0.16);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
-.mdx-poll-opt--mine .mdx-poll-bar { background: rgba(167, 139, 250, 0.34); }
-.mdx-poll-opt-label { position: relative; display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.mdx-poll-check { color: #a78bfa; font-weight: 700; }
+.mdx-poll-opt--mine .mdx-poll-bar { background: rgba(167, 139, 250, 0.26); }
+.mdx-poll-opt-label { position: relative; display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; }
+/* 自己投的那項：小圓點，不用打勾字元（字型會渲成 √ 很怪） */
+.mdx-poll-check {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #a78bfa;
+  flex: 0 0 auto;
+}
 .mdx-poll-pct {
   position: relative;
   flex: 0 0 auto;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.45);
 }
+.mdx-poll-opt--mine .mdx-poll-pct { color: rgba(255, 255, 255, 0.7); }
 .mdx-poll-foot {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  margin-top: 0.7rem;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.42);
+  margin-top: 0.65rem;
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.38);
 }
 .mdx-poll-peek {
   padding: 0;
@@ -908,11 +917,11 @@
   background: transparent;
   box-shadow: none;
   outline: none;
-  color: rgba(196, 181, 253, 0.85);
-  font-size: 0.75rem;
+  color: rgba(196, 181, 253, 0.75);
+  font-size: 0.73rem;
   font-family: inherit;
   cursor: pointer;
   text-decoration: underline dotted;
 }
 .mdx-poll-peek:hover, .mdx-poll-peek:focus-visible { background: transparent; box-shadow: none; color: #c4b5fd; outline: none; }
-.mdx-poll-voted { margin-left: auto; color: rgba(167, 139, 250, 0.8); }
+.mdx-poll-voted { margin-left: auto; color: rgba(255, 255, 255, 0.35); }
