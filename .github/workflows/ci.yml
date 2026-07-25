@@ -50,13 +50,46 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest,cargo-audit
+      # --locked：CI 必須測「commit 進來的那組版本」，不允許靜默更新 Cargo.lock
       - name: clippy (-D warnings)
-        run: cargo clippy --all-targets -- -D warnings
-      - name: test
-        run: cargo test
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: test (nextest)
+        run: cargo nextest run --locked
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |
-          cargo run --bin export_types
+          cargo run --locked --bin export_types
           cd ..
           git diff --exit-code packages/api-types/index.ts
+      # Rust 依賴漏洞掃描（Cargo.lock 在 workspace 根；豁免清單見 .cargo/audit.toml）
+      - name: cargo audit
+        working-directory: .
+        run: cargo audit
+
+  # 部署路徑守門：CI 過但 docker build 炸過（js-yaml + 未釘 pnpm 那次），
+  # 因為前端 job 只跑 vite build、從不碰 Dockerfile。這個 job 補上那個缺口。
+  docker:
+    name: Docker · frontend + backend image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: build frontend image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+      - name: build backend image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
