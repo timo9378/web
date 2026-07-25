@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use serde::Serialize;
 use sqlx::FromRow;
 

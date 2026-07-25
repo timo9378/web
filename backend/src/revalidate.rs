@@ -11,14 +11,7 @@ use std::time::Duration;
 // /view 是每次有人瀏覽文章都會打 —— 若也清快取,等於每有一次瀏覽就把全站 ISR 清空,
 // ISR 直接失效且不斷重複重生。like/reactions/comments 同理,而且它們的內容是 client 端
 // 才 render 的(不在 SSR HTML 裡),清了也沒意義。
-const NON_CONTENT_ACTIONS: &[&str] = &[
-    "view",
-    "like",
-    "unlike",
-    "reactions",
-    "comments",
-    "send-newsletter",
-];
+const NON_CONTENT_ACTIONS: &[&str] = &["view", "like", "unlike", "reactions", "comments", "send-newsletter"];
 
 fn is_content_mutation(path: &str) -> bool {
     if !path.starts_with("/api/posts") && !path.starts_with("/api/admin/posts") {
@@ -46,10 +39,9 @@ async fn fire() {
     // 兩個 env 都要有值才啟用;缺任一 = 功能沒開,安靜跳過。
     // 注意要擋空字串:compose 用 ${REVALIDATE_SECRET:-} 替換,未設定時傳進來的是空字串而非「不存在」,
     // env::var 會回 Ok("") —— 不擋的話每次發文都會送出空密鑰、被前端擋掉,然後在 log 噴 warn。
-    let (Ok(url), Ok(secret)) = (
-        std::env::var("FRONTEND_REVALIDATE_URL"),
-        std::env::var("REVALIDATE_SECRET"),
-    ) else {
+    let (Ok(url), Ok(secret)) =
+        (std::env::var("FRONTEND_REVALIDATE_URL"), std::env::var("REVALIDATE_SECRET"))
+    else {
         return;
     };
     if url.is_empty() || secret.is_empty() {
@@ -74,7 +66,7 @@ async fn fire() {
 #[cfg(test)]
 mod tests {
     use super::{is_content_mutation, notify_on_post_write};
-    use axum::{body::Body, http::Request, routing::put, Router};
+    use axum::{Router, body::Body, http::Request, routing::put};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tower::ServiceExt;
 
@@ -88,9 +80,7 @@ mod tests {
                 let mut buf = vec![0u8; 2048];
                 let n = sock.read(&mut buf).await.unwrap_or(0);
                 let req = String::from_utf8_lossy(&buf[..n]).to_string();
-                let _ = sock
-                    .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\nok")
-                    .await;
+                let _ = sock.write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\nok").await;
                 let _ = tx.send(req);
             }
         });
@@ -115,26 +105,14 @@ mod tests {
 
         // 1) 高頻瀏覽端點:不該發通知
         let res = app()
-            .oneshot(
-                Request::builder()
-                    .method("PUT")
-                    .uri("/api/posts/39/view")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().method("PUT").uri("/api/posts/39/view").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert!(res.status().is_success());
 
         // 2) 文章本體變更:該發通知
         let res = app()
-            .oneshot(
-                Request::builder()
-                    .method("PUT")
-                    .uri("/api/posts/39")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().method("PUT").uri("/api/posts/39").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert!(res.status().is_success());
@@ -147,10 +125,7 @@ mod tests {
             .expect("逾時:前端沒收到任何 revalidate 通知")
             .expect("通道關閉");
         assert!(got.starts_with("POST /_revalidate"), "收到的是: {got}");
-        assert!(
-            got.to_lowercase().contains("x-revalidate-secret: s3cret"),
-            "缺少密鑰標頭: {got}"
-        );
+        assert!(got.to_lowercase().contains("x-revalidate-secret: s3cret"), "缺少密鑰標頭: {got}");
     }
 
     #[test]

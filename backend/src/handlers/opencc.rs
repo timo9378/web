@@ -10,12 +10,12 @@
 use std::sync::Arc;
 
 use axum::{
+    Json,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
-use ferrous_opencc::{config::BuiltinConfig, OpenCC};
+use ferrous_opencc::{OpenCC, config::BuiltinConfig};
 use serde_json::json;
 use tokio::sync::OnceCell;
 
@@ -26,15 +26,14 @@ use crate::{auth::require_admin, state::AppState};
 static TW2S: OnceCell<Arc<OpenCC>> = OnceCell::const_new();
 
 async fn tw2s() -> anyhow::Result<Arc<OpenCC>> {
-    TW2S
-        .get_or_try_init(|| async {
-            tokio::task::spawn_blocking(|| OpenCC::from_config(BuiltinConfig::Tw2s).map(Arc::new))
-                .await
-                .map_err(|e| anyhow::anyhow!("opencc 建構 join 失敗: {e}"))?
-                .map_err(|e| anyhow::anyhow!("opencc 載入 tw2s 失敗: {e}"))
-        })
-        .await
-        .cloned()
+    TW2S.get_or_try_init(|| async {
+        tokio::task::spawn_blocking(|| OpenCC::from_config(BuiltinConfig::Tw2s).map(Arc::new))
+            .await
+            .map_err(|e| anyhow::anyhow!("opencc 建構 join 失敗: {e}"))?
+            .map_err(|e| anyhow::anyhow!("opencc 載入 tw2s 失敗: {e}"))
+    })
+    .await
+    .cloned()
 }
 
 fn err(code: StatusCode, msg: &str) -> Response {
@@ -45,7 +44,11 @@ fn err(code: StatusCode, msg: &str) -> Response {
 #[utoipa::path(post, path = "/api/admin/posts/{id}/generate-zh-cn", tag = "admin", security(("bearer" = [])),
     params(("id" = String, Path)),
     responses((status = 200, description = "zh-CN 轉換結果（動態 JSON）"), (status = 400, description = "來源語言非 zh-TW 或缺 title/content"), (status = 401, description = "未授權"), (status = 404, description = "文章不存在"), (status = 500, description = "OpenCC 轉換或 DB 失敗")))]
-pub async fn generate_zh_cn(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn generate_zh_cn(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }

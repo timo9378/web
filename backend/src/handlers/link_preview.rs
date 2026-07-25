@@ -16,8 +16,8 @@
 use std::time::Duration;
 
 use axum::{
-    extract::{Query, State},
     Json,
+    extract::{Query, State},
 };
 use serde::{Deserialize, Serialize};
 
@@ -68,16 +68,23 @@ fn meta_content(html: &str, keys: &[&str]) -> Option<String> {
     for key in keys {
         // 同時容忍 property="og:x" 與 name="og:x"，屬性順序也可能相反
         for pat in [
-            format!(r#"(?is)<meta[^>]+(?:property|name)\s*=\s*["']{k}["'][^>]*content\s*=\s*["']([^"']*)["']"#, k = regex::escape(key)),
-            format!(r#"(?is)<meta[^>]+content\s*=\s*["']([^"']*)["'][^>]*(?:property|name)\s*=\s*["']{k}["']"#, k = regex::escape(key)),
+            format!(
+                r#"(?is)<meta[^>]+(?:property|name)\s*=\s*["']{k}["'][^>]*content\s*=\s*["']([^"']*)["']"#,
+                k = regex::escape(key)
+            ),
+            format!(
+                r#"(?is)<meta[^>]+content\s*=\s*["']([^"']*)["'][^>]*(?:property|name)\s*=\s*["']{k}["']"#,
+                k = regex::escape(key)
+            ),
         ] {
             if let Ok(re) = regex::Regex::new(&pat)
-                && let Some(c) = re.captures(html) {
-                    let v = c.get(1)?.as_str().trim();
-                    if !v.is_empty() {
-                        return Some(decode_entities(v));
-                    }
+                && let Some(c) = re.captures(html)
+            {
+                let v = c.get(1)?.as_str().trim();
+                if !v.is_empty() {
+                    return Some(decode_entities(v));
                 }
+            }
         }
     }
     None
@@ -136,15 +143,16 @@ pub async fn link_preview(
     .await?;
 
     if let Some(c) = cached
-        && c.age_secs < CACHE_TTL_SECS {
-            return Ok(Json(LinkPreviewResponse {
-                title: c.title,
-                description: c.description,
-                image: c.image,
-                site_name: c.site_name.or_else(|| Some(host.clone())),
-                favicon: Some(format!("https://{host}/favicon.ico")),
-            }));
-        }
+        && c.age_secs < CACHE_TTL_SECS
+    {
+        return Ok(Json(LinkPreviewResponse {
+            title: c.title,
+            description: c.description,
+            image: c.image,
+            site_name: c.site_name.or_else(|| Some(host.clone())),
+            favicon: Some(format!("https://{host}/favicon.ico")),
+        }));
+    }
 
     // ── 抓取（失敗一律降級，不回錯誤）──
     let client = reqwest::Client::builder()
@@ -158,17 +166,15 @@ pub async fn link_preview(
         let resp = client.get(&url).send().await.ok()?;
         // 解析後的 peer IP 再擋一次（DNS rebinding / 域名指向私網）
         if let Some(addr) = resp.remote_addr()
-            && is_blocked_ip(&addr.ip()) {
-                return None;
-            }
+            && is_blocked_ip(&addr.ip())
+        {
+            return None;
+        }
         if !resp.status().is_success() {
             return None;
         }
-        let ct = resp
-            .headers()
-            .get(reqwest::header::CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
+        let ct =
+            resp.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("");
         if !ct.contains("text/html") && !ct.contains("application/xhtml") {
             return None;
         }

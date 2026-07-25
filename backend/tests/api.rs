@@ -5,11 +5,11 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use axum::body::Body;
-use axum::http::{header, Request, StatusCode};
 use axum::Router;
+use axum::body::Body;
+use axum::http::{Request, StatusCode, header};
 use http_body_util::BodyExt;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tower::ServiceExt;
 
@@ -19,15 +19,9 @@ const TEST_SECRET: &str = "test-secret";
 
 /// 建一個接上獨立 in-memory DB 的完整 app（與正式環境同一條 build_router 路徑）。
 async fn test_app() -> (Router, sqlx::SqlitePool) {
-    let opts = SqliteConnectOptions::from_str("sqlite::memory:")
-        .unwrap()
-        .foreign_keys(true);
+    let opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap().foreign_keys(true);
     // in-memory DB 一條連線就是一份 DB → 鎖在單連線，全部操作共用同一份
-    let pool = SqlitePoolOptions::new()
-        .max_connections(1)
-        .connect_with(opts)
-        .await
-        .unwrap();
+    let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
     seed(&pool).await;
     let state = AppState {
@@ -69,10 +63,9 @@ async fn request(
         b = b.header(header::AUTHORIZATION, format!("Bearer {t}"));
     }
     let req = match body {
-        Some(v) => b
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(v.to_string()))
-            .unwrap(),
+        Some(v) => {
+            b.header(header::CONTENT_TYPE, "application/json").body(Body::from(v.to_string())).unwrap()
+        }
         None => b.body(Body::empty()).unwrap(),
     };
     let resp = app.clone().oneshot(req).await.unwrap();
@@ -93,10 +86,7 @@ async fn post_json(app: &Router, path: &str, body: Value) -> (StatusCode, Value)
 
 /// 簽 legacy OWNER token（authorize 的 username 路徑）。with_exp=false 用來驗 exp 必要性。
 fn owner_token(with_exp: bool) -> String {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
     let mut claims = json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now });
     if with_exp {
         claims["exp"] = json!(now + 3600);
@@ -159,10 +149,8 @@ async fn post_view_and_like_counters() {
     assert_eq!(status, StatusCode::OK);
     let (status, _) = post_json(&app, "/api/posts/1/view", json!({})).await;
     assert_eq!(status, StatusCode::OK);
-    let views: i64 = sqlx::query_scalar("SELECT view_count FROM posts WHERE id = 1")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let views: i64 =
+        sqlx::query_scalar("SELECT view_count FROM posts WHERE id = 1").fetch_one(&pool).await.unwrap();
     assert_eq!(views, 2);
 
     let (status, body) = post_json(&app, "/api/posts/1/like", json!({})).await;
@@ -195,12 +183,8 @@ async fn post_reactions_upsert() {
 #[tokio::test]
 async fn anonymous_comment_goes_to_pending() {
     let (app, _pool) = test_app().await;
-    let (status, body) = post_json(
-        &app,
-        "/api/posts/1/comments",
-        json!({ "author": "路人", "content": "推一個" }),
-    )
-    .await;
+    let (status, body) =
+        post_json(&app, "/api/posts/1/comments", json!({ "author": "路人", "content": "推一個" })).await;
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(body["message"], "success");
     assert_eq!(body["status"], "pending");
@@ -300,10 +284,7 @@ async fn jwt_without_exp_is_rejected() {
 #[tokio::test]
 async fn jwt_wrong_secret_is_rejected() {
     let (app, _pool) = test_app().await;
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
     let token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &json!({ "username": "admin", "iat": now, "exp": now + 3600 }),
@@ -356,9 +337,7 @@ fn urlencode(s: &str) -> String {
     let mut out = String::new();
     for b in s.bytes() {
         match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                out.push(b as char)
-            }
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(b as char),
             _ => out.push_str(&format!("%{b:02X}")),
         }
     }

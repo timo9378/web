@@ -11,19 +11,19 @@ use koimsurai_web_backend::handlers::books::{BookDetailResponse, BookRow, BooksL
 use koimsurai_web_backend::handlers::home::{
     DigestComment, DigestPost, DigestResponse, DigestThought, DigestTimeline,
 };
-use koimsurai_web_backend::handlers::stats::StatsResponse;
+use koimsurai_web_backend::handlers::newsletter::{SubscriberByToken, SubscriberRow, SubscribersResponse};
+use koimsurai_web_backend::handlers::polls::{PollOptionRow, PollResponse};
+use koimsurai_web_backend::handlers::posts::{
+    CommentRow, CommentsResponse, Pagination, PostDetailResponse, PostListItem, PostsListResponse,
+    ReactionRow, ReactionsResponse,
+};
 use koimsurai_web_backend::handlers::series::{
     SeriesDetailResponse, SeriesListResponse, SeriesPostRow, SeriesRow,
 };
-use koimsurai_web_backend::handlers::newsletter::{SubscriberByToken, SubscriberRow, SubscribersResponse};
+use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::watch::{
     AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, TvResponse, TvRow, WatchStatsResponse,
 };
-use koimsurai_web_backend::handlers::posts::{
-    CommentRow, CommentsResponse, Pagination, PostDetailResponse, PostListItem, PostsListResponse, ReactionRow,
-    ReactionsResponse,
-};
-use koimsurai_web_backend::handlers::polls::{PollOptionRow, PollResponse};
 use specta_typescript::Typescript;
 
 fn main() {

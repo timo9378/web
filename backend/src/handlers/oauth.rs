@@ -8,13 +8,13 @@
 //! `/spotify/callback`（一次性 setup HTML）依既定決策留 proxy。
 
 use axum::{
+    Json,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
-use jsonwebtoken::{encode, EncodingKey, Header};
-use serde_json::{json, Map, Value};
+use jsonwebtoken::{EncodingKey, Header, encode};
+use serde_json::{Map, Value, json};
 use sqlx::Row;
 
 use crate::state::AppState;
@@ -52,7 +52,11 @@ async fn upsert_oauth_user(
     email: &str,
     avatar_url: &str,
 ) -> Result<OauthUser, sqlx::Error> {
-    let auto_role = if !email.is_empty() && email.to_lowercase() == OWNER_EMAIL.to_lowercase() { "OWNER" } else { "USER" };
+    let auto_role = if !email.is_empty() && email.to_lowercase() == OWNER_EMAIL.to_lowercase() {
+        "OWNER"
+    } else {
+        "USER"
+    };
 
     // 1. (provider, provider_id) 查找
     let existing = sqlx::query("SELECT * FROM oauth_users WHERE provider = ? AND provider_id = ?")
@@ -79,9 +83,9 @@ async fn upsert_oauth_user(
                 .bind(primary_id)
                 .fetch_optional(&state.pool)
                 .await?
-            {
-                return Ok(row_to_user(&primary));
-            }
+        {
+            return Ok(row_to_user(&primary));
+        }
         return Ok(OauthUser {
             id: ex_id,
             display_name: Some(display_name.to_string()),
@@ -93,10 +97,11 @@ async fn upsert_oauth_user(
 
     // 2. 無此 provider 紀錄 → email 關聯
     if !email.is_empty() {
-        let same = sqlx::query("SELECT * FROM oauth_users WHERE email = ? AND email != \"\" AND linked_to IS NULL")
-            .bind(email)
-            .fetch_optional(&state.pool)
-            .await?;
+        let same =
+            sqlx::query("SELECT * FROM oauth_users WHERE email = ? AND email != \"\" AND linked_to IS NULL")
+                .bind(email)
+                .fetch_optional(&state.pool)
+                .await?;
         if let Some(same) = same {
             let mut primary = row_to_user(&same);
             // OWNER email → 主帳號升級
@@ -157,10 +162,14 @@ fn finish(state: &AppState, provider: &str, user: &OauthUser) -> Response {
         "iat": now,
         "exp": now + 30 * 24 * 60 * 60,
     });
-    let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(state.jwt_secret.as_bytes())) {
-        Ok(t) => t,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "登入失敗" }))).into_response(),
-    };
+    let token =
+        match encode(&Header::default(), &claims, &EncodingKey::from_secret(state.jwt_secret.as_bytes())) {
+            Ok(t) => t,
+            Err(_) => {
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "登入失敗" })))
+                    .into_response();
+            }
+        };
     Json(json!({
         "token": token,
         "user": {
@@ -182,7 +191,10 @@ fn err_500() -> Response {
 /// `POST /api/auth/google/callback`
 #[utoipa::path(post, path = "/api/auth/google/callback", tag = "auth",
     responses((status = 200, description = "Google OAuth 登入成功，回 JWT + 使用者（動態 JSON）"), (status = 400, description = "缺少 code"), (status = 500, description = "登入失敗")))]
-pub async fn google_callback(State(state): State<AppState>, Json(body): Json<Map<String, Value>>) -> Response {
+pub async fn google_callback(
+    State(state): State<AppState>,
+    Json(body): Json<Map<String, Value>>,
+) -> Response {
     let Some(code) = body.get("code").filter(|v| crate::util::js_truthy(Some(v))) else {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing code" }))).into_response();
     };
@@ -243,7 +255,10 @@ pub async fn google_callback(State(state): State<AppState>, Json(body): Json<Map
 /// `POST /api/auth/github/callback`
 #[utoipa::path(post, path = "/api/auth/github/callback", tag = "auth",
     responses((status = 200, description = "GitHub OAuth 登入成功，回 JWT + 使用者（動態 JSON）"), (status = 400, description = "缺少 code"), (status = 500, description = "登入失敗")))]
-pub async fn github_callback(State(state): State<AppState>, Json(body): Json<Map<String, Value>>) -> Response {
+pub async fn github_callback(
+    State(state): State<AppState>,
+    Json(body): Json<Map<String, Value>>,
+) -> Response {
     let Some(code) = body.get("code").filter(|v| crate::util::js_truthy(Some(v))) else {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing code" }))).into_response();
     };
@@ -310,12 +325,14 @@ pub async fn github_callback(State(state): State<AppState>, Json(body): Json<Map
             .header("User-Agent", "koimsurai-app")
             .send()
             .await
-            && r.status().is_success()
-                && let Ok(Value::Array(arr)) = serde_json::from_str::<Value>(&r.text().await.unwrap_or_default())
-                    && let Some(primary) = arr.iter().find(|e| e.get("primary").and_then(|p| p.as_bool()).unwrap_or(false))
-                        && let Some(em) = primary.get("email").and_then(|v| v.as_str()) {
-                            user_email = em.to_string();
-                        }
+        && r.status().is_success()
+        && let Ok(Value::Array(arr)) = serde_json::from_str::<Value>(&r.text().await.unwrap_or_default())
+        && let Some(primary) =
+            arr.iter().find(|e| e.get("primary").and_then(|p| p.as_bool()).unwrap_or(false))
+        && let Some(em) = primary.get("email").and_then(|v| v.as_str())
+    {
+        user_email = em.to_string();
+    }
 
     let display_name = name.unwrap_or(login).to_string();
     match upsert_oauth_user(&state, "github", &id, &display_name, &user_email, &avatar).await {

@@ -1,8 +1,8 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -90,11 +90,7 @@ impl PostRow {
 fn i18n_trio<'a>(row: &'a PostRow, sfx: &str) -> (Option<&'a str>, Option<&'a str>, Option<&'a str>) {
     match sfx {
         "en" => (row.title_en.as_deref(), row.content_en.as_deref(), row.excerpt_en.as_deref()),
-        "zh_cn" => (
-            row.title_zh_cn.as_deref(),
-            row.content_zh_cn.as_deref(),
-            row.excerpt_zh_cn.as_deref(),
-        ),
+        "zh_cn" => (row.title_zh_cn.as_deref(), row.content_zh_cn.as_deref(), row.excerpt_zh_cn.as_deref()),
         "ja" => (row.title_ja.as_deref(), row.content_ja.as_deref(), row.excerpt_ja.as_deref()),
         "ko" => (row.title_ko.as_deref(), row.content_ko.as_deref(), row.excerpt_ko.as_deref()),
         _ => (None, None, None),
@@ -114,11 +110,7 @@ fn nonempty(s: Option<&str>) -> Option<&str> {
 fn locale_content(row: &PostRow, locale: &str) -> Option<(String, String, String)> {
     let source = source_lang(row);
     if locale == source {
-        return Some((
-            row.title.clone(),
-            row.content.clone(),
-            row.excerpt.clone().unwrap_or_default(),
-        ));
+        return Some((row.title.clone(), row.content.clone(), row.excerpt.clone().unwrap_or_default()));
     }
     let sfx = locale_suffix(locale)?;
     let (t, c, e) = i18n_trio(row, sfx);
@@ -354,12 +346,7 @@ pub async fn list_posts(
         message: "success".into(),
         posts,
         locale: requested_locale.map(String::from),
-        pagination: Pagination {
-            page,
-            limit,
-            total: resp_total,
-            total_pages,
-        },
+        pagination: Pagination { page, limit, total: resp_total, total_pages },
     }))
 }
 
@@ -541,10 +528,7 @@ pub struct CommentsResponse {
 
 impl CommentsResponse {
     pub fn new(comments: Vec<CommentRow>) -> Self {
-        Self {
-            message: "success".into(),
-            comments,
-        }
+        Self { message: "success".into(), comments }
     }
 }
 
@@ -594,15 +578,12 @@ async fn adjust_post_likes(state: &AppState, id: &str, like: bool) -> Response {
     let (sql, not_found) = if like {
         ("UPDATE posts SET likes = likes + 1 WHERE id = ?", "Post not found")
     } else {
-        (
-            "UPDATE posts SET likes = likes - 1 WHERE id = ? AND likes > 0",
-            "Post not found or cannot unlike",
-        )
+        ("UPDATE posts SET likes = likes - 1 WHERE id = ? AND likes > 0", "Post not found or cannot unlike")
     };
     match sqlx::query(sql).bind(id).execute(&state.pool).await {
         Err(e) => return crate::error::internal_error(StatusCode::BAD_REQUEST, e),
         Ok(r) if r.rows_affected() == 0 => {
-            return (StatusCode::NOT_FOUND, Json(json!({ "message": not_found }))).into_response()
+            return (StatusCode::NOT_FOUND, Json(json!({ "message": not_found }))).into_response();
         }
         Ok(_) => {}
     }
@@ -673,16 +654,15 @@ pub async fn post_reaction(
     {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
-    let count = sqlx::query_scalar::<_, i64>(
-        "SELECT count FROM post_reactions WHERE post_id = ? AND emoji = ?",
-    )
-    .bind(&id)
-    .bind(&emoji)
-    .fetch_optional(&state.pool)
-    .await
-    .ok()
-    .flatten()
-    .unwrap_or(0);
+    let count =
+        sqlx::query_scalar::<_, i64>("SELECT count FROM post_reactions WHERE post_id = ? AND emoji = ?")
+            .bind(&id)
+            .bind(&emoji)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
     Json(json!({ "emoji": emoji, "count": count })).into_response()
 }
 
@@ -700,7 +680,7 @@ pub async fn comment_like(State(state): State<AppState>, Path(id): Path<String>)
     {
         Err(e) => return crate::error::internal_error(StatusCode::BAD_REQUEST, e),
         Ok(r) if r.rows_affected() == 0 => {
-            return (StatusCode::NOT_FOUND, Json(json!({ "message": "Comment not found" }))).into_response()
+            return (StatusCode::NOT_FOUND, Json(json!({ "message": "Comment not found" }))).into_response();
         }
         Ok(_) => {}
     }
@@ -751,10 +731,19 @@ pub async fn create_post_public(
         return e.into_response();
     }
     if !js_truthy(b.get("title")) || !js_truthy(b.get("content")) {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing required fields: title, content" }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Missing required fields: title, content" })),
+        )
+            .into_response();
     }
-    let status = if b.contains_key("status") { b.get("status").and_then(v_to_s) } else { Some("draft".into()) };
-    let layout = if b.contains_key("layout_type") { b.get("layout_type").and_then(v_to_s) } else { Some("record".into()) };
+    let status =
+        if b.contains_key("status") { b.get("status").and_then(v_to_s) } else { Some("draft".into()) };
+    let layout = if b.contains_key("layout_type") {
+        b.get("layout_type").and_then(v_to_s)
+    } else {
+        Some("record".into())
+    };
     let r = sqlx::query(
         "INSERT INTO posts (title, content, excerpt, category, status, author, layout_type, created_at, updated_at) \
          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
@@ -856,7 +845,11 @@ pub async fn patch_post_status(
     }
     let status = b.status.unwrap_or_default();
     if status != "published" && status != "draft" {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "無效的狀態值，必須是 published 或 draft" }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "無效的狀態值，必須是 published 或 draft" })),
+        )
+            .into_response();
     }
     match sqlx::query("UPDATE posts SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(&status)
@@ -865,8 +858,11 @@ pub async fn patch_post_status(
         .await
     {
         Err(e) => crate::error::internal_error(StatusCode::BAD_REQUEST, e),
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "message": "找不到文章" }))).into_response(),
-        Ok(r) => Json(json!({ "message": "狀態更新成功", "status": status, "changes": r.rows_affected() })).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "message": "找不到文章" }))).into_response()
+        }
+        Ok(r) => Json(json!({ "message": "狀態更新成功", "status": status, "changes": r.rows_affected() }))
+            .into_response(),
     }
 }
 
@@ -884,12 +880,16 @@ pub async fn delete_post_public(
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
-    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(&id).execute(&state.pool).await {
+    if let Err(e) =
+        sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(&id).execute(&state.pool).await
+    {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
     match sqlx::query("DELETE FROM posts WHERE id = ?").bind(&id).execute(&state.pool).await {
         Err(e) => crate::error::internal_error(StatusCode::BAD_REQUEST, e),
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "message": "Post not found" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "message": "Post not found" }))).into_response()
+        }
         Ok(r) => Json(json!({ "message": "deleted", "changes": r.rows_affected() })).into_response(),
     }
 }
@@ -908,9 +908,14 @@ pub async fn create_post_legacy(
         return resp;
     }
     if !js_truthy(b.get("title")) || !js_truthy(b.get("content")) {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing required fields: title, content" }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Missing required fields: title, content" })),
+        )
+            .into_response();
     }
-    let author = b.get("author").filter(|v| js_truthy(Some(v))).and_then(v_to_s).unwrap_or_else(|| "Koimsurai".into());
+    let author =
+        b.get("author").filter(|v| js_truthy(Some(v))).and_then(v_to_s).unwrap_or_else(|| "Koimsurai".into());
     match sqlx::query(
         "INSERT INTO posts (title, content, status, author, created_at, updated_at) \
          VALUES (?, ?, 'published', ?, datetime('now'), datetime('now'))",
@@ -929,7 +934,8 @@ pub async fn create_post_legacy(
             for (k, v) in &b {
                 data.insert(k.clone(), v.clone());
             }
-            (StatusCode::CREATED, Json(json!({ "message": "success", "data": Value::Object(data) }))).into_response()
+            (StatusCode::CREATED, Json(json!({ "message": "success", "data": Value::Object(data) })))
+                .into_response()
         }
     }
 }

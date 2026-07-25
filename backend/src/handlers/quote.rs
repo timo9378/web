@@ -3,13 +3,13 @@
 //! 當日快取（key=`{date}|{locale}`）＝隨機名言穩定一天；來源失敗落 fallback pool（依日期取，同日固定）。
 
 use axum::{
+    Json,
     extract::{Query, State},
     http::header,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::state::AppState;
 
@@ -17,10 +17,7 @@ const SUPPORTED: [&str; 5] = ["zh-TW", "zh-CN", "en", "ja", "ko"];
 
 fn fallback_pool(locale: &str) -> &'static [(&'static str, &'static str)] {
     match locale {
-        "zh-CN" => &[
-            ("强大使人快乐。", "一拳超人"),
-            ("迷惘的时候，就选比较难走的那条路。", "宫崎骏"),
-        ],
+        "zh-CN" => &[("强大使人快乐。", "一拳超人"), ("迷惘的时候，就选比较难走的那条路。", "宫崎骏")],
         "en" => &[
             ("Stay hungry. Stay foolish.", "Steve Jobs"),
             ("Simplicity is the ultimate sophistication.", "Leonardo da Vinci"),
@@ -29,21 +26,19 @@ fn fallback_pool(locale: &str) -> &'static [(&'static str, &'static str)] {
             ("夢を見るから、人生は輝く。", "モーツァルト"),
             ("止まりさえしなければ、どんなにゆっくりでも進めばよい。", "孔子"),
         ],
-        "ko" => &[
-            ("음악은 인간의 내면으로부터 나오는 폭발이다.", "베토벤"),
-            ("천 리 길도 한 걸음부터.", "속담"),
-        ],
-        _ => &[
-            ("強大使人快樂。", "一拳超人"),
-            ("迷惘的時候，就選比較難走的那條路。", "宮崎駿"),
-        ],
+        "ko" => {
+            &[("음악은 인간의 내면으로부터 나오는 폭발이다.", "베토벤"), ("천 리 길도 한 걸음부터.", "속담")]
+        }
+        _ => &[("強大使人快樂。", "一拳超人"), ("迷惘的時候，就選比較難走的那條路。", "宮崎駿")],
     }
 }
 
 /// opencc 簡→繁（cn→tw）；與 quote 的 s2t 對齊（ferrous S2tw 實測 byte-identical）。
 fn s2t(text: &str) -> String {
     static S2TW: std::sync::OnceLock<Option<ferrous_opencc::OpenCC>> = std::sync::OnceLock::new();
-    match S2TW.get_or_init(|| ferrous_opencc::OpenCC::from_config(ferrous_opencc::config::BuiltinConfig::S2tw).ok()) {
+    match S2TW
+        .get_or_init(|| ferrous_opencc::OpenCC::from_config(ferrous_opencc::config::BuiltinConfig::S2tw).ok())
+    {
         Some(cc) => cc.convert(text),
         None => text.to_string(), // 對齊 JS：轉換器掛了回原文
     }
@@ -73,15 +68,12 @@ async fn fetch_quote(state: &AppState, locale: &str) -> Option<(String, String)>
             let from_who = j.get("from_who").and_then(|v| v.as_str()).unwrap_or("");
             let from_src = j.get("from").and_then(|v| v.as_str()).unwrap_or("");
             // [from_who, from].filter(Boolean).join('「') + (both ? '」' : '')
-            let mut from = [from_who, from_src].iter().filter(|s| !s.is_empty()).copied().collect::<Vec<_>>().join("「");
+            let mut from =
+                [from_who, from_src].iter().filter(|s| !s.is_empty()).copied().collect::<Vec<_>>().join("「");
             if !from_who.is_empty() && !from_src.is_empty() {
                 from.push('」');
             }
-            if locale == "zh-TW" {
-                Some((s2t(&text), s2t(&from)))
-            } else {
-                Some((text, from))
-            }
+            if locale == "zh-TW" { Some((s2t(&text), s2t(&from))) } else { Some((text, from)) }
         }
         "en" => {
             let j = fetch_json(state, "https://zenquotes.io/api/today").await?;
@@ -143,9 +135,6 @@ pub async fn quote_daily(State(state): State<AppState>, Query(q): Query<QuoteQue
 }
 
 fn quote_resp(quote: Value) -> Response {
-    (
-        [(header::CACHE_CONTROL, "public, max-age=3600")],
-        Json(json!({ "message": "success", "quote": quote })),
-    )
+    ([(header::CACHE_CONTROL, "public, max-age=3600")], Json(json!({ "message": "success", "quote": quote })))
         .into_response()
 }

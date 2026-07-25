@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Query, State},
     Json,
+    extract::{Query, State},
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -122,13 +122,7 @@ pub async fn home_digest(
     .fetch_all(&state.pool)
     .await?;
 
-    Ok(Json(DigestResponse {
-        message: "success".to_string(),
-        posts,
-        thoughts,
-        comments,
-        timeline,
-    }))
+    Ok(Json(DigestResponse { message: "success".to_string(), posts, thoughts, comments, timeline }))
 }
 
 /// `GET /api/health` —— 純文字 `OK`（Express `res.status(200).send('OK')`）。

@@ -43,12 +43,7 @@ async fn main() -> anyhow::Result<()> {
         .create_if_missing(true)
         .foreign_keys(true);
     let pool = SqlitePoolOptions::new()
-        .max_connections(
-            env::var("DATABASE_MAX_CONNECTIONS")
-                .ok()
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(5),
-        )
+        .max_connections(env::var("DATABASE_MAX_CONNECTIONS").ok().and_then(|v| v.parse().ok()).unwrap_or(5))
         .connect_with(connect_opts)
         .await?;
 
@@ -57,9 +52,7 @@ async fn main() -> anyhow::Result<()> {
     // 對全新 DB / 測試 in-memory DB 建出完整 schema。
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let http = reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()?;
+    let http = reqwest::Client::builder().timeout(Duration::from_secs(30)).build()?;
 
     // JWT_SECRET（HS256 驗章）。fail-fast：沒設就不啟動。
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
@@ -81,13 +74,10 @@ async fn main() -> anyhow::Result<()> {
 
     let app = router::build_router(state);
 
-    let bind_addr =
-        env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3002".to_string());
+    let bind_addr = env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3002".to_string());
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
     tracing::info!("koimsurai-web-backend listening on http://{bind_addr}");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal()).await?;
 
     Ok(())
 }

@@ -6,10 +6,10 @@
 //! hash 2/5 byte 相同、3/5 差 ≤2 字元（±1 量化係數，解碼後模糊圖視覺零差異）。
 
 use axum::{
+    Json,
     extract::{FromRequest, Multipart, Request, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use base64::Engine;
 use rand::Rng;
@@ -53,7 +53,9 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
     let mut multipart = match Multipart::from_request(req, &state).await {
         Ok(m) => m,
         // 非 multipart body：multer 情境下 req.file undefined → 400
-        Err(_) => return (StatusCode::BAD_REQUEST, Json(json!({ "error": "No file uploaded" }))).into_response(),
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "No file uploaded" }))).into_response();
+        }
     };
     // multer.single('file')：只取 name=='file' 的欄位
     let mut file: Option<(String, String, Vec<u8>)> = None; // (original_name, mimetype, bytes)

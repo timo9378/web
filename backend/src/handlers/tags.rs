@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use serde::Serialize;
 use sqlx::FromRow;
 
@@ -49,8 +49,5 @@ pub async fn list_tags(State(state): State<AppState>) -> Result<Json<TagsRespons
     .fetch_all(&state.pool)
     .await?;
 
-    Ok(Json(TagsResponse {
-        message: "success",
-        tags,
-    }))
+    Ok(Json(TagsResponse { message: "success", tags }))
 }

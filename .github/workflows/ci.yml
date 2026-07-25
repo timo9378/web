@@ -58,13 +58,16 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
-          components: clippy
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: backend
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
           tool: cargo-nextest,cargo-audit,cargo-llvm-cov
+      # 格式守門（設定見 backend/rustfmt.toml：max_width 110 + 緊湊啟發式，貼近既有風格）
+      - name: cargo fmt --check
+        run: cargo fmt --check
       # --locked：CI 必須測「commit 進來的那組版本」，不允許靜默更新 Cargo.lock
       - name: clippy (-D warnings)
         run: cargo clippy --locked --all-targets -- -D warnings

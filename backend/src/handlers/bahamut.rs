@@ -3,8 +3,8 @@
 //! 設計：共享 `Arc<AniGamer>`（內部鎖），cookie 熱抽換走 `set_cookies`，不套外層鎖。
 
 use std::path::PathBuf;
-use std::sync::atomic::AtomicI64;
 use std::sync::Arc;
+use std::sync::atomic::AtomicI64;
 
 use anigamer::{AniGamer, ClientOptions, CookieJar};
 
@@ -13,9 +13,10 @@ use crate::state::BahamutState;
 /// cookie 持久化路徑：`BAHAMUT_COOKIE_FILE` env，否則 DATABASE_URL 同目錄 `.bahamut-cookie.json`。
 fn cookie_file_path(database_url: &str) -> PathBuf {
     if let Ok(p) = std::env::var("BAHAMUT_COOKIE_FILE")
-        && !p.is_empty() {
-            return PathBuf::from(p);
-        }
+        && !p.is_empty()
+    {
+        return PathBuf::from(p);
+    }
     let path = database_url.trim_start_matches("sqlite://");
     let dir = std::path::Path::new(path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
     dir.join(".bahamut-cookie.json")
@@ -24,9 +25,10 @@ fn cookie_file_path(database_url: &str) -> PathBuf {
 /// 啟動時：先吃檔（最新 rotated），沒有再 fallback env `BAHAMUT_COOKIE`。
 fn load_cookie(file: &PathBuf) -> CookieJar {
     if let Ok(content) = std::fs::read_to_string(file)
-        && let Ok(jar) = serde_json::from_str::<CookieJar>(&content) {
-            return jar;
-        }
+        && let Ok(jar) = serde_json::from_str::<CookieJar>(&content)
+    {
+        return jar;
+    }
     anigamer::parse_cookie_string(std::env::var("BAHAMUT_COOKIE").ok().as_deref())
 }
 
@@ -37,13 +39,12 @@ pub fn build_state(database_url: &str) -> Arc<BahamutState> {
     // rotation 守門：BAHARUNE 不見或非 JWT（不含 '.'）→ 不寫（別把好檔掏空成空 jar）。
     let client = AniGamer::new(ClientOptions::new(jar).on_cookies_rotated(Arc::new(move |jar| {
         let ok = jar.get("BAHARUNE").map(|b| b.contains('.')).unwrap_or(false);
-        if ok
-            && let Ok(json) = serde_json::to_string_pretty(jar) {
-                // callback 為同步簽名（crate 內 async 路徑呼叫）；3.5KB 寫檔亞毫秒，可接受
-                if let Err(e) = std::fs::write(&cf, json) {
-                    tracing::error!("[Bahamut] persist cookie fail: {e}");
-                }
+        if ok && let Ok(json) = serde_json::to_string_pretty(jar) {
+            // callback 為同步簽名（crate 內 async 路徑呼叫）；3.5KB 寫檔亞毫秒，可接受
+            if let Err(e) = std::fs::write(&cf, json) {
+                tracing::error!("[Bahamut] persist cookie fail: {e}");
             }
+        }
     })));
     Arc::new(BahamutState {
         client: Arc::new(client),
@@ -55,12 +56,12 @@ pub fn build_state(database_url: &str) -> Arc<BahamutState> {
 
 // ── 端點 + sync worker ────────────────────────────────────────────────────
 use axum::{
+    Json,
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
@@ -68,24 +69,28 @@ use crate::state::AppState;
 use crate::util::{bind_val, iso_from_millis};
 
 fn now_ms() -> i64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
 }
 
 /// bahamutPushAuth：X-Bahamut-Token（constant-time）或 admin JWT。
 async fn push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response> {
     if let Ok(token) = std::env::var("BAHAMUT_PUSH_TOKEN")
-        && !token.is_empty() {
-            let got = headers.get("X-Bahamut-Token").and_then(|v| v.to_str().ok()).unwrap_or("");
-            if got.len() == token.len() {
-                let mut d = 0u8;
-                for (a, b) in got.bytes().zip(token.bytes()) {
-                    d |= a ^ b;
-                }
-                if d == 0 {
-                    return Ok(());
-                }
+        && !token.is_empty()
+    {
+        let got = headers.get("X-Bahamut-Token").and_then(|v| v.to_str().ok()).unwrap_or("");
+        if got.len() == token.len() {
+            let mut d = 0u8;
+            for (a, b) in got.bytes().zip(token.bytes()) {
+                d |= a ^ b;
+            }
+            if d == 0 {
+                return Ok(());
             }
         }
+    }
     crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
 }
 
@@ -115,7 +120,11 @@ pub async fn status(State(state): State<AppState>, headers: HeaderMap) -> Respon
 /// `POST /api/admin/bahamut/cookie` —— 熱更新 cookie（jar 或 cookie 字串）+ 觸發同步。
 #[utoipa::path(post, path = "/api/admin/bahamut/cookie", tag = "admin", security(("bearer" = [])),
     responses((status = 200, description = "熱更新 cookie + 觸發同步（動態 JSON）"), (status = 400, description = "缺少或無效 cookie"), (status = 401, description = "未授權")))]
-pub async fn cookie(State(state): State<AppState>, headers: HeaderMap, Json(body): Json<Map<String, Value>>) -> Response {
+pub async fn cookie(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<Map<String, Value>>,
+) -> Response {
     if let Err(r) = push_auth(&headers, &state).await {
         return r;
     }
@@ -131,27 +140,36 @@ pub async fn cookie(State(state): State<AppState>, headers: HeaderMap, Json(body
     } else if let Some(s) = body.get("cookie").and_then(|v| v.as_str()) {
         anigamer::parse_cookie_string(Some(s))
     } else {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "ok": false, "message": "缺少 cookie 或 jar" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({ "ok": false, "message": "缺少 cookie 或 jar" })))
+            .into_response();
     };
 
     let (ok, missing) = anigamer::validate_bahamut_cookies(&jar);
     if !ok {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "ok": false, "message": "缺少必要 cookie", "missing": missing }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "ok": false, "message": "缺少必要 cookie", "missing": missing })),
+        )
+            .into_response();
     }
     // jwtStatus 用新 jar：先算再換（避免順序歧義）
     let js = jar.get("BAHARUNE").and_then(|b| anigamer::check_jwt_expiry_default(b));
     // 寫檔 + 熱抽換（內部短鎖，非換整個 client）
     if let Ok(json) = serde_json::to_string_pretty(&jar)
-        && let Err(e) = tokio::fs::write(&state.bahamut.cookie_file, json).await {
-            tracing::error!("[Bahamut] persist cookie fail: {e}");
-        }
+        && let Err(e) = tokio::fs::write(&state.bahamut.cookie_file, json).await
+    {
+        tracing::error!("[Bahamut] persist cookie fail: {e}");
+    }
     state.bahamut.client.set_cookies(jar);
     state.bahamut.last_jwt_alert_at.store(0, Ordering::Relaxed); // 換新 cookie → 重置告警節流
     tracing::info!("[Bahamut] cookie 經 endpoint 熱更新，觸發同步");
 
     let sync = sync_bahamut_history(&state).await;
     let (jwt_at, days) = match js {
-        Some(s) => (Value::from(iso_from_millis(s.expires_at_ms)), Value::from(s.seconds_until_expiry.div_euclid(86_400))),
+        Some(s) => (
+            Value::from(iso_from_millis(s.expires_at_ms)),
+            Value::from(s.seconds_until_expiry.div_euclid(86_400)),
+        ),
         None => (Value::Null, Value::Null),
     };
     Json(json!({ "ok": true, "jwtExpiresAt": jwt_at, "daysLeft": days, "sync": sync })).into_response()
@@ -199,13 +217,20 @@ async fn check_bahamut_jwt_expiry(state: &AppState) {
         return;
     }
     let Some(s) = state.bahamut.client.jwt_status() else { return };
-    tracing::info!("[Bahamut] JWT exp {} ({}d left)", iso_from_millis(s.expires_at_ms), s.seconds_until_expiry / 86400);
+    tracing::info!(
+        "[Bahamut] JWT exp {} ({}d left)",
+        iso_from_millis(s.expires_at_ms),
+        s.seconds_until_expiry / 86400
+    );
     if s.is_expired || s.seconds_until_expiry < JWT_WARN_THRESHOLD_SEC {
         let days = (s.seconds_until_expiry / 86400).max(0);
         let msg = if s.is_expired {
             "⚠️ **動畫瘋 cookie 已過期** — 觀看歷史同步停擺，請登入 ani.gamer.com.tw 重抓 cookie 更新 BAHAMUT_COOKIE".to_string()
         } else {
-            format!("⏳ **動畫瘋 cookie 剩 {days} 天到期**（{}）— 找時間登入 ani.gamer.com.tw 重抓 cookie", iso_from_millis(s.expires_at_ms))
+            format!(
+                "⏳ **動畫瘋 cookie 剩 {days} 天到期**（{}）— 找時間登入 ani.gamer.com.tw 重抓 cookie",
+                iso_from_millis(s.expires_at_ms)
+            )
         };
         maybe_alert_discord(state, &msg).await;
     }
@@ -313,7 +338,11 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
             tracing::error!("[Bahamut] sync error: {e}");
             let auth = matches!(&e, anigamer::Error::Api(a) if a.is_auth_error());
             if auth {
-                maybe_alert_discord(state, "⚠️ **動畫瘋 session 失效（NO_LOGIN）** — 請在動畫瘋分頁點瀏覽器擴充推一次新 cookie。").await;
+                maybe_alert_discord(
+                    state,
+                    "⚠️ **動畫瘋 session 失效（NO_LOGIN）** — 請在動畫瘋分頁點瀏覽器擴充推一次新 cookie。",
+                )
+                .await;
                 return json!({ "ok": false, "deadSession": true, "error": e.to_string() });
             }
             return json!({ "ok": false, "error": e.to_string() });
@@ -393,14 +422,16 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
             let ep_label = ep_re.captures(ep_title).and_then(|c| c.get(1)).map(|m| m.as_str().to_string());
             let watch_at = ep.get("watchTime").and_then(|v| v.as_str()).map(String::from);
 
-            let is_new = sqlx::query_scalar::<_, i64>("SELECT 1 FROM anime_history WHERE anime_sn = ? AND video_sn = ?")
-                .bind(entry.anime_sn)
-                .bind(video_sn)
-                .fetch_optional(&state.pool)
-                .await
-                .ok()
-                .flatten()
-                .is_none();
+            let is_new = sqlx::query_scalar::<_, i64>(
+                "SELECT 1 FROM anime_history WHERE anime_sn = ? AND video_sn = ?",
+            )
+            .bind(entry.anime_sn)
+            .bind(video_sn)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten()
+            .is_none();
             if is_new {
                 new_entries += 1;
             }
@@ -420,20 +451,28 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
             q = bind_val(q, ep_label_v.as_ref());
             q = bind_val(q, watch_at_v.as_ref());
             if let Err(e) = q.execute(&state.pool).await {
-                tracing::warn!("[Bahamut] upsert anime_history fail (sn={} ep={video_sn}): {e}", entry.anime_sn);
+                tracing::warn!(
+                    "[Bahamut] upsert anime_history fail (sn={} ep={video_sn}): {e}",
+                    entry.anime_sn
+                );
             }
             total += 1;
         }
     }
 
     enrich_null_anime(state).await;
-    tracing::info!("[Bahamut] sync done: {total} entries, {new_entries} new, {covers_fetched} covers ({} unique)", unique.len());
+    tracing::info!(
+        "[Bahamut] sync done: {total} entries, {new_entries} new, {covers_fetched} covers ({} unique)",
+        unique.len()
+    );
     json!({ "ok": true, "totalEntries": total, "newEntries": new_entries, "coversFetched": covers_fetched })
 }
 
 /// 啟動 bahamut 同步 worker（`ENABLE_BAHAMUT_SYNC=1` 才啟動；30s 首跑 + 6h 週期）。
 pub fn spawn_sync(state: AppState) {
-    let enabled = std::env::var("ENABLE_BAHAMUT_SYNC").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
+    let enabled = std::env::var("ENABLE_BAHAMUT_SYNC")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
     if !enabled {
         tracing::info!("[Bahamut] sync worker disabled (ENABLE_BAHAMUT_SYNC unset) — Express cron 仍為寫者");
         return;

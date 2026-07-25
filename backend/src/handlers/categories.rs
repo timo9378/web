@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use serde::Serialize;
 use sqlx::FromRow;
 
@@ -30,9 +30,7 @@ pub struct CategoriesResponse {
 /// `GET /api/categories` —— 公開純讀。SQL 逐字照抄 Express。
 #[utoipa::path(get, path = "/api/categories", tag = "categories",
     responses((status = 200, body = CategoriesResponse)))]
-pub async fn list_categories(
-    State(state): State<AppState>,
-) -> Result<Json<CategoriesResponse>, AppError> {
+pub async fn list_categories(State(state): State<AppState>) -> Result<Json<CategoriesResponse>, AppError> {
     let categories = sqlx::query_as::<_, CategoryRow>(
         r#"
         SELECT
@@ -54,8 +52,5 @@ pub async fn list_categories(
     .fetch_all(&state.pool)
     .await?;
 
-    Ok(Json(CategoriesResponse {
-        message: "success",
-        categories,
-    }))
+    Ok(Json(CategoriesResponse { message: "success", categories }))
 }

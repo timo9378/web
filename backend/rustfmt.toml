@@ -1,0 +1,4 @@
+# 貼近既有風格：這份 code 是刻意寫緊湊的（單行 struct literal、較寬的行、對齊的中文註解），
+# rustfmt 預設會把它全部拆開。這兩個設定讓 fmt gate 的重排幅度最小化。
+max_width = 110
+use_small_heuristics = "Max"

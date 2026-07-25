@@ -6,13 +6,13 @@
 use std::sync::atomic::Ordering;
 
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use sqlx::FromRow;
 
 use crate::handlers::admin::bind_num;
@@ -174,11 +174,12 @@ pub async fn films_recent(State(state): State<AppState>, Query(q): Query<LimitQu
             for f in films.iter_mut() {
                 if f.poster_url.as_deref().unwrap_or("").is_empty()
                     && let Some(id) = f.tmdb_id
-                        && let Some(dd) = tmdb_detail(&state, "movie", &Value::from(id), "zh-TW").await {
-                            let get = |k: &str| dd.get(k).and_then(|v| v.as_str().map(String::from));
-                            f.poster_url = get("poster_url"); // w342 給小卡
-                            f.backdrop_url = get("backdrop_url"); // 橫式原圖給「最近看完」hero
-                        }
+                    && let Some(dd) = tmdb_detail(&state, "movie", &Value::from(id), "zh-TW").await
+                {
+                    let get = |k: &str| dd.get(k).and_then(|v| v.as_str().map(String::from));
+                    f.poster_url = get("poster_url"); // w342 給小卡
+                    f.backdrop_url = get("backdrop_url"); // 橫式原圖給「最近看完」hero
+                }
             }
             Json(FilmsResponse { message: "success".into(), films }).into_response()
         }
@@ -388,7 +389,11 @@ pub struct TmdbSearchQuery {
 /// `GET /api/watch/tmdb-search`（requireAdmin）。
 #[utoipa::path(get, path = "/api/watch/tmdb-search", tag = "watch", security(("bearer" = [])),
     responses((status = 200, description = "TMDb 搜尋結果（動態 JSON）"), (status = 401, description = "未授權")))]
-pub async fn tmdb_search(State(state): State<AppState>, headers: HeaderMap, Query(qq): Query<TmdbSearchQuery>) -> Response {
+pub async fn tmdb_search(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(qq): Query<TmdbSearchQuery>,
+) -> Response {
     if let Err(e) = crate::auth::require_admin(&headers, &state).await {
         return e.into_response();
     }
@@ -398,7 +403,8 @@ pub async fn tmdb_search(State(state): State<AppState>, headers: HeaderMap, Quer
         return Json(json!({ "message": "success", "results": [] })).into_response();
     }
     let Some(token) = std::env::var("TMDB_API_TOKEN").ok().filter(|s| !s.is_empty()) else {
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "TMDB_API_TOKEN 未設定" }))).into_response();
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "TMDB_API_TOKEN 未設定" })))
+            .into_response();
     };
     let r: Result<Value, String> = async {
         let resp = state
@@ -413,7 +419,8 @@ pub async fn tmdb_search(State(state): State<AppState>, headers: HeaderMap, Quer
             .await
             .map_err(|e| e.to_string())?;
         // Express 不看狀態碼、直接 parse（parse 失敗 → catch）
-        let mut v: Value = serde_json::from_str(&resp.text().await.map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+        let mut v: Value = serde_json::from_str(&resp.text().await.map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
         js_normalize_numbers(&mut v);
         Ok(v)
     }
@@ -472,11 +479,7 @@ fn clamp_rating(v: &Value) -> Option<f64> {
         }
         _ => f64::NAN,
     };
-    if n.is_nan() {
-        None
-    } else {
-        Some(n.clamp(1.0, 5.0))
-    }
+    if n.is_nan() { None } else { Some(n.clamp(1.0, 5.0)) }
 }
 
 /// `POST /api/watch/favorites`（requireAdmin）。
@@ -495,8 +498,10 @@ pub async fn create_favorite(
     }
     let tmdb_id = b.get("tmdbId").cloned().unwrap_or(Value::Null);
     let kind = if b.get("kind").and_then(|v| v.as_str()) == Some("tv") { "tv" } else { "film" };
-    let rating_v = if b.contains_key("rating") { b.get("rating").cloned().unwrap_or(Value::Null) } else { json!(5) };
-    let quote_v = if b.contains_key("quote") { b.get("quote").cloned().unwrap_or(Value::Null) } else { json!("") };
+    let rating_v =
+        if b.contains_key("rating") { b.get("rating").cloned().unwrap_or(Value::Null) } else { json!(5) };
+    let quote_v =
+        if b.contains_key("quote") { b.get("quote").cloned().unwrap_or(Value::Null) } else { json!("") };
     let d = tmdb_detail(&state, kind, &tmdb_id, "zh-TW").await;
 
     let max_order = sqlx::query_scalar::<_, Option<i64>>("SELECT MAX(sort_order) AS m FROM watch_favorites")
@@ -572,7 +577,11 @@ pub async fn update_favorite(
 #[utoipa::path(delete, path = "/api/watch/favorites/{id}", tag = "watch", security(("bearer" = [])),
     params(("id" = String, Path)),
     responses((status = 200, description = "刪除收藏（動態 JSON）"), (status = 401, description = "未授權")))]
-pub async fn delete_favorite(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_favorite(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = crate::auth::require_admin(&headers, &state).await {
         return e.into_response();
     }
@@ -603,12 +612,13 @@ fn timing_safe_eq(a: &[u8], b: &[u8]) -> bool {
 /// bahamutPushAuth：X-Bahamut-Token（constant-time）或 admin JWT。
 async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response> {
     if let Ok(token) = std::env::var("BAHAMUT_PUSH_TOKEN")
-        && !token.is_empty() {
-            let got = headers.get("X-Bahamut-Token").and_then(|v| v.to_str().ok()).unwrap_or("");
-            if timing_safe_eq(got.as_bytes(), token.as_bytes()) {
-                return Ok(());
-            }
+        && !token.is_empty()
+    {
+        let got = headers.get("X-Bahamut-Token").and_then(|v| v.to_str().ok()).unwrap_or("");
+        if timing_safe_eq(got.as_bytes(), token.as_bytes()) {
+            return Ok(());
         }
+    }
     crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
 }
 
@@ -633,7 +643,11 @@ fn tmdb_url_for(kind: &str, id: &Value) -> Value {
 /// `POST /api/admin/watch/now`（bahamutPushAuth）—— 動畫瘋擴充 heartbeat。
 #[utoipa::path(post, path = "/api/admin/watch/now", tag = "admin", security(("bearer" = [])),
     responses((status = 200, description = "動畫瘋 heartbeat（動態 JSON）"), (status = 401, description = "未授權")))]
-pub async fn heartbeat(State(state): State<AppState>, headers: HeaderMap, Json(b): Json<Map<String, Value>>) -> Response {
+pub async fn heartbeat(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(b): Json<Map<String, Value>>,
+) -> Response {
     if let Err(resp) = bahamut_push_auth(&headers, &state).await {
         return resp;
     }
@@ -674,7 +688,11 @@ pub async fn heartbeat(State(state): State<AppState>, headers: HeaderMap, Json(b
         }
     }
     let Some(title) = title else {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "ok": false, "message": "need title or known videoSn" }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "ok": false, "message": "need title or known videoSn" })),
+        )
+            .into_response();
     };
     let now = now_ms();
     let progress = b
@@ -721,9 +739,10 @@ pub async fn heartbeat(State(state): State<AppState>, headers: HeaderMap, Json(b
 
 fn trakt_token_file() -> String {
     if let Ok(p) = std::env::var("TRAKT_TOKEN_FILE")
-        && !p.is_empty() {
-            return p;
-        }
+        && !p.is_empty()
+    {
+        return p;
+    }
     // 預設：與 DATABASE_URL 同目錄（sqlite:///path/db.sqlite → /path/.trakt-token.json）
     let url = std::env::var("DATABASE_URL").unwrap_or_default();
     let path = url.trim_start_matches("sqlite://");
@@ -860,7 +879,9 @@ async fn poll_trakt_watching(state: &AppState) {
         // 要等 6h 的 worker）。idempotent（INSERT OR IGNORE）、只在轉換當下觸發一次。
         if was_watching {
             let st = state.clone();
-            tokio::spawn(async move { sync_trakt_history(&st).await; });
+            tokio::spawn(async move {
+                sync_trakt_history(&st).await;
+            });
         }
     };
     let access = tok.get("access_token").and_then(|v| v.as_str()).unwrap_or("");
@@ -885,45 +906,38 @@ async fn poll_trakt_watching(state: &AppState) {
     let Ok(mut d) = serde_json::from_str::<Value>(&text) else { return };
     js_normalize_numbers(&mut d);
 
-    let (kind, title, tmdb_id, episode): (&str, Value, Value, Value) = if d.get("type").and_then(|v| v.as_str()) == Some("movie")
-        && d.get("movie").is_some_and(|m| !m.is_null())
-    {
-        (
-            "movie",
-            d.pointer("/movie/title").cloned().unwrap_or(Value::Null),
-            d.pointer("/movie/ids/tmdb").filter(|v| js_truthy(Some(v))).cloned().unwrap_or(Value::Null),
-            Value::Null,
-        )
-    } else if d.get("type").and_then(|v| v.as_str()) == Some("episode")
-        && d.get("show").is_some_and(|m| !m.is_null())
-        && d.get("episode").is_some_and(|m| !m.is_null())
-    {
-        let season = d.pointer("/episode/season").and_then(|v| v.as_i64()).unwrap_or(0);
-        let number = d.pointer("/episode/number").and_then(|v| v.as_i64()).unwrap_or(0);
-        (
-            "tv",
-            d.pointer("/show/title").cloned().unwrap_or(Value::Null),
-            d.pointer("/show/ids/tmdb").filter(|v| js_truthy(Some(v))).cloned().unwrap_or(Value::Null),
-            Value::from(format!("S{season:02}E{number:02}")),
-        )
-    } else {
-        clear_trakt(state);
-        return;
-    };
+    let (kind, title, tmdb_id, episode): (&str, Value, Value, Value) =
+        if d.get("type").and_then(|v| v.as_str()) == Some("movie")
+            && d.get("movie").is_some_and(|m| !m.is_null())
+        {
+            (
+                "movie",
+                d.pointer("/movie/title").cloned().unwrap_or(Value::Null),
+                d.pointer("/movie/ids/tmdb").filter(|v| js_truthy(Some(v))).cloned().unwrap_or(Value::Null),
+                Value::Null,
+            )
+        } else if d.get("type").and_then(|v| v.as_str()) == Some("episode")
+            && d.get("show").is_some_and(|m| !m.is_null())
+            && d.get("episode").is_some_and(|m| !m.is_null())
+        {
+            let season = d.pointer("/episode/season").and_then(|v| v.as_i64()).unwrap_or(0);
+            let number = d.pointer("/episode/number").and_then(|v| v.as_i64()).unwrap_or(0);
+            (
+                "tv",
+                d.pointer("/show/title").cloned().unwrap_or(Value::Null),
+                d.pointer("/show/ids/tmdb").filter(|v| js_truthy(Some(v))).cloned().unwrap_or(Value::Null),
+                Value::from(format!("S{season:02}E{number:02}")),
+            )
+        } else {
+            clear_trakt(state);
+            return;
+        };
 
     let now = now_ms();
     // Date.parse(ISO8601) — 用簡化 parser（Trakt 回 RFC3339）
-    let started = d
-        .get("started_at")
-        .and_then(|v| v.as_str())
-        .and_then(parse_rfc3339_ms)
-        .unwrap_or(now);
+    let started = d.get("started_at").and_then(|v| v.as_str()).and_then(parse_rfc3339_ms).unwrap_or(now);
     // tmdb_detail 一次拿 cover + runtime（快取；無 token/失敗 → None）。
-    let dd = if js_truthy(Some(&tmdb_id)) {
-        tmdb_detail(state, kind, &tmdb_id, "zh-TW").await
-    } else {
-        None
-    };
+    let dd = if js_truthy(Some(&tmdb_id)) { tmdb_detail(state, kind, &tmdb_id, "zh-TW").await } else { None };
     // cover：Trakt 不回海報 → 用 TMDb 圖。「正在看」是橫式 hero → 優先 backdrop（橫式劇照
     // original 解析）；沒 backdrop 才退 poster（換 original）。w342 只留給 favorites 小卡。
     let cover = dd
@@ -940,7 +954,8 @@ async fn poll_trakt_watching(state: &AppState) {
     // 都有 → (expires-runtime, expires)；缺 runtime → Trakt started/expires；缺 expires → started+runtime；
     // 都缺 → 無進度。startedAt/endsAt 一起給前端做 client 端插值（本地 timer 平滑推進）。
     let trakt_expires = d.get("expires_at").and_then(|v| v.as_str()).and_then(parse_rfc3339_ms);
-    let runtime_ms = dd.as_ref().and_then(|d| d.get("runtime_min").and_then(|v| v.as_i64())).map(|m| m * 60_000);
+    let runtime_ms =
+        dd.as_ref().and_then(|d| d.get("runtime_min").and_then(|v| v.as_i64())).map(|m| m * 60_000);
     let (started, ends) = match (trakt_expires, runtime_ms) {
         (Some(e), Some(r)) => (e - r, e),
         (Some(e), None) => (started, e),
@@ -1001,11 +1016,7 @@ fn parse_rfc3339_ms(s: &str) -> Option<i64> {
     responses((status = 200, description = "目前正在看（動態 JSON）")))]
 pub async fn watch_now(State(state): State<AppState>) -> Response {
     let cur = current_now_watching(&state);
-    let is_baha = cur
-        .as_ref()
-        .and_then(|w| w.get("source"))
-        .and_then(|s| s.as_str())
-        == Some("bahamut");
+    let is_baha = cur.as_ref().and_then(|w| w.get("source")).and_then(|s| s.as_str()) == Some("bahamut");
     if !is_baha && now_ms() - state.watch.last_trakt_poll.load(Ordering::Relaxed) > TRAKT_POLL_MIN_MS {
         poll_trakt_watching(&state).await;
     }
@@ -1054,11 +1065,7 @@ async fn trakt_get_paged(state: &AppState, tok: &Value, path: &str) -> Option<(V
 /// Trakt watched_at 清理：epoch 假日期（<=1970-01-02）當無日期存 NULL。
 fn clean_watched_date(raw: Option<&str>) -> Option<String> {
     let d: String = raw.unwrap_or("").chars().take(10).collect();
-    if d.is_empty() || d.as_str() <= "1970-01-02" {
-        None
-    } else {
-        Some(d)
-    }
+    if d.is_empty() || d.as_str() <= "1970-01-02" { None } else { Some(d) }
 }
 
 async fn sync_trakt_history(state: &AppState) {
@@ -1073,7 +1080,9 @@ async fn sync_trakt_history(state: &AppState) {
     // movies
     let mut page = 1i64;
     loop {
-        let Some((data, pagecount)) = trakt_get_paged(state, &tok, &format!("/sync/history/movies?page={page}&limit=100")).await else {
+        let Some((data, pagecount)) =
+            trakt_get_paged(state, &tok, &format!("/sync/history/movies?page={page}&limit=100")).await
+        else {
             tracing::error!("[Trakt] sync error (movies page {page})");
             return;
         };
@@ -1102,15 +1111,16 @@ async fn sync_trakt_history(state: &AppState) {
     // tv episodes
     let mut page = 1i64;
     loop {
-        let Some((data, pagecount)) = trakt_get_paged(state, &tok, &format!("/sync/history/episodes?page={page}&limit=100")).await else {
+        let Some((data, pagecount)) =
+            trakt_get_paged(state, &tok, &format!("/sync/history/episodes?page={page}&limit=100")).await
+        else {
             tracing::error!("[Trakt] sync error (episodes page {page})");
             return;
         };
         for item in data.as_array().map(|a| a.as_slice()).unwrap_or(&[]) {
-            let (Some(ep), Some(show)) = (
-                item.get("episode").filter(|v| !v.is_null()),
-                item.get("show").filter(|v| !v.is_null()),
-            ) else {
+            let (Some(ep), Some(show)) =
+                (item.get("episode").filter(|v| !v.is_null()), item.get("show").filter(|v| !v.is_null()))
+            else {
                 continue;
             };
             let watched = clean_watched_date(item.get("watched_at").and_then(|v| v.as_str()));

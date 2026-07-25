@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, Request, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
 use base64::Engine;
@@ -54,11 +54,13 @@ fn wrap_title(title: &str, max_chars_per_line: usize, max_lines: usize) -> Vec<S
         out.push(line);
     }
     let joined16: usize = out.iter().map(|l| l.encode_utf16().count()).sum();
-    if out.len() == max_lines && t_len16 > joined16
-        && let Some(last) = out.last_mut() {
-            let truncated = crate::util::js_substring_prefix(last, max_chars_per_line - 1);
-            *last = format!("{truncated}…");
-        }
+    if out.len() == max_lines
+        && t_len16 > joined16
+        && let Some(last) = out.last_mut()
+    {
+        let truncated = crate::util::js_substring_prefix(last, max_chars_per_line - 1);
+        *last = format!("{truncated}…");
+    }
     out
 }
 
@@ -166,30 +168,28 @@ pub async fn og_png(State(state): State<AppState>, Path(file): Path<String>, req
     };
     let title = title.unwrap_or_default();
     // cacheKey = `${id}::${updated_at || created_at}::${title}`（js truthy：空字串也 fallback）
-    let stamp = updated_at
-        .filter(|s| !s.is_empty())
-        .or(created_at.clone())
-        .unwrap_or_default();
+    let stamp = updated_at.filter(|s| !s.is_empty()).or(created_at.clone()).unwrap_or_default();
     let cache_key = format!("{post_id}::{stamp}::{title}");
 
     let og = og_state();
     {
         let cache = og.cache.lock();
         if let Some(c) = cache.get(&post_id)
-            && c.key == cache_key {
-                if inm.as_deref() == Some(c.etag.as_str()) {
-                    return StatusCode::NOT_MODIFIED.into_response();
-                }
-                return (
-                    [
-                        (header::CONTENT_TYPE, "image/png".to_string()),
-                        (header::ETAG, c.etag.clone()),
-                        (header::CACHE_CONTROL, "public, max-age=300, s-maxage=86400".to_string()),
-                    ],
-                    c.png.as_ref().clone(),
-                )
-                    .into_response();
+            && c.key == cache_key
+        {
+            if inm.as_deref() == Some(c.etag.as_str()) {
+                return StatusCode::NOT_MODIFIED.into_response();
             }
+            return (
+                [
+                    (header::CONTENT_TYPE, "image/png".to_string()),
+                    (header::ETAG, c.etag.clone()),
+                    (header::CACHE_CONTROL, "public, max-age=300, s-maxage=86400".to_string()),
+                ],
+                c.png.as_ref().clone(),
+            )
+                .into_response();
+        }
     }
 
     // date = (created_at || '').slice(0,10)

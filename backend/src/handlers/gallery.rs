@@ -2,14 +2,14 @@
 //! `/gallery/photos`＝讀 manifest.json；`/image-proxy`＝純串流代理（Express 用 axios pipe，無 sharp）。
 
 use axum::{
+    Json,
     body::Body,
     extract::{Query, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::state::AppState;
 
@@ -30,7 +30,11 @@ pub async fn gallery_photos() -> Response {
         Ok(data) => match serde_json::from_str::<Value>(&data) {
             Ok(manifest) => Json(manifest).into_response(),
             // JSON.parse 失敗在 Express 落到非 ENOENT 分支 → 500
-            Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Failed to read gallery manifest" }))).into_response(),
+            Err(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": "Failed to read gallery manifest" })),
+            )
+                .into_response(),
         },
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             // 無 manifest → 空結構（generatedAt=當下時間，非決定性欄位）
@@ -48,7 +52,10 @@ pub async fn gallery_photos() -> Response {
             }))
             .into_response()
         }
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Failed to read gallery manifest" }))).into_response(),
+        Err(_) => {
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Failed to read gallery manifest" })))
+                .into_response()
+        }
     }
 }
 
@@ -88,9 +95,10 @@ pub async fn image_proxy(State(state): State<AppState>, Query(q): Query<ImagePro
         // axios 預設非 2xx 會 throw → 走 catch 回 500；reqwest 不 throw，手動對齊
         Ok(r) if r.status().is_success() => {
             if let Some(addr) = r.remote_addr()
-                && crate::net_guard::is_blocked_ip(&addr.ip()) {
-                    return bad_request("Invalid image URL");
-                }
+                && crate::net_guard::is_blocked_ip(&addr.ip())
+            {
+                return bad_request("Invalid image URL");
+            }
             if r.content_length().is_some_and(|len| len > MAX_PROXY_BYTES) {
                 return bad_request("Image too large");
             }
@@ -133,13 +141,20 @@ use axum::http::HeaderMap;
 use serde_json::Map;
 
 fn gallery_source_path() -> std::path::PathBuf {
-    std::env::var("GALLERY_SOURCE_PATH").map(Into::into).unwrap_or_else(|_| "/usr/src/app/storage/Blog_Source".into())
+    std::env::var("GALLERY_SOURCE_PATH")
+        .map(Into::into)
+        .unwrap_or_else(|_| "/usr/src/app/storage/Blog_Source".into())
 }
 fn gallery_output_dir() -> std::path::PathBuf {
-    std::env::var("GALLERY_OUTPUT_DIR").map(Into::into).unwrap_or_else(|_| "/usr/src/app/storage/gallery".into())
+    std::env::var("GALLERY_OUTPUT_DIR")
+        .map(Into::into)
+        .unwrap_or_else(|_| "/usr/src/app/storage/gallery".into())
 }
 fn photo_tagger_url() -> String {
-    std::env::var("PHOTO_TAGGER_URL").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "http://photo-tagger:8000".into())
+    std::env::var("PHOTO_TAGGER_URL")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "http://photo-tagger:8000".into())
 }
 
 /// 目錄排除：`/(@eaDir|\.DS_Store|thumbs|cache|gallery)/i` —— 子字串、不分大小寫（照抄）。
@@ -194,26 +209,30 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
         Err(_) => return (None, orientation),
     };
     if let Some(f) = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY)
-        && let Some(v) = f.value.get_uint(0) {
-            orientation = v;
-        }
+        && let Some(v) = f.value.get_uint(0)
+    {
+        orientation = v;
+    }
     let mut m = Map::new();
     let ascii = |tag: exif::Tag| -> Option<String> {
         exif.get_field(tag, exif::In::PRIMARY).and_then(|f| match &f.value {
-            exif::Value::Ascii(v) => v.first().map(|b| String::from_utf8_lossy(b).trim_end_matches('\0').trim().to_string()),
+            exif::Value::Ascii(v) => {
+                v.first().map(|b| String::from_utf8_lossy(b).trim_end_matches('\0').trim().to_string())
+            }
             _ => None,
         })
     };
     // 數字：exifr 給 JS number → 整值輸出整數（js_normalize 語意）
     let num = |tag: exif::Tag| -> Option<Value> {
-        exif.get_field(tag, exif::In::PRIMARY).and_then(|f| match &f.value {
-            exif::Value::Rational(v) => v.first().map(|r| r.to_f64()),
-            exif::Value::SRational(v) => v.first().map(|r| r.to_f64()),
-            exif::Value::Short(v) => v.first().map(|&x| x as f64),
-            exif::Value::Long(v) => v.first().map(|&x| x as f64),
-            _ => None,
-        })
-        .map(|f| if f.fract() == 0.0 && f.abs() < 9e15 { Value::from(f as i64) } else { Value::from(f) })
+        exif.get_field(tag, exif::In::PRIMARY)
+            .and_then(|f| match &f.value {
+                exif::Value::Rational(v) => v.first().map(|r| r.to_f64()),
+                exif::Value::SRational(v) => v.first().map(|r| r.to_f64()),
+                exif::Value::Short(v) => v.first().map(|&x| x as f64),
+                exif::Value::Long(v) => v.first().map(|&x| x as f64),
+                _ => None,
+            })
+            .map(|f| if f.fract() == 0.0 && f.abs() < 9e15 { Value::from(f as i64) } else { Value::from(f) })
     };
     if let Some(v) = ascii(exif::Tag::Make) {
         m.insert("make".into(), Value::from(v));
@@ -242,13 +261,17 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
     // DateTimeOriginal："2023:04:27 10:56:22"——exifr 以**容器本地時區**（TZ=Asia/Taipei）
     // 解析再 toISOString（UTC）→ chrono 同語意：naive → Local → UTC ISO。
     if let Some(v) = ascii(exif::Tag::DateTimeOriginal)
-        && let Ok(naive) = chrono::NaiveDateTime::parse_from_str(&v, "%Y:%m:%d %H:%M:%S") {
-            use chrono::TimeZone;
-            if let chrono::LocalResult::Single(local) = chrono::Local.from_local_datetime(&naive) {
-                let utc = local.with_timezone(&chrono::Utc);
-                m.insert("DateTimeOriginal".into(), Value::from(utc.format("%Y-%m-%dT%H:%M:%S.000Z").to_string()));
-            }
+        && let Ok(naive) = chrono::NaiveDateTime::parse_from_str(&v, "%Y:%m:%d %H:%M:%S")
+    {
+        use chrono::TimeZone;
+        if let chrono::LocalResult::Single(local) = chrono::Local.from_local_datetime(&naive) {
+            let utc = local.with_timezone(&chrono::Utc);
+            m.insert(
+                "DateTimeOriginal".into(),
+                Value::from(utc.format("%Y-%m-%dT%H:%M:%S.000Z").to_string()),
+            );
         }
+    }
     let e = if m.is_empty() { None } else { Some(m) };
     (e, orientation)
 }
@@ -271,7 +294,11 @@ struct Processed {
 }
 
 /// `processSingleGalleryImage`：rotate → 雙輸出 webp（1920 q85 / 400 q80）→ 原檔尺寸 + EXIF。
-fn process_single_image(source: &std::path::Path, full_out: &std::path::Path, thumb_out: &std::path::Path) -> anyhow::Result<Processed> {
+fn process_single_image(
+    source: &std::path::Path,
+    full_out: &std::path::Path,
+    thumb_out: &std::path::Path,
+) -> anyhow::Result<Processed> {
     let bytes = std::fs::read(source)?;
     let (exif_map, orientation) = extract_exif(&bytes);
     let img = image::load_from_memory(&bytes)?; // failOn:'none' ≈ 盡量解
@@ -306,7 +333,8 @@ fn process_single_image(source: &std::path::Path, full_out: &std::path::Path, th
 
 /// `tagPhoto`：POST {path} → {zh_tw,en}。失敗 None（不擋 sync）。
 async fn tag_photo(state: &AppState, tagger_path: &str) -> Option<(Vec<Value>, Vec<Value>)> {
-    let timeout_ms: u64 = std::env::var("PHOTO_TAGGER_TIMEOUT_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(25000);
+    let timeout_ms: u64 =
+        std::env::var("PHOTO_TAGGER_TIMEOUT_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(25000);
     let resp = state
         .http
         .post(format!("{}/tag", photo_tagger_url()))
@@ -334,7 +362,11 @@ pub async fn gallery_sync(State(state): State<AppState>, headers: HeaderMap) -> 
         return e.into_response();
     }
     let Ok(_guard) = GALLERY_SYNC_LOCK.try_lock() else {
-        return (StatusCode::CONFLICT, Json(serde_json::json!({ "error": "Gallery sync is already running" }))).into_response();
+        return (
+            StatusCode::CONFLICT,
+            Json(serde_json::json!({ "error": "Gallery sync is already running" })),
+        )
+            .into_response();
     };
     match sync_gallery_manifest(&state).await {
         Ok(result) => {
@@ -345,7 +377,8 @@ pub async fn gallery_sync(State(state): State<AppState>, headers: HeaderMap) -> 
             }
             Json(Value::Object(out)).into_response()
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": e.to_string() }))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": e.to_string() })))
+            .into_response(),
     }
 }
 
@@ -360,16 +393,20 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     let manifest_file = output_dir.join("manifest.json");
 
     // readGalleryManifestSafe
-    let (version, existing_photos): (Value, Vec<Value>) = match tokio::fs::read_to_string(&manifest_file).await {
-        Ok(raw) => match serde_json::from_str::<Value>(&raw) {
-            Ok(p) => (
-                p.get("version").filter(|v| crate::util::js_truthy(Some(v))).cloned().unwrap_or_else(|| Value::from("1.0")),
-                p.get("photos").and_then(|v| v.as_array()).cloned().unwrap_or_default(),
-            ),
+    let (version, existing_photos): (Value, Vec<Value>) =
+        match tokio::fs::read_to_string(&manifest_file).await {
+            Ok(raw) => match serde_json::from_str::<Value>(&raw) {
+                Ok(p) => (
+                    p.get("version")
+                        .filter(|v| crate::util::js_truthy(Some(v)))
+                        .cloned()
+                        .unwrap_or_else(|| Value::from("1.0")),
+                    p.get("photos").and_then(|v| v.as_array()).cloned().unwrap_or_default(),
+                ),
+                Err(_) => (Value::from("1.0"), vec![]),
+            },
             Err(_) => (Value::from("1.0"), vec![]),
-        },
-        Err(_) => (Value::from("1.0"), vec![]),
-    };
+        };
     let existing_by_id: std::collections::HashMap<String, &Value> = existing_photos
         .iter()
         .filter_map(|p| p.get("id").and_then(|v| v.as_str()).map(|id| (id.to_string(), p)))
@@ -398,11 +435,13 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
 
         // skip：existing 有且兩個輸出檔都在（exists 為快速 stat，容忍在 async 內）
         if let Some(ex) = existing
-            && full_out.exists() && thumb_out.exists() {
-                next_photos.push(ex.clone());
-                skipped += 1;
-                continue;
-            }
+            && full_out.exists()
+            && thumb_out.exists()
+        {
+            next_photos.push(ex.clone());
+            skipped += 1;
+            continue;
+        }
 
         let sp = source_path.clone();
         let (fo, to) = (full_out.clone(), thumb_out.clone());
@@ -466,8 +505,10 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
                 photo.remove("exif");
             }
         }
-        let tags = existing.and_then(|e| e.get("tags")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
-        let tags_en = existing.and_then(|e| e.get("tagsEn")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
+        let tags =
+            existing.and_then(|e| e.get("tags")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
+        let tags_en =
+            existing.and_then(|e| e.get("tagsEn")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
         photo.insert("tags".into(), Value::Array(tags));
         photo.insert("tagsEn".into(), Value::Array(tags_en));
         next_photos.push(Value::Object(photo));
@@ -484,18 +525,22 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         }
         let id = p.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
         if let Some((zh, en)) = tag_photo(state, &format!("{tagger_prefix}/{id}.webp")).await
-            && (!zh.is_empty() || !en.is_empty()) {
-                if let Some(obj) = p.as_object_mut() {
-                    obj.insert("tags".into(), Value::Array(zh));
-                    obj.insert("tagsEn".into(), Value::Array(en));
-                }
-                tagged += 1;
+            && (!zh.is_empty() || !en.is_empty())
+        {
+            if let Some(obj) = p.as_object_mut() {
+                obj.insert("tags".into(), Value::Array(zh));
+                obj.insert("tagsEn".into(), Value::Array(en));
             }
+            tagged += 1;
+        }
     }
 
     // manifest 寫檔（JSON.stringify(manifest, null, 2)）
     let generated_at = crate::util::iso_from_millis(
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0),
     );
     let total_photos = next_photos.len();
     let mut manifest = Map::new();

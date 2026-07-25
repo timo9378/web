@@ -2,7 +2,11 @@
 //! 行為清理註記：Express 的 `new Date(created_at)`（無 'Z'）在 TZ=Asia/Taipei 下把 DB 的
 //! UTC 時間誤當本地時間（pubDate 偏 8h）；此處採正確版（當 UTC 解析），退役後無對拍對象。
 
-use axum::{extract::State, http::header, response::{IntoResponse, Response}};
+use axum::{
+    extract::State,
+    http::header,
+    response::{IntoResponse, Response},
+};
 
 use crate::state::AppState;
 use crate::util::{js_date_to_utc_string, js_substring_prefix};
@@ -15,8 +19,21 @@ fn esc_xml(s: &str) -> String {
 #[utoipa::path(get, path = "/rss", tag = "misc",
     responses((status = 200, description = "全站 RSS feed（XML）")))]
 pub async fn site_rss(State(state): State<AppState>) -> Response {
-    let site_url = std::env::var("SITE_URL").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "https://koimsurai.com".into());
-    type Row = (i64, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>);
+    let site_url = std::env::var("SITE_URL")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "https://koimsurai.com".into());
+    type Row = (
+        i64,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+    );
     let rows = sqlx::query_as::<_, Row>(
         "SELECT p.id, p.title, p.excerpt, p.content, p.created_at, p.updated_at, p.author, p.category, \
                 GROUP_CONCAT(t.name) as tags \
@@ -36,7 +53,7 @@ pub async fn site_rss(State(state): State<AppState>) -> Response {
                 [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
                 "Internal Server Error",
             )
-                .into_response()
+                .into_response();
         }
     };
 

@@ -1,5 +1,5 @@
-use axum::http::{header, HeaderMap};
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use axum::http::{HeaderMap, header};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::Deserialize;
 
 use crate::{error::AppError, state::AppState};
@@ -34,10 +34,7 @@ pub fn verify_jwt(token: &str, secret: &str) -> Option<serde_json::Value> {
 
 /// 從 `Authorization` header 取 Bearer token（沒有則 None）。
 pub fn bearer_token(headers: &HeaderMap) -> Option<&str> {
-    headers
-        .get(header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|h| h.strip_prefix("Bearer "))
+    headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()).and_then(|h| h.strip_prefix("Bearer "))
 }
 
 /// basicAuth 等價（/posts/legacy 用）：通過回 None、失敗回 Some(response)。
@@ -48,13 +45,9 @@ pub fn basic_auth_check(headers: &HeaderMap) -> Option<axum::response::Response>
     use base64::Engine;
 
     let unauthorized = |msg: &str| {
-        let mut resp = (
-            StatusCode::UNAUTHORIZED,
-            axum::Json(serde_json::json!({ "message": msg })),
-        )
-            .into_response();
-        resp.headers_mut()
-            .insert("WWW-Authenticate", axum::http::HeaderValue::from_static("Basic"));
+        let mut resp =
+            (StatusCode::UNAUTHORIZED, axum::Json(serde_json::json!({ "message": msg }))).into_response();
+        resp.headers_mut().insert("WWW-Authenticate", axum::http::HeaderValue::from_static("Basic"));
         resp
     };
 
@@ -83,11 +76,7 @@ pub fn basic_auth_check(headers: &HeaderMap) -> Option<axum::response::Response>
                 .into_response(),
         );
     }
-    if user == admin_user && pass == admin_pass {
-        None
-    } else {
-        Some(unauthorized("Invalid credentials"))
-    }
+    if user == admin_user && pass == admin_pass { None } else { Some(unauthorized("Invalid credentials")) }
 }
 
 /// requireAdmin：需要 ADMIN 或 OWNER。
@@ -102,11 +91,7 @@ pub async fn require_owner(headers: &HeaderMap, state: &AppState) -> Result<Admi
 
 /// 驗 Bearer JWT（HS256）→ 依 token 類型查角色。owner_only 決定角色門檻與不足時的訊息。
 /// 錯誤訊息與狀態碼逐字對齊 Express `createRequireAdmin`/`createRequireOwner`。
-async fn authorize(
-    headers: &HeaderMap,
-    state: &AppState,
-    owner_only: bool,
-) -> Result<AdminUser, AppError> {
+async fn authorize(headers: &HeaderMap, state: &AppState, owner_only: bool) -> Result<AdminUser, AppError> {
     // 1) 取 Bearer token
     let token = headers
         .get(header::AUTHORIZATION)
@@ -118,13 +103,9 @@ async fn authorize(
     //    不帶 exp 的 token 一律拒絕，避免永不過期。刻意偏離 node jwt.verify 的「有才驗」）。
     let mut validation = Validation::new(Algorithm::HS256);
     validation.leeway = 0;
-    let claims = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
-        &validation,
-    )
-    .map_err(|_| AppError::unauthorized("無效的授權令牌"))?
-    .claims;
+    let claims = decode::<Claims>(token, &DecodingKey::from_secret(state.jwt_secret.as_bytes()), &validation)
+        .map_err(|_| AppError::unauthorized("無效的授權令牌"))?
+        .claims;
 
     // 3) OAuth token（有 userId 且非 0）→ 查 oauth_users → linked_to → 主帳號角色
     if let Some(uid) = claims.user_id.filter(|&u| u != 0) {
@@ -145,11 +126,7 @@ async fn authorize(
             .map_err(|_| AppError::unauthorized("使用者不存在"))?;
         let (prole,) = primary.ok_or_else(|| AppError::unauthorized("使用者不存在"))?;
         let role = prole.unwrap_or_default();
-        let allowed = if owner_only {
-            role == "OWNER"
-        } else {
-            role == "ADMIN" || role == "OWNER"
-        };
+        let allowed = if owner_only { role == "OWNER" } else { role == "ADMIN" || role == "OWNER" };
         if !allowed {
             return Err(AppError::forbidden(if owner_only {
                 "權限不足，需要擁有者權限"
@@ -161,10 +138,7 @@ async fn authorize(
     }
     // 4) Legacy admin token（有非空 username）→ 視為 OWNER
     else if claims.username.as_deref().is_some_and(|u| !u.is_empty()) {
-        Ok(AdminUser {
-            role: "OWNER".to_string(),
-            db_user_id: None,
-        })
+        Ok(AdminUser { role: "OWNER".to_string(), db_user_id: None })
     }
     // 5) 兩者皆無 → 403
     else {

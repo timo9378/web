@@ -4,14 +4,14 @@
 use std::sync::atomic::Ordering;
 
 use axum::{
-    extract::{Query, State},
-    http::{header, StatusCode},
-    response::{IntoResponse, Response},
     Json,
+    extract::{Query, State},
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
 };
 use base64::Engine;
 use serde::Deserialize;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 
 use crate::state::AppState;
 use crate::util::{js_normalize_numbers, js_truthy};
@@ -65,9 +65,10 @@ async fn access_token(state: &AppState) -> Result<String, SpErr> {
     {
         let g = state.spotify.token.lock();
         if let Some((t, exp)) = &*g
-            && now_ms() < *exp {
-                return Ok(t.clone());
-            }
+            && now_ms() < *exp
+        {
+            return Ok(t.clone());
+        }
     }
     let id = std::env::var("SPOTIFY_CLIENT_ID").unwrap_or_default();
     let secret = std::env::var("SPOTIFY_CLIENT_SECRET").unwrap_or_default();
@@ -100,7 +101,12 @@ async fn access_token(state: &AppState) -> Result<String, SpErr> {
 }
 
 /// axios GET 等價：非 2xx → Err(Http)。回 (status, normalized json)。
-async fn sp_get(state: &AppState, url: &str, token: &str, timeout: Option<u64>) -> Result<(StatusCode, Value), SpErr> {
+async fn sp_get(
+    state: &AppState,
+    url: &str,
+    token: &str,
+    timeout: Option<u64>,
+) -> Result<(StatusCode, Value), SpErr> {
     let mut req = state.http.get(url).header("Authorization", format!("Bearer {token}"));
     if let Some(t) = timeout {
         req = req.timeout(std::time::Duration::from_secs(t));
@@ -108,7 +114,8 @@ async fn sp_get(state: &AppState, url: &str, token: &str, timeout: Option<u64>) 
     let resp = req.send().await.map_err(|e| SpErr::Net(e.to_string()))?;
     let status = resp.status();
     let body = resp.text().await.map_err(|e| SpErr::Net(e.to_string()))?;
-    let mut v: Value = if body.is_empty() { Value::Null } else { serde_json::from_str(&body).unwrap_or(Value::from(body)) };
+    let mut v: Value =
+        if body.is_empty() { Value::Null } else { serde_json::from_str(&body).unwrap_or(Value::from(body)) };
     js_normalize_numbers(&mut v);
     if !status.is_success() {
         return Err(SpErr::Http(status, v));
@@ -137,16 +144,11 @@ pub async fn login() -> Response {
         form(scope),
         form(&redirect_uri())
     );
-    let mut resp = (
-        StatusCode::FOUND,
-        format!("Found. Redirecting to {url}"),
-    )
-        .into_response();
-    resp.headers_mut().insert(header::LOCATION, url.parse().unwrap_or_else(|_| header::HeaderValue::from_static("/")));
-    resp.headers_mut().insert(
-        header::CONTENT_TYPE,
-        header::HeaderValue::from_static("text/plain; charset=utf-8"),
-    );
+    let mut resp = (StatusCode::FOUND, format!("Found. Redirecting to {url}")).into_response();
+    resp.headers_mut()
+        .insert(header::LOCATION, url.parse().unwrap_or_else(|_| header::HeaderValue::from_static("/")));
+    resp.headers_mut()
+        .insert(header::CONTENT_TYPE, header::HeaderValue::from_static("text/plain; charset=utf-8"));
     resp
 }
 
@@ -156,7 +158,9 @@ pub async fn login() -> Response {
 pub async fn recently_played(State(state): State<AppState>) -> Response {
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
-        let (_, v) = sp_get(&state, "https://api.spotify.com/v1/me/player/recently-played?limit=10", &token, None).await?;
+        let (_, v) =
+            sp_get(&state, "https://api.spotify.com/v1/me/player/recently-played?limit=10", &token, None)
+                .await?;
         Ok(v)
     }
     .await;
@@ -173,7 +177,7 @@ pub async fn now_playing(State(state): State<AppState>) -> Response {
     let token = match access_token(&state).await {
         Ok(t) => t,
         Err(SpErr::NotConfigured) => {
-            return Json(json!({ "is_playing": false, "error": "Spotify 未配置" })).into_response()
+            return Json(json!({ "is_playing": false, "error": "Spotify 未配置" })).into_response();
         }
         Err(_) => return Json(json!({ "is_playing": false })).into_response(),
     };
@@ -201,14 +205,16 @@ pub async fn now_playing(State(state): State<AppState>) -> Response {
 pub async fn top_genres(State(state): State<AppState>) -> Response {
     let now = now_ms();
     if let Some((data, exp)) = state.spotify.top_genres.lock().clone()
-        && exp > now {
-            return Json(data).into_response();
-        }
+        && exp > now
+    {
+        return Json(data).into_response();
+    }
     if state.spotify.top_disabled_until.load(Ordering::Relaxed) > now {
         if let Some((data, _)) = state.spotify.top_genres.lock().clone() {
             return Json(data).into_response();
         }
-        return (StatusCode::TOO_MANY_REQUESTS, Json(json!({ "error": "Spotify rate limited, try later" }))).into_response();
+        return (StatusCode::TOO_MANY_REQUESTS, Json(json!({ "error": "Spotify rate limited, try later" })))
+            .into_response();
     }
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
@@ -239,7 +245,8 @@ pub async fn top_genres(State(state): State<AppState>) -> Response {
                 }
             }
             counts.sort_by_key(|&(_, c)| std::cmp::Reverse(c)); // stable：同數保插入序（同 V8）
-            let top: Vec<Value> = counts.iter().take(5).map(|(g, c)| json!({ "genre": g, "count": c })).collect();
+            let top: Vec<Value> =
+                counts.iter().take(5).map(|(g, c)| json!({ "genre": g, "count": c })).collect();
             let payload = json!({ "genres": top });
             *state.spotify.top_genres.lock() = Some((payload.clone(), now + TOP_GENRES_TTL));
             Json(payload).into_response()
@@ -272,14 +279,16 @@ pub async fn top_tracks(State(state): State<AppState>, Query(q): Query<TopTracks
     let now = now_ms();
     let cached = state.spotify.top_tracks.lock().get(&key).cloned();
     if let Some((data, exp)) = &cached
-        && *exp > now {
-            return Json(data.clone()).into_response();
-        }
+        && *exp > now
+    {
+        return Json(data.clone()).into_response();
+    }
     if state.spotify.top_disabled_until.load(Ordering::Relaxed) > now {
         if let Some((data, _)) = &cached {
             return Json(data.clone()).into_response();
         }
-        return (StatusCode::TOO_MANY_REQUESTS, Json(json!({ "error": "Spotify rate limited, try later" }))).into_response();
+        return (StatusCode::TOO_MANY_REQUESTS, Json(json!({ "error": "Spotify rate limited, try later" })))
+            .into_response();
     }
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
@@ -338,7 +347,8 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
         }
     }
     let respond = |cached: &Map<String, Value>| -> Response {
-        let list: Vec<Value> = id_list.iter().map(|id| cached.get(id).cloned().unwrap_or(Value::Null)).collect();
+        let list: Vec<Value> =
+            id_list.iter().map(|id| cached.get(id).cloned().unwrap_or(Value::Null)).collect();
         Json(json!({ "audio_features": list })).into_response()
     };
     if state.spotify.af_disabled_until.load(Ordering::Relaxed) > now {
@@ -406,10 +416,20 @@ pub async fn spotify_callback(
 ) -> Response {
     use axum::http::header;
     if let Some(e) = q.get("error") {
-        return (StatusCode::BAD_REQUEST, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], format!("授權失敗: {e}")).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            format!("授權失敗: {e}"),
+        )
+            .into_response();
     }
     let Some(code) = q.get("code") else {
-        return (StatusCode::BAD_REQUEST, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], "缺少授權碼".to_string()).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            "缺少授權碼".to_string(),
+        )
+            .into_response();
     };
     let cid = std::env::var("SPOTIFY_CLIENT_ID").unwrap_or_default();
     let secret = std::env::var("SPOTIFY_CLIENT_SECRET").unwrap_or_default();
@@ -430,9 +450,23 @@ pub async fn spotify_callback(
     let data: serde_json::Value = match resp {
         Ok(r) if r.status().is_success() => match serde_json::from_str(&r.text().await.unwrap_or_default()) {
             Ok(v) => v,
-            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], "token 交換失敗".to_string()).into_response(),
+            Err(_) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+                    "token 交換失敗".to_string(),
+                )
+                    .into_response();
+            }
         },
-        _ => return (StatusCode::INTERNAL_SERVER_ERROR, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], "token 交換失敗".to_string()).into_response(),
+        _ => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+                "token 交換失敗".to_string(),
+            )
+                .into_response();
+        }
     };
     let refresh = data.get("refresh_token").and_then(|v| v.as_str()).unwrap_or("(無)");
     let html = format!(

@@ -1,11 +1,11 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sqlx::FromRow;
 
 use crate::handlers::posts::{CommentRow, CommentsResponse};
@@ -51,11 +51,8 @@ pub struct ThoughtOut {
 impl From<ThoughtRow> for ThoughtOut {
     fn from(r: ThoughtRow) -> Self {
         // safeParse 等價：解析 ref_json；None 或解析失敗 → Null（preserve_order 保留物件 key 順序）
-        let ref_val = r
-            .ref_json
-            .as_deref()
-            .and_then(|s| serde_json::from_str::<Value>(s).ok())
-            .unwrap_or(Value::Null);
+        let ref_val =
+            r.ref_json.as_deref().and_then(|s| serde_json::from_str::<Value>(s).ok()).unwrap_or(Value::Null);
         ThoughtOut {
             id: r.id,
             content: r.content,
@@ -93,10 +90,11 @@ fn js_parse_int(s: &str, default: i64) -> i64 {
     let mut out = String::new();
     let mut chars = t.chars().peekable();
     if let Some(&c) = chars.peek()
-        && (c == '+' || c == '-') {
-            out.push(c);
-            chars.next();
-        }
+        && (c == '+' || c == '-')
+    {
+        out.push(c);
+        chars.next();
+    }
     while let Some(&c) = chars.peek() {
         if c.is_ascii_digit() {
             out.push(c);
@@ -105,11 +103,7 @@ fn js_parse_int(s: &str, default: i64) -> i64 {
             break;
         }
     }
-    if out.is_empty() || out == "+" || out == "-" {
-        default
-    } else {
-        out.parse().unwrap_or(default)
-    }
+    if out.is_empty() || out == "+" || out == "-" { default } else { out.parse().unwrap_or(default) }
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -127,18 +121,8 @@ pub async fn list_thoughts(
     Query(q): Query<ListQuery>,
 ) -> Result<Json<ThoughtsListResponse>, AppError> {
     // Express: min(parseInt(limit||'30'),100) / max(parseInt(offset||'0'),0)
-    let limit = q
-        .limit
-        .as_deref()
-        .map(|s| js_parse_int(s, 30))
-        .unwrap_or(30)
-        .min(100);
-    let offset = q
-        .offset
-        .as_deref()
-        .map(|s| js_parse_int(s, 0))
-        .unwrap_or(0)
-        .max(0);
+    let limit = q.limit.as_deref().map(|s| js_parse_int(s, 30)).unwrap_or(30).min(100);
+    let offset = q.offset.as_deref().map(|s| js_parse_int(s, 0)).unwrap_or(0).max(0);
 
     let sql = format!(
         "SELECT {THOUGHT_SELECT} FROM thoughts t ORDER BY t.created_at DESC, t.id DESC LIMIT ? OFFSET ?"
@@ -176,10 +160,7 @@ pub async fn get_thought(
         .await?;
 
     match row {
-        Some(r) => Ok(Json(ThoughtDetailResponse {
-            message: "success",
-            thought: r.into(),
-        })),
+        Some(r) => Ok(Json(ThoughtDetailResponse { message: "success", thought: r.into() })),
         // Express 回 404 + {"error":"not found"}；用 AppError 之外的明確分支處理
         None => Err(AppError::not_found("not found")),
     }
@@ -228,7 +209,8 @@ pub async fn thought_react(
     if !react_ok(&body.prev) || !react_ok(&body.next) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "bad reaction" }))).into_response();
     }
-    let d_like = (body.next.as_deref() == Some("like")) as i64 - (body.prev.as_deref() == Some("like")) as i64;
+    let d_like =
+        (body.next.as_deref() == Some("like")) as i64 - (body.prev.as_deref() == Some("like")) as i64;
     let d_dislike =
         (body.next.as_deref() == Some("dislike")) as i64 - (body.prev.as_deref() == Some("dislike")) as i64;
 
@@ -303,10 +285,7 @@ async fn unfurl_url(http: &reqwest::Client, url: &str) -> Option<Value> {
     let resp = http
         .get(url)
         .timeout(std::time::Duration::from_secs(6))
-        .header(
-            "User-Agent",
-            "Mozilla/5.0 (compatible; koimsurai-bot/1.0; +https://koimsurai.com)",
-        )
+        .header("User-Agent", "Mozilla/5.0 (compatible; koimsurai-bot/1.0; +https://koimsurai.com)")
         .send()
         .await
         .ok()?;
@@ -346,11 +325,7 @@ async fn unfurl_url(http: &reqwest::Client, url: &str) -> Option<Value> {
 async fn enrich_media_ref(http: &reqwest::Client, json: &Map<String, Value>) -> Map<String, Value> {
     let mut out = json.clone();
     out.insert("source".into(), Value::from("www.themoviedb.org"));
-    let mt = if json.get("mediaType").and_then(|v| v.as_str()) == Some("movie") {
-        "movie"
-    } else {
-        "tv"
-    };
+    let mt = if json.get("mediaType").and_then(|v| v.as_str()) == Some("movie") { "movie" } else { "tv" };
     let tmdb_id = json.get("tmdbId").filter(|v| js_truthy(Some(v))).map(js_interp);
     out.insert(
         "url".into(),
@@ -361,75 +336,70 @@ async fn enrich_media_ref(http: &reqwest::Client, json: &Map<String, Value>) -> 
     );
     let token = std::env::var("TMDB_API_TOKEN").unwrap_or_default();
     if !token.is_empty()
-        && let Some(id) = &tmdb_id {
-            let resp = http
-                .get(format!("https://api.themoviedb.org/3/{mt}/{id}?language=zh-TW"))
-                .bearer_auth(&token)
-                .header("accept", "application/json")
-                .send()
-                .await;
-            if let Ok(r) = resp
-                && r.status().is_success() {
-                    // reqwest 未開 json feature，text + serde 解析
-                    if let Ok(d) = r
-                        .text()
-                        .await
-                        .map_err(|_| ())
-                        .and_then(|t| serde_json::from_str::<Value>(&t).map_err(|_| ()))
-                    {
-                        let pick = |v: Option<&Value>| -> Option<String> {
-                            v.filter(|x| js_truthy(Some(x))).and_then(|x| x.as_str()).map(String::from)
-                        };
-                        let title = pick(json.get("title"))
-                            .or_else(|| pick(d.get("title")))
-                            .or_else(|| pick(d.get("name")))
-                            .unwrap_or_default();
-                        out.insert("title".into(), Value::from(title));
-                        out.insert(
-                            "overview".into(),
-                            Value::from(pick(d.get("overview")).unwrap_or_default()),
-                        );
-                        let rating = d
-                            .get("vote_average")
-                            .and_then(|v| v.as_f64())
-                            .filter(|&v| v != 0.0)
-                            .map(|v| format!("{v:.1}"));
-                        out.insert("rating".into(), rating.map(Value::from).unwrap_or(Value::Null));
-                        let genres = d
-                            .get("genres")
-                            .and_then(|g| g.as_array())
-                            .map(|a| {
-                                a.iter()
-                                    .filter_map(|g| g.get("name").and_then(|n| n.as_str()))
-                                    .collect::<Vec<_>>()
-                                    .join(", ")
-                            })
-                            .filter(|s| !s.is_empty());
-                        out.insert("genres".into(), genres.map(Value::from).unwrap_or(Value::Null));
-                        // (release_date || first_air_date || '').slice(0,4) || json.year || null
-                        let date = pick(d.get("release_date"))
-                            .or_else(|| pick(d.get("first_air_date")))
-                            .unwrap_or_default();
-                        let y: String = date.chars().take(4).collect();
-                        let year = if !y.is_empty() {
-                            Value::from(y)
-                        } else if js_truthy(json.get("year")) {
-                            json.get("year").cloned().unwrap_or(Value::Null)
-                        } else {
-                            Value::Null
-                        };
-                        out.insert("year".into(), year);
-                        let poster = if js_truthy(json.get("poster")) {
-                            json.get("poster").cloned().unwrap_or(Value::Null)
-                        } else if let Some(p) = pick(d.get("poster_path")) {
-                            Value::from(format!("https://image.tmdb.org/t/p/w500{p}"))
-                        } else {
-                            Value::Null
-                        };
-                        out.insert("poster".into(), poster);
-                    }
-                }
+        && let Some(id) = &tmdb_id
+    {
+        let resp = http
+            .get(format!("https://api.themoviedb.org/3/{mt}/{id}?language=zh-TW"))
+            .bearer_auth(&token)
+            .header("accept", "application/json")
+            .send()
+            .await;
+        if let Ok(r) = resp
+            && r.status().is_success()
+        {
+            // reqwest 未開 json feature，text + serde 解析
+            if let Ok(d) =
+                r.text().await.map_err(|_| ()).and_then(|t| serde_json::from_str::<Value>(&t).map_err(|_| ()))
+            {
+                let pick = |v: Option<&Value>| -> Option<String> {
+                    v.filter(|x| js_truthy(Some(x))).and_then(|x| x.as_str()).map(String::from)
+                };
+                let title = pick(json.get("title"))
+                    .or_else(|| pick(d.get("title")))
+                    .or_else(|| pick(d.get("name")))
+                    .unwrap_or_default();
+                out.insert("title".into(), Value::from(title));
+                out.insert("overview".into(), Value::from(pick(d.get("overview")).unwrap_or_default()));
+                let rating = d
+                    .get("vote_average")
+                    .and_then(|v| v.as_f64())
+                    .filter(|&v| v != 0.0)
+                    .map(|v| format!("{v:.1}"));
+                out.insert("rating".into(), rating.map(Value::from).unwrap_or(Value::Null));
+                let genres = d
+                    .get("genres")
+                    .and_then(|g| g.as_array())
+                    .map(|a| {
+                        a.iter()
+                            .filter_map(|g| g.get("name").and_then(|n| n.as_str()))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    })
+                    .filter(|s| !s.is_empty());
+                out.insert("genres".into(), genres.map(Value::from).unwrap_or(Value::Null));
+                // (release_date || first_air_date || '').slice(0,4) || json.year || null
+                let date =
+                    pick(d.get("release_date")).or_else(|| pick(d.get("first_air_date"))).unwrap_or_default();
+                let y: String = date.chars().take(4).collect();
+                let year = if !y.is_empty() {
+                    Value::from(y)
+                } else if js_truthy(json.get("year")) {
+                    json.get("year").cloned().unwrap_or(Value::Null)
+                } else {
+                    Value::Null
+                };
+                out.insert("year".into(), year);
+                let poster = if js_truthy(json.get("poster")) {
+                    json.get("poster").cloned().unwrap_or(Value::Null)
+                } else if let Some(p) = pick(d.get("poster_path")) {
+                    Value::from(format!("https://image.tmdb.org/t/p/w500{p}"))
+                } else {
+                    Value::Null
+                };
+                out.insert("poster".into(), poster);
+            }
         }
+    }
     out
 }
 
@@ -467,11 +437,7 @@ async fn resolve_ref_for_create(
     }
     if let Some(u) = body.ref_url.as_deref().filter(|s| !s.is_empty()) {
         let meta = unfurl_url(http, u).await.unwrap_or_else(|| serde_json::json!({}));
-        return (
-            Some("link".into()),
-            Some(u.to_string()),
-            serde_json::to_string(&meta).ok(),
-        );
+        return (Some("link".into()), Some(u.to_string()), serde_json::to_string(&meta).ok());
     }
     (None, None, None)
 }
@@ -544,12 +510,13 @@ pub async fn admin_update_thought(
             ref_json = r.get("json").and_then(|j| serde_json::to_string(j).ok());
         }
     } else if let Some(u) = body.ref_url.as_deref().filter(|s| !s.is_empty())
-        && Some(u.to_string()) != r_url {
-            let meta = unfurl_url(&state.http, u).await.unwrap_or_else(|| serde_json::json!({}));
-            ref_type = Some("link".into());
-            r_url = Some(u.to_string());
-            ref_json = serde_json::to_string(&meta).ok();
-        }
+        && Some(u.to_string()) != r_url
+    {
+        let meta = unfurl_url(&state.http, u).await.unwrap_or_else(|| serde_json::json!({}));
+        ref_type = Some("link".into());
+        r_url = Some(u.to_string());
+        ref_json = serde_json::to_string(&meta).ok();
+    }
 
     let new_content = match &body.content {
         Some(c) => c.trim().to_string(),
@@ -584,7 +551,9 @@ pub async fn admin_delete_thought(
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
-    if let Err(e) = sqlx::query("DELETE FROM comments WHERE thought_id = ?").bind(&id).execute(&state.pool).await {
+    if let Err(e) =
+        sqlx::query("DELETE FROM comments WHERE thought_id = ?").bind(&id).execute(&state.pool).await
+    {
         tracing::warn!("[thoughts] 刪 thought {id} 連帶留言失敗: {e}");
     }
     match sqlx::query("DELETE FROM thoughts WHERE id = ?").bind(&id).execute(&state.pool).await {
@@ -614,7 +583,7 @@ pub async fn thoughts_rss(State(state): State<AppState>) -> Response {
                 [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
                 "error",
             )
-                .into_response()
+                .into_response();
         }
     };
     let mut items = String::new();
@@ -653,9 +622,5 @@ pub async fn thoughts_rss(State(state): State<AppState>) -> Response {
     let xml = format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\"><channel><title>碎念 · Koimsurai</title><link>https://koimsurai.com/thinking</link><description>想到什麼寫什麼</description>{items}</channel></rss>"
     );
-    (
-        [(axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8")],
-        xml,
-    )
-        .into_response()
+    ([(axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8")], xml).into_response()
 }

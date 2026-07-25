@@ -1,8 +1,8 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -138,7 +138,8 @@ pub async fn unsubscribe(State(state): State<AppState>, Json(b): Json<Unsubscrib
             e,
         ),
         (None, None) => {
-            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Email or token is required" }))).into_response()
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Email or token is required" })))
+                .into_response();
         }
     };
     match sqlx::query(sql).bind("unsubscribed").bind(&param).execute(&state.pool).await {
@@ -203,10 +204,12 @@ pub async fn subscribers(
         Ok(r) => r,
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) as total FROM newsletter_subscribers WHERE status = ?")
-        .bind(status)
-        .fetch_one(&state.pool)
-        .await
+    let total = match sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) as total FROM newsletter_subscribers WHERE status = ?",
+    )
+    .bind(status)
+    .fetch_one(&state.pool)
+    .await
     {
         Ok(t) => t,
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
@@ -215,12 +218,7 @@ pub async fn subscribers(
     Json(SubscribersResponse {
         message: "success".into(),
         subscribers,
-        pagination: Pagination {
-            page,
-            limit,
-            total,
-            total_pages,
-        },
+        pagination: Pagination { page, limit, total, total_pages },
     })
     .into_response()
 }

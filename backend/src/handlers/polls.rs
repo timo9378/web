@@ -4,10 +4,10 @@
 //! - `GET  /api/polls/{id}`      —— 公開純讀，回各選項票數 + 總數
 //! - `POST /api/polls/{id}/vote` —— 公開投票（body `{ "option": "..." }`），回更新後票數
 use axum::{
+    Json,
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -78,17 +78,17 @@ pub async fn vote_poll(
     let option = body.option.unwrap_or_default();
     let option = option.trim();
     if id.is_empty() || id.len() > MAX_KEY_LEN || option.is_empty() || option.len() > MAX_KEY_LEN {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid poll id or option" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "invalid poll id or option" })))
+            .into_response();
     }
 
     // 新選項才受選項數上限約束（既有選項一律放行）。
-    let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM poll_votes WHERE poll_id = ? AND option_key <> ?",
-    )
-    .bind(&id)
-    .bind(option)
-    .fetch_one(&state.pool)
-    .await;
+    let existing =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM poll_votes WHERE poll_id = ? AND option_key <> ?")
+            .bind(&id)
+            .bind(option)
+            .fetch_one(&state.pool)
+            .await;
     match existing {
         Ok(n) if n >= MAX_OPTIONS_PER_POLL => {
             let is_known = sqlx::query_scalar::<_, i64>(
@@ -100,7 +100,8 @@ pub async fn vote_poll(
             .await
             .unwrap_or(0);
             if is_known == 0 {
-                return (StatusCode::BAD_REQUEST, Json(json!({ "error": "too many options" }))).into_response();
+                return (StatusCode::BAD_REQUEST, Json(json!({ "error": "too many options" })))
+                    .into_response();
             }
         }
         Ok(_) => {}

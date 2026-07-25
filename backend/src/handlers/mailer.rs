@@ -9,12 +9,12 @@
 //! 驗證方式：兩邊都 `RESEND_BASE_URL` 指本地 mock、比對實際 wire body（不真寄）。
 
 use axum::{
+    Json,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 
 use crate::util::encode_uri_component;
 use crate::{auth::require_admin, state::AppState};
@@ -210,7 +210,8 @@ async fn send_newsletter(state: &AppState, post: &Post, subs: &[Sub]) -> (i64, i
     let mut errors: Vec<String> = Vec::new();
 
     for chunk in subs.chunks(BATCH_SIZE) {
-        let payload: Vec<Value> = chunk.iter().map(|s| build_email_object(&site, &from, &subject, post, s)).collect();
+        let payload: Vec<Value> =
+            chunk.iter().map(|s| build_email_object(&site, &from, &subject, post, s)).collect();
         let resp = state
             .http
             .post(format!("{base}/emails/batch"))
@@ -275,13 +276,21 @@ pub(crate) async fn dispatch_newsletter(
 #[utoipa::path(post, path = "/api/admin/posts/{id}/send-newsletter", tag = "admin", security(("bearer" = [])),
     params(("id" = String, Path)),
     responses((status = 200, description = "電子報寄送結果（動態 JSON）"), (status = 400, description = "只有已發佈文章可寄送"), (status = 401, description = "未授權"), (status = 404, description = "文章不存在"), (status = 500, description = "RESEND_API_KEY 未設定或伺服器錯誤")))]
-pub async fn send_newsletter_route(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn send_newsletter_route(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
     // isMailerConfigured()
     if std::env::var("RESEND_API_KEY").ok().filter(|s| !s.is_empty()).is_none() {
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "RESEND_API_KEY not configured on server" }))).into_response();
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": "RESEND_API_KEY not configured on server" })),
+        )
+            .into_response();
     }
     let row = sqlx::query_as::<_, (i64, Option<String>, Option<String>, Option<String>)>(
         "SELECT id, title, excerpt, status FROM posts WHERE id = ?",
@@ -291,11 +300,14 @@ pub async fn send_newsletter_route(State(state): State<AppState>, Path(id): Path
     .await;
     let (post_id, title, excerpt, status) = match row {
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(json!({ "error": "post not found" }))).into_response(),
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, Json(json!({ "error": "post not found" }))).into_response();
+        }
         Ok(Some(r)) => r,
     };
     if status.as_deref() != Some("published") {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "only published posts can be sent" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "only published posts can be sent" })))
+            .into_response();
     }
     let post = Post { id: json!(post_id), title: title.unwrap_or_default(), excerpt };
 
@@ -314,5 +326,6 @@ pub async fn send_newsletter_route(State(state): State<AppState>, Path(id): Path
     }
     let subs: Vec<Sub> = subs.into_iter().map(|(email, name, token)| Sub { email, name, token }).collect();
     let (sent, failed, errors) = send_newsletter(&state, &post, &subs).await;
-    Json(json!({ "message": "newsletter dispatched", "sent": sent, "failed": failed, "errors": errors })).into_response()
+    Json(json!({ "message": "newsletter dispatched", "sent": sent, "failed": failed, "errors": errors }))
+        .into_response()
 }

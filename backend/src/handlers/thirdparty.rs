@@ -3,13 +3,13 @@
 //! JSON parse 失敗與網路錯誤各有固定錯誤訊息；wakatime（axios）例外——非 2xx 會轉拋。
 
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Deserialize;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 
 use crate::state::AppState;
 use crate::util::{encode_uri_component, js_truthy};
@@ -31,13 +31,17 @@ async fn passthrough_json(
     match req.send().await {
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": fetch_err }))).into_response(),
         Ok(resp) => match resp.text().await {
-            Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": fetch_err }))).into_response(),
+            Err(_) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": fetch_err }))).into_response()
+            }
             Ok(body) => match serde_json::from_str::<Value>(&body) {
                 Ok(mut v) => {
                     crate::util::js_normalize_numbers(&mut v);
                     Json(v).into_response()
                 }
-                Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": parse_err }))).into_response(),
+                Err(_) => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": parse_err }))).into_response()
+                }
             },
         },
     }
@@ -187,7 +191,9 @@ fn waka_auth(key: &str) -> String {
 fn waka_unconfigured() -> Response {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({ "error": "WakaTime API 未配置", "message": "請在 server/.env 中設置 WAKATIME_API_KEY" })),
+        Json(
+            json!({ "error": "WakaTime API 未配置", "message": "請在 server/.env 中設置 WAKATIME_API_KEY" }),
+        ),
     )
         .into_response()
 }
@@ -202,17 +208,11 @@ async fn waka_get(http: &reqwest::Client, url: &str, key: &str) -> Result<Value,
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Value::from(e.to_string())))?;
     let status = resp.status();
-    let body = resp
-        .text()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Value::from(e.to_string())))?;
+    let body =
+        resp.text().await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Value::from(e.to_string())))?;
     let mut v: Value = serde_json::from_str(&body).unwrap_or(Value::from(body));
     crate::util::js_normalize_numbers(&mut v);
-    if status.is_success() {
-        Ok(v)
-    } else {
-        Err((status, v))
-    }
+    if status.is_success() { Ok(v) } else { Err((status, v)) }
 }
 
 fn waka_err(kind: &str, e: (StatusCode, Value)) -> Response {
@@ -227,10 +227,8 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
     let date = today_utc();
     let url_summary = format!("https://wakatime.com/api/v1/users/current/summaries?start={date}&end={date}");
     let url_durations = format!("https://wakatime.com/api/v1/users/current/durations?date={date}");
-    let (summary, durations) = tokio::join!(
-        waka_get(&state.http, &url_summary, &key),
-        waka_get(&state.http, &url_durations, &key)
-    );
+    let (summary, durations) =
+        tokio::join!(waka_get(&state.http, &url_summary, &key), waka_get(&state.http, &url_durations, &key));
     let summary = match summary {
         Ok(v) => v,
         Err(e) => return waka_err("Failed to fetch WakaTime today data", e),
@@ -240,7 +238,8 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
         Err(e) => return waka_err("Failed to fetch WakaTime today data", e),
     };
 
-    let dur_list: Vec<&Value> = durations.get("data").and_then(|d| d.as_array()).map(|a| a.iter().collect()).unwrap_or_default();
+    let dur_list: Vec<&Value> =
+        durations.get("data").and_then(|d| d.as_array()).map(|a| a.iter().collect()).unwrap_or_default();
     let mut actual_start: Option<f64> = None;
     let mut actual_end: Option<f64> = None;
     for d in &dur_list {
@@ -250,10 +249,7 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
             actual_end = Some(actual_end.map_or(end, |e| e.max(end)));
         }
     }
-    let summary_data = summary
-        .pointer("/data/0")
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    let summary_data = summary.pointer("/data/0").cloned().unwrap_or_else(|| json!({}));
 
     Json(json!({
         "data": [summary_data],
@@ -370,10 +366,11 @@ fn upgrade_google_cover(url: &str) -> String {
     if url.is_empty() {
         return String::new();
     }
-    let mut cover = url
-        .replacen("&zoom=1", "&zoom=0", 1)
-        .replacen("&edge=curl", "", 1)
-        .replacen("&img=1", "&img=1&w=500&h=800", 1);
+    let mut cover = url.replacen("&zoom=1", "&zoom=0", 1).replacen("&edge=curl", "", 1).replacen(
+        "&img=1",
+        "&img=1&w=500&h=800",
+        1,
+    );
     if !cover.contains("zoom=") {
         cover.push_str("&zoom=0");
     }
@@ -388,10 +385,8 @@ fn s_or_empty(v: Option<&Value>) -> String {
 }
 
 async fn search_google_books(http: &reqwest::Client, q: &str) -> Vec<Value> {
-    let url = format!(
-        "https://www.googleapis.com/books/v1/volumes?q={}&maxResults=10",
-        encode_uri_component(q)
-    );
+    let url =
+        format!("https://www.googleapis.com/books/v1/volumes?q={}&maxResults=10", encode_uri_component(q));
     let Some(data) = fetch_json(http, &url).await else { return vec![] };
     let Some(items) = data.get("items").and_then(|i| i.as_array()) else { return vec![] };
     items
@@ -421,7 +416,8 @@ async fn search_google_books(http: &reqwest::Client, q: &str) -> Vec<Value> {
                 .and_then(|a| a.as_array())
                 .map(|a| a.iter().filter_map(|x| x.as_str()).collect::<Vec<_>>().join(", "))
                 .unwrap_or_default();
-            let page_count = v.get("pageCount").filter(|x| js_truthy(Some(x))).cloned().unwrap_or(Value::Null);
+            let page_count =
+                v.get("pageCount").filter(|x| js_truthy(Some(x))).cloned().unwrap_or(Value::Null);
             json!({
                 "isbn": isbn,
                 "title": s_or_empty(v.get("title")),
@@ -456,7 +452,12 @@ async fn search_open_library(http: &reqwest::Client, input: &str, is_isbn: bool)
         let names = |k: &str| -> String {
             b.get(k)
                 .and_then(|a| a.as_array())
-                .map(|a| a.iter().filter_map(|x| x.get("name").and_then(|n| n.as_str())).collect::<Vec<_>>().join(", "))
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.get("name").and_then(|n| n.as_str()))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
                 .unwrap_or_default()
         };
         let description = b
@@ -468,12 +469,20 @@ async fn search_open_library(http: &reqwest::Client, input: &str, is_isbn: bool)
             .unwrap_or_default();
         let cover = ["large", "medium", "small"]
             .iter()
-            .find_map(|k| b.pointer(&format!("/cover/{k}")).and_then(|x| x.as_str()).filter(|s| !s.is_empty()))
+            .find_map(|k| {
+                b.pointer(&format!("/cover/{k}")).and_then(|x| x.as_str()).filter(|s| !s.is_empty())
+            })
             .unwrap_or("");
         let categories = b
             .get("subjects")
             .and_then(|a| a.as_array())
-            .map(|a| a.iter().take(5).filter_map(|x| x.get("name").and_then(|n| n.as_str())).collect::<Vec<_>>().join(", "))
+            .map(|a| {
+                a.iter()
+                    .take(5)
+                    .filter_map(|x| x.get("name").and_then(|n| n.as_str()))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            })
             .unwrap_or_default();
         vec![json!({
             "isbn": clean,
@@ -537,7 +546,10 @@ pub struct BookSearchQuery {
 /// `GET /api/books/search/external` —— Google Books 為主、OpenLibrary 補位。
 #[utoipa::path(get, path = "/api/books/search/external", tag = "integrations",
     responses((status = 200, description = "書籍外部搜尋（Google Books + OpenLibrary，動態 JSON，第三方 proxy）")))]
-pub async fn books_search_external(State(state): State<AppState>, Query(q): Query<BookSearchQuery>) -> Response {
+pub async fn books_search_external(
+    State(state): State<AppState>,
+    Query(q): Query<BookSearchQuery>,
+) -> Response {
     let query = q.query.filter(|s| !s.is_empty());
     let isbn = q.isbn.filter(|s| !s.is_empty());
     let Some(input) = isbn.clone().or(query) else {
@@ -606,10 +618,14 @@ fn parse_mini_profile(html: &str) -> Value {
         .and_then(|r| r.captures(html).map(|c| c.get(1).map(|m| m.as_str().to_string())))
         .flatten()
     {
-        if let Some(w) = re(r#"src=["']([^"']+\.webm)["']"#).and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string()))) {
+        if let Some(w) = re(r#"src=["']([^"']+\.webm)["']"#)
+            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
+        {
             out.insert("nameplateWebm".into(), Value::from(w));
         }
-        if let Some(m4) = re(r#"src=["']([^"']+\.mp4)["']"#).and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string()))) {
+        if let Some(m4) = re(r#"src=["']([^"']+\.mp4)["']"#)
+            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
+        {
             out.insert("nameplateMp4".into(), Value::from(m4));
         }
     }
@@ -650,7 +666,8 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
             return Err("invalid STEAM_ID".to_string());
         }
     };
-    let u1 = format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}");
+    let u1 =
+        format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}");
     let u2 = format!("https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={key}&steamid={id}");
     let u3 = format!("https://api.steampowered.com/IPlayerService/GetBadges/v1/?key={key}&steamid={id}");
     let u4 = format!("https://steamcommunity.com/miniprofile/{account_id}");
@@ -670,11 +687,8 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
             return Err("incomplete response from Steam".to_string());
         };
         let customization = parse_mini_profile(&mini_html.unwrap_or_default());
-        let badge_count = badges
-            .pointer("/response/badges")
-            .and_then(|b| b.as_array())
-            .map(|a| a.len())
-            .unwrap_or(0);
+        let badge_count =
+            badges.pointer("/response/badges").and_then(|b| b.as_array()).map(|a| a.len()).unwrap_or(0);
         Ok(json!({
             "player": player_obj,
             "level": lvl,
@@ -710,7 +724,8 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
     responses((status = 200, description = "Steam 個人檔案（含等級/徽章/客製，動態 JSON，第三方 proxy）")))]
 pub async fn steam_profile(State(state): State<AppState>) -> Response {
     let Some((key, id)) = steam_env() else {
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Steam API 未配置" }))).into_response();
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Steam API 未配置" })))
+            .into_response();
     };
     let now = now_ms();
     let cached = state.steam.cache.lock().clone();

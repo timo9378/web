@@ -1,9 +1,9 @@
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// 服務層錯誤。回應形狀刻意對齊 Express：多數端點 `{ "error": ... }`，
 /// 但 auth（requireAdmin）用 `{ "message": ... }`，故分變體決定 body key。
@@ -57,12 +57,22 @@ impl IntoResponse for AppError {
         // Database/Upstream/Anyhow 的原文只進 log——SQLite/reqwest 錯誤字串可能含
         // 資料表、欄位、內部 URL 等細節，不外洩給客戶端（刻意偏離 Express 的舊行為）。
         let (status, body, detail): (StatusCode, Value, Option<String>) = match self {
-            AppError::Database(e) => (StatusCode::INTERNAL_SERVER_ERROR, json!({ "error": "Internal server error" }), Some(e.to_string())),
-            AppError::Upstream(e) => (StatusCode::BAD_GATEWAY, json!({ "error": "Upstream error" }), Some(e.to_string())),
+            AppError::Database(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                json!({ "error": "Internal server error" }),
+                Some(e.to_string()),
+            ),
+            AppError::Upstream(e) => {
+                (StatusCode::BAD_GATEWAY, json!({ "error": "Upstream error" }), Some(e.to_string()))
+            }
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, json!({ "error": msg }), None),
             AppError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, json!({ "message": msg }), None),
             AppError::Forbidden(msg) => (StatusCode::FORBIDDEN, json!({ "message": msg }), None),
-            AppError::Anyhow(e) => (StatusCode::INTERNAL_SERVER_ERROR, json!({ "error": "Internal server error" }), Some(format!("{e:#}"))),
+            AppError::Anyhow(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                json!({ "error": "Internal server error" }),
+                Some(format!("{e:#}")),
+            ),
         };
         if status.is_server_error() {
             tracing::error!(%status, %body, detail = detail.as_deref().unwrap_or(""), "request failed");

@@ -1,11 +1,11 @@
 use axum::{
+    Json,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::{
     auth::{bearer_token, verify_jwt},
@@ -46,11 +46,7 @@ fn js_loose_eq(a: &Value, b: &Value) -> bool {
         (Value::Number(x), Value::Number(y)) => x.as_f64() == y.as_f64(),
         (Value::String(x), Value::String(y)) => x == y,
         (Value::Number(n), Value::String(s)) | (Value::String(s), Value::Number(n)) => {
-            let sv = if s.trim().is_empty() {
-                Some(0.0)
-            } else {
-                s.trim().parse::<f64>().ok()
-            };
+            let sv = if s.trim().is_empty() { Some(0.0) } else { s.trim().parse::<f64>().ok() };
             sv == n.as_f64()
         }
         _ => false,
@@ -69,29 +65,23 @@ async fn create_comment(
     let author = body.author.unwrap_or_default();
     let content = body.content.unwrap_or_default();
     if author.is_empty() || content.is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Author and content are required" })),
-        )
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Author and content are required" })))
             .into_response();
     }
 
     // 登入（OAuth）用戶：Bearer token 驗章成功且帶 userId + provider
-    let is_oauth = bearer_token(headers)
-        .and_then(|t| verify_jwt(t, &state.jwt_secret))
-        .is_some_and(|c| {
-            c.get("userId").and_then(|v| v.as_i64()).is_some()
-                && c.get("provider").and_then(|v| v.as_str()).is_some()
-        });
+    let is_oauth = bearer_token(headers).and_then(|t| verify_jwt(t, &state.jwt_secret)).is_some_and(|c| {
+        c.get("userId").and_then(|v| v.as_i64()).is_some()
+            && c.get("provider").and_then(|v| v.as_str()).is_some()
+    });
 
     // captcha 檢查（僅匿名且有帶 captcha 欄位時）
-    if !is_oauth
-        && let Some(captcha) = &body.captcha {
-            let answer = body.captcha_answer.clone().unwrap_or(Value::Null);
-            if !js_loose_eq(captcha, &answer) {
-                return (StatusCode::BAD_REQUEST, Json(json!({ "error": "驗證碼錯誤" }))).into_response();
-            }
+    if !is_oauth && let Some(captcha) = &body.captcha {
+        let answer = body.captcha_answer.clone().unwrap_or(Value::Null);
+        if !js_loose_eq(captcha, &answer) {
+            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "驗證碼錯誤" }))).into_response();
         }
+    }
 
     let ip = client_ip(headers);
 
@@ -103,18 +93,15 @@ async fn create_comment(
         .ok()
         .flatten();
     if blocked.is_some() {
-        return (
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "您的留言權限已被限制" })),
-        )
-            .into_response();
+        return (StatusCode::FORBIDDEN, Json(json!({ "error": "您的留言權限已被限制" }))).into_response();
     }
 
     // 關鍵字過濾：第一個命中的 filter 決定 action（DB rowid 序，無 ORDER BY）
-    let filters = sqlx::query_as::<_, (String, Option<String>)>("SELECT keyword, action FROM keyword_filters")
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
+    let filters =
+        sqlx::query_as::<_, (String, Option<String>)>("SELECT keyword, action FROM keyword_filters")
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
     let lower = format!("{content} {author}").to_lowercase();
     let mut matched: Option<String> = None;
     for (keyword, action) in &filters {
@@ -124,10 +111,7 @@ async fn create_comment(
         }
     }
     if matched.as_deref() == Some("reject") {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "留言內容包含不允許的詞彙" })),
-        )
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "留言內容包含不允許的詞彙" })))
             .into_response();
     }
     let status = if matched.as_deref() == Some("spam") {

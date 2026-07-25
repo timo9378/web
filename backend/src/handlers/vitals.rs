@@ -10,7 +10,11 @@
 //! 資料表 `web_vitals` 由 main.rs 啟動時 CREATE TABLE IF NOT EXISTS（本 repo 無
 //! migration 框架，schema 為 Express 時代手建；新表沿用冪等建表慣例）。
 
-use axum::{extract::{Query, State}, http::StatusCode, Json};
+use axum::{
+    Json,
+    extract::{Query, State},
+    http::StatusCode,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -48,16 +52,14 @@ pub async fn report_vital(
     if valid {
         // path 去掉 query（避免存到 token 類參數；beacon 端也已只送 pathname，此為第二道）
         let path = b.path.split('?').next().unwrap_or("/");
-        sqlx::query(
-            "INSERT INTO web_vitals (metric, value, rating, path, is_mobile) VALUES (?, ?, ?, ?, ?)",
-        )
-        .bind(&b.metric)
-        .bind(b.value)
-        .bind(&b.rating)
-        .bind(path)
-        .bind(if b.is_mobile { 1i64 } else { 0 })
-        .execute(&state.pool)
-        .await?;
+        sqlx::query("INSERT INTO web_vitals (metric, value, rating, path, is_mobile) VALUES (?, ?, ?, ?, ?)")
+            .bind(&b.metric)
+            .bind(b.value)
+            .bind(&b.rating)
+            .bind(path)
+            .bind(if b.is_mobile { 1i64 } else { 0 })
+            .execute(&state.pool)
+            .await?;
     }
     Ok(StatusCode::NO_CONTENT)
 }
@@ -115,14 +117,7 @@ pub async fn vitals_stats(
         } else {
             None
         };
-        out.push(MetricStat {
-            metric: m.to_string(),
-            count,
-            p75,
-            good,
-            needs_improvement: ni,
-            poor,
-        });
+        out.push(MetricStat { metric: m.to_string(), count, p75, good, needs_improvement: ni, poor });
     }
     Ok(Json(json!({ "message": "success", "days": days, "metrics": out })))
 }

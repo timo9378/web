@@ -1,5 +1,5 @@
 use serde_json::{Map, Value};
-use sqlx::{sqlite::SqliteRow, Column, Row, TypeInfo, ValueRef};
+use sqlx::{Column, Row, TypeInfo, ValueRef, sqlite::SqliteRow};
 
 /// 把一列 sqlite row 動態轉成 JSON object，**保留 DB 欄位順序**（serde_json preserve_order）。
 /// 用於 Express 端 `SELECT *`/`p.*` 直接 spread 整列的端點（/admin/posts、/admin/comments），
@@ -32,11 +32,7 @@ fn column_to_value(row: &SqliteRow, idx: usize) -> Value {
 
 /// f64 → JSON Value，整值輸出整數（對齊 JS number 序列化）。
 pub fn js_num_value(f: f64) -> Value {
-    if f.fract() == 0.0 && f.abs() < 9.0e15 {
-        Value::from(f as i64)
-    } else {
-        Value::from(f)
-    }
+    if f.fract() == 0.0 && f.abs() < 9.0e15 { Value::from(f as i64) } else { Value::from(f) }
 }
 
 /// JS `parseInt(s,10)` 的 Option 版：無合法前導整數 → None（NaN → SQL 綁 NULL）。
@@ -45,10 +41,11 @@ pub fn js_parse_int_opt(s: &str) -> Option<i64> {
     let mut out = String::new();
     let mut it = t.chars().peekable();
     if let Some(&c) = it.peek()
-        && (c == '+' || c == '-') {
-            out.push(c);
-            it.next();
-        }
+        && (c == '+' || c == '-')
+    {
+        out.push(c);
+        it.next();
+    }
     while let Some(&c) = it.peek() {
         if c.is_ascii_digit() {
             out.push(c);
@@ -145,7 +142,9 @@ pub fn gen_slug(name: &str) -> String {
     // 移除 [^\w\-一-龥]（JS 無 /u：\w 為 ASCII [A-Za-z0-9_]）
     collapsed
         .chars()
-        .filter(|&c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || ('\u{4e00}'..='\u{9fa5}').contains(&c))
+        .filter(|&c| {
+            c.is_ascii_alphanumeric() || c == '_' || c == '-' || ('\u{4e00}'..='\u{9fa5}').contains(&c)
+        })
         .collect()
 }
 
@@ -162,9 +161,18 @@ pub fn encode_uri_component(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for b in s.as_bytes() {
         match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'!' | b'~' | b'*' | b'\'' | b'(' | b')' => {
-                out.push(*b as char)
-            }
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'!'
+            | b'~'
+            | b'*'
+            | b'\''
+            | b'('
+            | b')' => out.push(*b as char),
             _ => out.push_str(&format!("%{b:02X}")),
         }
     }
@@ -177,9 +185,13 @@ pub fn js_normalize_numbers(v: &mut Value) {
     match v {
         Value::Number(n) => {
             if let Some(f) = n.as_f64()
-                && n.as_i64().is_none() && n.as_u64().is_none() && f.fract() == 0.0 && f.abs() < 9.0e15 {
-                    *v = Value::from(f as i64);
-                }
+                && n.as_i64().is_none()
+                && n.as_u64().is_none()
+                && f.fract() == 0.0
+                && f.abs() < 9.0e15
+            {
+                *v = Value::from(f as i64);
+            }
         }
         Value::Array(a) => a.iter_mut().for_each(js_normalize_numbers),
         Value::Object(o) => o.values_mut().for_each(js_normalize_numbers),
@@ -248,10 +260,17 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
     let days = era * 146_097 + doe - 719_468;
     let dow = ((days % 7 + 4) % 7 + 7) % 7; // 1970-01-01 = Thu(4)；Sunday=0
     const DOW: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const MON: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const MON: [&str; 12] =
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     format!(
         "{}, {:02} {} {:04} {:02}:{:02}:{:02} GMT",
-        DOW[dow as usize], d, MON[(mo - 1) as usize], y, h, mi, se
+        DOW[dow as usize],
+        d,
+        MON[(mo - 1) as usize],
+        y,
+        h,
+        mi,
+        se
     )
 }
 

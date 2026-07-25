@@ -1,12 +1,12 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::{
+    Json,
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -33,20 +33,15 @@ pub struct LoginBody {
         (status = 401, description = "帳密錯誤"),
     ),
 )]
-pub async fn login(
-    State(state): State<AppState>,
-    Json(body): Json<LoginBody>,
-) -> Result<Response, AppError> {
+pub async fn login(State(state): State<AppState>, Json(body): Json<LoginBody>) -> Result<Response, AppError> {
     let username = body.username.unwrap_or_default();
     let password = body.password.unwrap_or_default();
 
     // Express: `if (!username || !password)` —— 空字串也算缺。
     if username.is_empty() || password.is_empty() {
-        return Ok((
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "message": "請提供用戶名和密碼" })),
-        )
-            .into_response());
+        return Ok(
+            (StatusCode::BAD_REQUEST, Json(json!({ "message": "請提供用戶名和密碼" }))).into_response()
+        );
     }
 
     // 查使用者。DB 錯 → 500 {"message":"伺服器錯誤"}（對齊 Express，非 AppError 的 error key）
@@ -59,21 +54,14 @@ pub async fn login(
     {
         Ok(u) => u,
         Err(_) => {
-            return Ok((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "message": "伺服器錯誤" })),
-            )
-                .into_response())
+            return Ok(
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "伺服器錯誤" }))).into_response()
+            );
         }
     };
 
-    let invalid = || {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "message": "用戶名或密碼錯誤" })),
-        )
-            .into_response()
-    };
+    let invalid =
+        || (StatusCode::UNAUTHORIZED, Json(json!({ "message": "用戶名或密碼錯誤" }))).into_response();
     let Some((id, uname, hash, role)) = user else {
         return Ok(invalid());
     };
@@ -89,10 +77,7 @@ pub async fn login(
     }
 
     // 簽 JWT：payload {id, username, role} + iat/exp（7 天），對齊 Express jwt.sign(expiresIn:'7d')。
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let exp = now + 7 * 24 * 60 * 60;
     let claims = json!({ "id": id, "username": uname, "role": role, "iat": now, "exp": exp });
     let token = encode(
@@ -136,7 +121,8 @@ fn role_or_user(role: Option<String>) -> String {
 }
 
 /// oauth_users 一列（/auth/me 用到的欄位）。
-type OauthRow = (i64, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<i64>);
+type OauthRow =
+    (i64, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<i64>);
 //                id   display_name     email            avatar_url       provider         role             linked_to
 
 fn me_user_json(u: &OauthRow) -> serde_json::Value {
@@ -154,9 +140,7 @@ fn me_user_json(u: &OauthRow) -> serde_json::Value {
 #[utoipa::path(get, path = "/api/auth/me", tag = "auth", security(("bearer" = [])),
     responses((status = 200, description = "當前登入使用者（動態 JSON）"), (status = 401, description = "未登入")))]
 pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> Result<Response, AppError> {
-    let unauth = |msg: &str| {
-        (StatusCode::UNAUTHORIZED, Json(json!({ "error": msg }))).into_response()
-    };
+    let unauth = |msg: &str| (StatusCode::UNAUTHORIZED, Json(json!({ "error": msg }))).into_response();
 
     let Some(token) = bearer_token(&headers) else {
         return Ok(unauth("Not authenticated"));
@@ -166,10 +150,7 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> Result<Res
     };
 
     let user_id = claims.get("userId").and_then(|v| v.as_i64()).filter(|&u| u != 0);
-    let provider_truthy = claims
-        .get("provider")
-        .and_then(|v| v.as_str())
-        .is_some_and(|s| !s.is_empty());
+    let provider_truthy = claims.get("provider").and_then(|v| v.as_str()).is_some_and(|s| !s.is_empty());
 
     // OAuth token（userId && provider）
     if let (Some(uid), true) = (user_id, provider_truthy) {
@@ -243,9 +224,7 @@ pub async fn reset_admin(
     let b = body.map(|Json(x)| x).unwrap_or(ResetAdminBody { username: None, password: None });
     let env_user = std::env::var("ADMIN_USERNAME").ok().filter(|s| !s.is_empty());
     let env_pass = std::env::var("ADMIN_PASSWORD").ok().filter(|s| !s.is_empty());
-    let username = env_user
-        .or(b.username.filter(|s| !s.is_empty()))
-        .unwrap_or_else(|| "admin".to_string());
+    let username = env_user.or(b.username.filter(|s| !s.is_empty())).unwrap_or_else(|| "admin".to_string());
     let Some(password) = env_pass.or(b.password.filter(|s| !s.is_empty())) else {
         return Ok((
             StatusCode::BAD_REQUEST,
@@ -259,7 +238,8 @@ pub async fn reset_admin(
     let hash = match tokio::task::spawn_blocking(move || bcrypt::hash(&pw, 10)).await {
         Ok(Ok(h)) => h,
         _ => {
-            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "密碼處理失敗" }))).into_response())
+            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "密碼處理失敗" })))
+                .into_response());
         }
     };
 
@@ -271,7 +251,8 @@ pub async fn reset_admin(
     {
         Ok(r) => r.rows_affected(),
         Err(_) => {
-            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "更新密碼失敗" }))).into_response())
+            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "更新密碼失敗" })))
+                .into_response());
         }
     };
     if updated == 0 {
@@ -282,9 +263,12 @@ pub async fn reset_admin(
             .await
             .is_err()
         {
-            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "創建用戶失敗" }))).into_response());
+            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "創建用戶失敗" })))
+                .into_response());
         }
-        return Ok(Json(json!({ "message": format!("管理員用戶 {username} 已創建"), "username": username })).into_response());
+        return Ok(Json(json!({ "message": format!("管理員用戶 {username} 已創建"), "username": username }))
+            .into_response());
     }
-    Ok(Json(json!({ "message": format!("管理員 {username} 密碼已重置"), "username": username })).into_response())
+    Ok(Json(json!({ "message": format!("管理員 {username} 密碼已重置"), "username": username }))
+        .into_response())
 }

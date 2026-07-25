@@ -1,17 +1,17 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use sqlx::FromRow;
 
 use crate::{
     auth::{require_admin, require_owner},
     error::AppError,
-    handlers::posts::{available_locales_with_source, PostRow},
+    handlers::posts::{PostRow, available_locales_with_source},
     state::AppState,
     util::{gen_slug, is_unique_violation, js_substring_prefix, parse_int, split_tags},
 };
@@ -386,12 +386,7 @@ pub async fn admin_posts(
         .collect();
 
     let total_pages = if limit > 0 { (total + limit - 1) / limit } else { 0 };
-    Ok(Json(AdminPostsResponse {
-        posts,
-        total_pages,
-        current_page: page,
-        total,
-    }))
+    Ok(Json(AdminPostsResponse { posts, total_pages, current_page: page, total }))
 }
 
 // ── GET /api/admin/comments（分頁；requireAdmin）──────────────────────────
@@ -540,13 +535,7 @@ pub async fn admin_comments(
         }
     }
 
-    Ok(Json(AdminCommentsResponse {
-        comments,
-        total,
-        page,
-        limit,
-        counts,
-    }))
+    Ok(Json(AdminCommentsResponse { comments, total, page, limit, counts }))
 }
 
 // ════════════════════ Admin CRUD 寫入（requireAdmin）════════════════════
@@ -571,7 +560,11 @@ pub struct TagBody {
         (status = 200, description = "建立標籤（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn create_tag(State(state): State<AppState>, headers: HeaderMap, Json(body): Json<TagBody>) -> Response {
+pub async fn create_tag(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<TagBody>,
+) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.unwrap_or_default();
     if name.is_empty() {
@@ -582,12 +575,13 @@ pub async fn create_tag(State(state): State<AppState>, headers: HeaderMap, Json(
         .execute(&state.pool)
         .await
     {
-        Ok(r) => (
-            StatusCode::CREATED,
-            Json(json!({ "id": r.last_insert_rowid(), "name": name, "post_count": 0 })),
-        )
-            .into_response(),
-        Err(e) if is_unique_violation(&e) => (StatusCode::CONFLICT, Json(json!({ "error": "標籤已存在" }))).into_response(),
+        Ok(r) => {
+            (StatusCode::CREATED, Json(json!({ "id": r.last_insert_rowid(), "name": name, "post_count": 0 })))
+                .into_response()
+        }
+        Err(e) if is_unique_violation(&e) => {
+            (StatusCode::CONFLICT, Json(json!({ "error": "標籤已存在" }))).into_response()
+        }
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -615,9 +609,13 @@ pub async fn update_tag(
         .execute(&state.pool)
         .await
     {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response()
+        }
         Ok(r) => Json(json!({ "id": id, "name": name, "updated": r.rows_affected() })).into_response(),
-        Err(e) if is_unique_violation(&e) => (StatusCode::CONFLICT, Json(json!({ "error": "標籤名稱已存在" }))).into_response(),
+        Err(e) if is_unique_violation(&e) => {
+            (StatusCode::CONFLICT, Json(json!({ "error": "標籤名稱已存在" }))).into_response()
+        }
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -628,13 +626,20 @@ pub async fn update_tag(
         (status = 200, description = "刪除標籤（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn delete_tag(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_tag(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     auth_or_return!(&headers, &state);
-    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE tag_id = ?").bind(&id).execute(&state.pool).await {
+    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE tag_id = ?").bind(&id).execute(&state.pool).await
+    {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
     match sqlx::query("DELETE FROM tags WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response()
+        }
         Ok(_) => Json(json!({ "message": "標籤已刪除" })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -667,7 +672,11 @@ fn resolve_slug(slug: &Option<String>, name: &str) -> String {
         (status = 200, description = "建立分類（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn create_category(State(state): State<AppState>, headers: HeaderMap, Json(body): Json<CategoryBody>) -> Response {
+pub async fn create_category(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<CategoryBody>,
+) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.clone().unwrap_or_default();
     if name.is_empty() {
@@ -755,7 +764,8 @@ pub async fn update_category(
     {
         Ok(r) => r.rows_affected(),
         Err(e) if is_unique_violation(&e) => {
-            return (StatusCode::CONFLICT, Json(json!({ "error": "分類名稱或 slug 已存在" }))).into_response()
+            return (StatusCode::CONFLICT, Json(json!({ "error": "分類名稱或 slug 已存在" })))
+                .into_response();
         }
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
@@ -768,7 +778,8 @@ pub async fn update_category(
             .await;
     }
     // 注意：回應無 short_description（對齊 Express）
-    Json(json!({ "id": id, "name": name, "slug": slug, "description": description, "updated": updated })).into_response()
+    Json(json!({ "id": id, "name": name, "slug": slug, "description": description, "updated": updated }))
+        .into_response()
 }
 
 #[utoipa::path(delete, path = "/api/admin/categories/{id}", tag = "admin", security(("bearer" = [])),
@@ -777,7 +788,11 @@ pub async fn update_category(
         (status = 200, description = "刪除分類（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn delete_category(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_category(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     auth_or_return!(&headers, &state);
     let cat_name = match sqlx::query_scalar::<_, String>("SELECT name FROM categories WHERE id = ?")
         .bind(&id)
@@ -814,7 +829,11 @@ pub struct BlacklistBody {
         (status = 200, description = "新增黑名單 IP（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn create_blacklist(State(state): State<AppState>, headers: HeaderMap, Json(body): Json<BlacklistBody>) -> Response {
+pub async fn create_blacklist(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<BlacklistBody>,
+) -> Response {
     auth_or_return!(&headers, &state);
     let ip = body.ip.unwrap_or_default();
     if ip.is_empty() {
@@ -826,7 +845,8 @@ pub async fn create_blacklist(State(state): State<AppState>, headers: HeaderMap,
         .execute(&state.pool)
         .await
     {
-        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() }))).into_response(),
+        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() })))
+            .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -837,7 +857,11 @@ pub async fn create_blacklist(State(state): State<AppState>, headers: HeaderMap,
         (status = 200, description = "刪除黑名單 IP（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn delete_blacklist(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_blacklist(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     auth_or_return!(&headers, &state);
     match sqlx::query("DELETE FROM ip_blacklist WHERE id = ?").bind(&id).execute(&state.pool).await {
         Ok(_) => Json(json!({ "message": "success" })).into_response(),
@@ -857,7 +881,11 @@ pub struct KeywordBody {
         (status = 200, description = "新增關鍵字過濾（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn create_keyword_filter(State(state): State<AppState>, headers: HeaderMap, Json(body): Json<KeywordBody>) -> Response {
+pub async fn create_keyword_filter(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<KeywordBody>,
+) -> Response {
     auth_or_return!(&headers, &state);
     let keyword = body.keyword.unwrap_or_default();
     if keyword.is_empty() {
@@ -873,7 +901,8 @@ pub async fn create_keyword_filter(State(state): State<AppState>, headers: Heade
         .execute(&state.pool)
         .await
     {
-        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() }))).into_response(),
+        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() })))
+            .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -884,7 +913,11 @@ pub async fn create_keyword_filter(State(state): State<AppState>, headers: Heade
         (status = 200, description = "刪除關鍵字過濾（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn delete_keyword_filter(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_keyword_filter(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     auth_or_return!(&headers, &state);
     match sqlx::query("DELETE FROM keyword_filters WHERE id = ?").bind(&id).execute(&state.pool).await {
         Ok(_) => Json(json!({ "message": "success" })).into_response(),
@@ -918,8 +951,15 @@ pub async fn patch_comment_status(
     if !VALID_STATUSES.contains(&status.as_str()) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Invalid status" }))).into_response();
     }
-    match sqlx::query("UPDATE comments SET status = ? WHERE id = ?").bind(&status).bind(&id).execute(&state.pool).await {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response(),
+    match sqlx::query("UPDATE comments SET status = ? WHERE id = ?")
+        .bind(&status)
+        .bind(&id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response()
+        }
         Ok(_) => Json(json!({ "message": "success" })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -952,8 +992,15 @@ pub async fn update_comment(
     if content.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Content is required" }))).into_response();
     }
-    match sqlx::query("UPDATE comments SET content = ? WHERE id = ?").bind(&content).bind(&id).execute(&state.pool).await {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response(),
+    match sqlx::query("UPDATE comments SET content = ? WHERE id = ?")
+        .bind(&content)
+        .bind(&id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response()
+        }
         Ok(_) => Json(json!({ "message": "success" })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -966,10 +1013,16 @@ pub async fn update_comment(
         (status = 200, description = "刪除留言（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn delete_comment(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_comment(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     auth_or_return!(&headers, &state);
     match sqlx::query("DELETE FROM comments WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response()
+        }
         Ok(_) => Json(json!({ "message": "success" })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -1000,7 +1053,10 @@ pub async fn reply_comment(
         .await;
     let post_id = match parent {
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(json!({ "error": "Parent comment not found" }))).into_response(),
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, Json(json!({ "error": "Parent comment not found" })))
+                .into_response();
+        }
         Ok(Some(pid)) => pid,
     };
     match sqlx::query(
@@ -1013,7 +1069,8 @@ pub async fn reply_comment(
     .execute(&state.pool)
     .await
     {
-        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() }))).into_response(),
+        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() })))
+            .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -1133,7 +1190,8 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
     let want_newsletter = js_truthy(b.get("send_newsletter")) && status_str.as_deref() == Some("published");
 
     if !js_truthy(b.get("title")) || !js_truthy(b.get("content")) {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "缺少必填欄位: title, content" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "缺少必填欄位: title, content" })))
+            .into_response();
     }
     // source_language：缺 → 'zh-TW'；有值但非合法 locale → 400（含 null → "null"）
     let source_language = if let Some(v) = b.get("source_language") {
@@ -1143,7 +1201,11 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
                 Value::String(x) => x.clone(),
                 other => other.to_string(),
             };
-            return (StatusCode::BAD_REQUEST, Json(json!({ "error": format!("無效的 source_language: {disp}") }))).into_response();
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": format!("無效的 source_language: {disp}") })),
+            )
+                .into_response();
         }
         s
     } else {
@@ -1155,8 +1217,13 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
     let excerpt = b.get("excerpt").and_then(to_s); // 缺→NULL、''→''
     let category = truthy_s(b.get("category")); // || null
     let status = if b.contains_key("status") { b.get("status").and_then(to_s) } else { Some("draft".into()) };
-    let layout_type = if b.contains_key("layout_type") { b.get("layout_type").and_then(to_s) } else { Some("record".into()) };
-    let format = if b.contains_key("format") { b.get("format").and_then(to_s) } else { Some("markdown".into()) };
+    let layout_type = if b.contains_key("layout_type") {
+        b.get("layout_type").and_then(to_s)
+    } else {
+        Some("record".into())
+    };
+    let format =
+        if b.contains_key("format") { b.get("format").and_then(to_s) } else { Some("markdown".into()) };
     let i18n = |k: &str| truthy_s(b.get(k)); // || null
     let series_name = b
         .get("series_name")
@@ -1188,8 +1255,18 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
     .bind(&format)
     .bind(&source_language);
     for k in [
-        "title_en", "content_en", "excerpt_en", "title_zh_cn", "content_zh_cn", "excerpt_zh_cn",
-        "title_ja", "content_ja", "excerpt_ja", "title_ko", "content_ko", "excerpt_ko",
+        "title_en",
+        "content_en",
+        "excerpt_en",
+        "title_zh_cn",
+        "content_zh_cn",
+        "excerpt_zh_cn",
+        "title_ja",
+        "content_ja",
+        "excerpt_ja",
+        "title_ko",
+        "content_ko",
+        "excerpt_ko",
     ] {
         q = q.bind(i18n(k));
     }
@@ -1259,7 +1336,11 @@ pub async fn admin_update_post(
                 Value::String(x) => x.clone(),
                 other => other.to_string(),
             };
-            return (StatusCode::BAD_REQUEST, Json(json!({ "error": format!("無效的 source_language: {disp}") }))).into_response();
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": format!("無效的 source_language: {disp}") })),
+            )
+                .into_response();
         }
     }
 
@@ -1329,8 +1410,18 @@ pub async fn admin_update_post(
     .bind(b.get("format").and_then(to_s))
     .bind(b.get("source_language").and_then(to_s));
     for k in [
-        "title_en", "content_en", "excerpt_en", "title_zh_cn", "content_zh_cn", "excerpt_zh_cn",
-        "title_ja", "content_ja", "excerpt_ja", "title_ko", "content_ko", "excerpt_ko",
+        "title_en",
+        "content_en",
+        "excerpt_en",
+        "title_zh_cn",
+        "content_zh_cn",
+        "excerpt_zh_cn",
+        "title_ja",
+        "content_ja",
+        "excerpt_ja",
+        "title_ko",
+        "content_ko",
+        "excerpt_ko",
     ] {
         let (f, v) = nullable(k);
         q = q.bind(f).bind(v);
@@ -1344,16 +1435,17 @@ pub async fn admin_update_post(
     match q.execute(&state.pool).await {
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
         Ok(r) if r.rows_affected() == 0 => {
-            return (StatusCode::NOT_FOUND, Json(json!({ "error": "文章不存在" }))).into_response()
+            return (StatusCode::NOT_FOUND, Json(json!({ "error": "文章不存在" }))).into_response();
         }
         Ok(_) => {}
     }
     // tags 有帶 key（含空陣列）才重建關聯；缺 key 不動（回應仍回 body 的 tags 或 []）
     let tags = tags_from(&b);
     if b.contains_key("tags")
-        && let Err(e) = manage_tags(&state, &id, &tags).await {
-            return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
-        }
+        && let Err(e) = manage_tags(&state, &id, &tags).await
+    {
+        return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
+    }
 
     let mut data = Map::new();
     data.insert("id".into(), json!(id));
@@ -1366,10 +1458,9 @@ pub async fn admin_update_post(
     if let Some(v) = b.get("status") {
         data.insert("status".into(), v.clone());
     }
-    if want_newsletter
-        && let Ok(pid) = id.parse::<i64>() {
-            data.insert("newsletter".into(), dispatch_newsletter_result(&state, pid).await);
-        }
+    if want_newsletter && let Ok(pid) = id.parse::<i64>() {
+        data.insert("newsletter".into(), dispatch_newsletter_result(&state, pid).await);
+    }
     Json(json!({ "message": "success", "data": Value::Object(data) })).into_response()
 }
 
@@ -1380,15 +1471,23 @@ pub async fn admin_update_post(
         (status = 200, description = "刪除文章（動態 JSON）"),
         (status = 401, description = "未授權"),
     ))]
-pub async fn admin_delete_post(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn admin_delete_post(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
-    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(&id).execute(&state.pool).await {
+    if let Err(e) =
+        sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(&id).execute(&state.pool).await
+    {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
     match sqlx::query("DELETE FROM posts WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "文章不存在" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "文章不存在" }))).into_response()
+        }
         Ok(r) => Json(json!({ "message": "文章已刪除", "deleted": r.rows_affected() })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -1411,7 +1510,11 @@ pub struct AdminPostDetailResponse {
         (status = 200, body = AdminPostDetailResponse),
         (status = 401, description = "未授權"),
     ))]
-pub async fn admin_get_post(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn admin_get_post(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
@@ -1425,25 +1528,17 @@ pub async fn admin_get_post(State(state): State<AppState>, Path(id): Path<String
     .await;
     let row = match row {
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(json!({ "message": "Post not found" }))).into_response(),
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, Json(json!({ "message": "Post not found" }))).into_response();
+        }
         Ok(Some(r)) => r,
     };
     let mut post = AdminPostFull::from_row(&row);
     // source_language: row.source_language || 'zh-TW'（空字串也算缺；與公開端點的規則不同）
-    let source = post
-        .source_language
-        .as_deref()
-        .filter(|s| !s.is_empty())
-        .unwrap_or("zh-TW")
-        .to_string();
+    let source = post.source_language.as_deref().filter(|s| !s.is_empty()).unwrap_or("zh-TW").to_string();
     post.source_language = Some(source.clone());
     let available_locales = available_locales_with_source(&row, &source);
-    Json(AdminPostDetailResponse {
-        message: "success".into(),
-        post,
-        available_locales,
-    })
-    .into_response()
+    Json(AdminPostDetailResponse { message: "success".into(), post, available_locales }).into_response()
 }
 
 /// `GET /api/admin/stats` —— requireAdmin。文章/留言統計 + 模擬訪客數（`Math.random`）。
@@ -1521,25 +1616,28 @@ pub async fn admin_update_user_role(
     };
     let role = body.get("role").and_then(|v| v.as_str()).unwrap_or("");
     if !matches!(role, "USER" | "ADMIN" | "OWNER") {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "無效的角色，允許值：USER, ADMIN, OWNER" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "無效的角色，允許值：USER, ADMIN, OWNER" })))
+            .into_response();
     }
     // req.user.dbUser.id === parseInt(userId)（legacy token 無 dbUser → 跳過）
     if let (Some(db_id), Some(target)) = (owner.db_user_id, crate::util::js_parse_int_opt(&id))
-        && db_id == target {
-            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "不能修改自己的角色" }))).into_response();
-        }
+        && db_id == target
+    {
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "不能修改自己的角色" }))).into_response();
+    }
     match sqlx::query("UPDATE oauth_users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(role)
         .bind(&id)
         .execute(&state.pool)
         .await
     {
-        Ok(r) if r.rows_affected() == 0 => (StatusCode::NOT_FOUND, Json(json!({ "error": "用戶不存在" }))).into_response(),
+        Ok(r) if r.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, Json(json!({ "error": "用戶不存在" }))).into_response()
+        }
         Ok(_) => Json(json!({ "message": "角色更新成功", "role": role })).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
-
 
 /// `PATCH /api/admin/comments/batch/status` —— 批次審核。
 /// Express 原版因 `:id/status` 先註冊而永遠打不到（bug #2）；axum matchit 靜態段

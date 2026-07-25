@@ -1,18 +1,18 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use sqlx::FromRow;
 
+use crate::state::AppState;
 use crate::{
     auth::require_admin,
     util::{bind_val, js_num_value, js_parse_int_opt, js_truthy},
 };
-use crate::state::AppState;
 
 /// books 一列（`SELECT *`）。欄位序 = books 表宣告序，對齊舊 `row_to_json` 的 key 序。
 #[derive(Debug, Serialize, FromRow, specta::Type, utoipa::ToSchema)]
@@ -149,7 +149,11 @@ pub async fn admin_books(
     params(("id" = String, Path)),
     responses((status = 200, body = BookDetailResponse)))]
 pub async fn get_book(State(state): State<AppState>, Path(id): Path<String>) -> Response {
-    match sqlx::query_as::<_, BookRow>("SELECT * FROM books WHERE id = ?").bind(&id).fetch_optional(&state.pool).await {
+    match sqlx::query_as::<_, BookRow>("SELECT * FROM books WHERE id = ?")
+        .bind(&id)
+        .fetch_optional(&state.pool)
+        .await
+    {
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
         Ok(None) => (StatusCode::NOT_FOUND, Json(json!({ "message": "Book not found" }))).into_response(),
         Ok(Some(book)) => Json(BookDetailResponse { message: "success".into(), book }).into_response(),
@@ -158,8 +162,19 @@ pub async fn get_book(State(state): State<AppState>, Path(id): Path<String>) -> 
 
 /// POST/PUT 共用的 13/15 個欄位鍵名。
 const BOOK_FIELDS: [&str; 13] = [
-    "isbn", "title", "authors", "publisher", "published_date", "description",
-    "cover_url", "page_count", "language", "categories", "reading_status", "rating", "personal_notes",
+    "isbn",
+    "title",
+    "authors",
+    "publisher",
+    "published_date",
+    "description",
+    "cover_url",
+    "page_count",
+    "language",
+    "categories",
+    "reading_status",
+    "rating",
+    "personal_notes",
 ];
 
 /// `POST /api/books`（requireAdmin）—— 建書。回應 `{message, book:{id, ...req.body}}`（spread 原 body）。
@@ -198,7 +213,8 @@ pub async fn create_book(
             for (k, v) in &body {
                 book.insert(k.clone(), v.clone());
             }
-            (StatusCode::CREATED, Json(json!({ "message": "success", "book": Value::Object(book) }))).into_response()
+            (StatusCode::CREATED, Json(json!({ "message": "success", "book": Value::Object(book) })))
+                .into_response()
         }
     }
 }
@@ -246,7 +262,11 @@ pub async fn update_book(
 #[utoipa::path(delete, path = "/api/books/{id}", tag = "books", security(("bearer" = [])),
     params(("id" = String, Path)),
     responses((status = 200, description = "刪除書籍（動態 JSON）"), (status = 401, description = "未授權")))]
-pub async fn delete_book(State(state): State<AppState>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+pub async fn delete_book(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
