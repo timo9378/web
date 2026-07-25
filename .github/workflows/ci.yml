@@ -64,12 +64,16 @@ jobs:
           workspaces: backend
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
-          tool: cargo-nextest,cargo-audit
+          tool: cargo-nextest,cargo-audit,cargo-llvm-cov
       # --locked：CI 必須測「commit 進來的那組版本」，不允許靜默更新 Cargo.lock
       - name: clippy (-D warnings)
         run: cargo clippy --locked --all-targets -- -D warnings
-      - name: test (nextest)
-        run: cargo nextest run --locked
+      # 測試 + 覆蓋率一次跑完（llvm-cov 會帶 instrumentation 重編，不另外跑 nextest 免得編兩次）。
+      # --fail-under-lines 是 ratchet：現況 line 16.98%，門檻設 15 只擋退步。
+      # 0% 的多是外部 API 整合（Trakt/動畫瘋/Spotify/OAuth），要 mock 外部服務才測得動，
+      # 刻意不追高；調高門檻前先確認是真的多測到東西，而不是為了數字寫空測試。
+      - name: test + coverage (llvm-cov + nextest)
+        run: cargo llvm-cov nextest --locked --fail-under-lines 15
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |
