@@ -66,6 +66,11 @@ pub struct AdminCategoryRow {
     pub updated_at: Option<String>,
     #[specta(type = specta_typescript::Number)]
     pub post_count: i64,
+    /// 顯示用譯名（name 仍是資料鍵）。後台編輯用。
+    pub name_en: Option<String>,
+    pub name_ja: Option<String>,
+    pub name_ko: Option<String>,
+    pub name_zh_cn: Option<String>,
 }
 
 #[utoipa::path(get, path = "/api/admin/categories", tag = "admin", security(("bearer" = [])),
@@ -80,10 +85,12 @@ pub async fn admin_categories(
     require_admin(&headers, &state).await?;
     let rows = sqlx::query_as::<_, AdminCategoryRow>(
         "SELECT c.id, c.name, c.slug, c.description, c.short_description, c.created_at, c.updated_at, \
+         c.name_en, c.name_ja, c.name_ko, c.name_zh_cn, \
                 COUNT(p.id) as post_count \
          FROM categories c \
          LEFT JOIN posts p ON p.category = c.name \
-         GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.created_at, c.updated_at \
+         GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.created_at, c.updated_at, \
+                  c.name_en, c.name_ja, c.name_ko, c.name_zh_cn \
          ORDER BY c.name ASC",
     )
     .fetch_all(&state.pool)

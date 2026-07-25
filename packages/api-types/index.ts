@@ -11,6 +11,11 @@ export type AdminCategoryRow = {
 	created_at: string,
 	updated_at: string | null,
 	post_count: number,
+	/**  顯示用譯名（name 仍是資料鍵）。後台編輯用。 */
+	name_en: string | null,
+	name_ja: string | null,
+	name_ko: string | null,
+	name_zh_cn: string | null,
 };
 
 /**

@@ -32,7 +32,20 @@ interface CategoryForm {
   slug: string;
   description: string;
   short_description: string;
+  // 顯示用譯名（name 仍是資料鍵：文章的 category 與前台篩選都比對它）
+  name_en: string;
+  name_ja: string;
+  name_ko: string;
+  name_zh_cn: string;
 }
+
+/** 譯名欄位表：新增語系時只要改這裡（表單自動長出欄位）。 */
+const LOCALE_NAME_FIELDS = [
+  { key: 'name_en', label: 'English', placeholder: 'Tech Notes' },
+  { key: 'name_ja', label: '日本語', placeholder: '技術ノート' },
+  { key: 'name_ko', label: '한국어', placeholder: '기술 노트' },
+  { key: 'name_zh_cn', label: '简体中文', placeholder: '技术笔记' },
+] as const;
 
 export default function CategoriesManager() {
   const queryClient = useQueryClient();
@@ -46,6 +59,10 @@ export default function CategoriesManager() {
     slug: '',
     description: '',
     short_description: '',
+    name_en: '',
+    name_ja: '',
+    name_ko: '',
+    name_zh_cn: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,6 +113,10 @@ export default function CategoriesManager() {
       slug: category.slug,
       description: category.description ?? '',
       short_description: category.short_description ?? '',
+      name_en: category.name_en ?? '',
+      name_ja: category.name_ja ?? '',
+      name_ko: category.name_ko ?? '',
+      name_zh_cn: category.name_zh_cn ?? '',
     });
     setDialogOpen(true);
   };
@@ -125,7 +146,7 @@ export default function CategoriesManager() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '', description: '', short_description: '' });
+    setFormData({ name: '', slug: '', description: '', short_description: '', name_en: '', name_ja: '', name_ko: '', name_zh_cn: '' });
     setEditingCategory(null);
   };
 
@@ -202,6 +223,26 @@ export default function CategoriesManager() {
                     onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
                     placeholder="一句話描述此分類"
                   />
+                </div>
+
+                <div className="pt-2 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground mb-1">多語系顯示名（選填）</p>
+                  <p className="text-[11px] text-muted-foreground/60 mb-3">
+                    只影響各語系頁面上的顯示；「分類名稱」仍是資料鍵（文章歸屬與篩選都用它）。留空該語系就顯示原名。
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {LOCALE_NAME_FIELDS.map(({ key, label, placeholder }) => (
+                      <div className="space-y-2" key={key}>
+                        <Label htmlFor={key} className="text-xs">{label}</Label>
+                        <Input
+                          id={key}
+                          value={formData[key]}
+                          onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                          placeholder={placeholder}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <DialogFooter>
