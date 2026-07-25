@@ -117,10 +117,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      # actionlint 不在 taiki-e/install-action 的清單裡，用維護中的 wrapper action。
+      - uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
-          tool: actionlint,zizmor
-      - name: actionlint
-        run: actionlint
+          tool: zizmor
       - name: zizmor
         run: zizmor .github/workflows/
