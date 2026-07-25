@@ -640,6 +640,11 @@ pub struct CategoryBody {
     description: Option<String>,
     slug: Option<String>,
     short_description: Option<String>,
+    // 顯示用譯名（name 仍是資料鍵，不參與 join/比對）
+    name_en: Option<String>,
+    name_ja: Option<String>,
+    name_ko: Option<String>,
+    name_zh_cn: Option<String>,
 }
 
 /// slug = 提供的（非空）或由 name 生成。
@@ -665,13 +670,18 @@ pub async fn create_category(State(state): State<AppState>, headers: HeaderMap, 
     let description = body.description.clone().unwrap_or_default();
     let short_description = body.short_description.clone().unwrap_or_default();
     match sqlx::query(
-        "INSERT INTO categories (name, slug, description, short_description, created_at, updated_at) \
-         VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
+        "INSERT INTO categories (name, slug, description, short_description, \
+         name_en, name_ja, name_ko, name_zh_cn, created_at, updated_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
     )
     .bind(&name)
     .bind(&slug)
     .bind(&description)
     .bind(&short_description)
+    .bind(body.name_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
     .execute(&state.pool)
     .await
     {
@@ -721,12 +731,17 @@ pub async fn update_category(
     let description = body.description.clone().unwrap_or_default();
     let short_description = body.short_description.clone().unwrap_or_default();
     let updated = match sqlx::query(
-        "UPDATE categories SET name = ?, slug = ?, description = ?, short_description = ?, updated_at = datetime('now') WHERE id = ?",
+        "UPDATE categories SET name = ?, slug = ?, description = ?, short_description = ?, \
+         name_en = ?, name_ja = ?, name_ko = ?, name_zh_cn = ?, updated_at = datetime('now') WHERE id = ?",
     )
     .bind(&name)
     .bind(&slug)
     .bind(&description)
     .bind(&short_description)
+    .bind(body.name_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
     .bind(&id)
     .execute(&state.pool)
     .await

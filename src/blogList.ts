@@ -127,6 +127,11 @@ export interface CategoryInfo {
   description?: string;
   post_count?: number;
   updated_at?: string;
+  // 顯示用譯名（name 仍是資料鍵）。解析見 lib/categoryLabel 的 useCategoryLabel。
+  name_en?: string;
+  name_ja?: string;
+  name_ko?: string;
+  name_zh_cn?: string;
 }
 export const blogCategoriesDetailQueryOptions = queryOptions({
   queryKey: ['categories', 'detail'],

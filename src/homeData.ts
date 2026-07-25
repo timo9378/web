@@ -7,11 +7,13 @@ import { apiUrl } from './api';
 // 消除「同專案兩種抓法混用」。digest/quote 失敗回空（對齊舊 catch 的靜默降級）。
 const STALE = 5 * 60 * 1000;
 
-export const homeDigestQueryOptions = queryOptions({
-  queryKey: ['home', 'digest'],
+// locale 進 queryKey：切語系（導航到 /ja 等）時會重抓，文章標題換成該語系的譯文。
+export const homeDigestQueryOptions = (locale: string) =>
+  queryOptions({
+  queryKey: ['home', 'digest', locale],
   queryFn: async (): Promise<DigestResponse> => {
     try {
-      const res = await fetch(apiUrl('/api/home/digest'));
+      const res = await fetch(apiUrl(`/api/home/digest?locale=${encodeURIComponent(locale)}`));
       if (!res.ok) throw new Error(`GET /api/home/digest ${res.status}`);
       return (await res.json()) as DigestResponse;
     } catch {

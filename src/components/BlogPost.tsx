@@ -39,6 +39,7 @@ import { MdxContent } from './MdxContent';
 // slugify / extractHeadings / computeReadTime：與 BlogPostPage（SSR fallback）共用同一份，
 // 確保 heading anchor id / TOC / 閱讀時間兩邊逐字一致。
 import { slugify, extractHeadings, computeReadTime } from '../lib/blogContent';
+import { useCategoryLabel } from '../lib/categoryLabel';
 
 /// `GET /api/posts/:id` 的成功回應（型別由後端 Rust struct 生成），外加 client 端自己算的
 /// `date`（由 created_at 依語系格式化，見下方 setPost）。API 不回傳 date。
@@ -923,6 +924,7 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
    CategoryTooltipTrigger — hover 顯示分類 tooltip (Portal 到 body)
    ══════════════════════════ */
 const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnter, onLeave, linkClassName, compact = false }: { postCategory: string; categoryInfo: CategoryInfo | null; showTooltip: boolean; onEnter: () => void; onLeave: () => void; linkClassName?: string; compact?: boolean }) => {
+  const categoryLabel = useCategoryLabel();
   const triggerRef = useRef<HTMLSpanElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -947,7 +949,7 @@ const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnt
         to={'/blog?category=' + encodeURIComponent(postCategory)}
         className={linkClassName ?? 'text-sm text-white hover:text-purple-400 transition-colors font-semibold'}
       >
-        {postCategory}
+        {categoryLabel(postCategory)}
       </LocaleLink>
       {showTooltip && categoryInfo && ReactDOM.createPortal(
         <div

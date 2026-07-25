@@ -14,6 +14,11 @@ pub struct CategoryRow {
     pub short_description: Option<String>,
     pub updated_at: Option<String>,
     pub post_count: i64,
+    /// 顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。
+    pub name_en: Option<String>,
+    pub name_ja: Option<String>,
+    pub name_ko: Option<String>,
+    pub name_zh_cn: Option<String>,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -37,10 +42,12 @@ pub async fn list_categories(
           c.description,
           c.short_description,
           c.updated_at,
-          COUNT(p.id) as post_count
+          COUNT(p.id) as post_count,
+          c.name_en, c.name_ja, c.name_ko, c.name_zh_cn
         FROM categories c
         LEFT JOIN posts p ON p.category = c.name AND p.status = 'published'
-        GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.updated_at
+        GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.updated_at,
+                 c.name_en, c.name_ja, c.name_ko, c.name_zh_cn
         ORDER BY post_count DESC, c.name ASC
         "#,
     )

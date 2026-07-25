@@ -14,6 +14,7 @@ import type { PostListItem } from '@koimsurai/api-types';
 import { postsListQueryOptions, blogTagsQueryOptions, blogCategoriesQueryOptions } from '../blogList';
 import { usePrefetchArticle } from '../lib/usePrefetchArticle';
 import './Blog.css';
+import { useCategoryLabel } from '../lib/categoryLabel';
 
 /** `GET /api/posts` 的單篇摘要，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 export type Post = PostListItem;
@@ -94,6 +95,7 @@ const stagger: Variants = {
    ════════════════════════════════════════════════ */
 
 const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; index: number; onOpenComments?: (postId: string | number, postTitle: string, allowComments: boolean) => void }) => {
+  const categoryLabel = useCategoryLabel();
   const { t } = useTranslation();
   const prefetchArticle = usePrefetchArticle();
   const [liked, setLiked] = useState(false);
@@ -205,7 +207,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
         {(!isColumn || post.category) && (
           <div className="note-meta-top">
             {!isColumn && <span className="note-full-date">{fullDate}</span>}
-            {post.category && <span className="note-category">{post.category}</span>}
+            {post.category && <span className="note-category">{categoryLabel(post.category)}</span>}
           </div>
         )}
 
@@ -349,6 +351,7 @@ function Blog() {
   // 而不是卡在下面的 `if (loading)` 骨架屏。
   const locale = useLocale();
   const prefetchArticle = usePrefetchArticle();
+  const categoryLabel = useCategoryLabel();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -583,7 +586,7 @@ function Blog() {
                     className={`category-item ${selectedCategory === cat.name ? 'active' : ''}`}
                     onClick={() => setSelectedCategory(cat.name)}
                   >
-                    {cat.name}
+                    {categoryLabel(cat.name)}
                     <span className="cat-count">{cat.post_count}</span>
                   </button>
                 ))}

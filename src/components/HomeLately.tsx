@@ -9,6 +9,7 @@ import type { TFunction } from 'i18next';
 import type { DigestTimeline } from '@koimsurai/api-types';
 import { homeDigestQueryOptions, dailyQuoteQueryOptions } from '../homeData';
 import './HomeLately.css';
+import { useCategoryLabel } from '../lib/categoryLabel';
 
 /** 相對時間（30 天內），更久就顯示日期 */
 function timeAgo(iso: string, t: TFunction) {
@@ -113,8 +114,9 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
 
 export default function HomeLately() {
   const { t, i18n } = useTranslation();
+  const categoryLabel = useCategoryLabel();
   // 動態帶 / 每日名言改由 TanStack Query 讀（queryFn 內建 catch 降級，對齊舊 UX）。
-  const { data: digest } = useQuery(homeDigestQueryOptions);
+  const { data: digest } = useQuery(homeDigestQueryOptions(i18n.resolvedLanguage ?? i18n.language));
   const { data: quote } = useQuery(dailyQuoteQueryOptions(i18n.resolvedLanguage ?? i18n.language));
 
   // /#contact 深連結：本元件 lazy 掛載比 Header 的 100ms hash 捲動晚，掛載後自己補捲
@@ -151,7 +153,7 @@ export default function HomeLately() {
                   <span className="lately-post-body">
                     <span className="lately-post-title">{p.title}</span>
                     <span className="lately-post-meta">
-                      {p.category ? `${p.category} · ` : ''}{timeAgo(p.created_at, t)}
+                      {p.category ? `${categoryLabel(p.category)} · ` : ''}{timeAgo(p.created_at, t)}
                     </span>
                   </span>
                 </LocaleLink>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { recentPostsQueryOptions, blogCategoriesQueryOptions, blogTagsQueryOptions } from '../blogList';
 import './CommandPalette.css';
+import { useCategoryLabel } from '../lib/categoryLabel';
 
 interface StaticPage { label: string; path: string; icon: LucideIcon; keywords: string }
 
@@ -26,6 +27,7 @@ const STATIC_PAGES: StaticPage[] = [
 ];
 
 export default function CommandPalette() {
+  const categoryLabel = useCategoryLabel();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const navigate = useLocaleNavigate();
@@ -93,7 +95,7 @@ export default function CommandPalette() {
                   >
                     <FileText size={14} className="cmdk-icon" />
                     <span className="cmdk-truncate">{p.title}</span>
-                    {p.category && <span className="cmdk-meta">{p.category}</span>}
+                    {p.category && <span className="cmdk-meta">{categoryLabel(p.category)}</span>}
                   </Command.Item>
                 ))}
               </Command.Group>

@@ -453,17 +453,21 @@ export function makeTools(api: ApiClient): Tool[] {
       inputSchema: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          name: { type: 'string', description: '分類名（同時是資料鍵：文章的 category 存的就是它）' },
           description: { type: 'string' },
           slug: { type: 'string' },
           short_description: { type: 'string' },
+          name_en: { type: 'string', description: '英文顯示名（可選；不影響資料鍵）' },
+          name_ja: { type: 'string', description: '日文顯示名（可選）' },
+          name_ko: { type: 'string', description: '韓文顯示名（可選）' },
+          name_zh_cn: { type: 'string', description: '簡中顯示名（可選）' },
         },
         required: ['name'],
         additionalProperties: false,
       },
       handler: (a) =>
         api.request('POST', '/api/admin/categories', {
-          body: pick(a, ['name', 'description', 'slug', 'short_description']),
+          body: pick(a, ['name', 'description', 'slug', 'short_description', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn']),
         }),
     },
     {
@@ -477,13 +481,17 @@ export function makeTools(api: ApiClient): Tool[] {
           description: { type: 'string' },
           slug: { type: 'string' },
           short_description: { type: 'string' },
+          name_en: { type: 'string', description: '英文顯示名（可選；不影響資料鍵）' },
+          name_ja: { type: 'string', description: '日文顯示名（可選）' },
+          name_ko: { type: 'string', description: '韓文顯示名（可選）' },
+          name_zh_cn: { type: 'string', description: '簡中顯示名（可選）' },
         },
         required: ['id'],
         additionalProperties: false,
       },
       handler: (a) =>
         api.request('PUT', `/api/admin/categories/${a.id}`, {
-          body: pick(a, ['name', 'description', 'slug', 'short_description']),
+          body: pick(a, ['name', 'description', 'slug', 'short_description', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn']),
         }),
     },
     {

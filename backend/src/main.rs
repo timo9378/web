@@ -12,6 +12,16 @@ use state::AppState;
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
+// jemalloc 預設 decay 無上限且無背景執行緒 → 記憶體只進不出。
+// 實測（20 萬請求 ×100 併發，n=3，負載退去 20s 後的穩態 RSS）：
+//   glibc 44.9MB ／ jemalloc 預設 47.6MB（比 glibc 還差）／ 本設定 22.3MB（-50%）
+// 這台同時跑 ~35 個容器，穩態 RSS 才是真正該省的數字。
+// tikv-jemalloc 以 _rjem_ 前綴編譯，設定符號名須為 _rjem_malloc_conf（環境變數則是 _RJEM_MALLOC_CONF）。
+#[cfg(not(target_env = "msvc"))]
+#[allow(non_upper_case_globals)]
+#[unsafe(export_name = "_rjem_malloc_conf")]
+pub static malloc_conf: &[u8] = b"background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:1000\0";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();

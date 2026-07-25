@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { FaGlobe, FaCheck } from 'react-icons/fa';
-import { SUPPORTED_LOCALES, LOCALE_LABELS } from '../start-i18n';
+import { SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_PREFIX, stripLocalePrefix, type Locale } from '../start-i18n';
 import './LanguagePicker.css';
 
 /* ──────────────────────────────────────────────────────────────
@@ -9,13 +10,17 @@ import './LanguagePicker.css';
    - trigger: 🌐 + 當前語系 label
    - popup: 5 個 locale，當前打勾
    - 切完寫 localStorage（i18next-browser-languagedetector 自動處理 koim_locale）
-   - changeLanguage 觸發 i18n + <html lang> 同步 → CSS :lang() 套字體
+   - ⚠ 一定要「導航到帶前綴的網址」而不是只 changeLanguage：頁面內容由 LocaleProvider
+     依 **URL** 建的獨立 i18n instance 驅動（見 start-i18n 的 createI18n/LocaleProvider），
+     只呼叫 changeLanguage 只會換到外殼那顆 instance → 內容（含今日訊號）不會跟著換。
 ─────────────────────────────────────────────────────────────── */
 
 function LanguagePicker() {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // 點外面關掉 + Esc 關掉
   useEffect(() => {
@@ -35,8 +40,13 @@ function LanguagePicker() {
   const current = i18n.resolvedLanguage ?? i18n.language ?? 'zh-TW';
 
   const select = (code: string) => {
-    void i18n.changeLanguage(code);
+    void i18n.changeLanguage(code); // 記住偏好（localStorage），並讓外殼即時反應
     setOpen(false);
+    // 同一個邏輯路徑換前綴：'/en/blog/39' + ja → '/ja/blog/39'；預設語系無前綴。
+    const base = stripLocalePrefix(pathname);
+    const prefix = LOCALE_PREFIX[code as Locale];
+    const target = `/${[prefix, base].filter(Boolean).join('/')}`;
+    if (target !== pathname) void navigate({ href: target });
   };
 
   return (
