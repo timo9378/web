@@ -250,4 +250,47 @@ mod tests {
     fn esc_xml_matches_js() {
         assert_eq!(esc_xml(r#"a&b<c>d"e'f"#), "a&amp;b&lt;c&gt;d&quot;e&#39;f");
     }
+
+    // ── property tests ────────────────────────────────────────────────
+    // 上面的對拍測試釘的是「已知案例」；這裡釘的是「所有輸入都該成立的不變量」。
+    // OG 標題直接來自使用者輸入的文章標題，CJK/emoji/組合字元都會進來。
+    proptest::proptest! {
+        /// 行數不超過 max_lines。
+        #[test]
+        fn wrap_title_respects_max_lines(t in ".{0,200}", max_chars in 1usize..40, max_lines in 1usize..6) {
+            let out = wrap_title(&t, max_chars, max_lines);
+            proptest::prop_assert!(out.len() <= max_lines, "got {} lines", out.len());
+        }
+
+        /// 每行長度上限：實作是「先檢查再 push char」，而一個 char 可能佔 2 個 UTF-16
+        /// 單位（surrogate pair），所以單行最多可能超出 1 個單位——這是既有行為，
+        /// 在此明確釘住，日後若改斷行邏輯會被這條擋下。
+        #[test]
+        fn wrap_title_line_length_bounded(t in ".{0,200}", max_chars in 1usize..40, max_lines in 1usize..6) {
+            for line in wrap_title(&t, max_chars, max_lines) {
+                let n = line.encode_utf16().count();
+                proptest::prop_assert!(n <= max_chars + 1, "line {n} units > {max_chars}+1: {line:?}");
+            }
+        }
+
+        /// 只有空白的輸入 → 空結果（trim 後為空）。
+        #[test]
+        fn wrap_title_blank_input_is_empty(t in "[ \t\n]{0,20}") {
+            proptest::prop_assert!(wrap_title(&t, 16, 3).is_empty());
+        }
+
+        /// 轉義後不得殘留任何未轉義的 XML 特殊字元。
+        #[test]
+        fn esc_xml_leaves_no_raw_specials(s in ".{0,200}") {
+            let out = esc_xml(&s);
+            for c in ['<', '>', '"', '\''] {
+                proptest::prop_assert!(!out.contains(c), "raw {c:?} left in {out:?}");
+            }
+            // '&' 只能以 entity 開頭的形式出現
+            let stripped = out
+                .replace("&amp;", "").replace("&lt;", "").replace("&gt;", "")
+                .replace("&quot;", "").replace("&#39;", "");
+            proptest::prop_assert!(!stripped.contains('&'), "unescaped & in {out:?}");
+        }
+    }
 }

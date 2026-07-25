@@ -69,3 +69,6 @@ tikv-jemallocator = "0.6"
 [dev-dependencies]
 # 整合測試（tests/api.rs）：tower oneshot 打 build_router + 收 body
 http-body-util = "0.1"
+# property testing：JS 相容層（util.rs / og.rs）的不變量——手挑案例只能覆蓋想得到的，
+# 這些函式要對齊 JS 的 UTF-16 語意，CJK/emoji/surrogate 的邊界靠隨機輸入才掃得到。
+proptest = "1"

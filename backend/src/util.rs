@@ -254,3 +254,50 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
         DOW[dow as usize], d, MON[(mo - 1) as usize], y, h, mi, se
     )
 }
+
+#[cfg(test)]
+mod props {
+    use super::*;
+
+    // JS 相容層的不變量。這些函式要對齊 JS 的 UTF-16 語意，
+    // 而 CJK／emoji／surrogate pair 的邊界靠手挑案例掃不完。
+    proptest::proptest! {
+        /// 截斷後的 UTF-16 長度不得超過 n（對齊 JS `s.substring(0, n)`）。
+        #[test]
+        fn js_substring_prefix_bounded(s in ".{0,200}", n in 0usize..80) {
+            let out = js_substring_prefix(&s, n);
+            proptest::prop_assert!(out.encode_utf16().count() <= n);
+        }
+
+        /// 原字串夠短時原樣返回。
+        #[test]
+        fn js_substring_prefix_identity_when_short(s in ".{0,60}") {
+            let n = s.encode_utf16().count();
+            proptest::prop_assert_eq!(js_substring_prefix(&s, n), s);
+        }
+
+        /// 冪等：截過一次再截同樣長度不變。
+        #[test]
+        fn js_substring_prefix_idempotent(s in ".{0,200}", n in 0usize..80) {
+            let once = js_substring_prefix(&s, n);
+            proptest::prop_assert_eq!(js_substring_prefix(&once, n), once.clone());
+        }
+
+        /// slug 只會留下 ASCII 英數、`_`、`-`、以及 CJK 區段（對齊 JS 的 `[^\w\-一-龥]` 過濾）。
+        #[test]
+        fn gen_slug_charset(name in ".{0,120}") {
+            for c in gen_slug(&name).chars() {
+                let ok = c.is_ascii_alphanumeric() || c == '_' || c == '-'
+                    || ('\u{4e00}'..='\u{9fa5}').contains(&c);
+                proptest::prop_assert!(ok, "unexpected char {c:?}");
+            }
+        }
+
+        /// slug 不含大寫（實作先 to_lowercase）。
+        #[test]
+        fn gen_slug_is_lowercase(name in ".{0,120}") {
+            let s = gen_slug(&name);
+            proptest::prop_assert_eq!(s.to_lowercase(), s.clone());
+        }
+    }
+}
