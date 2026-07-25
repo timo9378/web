@@ -29,6 +29,8 @@ RUN npm config set script-shell sh && npm install -g pnpm@11.17.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
+# patchedDependencies 的 patch 檔:install 期就要讀得到，否則 frozen install 直接失敗
+COPY patches ./patches
 RUN pnpm install --frozen-lockfile
 
 COPY . .
