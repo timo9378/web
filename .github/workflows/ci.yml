@@ -6,19 +6,29 @@ on:
   pull_request:
     branches: [main]
 
+# 最小權限：所有 job 只需讀 repo（zizmor excessive-permissions）。
+permissions:
+  contents: read
+
 # 同分支/PR 有新 push 就取消進行中的舊 run，省 runner
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+# action 一律釘 commit SHA：tag 可被移動，上游 repo 被入侵即等於在 CI 執行任意程式碼
+# （zizmor unpinned-uses）。版本靠 .github/dependabot.yml 的 github-actions 生態自動更新。
+# checkout 一律 persist-credentials: false：預設會把 git 憑證留在工作區（zizmor artipacked）。
 
 jobs:
   frontend:
     name: Frontend · tsc + eslint + vitest + build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 26
           cache: pnpm
@@ -43,14 +53,16 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: backend
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
           tool: cargo-nextest,cargo-audit
       # --locked：CI 必須測「commit 進來的那組版本」，不允許靜默更新 Cargo.lock
@@ -75,10 +87,12 @@ jobs:
     name: Docker · frontend + backend image build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
       - name: build frontend image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
           file: Dockerfile
@@ -86,10 +100,27 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
       - name: build backend image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
           file: backend/Dockerfile
           push: false
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
+
+  # workflow 自身的守門：actionlint 管正確性、zizmor 管安全（template injection、
+  # 過寬權限、未釘 action、憑證外洩）。CI 自己也是攻擊面。
+  workflows:
+    name: Workflows · actionlint + zizmor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
+        with:
+          tool: actionlint,zizmor
+      - name: actionlint
+        run: actionlint
+      - name: zizmor
+        run: zizmor .github/workflows/

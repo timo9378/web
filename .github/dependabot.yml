@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # GitHub Actions：workflow 裡的 action 都釘 commit SHA（zizmor unpinned-uses），
+  # 釘死就得有人更新——交給 Dependabot，它會連 SHA 帶 # vX 註解一起 bump。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  # npm/pnpm：security 更新 GitHub 已自動開，這裡補「版本更新」。
+  # 分組送 PR，避免一週被灌十幾個。
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      dev-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  # Rust：cargo audit 只擋「已知漏洞」，這裡管日常版本更新。
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
