@@ -97,8 +97,8 @@ const AboutMe = () => {
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
         <h2 className="section-hero-title">{t('home.aboutMe.titleLine1')}<br />{t('home.aboutMe.titleLine2')}</h2>
-        {PARAGRAPHS.map((p, i) => (
-          <p key={i} className="about-paragraph">{p}</p>
+        {PARAGRAPHS.map((p) => (
+          <p key={p} className="about-paragraph">{p}</p>
         ))}
       </motion.div>
 

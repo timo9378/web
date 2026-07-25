@@ -27,9 +27,9 @@ jobs:
         run: pnpm exec tsc --noEmit
       - name: mcp-server typecheck
         run: pnpm --filter @koimsurai/mcp-server typecheck
-      # --max-warnings 是 ratchet：擋住新增警告，存量（404）分批燒掉後再往下調
+      # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調（404 → 398）
       - name: eslint (src)
-        run: pnpm exec eslint src --max-warnings 404
+        run: pnpm exec eslint src --max-warnings 398
       - name: vitest
         run: pnpm test
       # 真正的建置驗證——tsc/eslint 過不代表 Nitro/Vite build 不會炸

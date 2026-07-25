@@ -191,7 +191,8 @@ const Activity = () => {
     : [];
   const contributionTotal = contributions?.total;
   const contributionCount = contributionTotal ? (contributionTotal[Object.keys(contributionTotal)[0]] ?? 0) : 0;
-  const heatmapCurrentYear = new Date().getFullYear();
+  // render 必須是純函式：new Date() 放進 state initializer（只在首次 render 求值）
+  const [heatmapCurrentYear] = useState(() => new Date().getFullYear());
   const heatmapYears = ['last', String(heatmapCurrentYear), String(heatmapCurrentYear - 1), String(heatmapCurrentYear - 2)];
 
   // 不再等所有 API 好才進頁面：各區靠自己的 query 資料條件渲染（null → 先隱藏，到齊再補），
@@ -414,7 +415,7 @@ const Activity = () => {
               {(wakatimeData.week?.languages?.length ?? 0) > 0 ? (
                 <div className="lang-bars">
                   {wakatimeData.week?.languages?.slice(0, 5).map((lang, i) => (
-                    <div key={i} className="lang-bar-row">
+                    <div key={lang.name} className="lang-bar-row">
                       <div className="lang-bar-meta">
                         <span className="lang-bar-name">{lang.name}</span>
                         <span className="lang-bar-time">{lang.text}</span>
@@ -519,10 +520,10 @@ const Activity = () => {
                 </div>
               )}
               <div className="heatmap-grid">
-                {contributionData.map((week, wi) => (
-                  <div key={wi} className="heatmap-week">
-                    {week.map((day, di) => (
-                      <div key={`${wi}-${di}`} className={`heatmap-day level-${day.level}`}>
+                {contributionData.map((week) => (
+                  <div key={week[0]?.date} className="heatmap-week">
+                    {week.map((day) => (
+                      <div key={day.date} className={`heatmap-day level-${day.level}`}>
                         <div className="day-tooltip">
                           <div>{day.count} commits</div>
                           <div className="tooltip-date">{day.date}</div>
