@@ -22,7 +22,6 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
 dotenvy = "0.15"
-bytes = "1"
 # JWT 驗章/簽章（HS256），對齊 Express 的 jsonwebtoken
 # v10 default features 不含 crypto provider（只有 use_pem）→ 顯式選純 Rust 的 rust_crypto
 # （HS256 用 hmac+sha2，免 C 工具鏈，Docker/CI 都能編）。不然 runtime 會噴 CryptoProvider 找不到。

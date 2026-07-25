@@ -1636,7 +1636,6 @@ dependencies = [
  "axum",
  "base64",
  "bcrypt",
- "bytes",
  "chrono",
  "dotenvy",
  "ferrous-opencc",
