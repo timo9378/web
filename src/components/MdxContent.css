@@ -667,6 +667,19 @@
   transition: transform 0.18s ease;
 }
 .mdx-details[open] .mdx-details-summary::before { transform: rotate(90deg); }
+/* 展開／收合動畫：::details-content + interpolate-size 讓 auto 高度可以內插。
+   不支援的瀏覽器會退回原本的瞬間展開（漸進增強，不需要 JS 量高度）。 */
+.mdx-details {
+  interpolate-size: allow-keywords;
+}
+.mdx-details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition: block-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), content-visibility 0.3s allow-discrete;
+}
+.mdx-details[open]::details-content {
+  block-size: auto;
+}
 .mdx-details-summary:hover { background: rgba(255, 255, 255, 0.03); }
 .mdx-details-body { padding: 0 1rem 0.75rem; }
 .mdx-details-body > :first-child { margin-top: 0.25rem; }

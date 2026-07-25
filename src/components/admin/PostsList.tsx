@@ -31,7 +31,7 @@ type PostItem = AdminPostFull;
 export default function PostsList() {
   const queryClient = useQueryClient();
   // 文章列表改由 TanStack Query 讀（生成 AdminPostsResponse）；刪除後 invalidate 重抓。
-  const { data, isPending: isLoading } = useQuery(adminPostsQueryOptions(''));
+  const { data, isPending: isLoading } = useQuery(adminPostsQueryOptions('limit=500'));
   const posts: PostItem[] = data?.posts ?? [];
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
