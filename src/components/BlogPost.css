@@ -797,9 +797,12 @@ a.series-nav-title:hover {
 }
 
 /* ── Content card ── */
+/* ⚠ 這裡「不要」加 isolation / contain / opacity<1 / mix-blend-mode。
+   它們會讓這張卡變成 backdrop root（因為 ::before 有 backdrop-filter），Chromium 就得把整個
+   子樹畫進一張獨立 texture；而跑在硬體 overlay 上的 <video> 畫不進去 → 影片區塊全黑（解碼其實
+   正常，關掉硬體加速就會有畫面）。卡片外的 ::before 靠 z-index:-1 疊在最底，不需要 isolate。 */
 .post-content-wrapper {
   position: relative;
-  isolation: isolate;
   border: 1px solid var(--post-card-border);
   border-radius: 16px;
   padding: 2.5rem;
