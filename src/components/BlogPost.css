@@ -67,6 +67,18 @@
   user-select: text;
 }
 
+/* ⚠ 防複製的 user-select:none 會被 <video> 繼承，而 Chrome 在 video 帶 user-select:none 時
+   原生控制列會失去互動——hover 不浮出、點擊沒反應（但程式呼叫 play() 仍可播，所以很容易誤判成
+   「被東西蓋住」）。媒體元素一律豁免。 */
+.blog-post-container .mdx-video,
+.blog-post-container .mdx-video-frame,
+.blog-post-container .mdx-video-el,
+.blog-post-container video,
+.blog-post-container audio {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
 /* ═══════════════════════
    Loading / Error
    ═══════════════════════ */
