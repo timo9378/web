@@ -1121,6 +1121,13 @@ a.series-nav-title:hover {
   hanging-punctuation: first allow-end last;
   text-spacing-trim: trim-start;
 }
+/* ⚠ 有影片的文章必須關掉 content-visibility：它隱含 contain:paint，會把內文變成獨立的
+   paint container，而跑在硬體 overlay 上的 <video> 畫不進去 → 影片全黑（解碼其實正常，
+   關掉瀏覽器硬體加速就會有畫面）。有影片時寧可放棄這點捲動最佳化。 */
+.post-content:has(video) {
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}
 
 /* 腳註樣式 + hover 浮窗（remark-gfm footnotes） */
 .post-content .footnotes {

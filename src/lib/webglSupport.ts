@@ -6,21 +6,50 @@
 // 官方建議：網站自行測試並處理 context 建立失敗（blink-dev "Intent to Remove:
 // SwiftShader Fallback"）。
 //
+// 但「context 建得起來」不等於「跑得動」：使用者在瀏覽器設定裡關掉硬體加速時，
+// Chrome/Edge 仍會給一個由 SwiftShader（純 CPU 光柵化）撐起來的 WebGL context。
+// 兩萬多顆 instanced 星星在上面是個位數 fps——這時候降低星星數量救不了，唯一正解是
+// 完全不掛 3D、直接走 DOM 特效。所以這裡連 renderer 字串一起看：軟體渲染 → 視同不可用。
+//
 // 用法：掛任何 R3F <Canvas> 前先呼叫；false → 不掛 WebGL、走純 DOM 特效降級。
 // 結果快取（加速狀態在分頁生命週期內不會自己好轉；真的變了重整即可）。
 
+/** SwiftShader / llvmpipe / WARP 等 CPU 光柵化器的 renderer 字串特徵 */
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|basic render|software|微软基本呈现/i;
+
 let cached: boolean | null = null;
+let rendererName = '';
 
 export function isWebGLAvailable(): boolean {
   if (cached !== null) return cached;
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
-    cached = gl !== null;
+    if (!gl) {
+      cached = false;
+      return cached;
+    }
+    // UNMASKED_RENDERER 才看得到真實裝置名；擴充被擋掉時退回 RENDERER（多半是 "WebKit WebGL"，
+    // 認不出軟體渲染，那就當它是硬體——寧可誤放也不要誤殺有 GPU 的機器）
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const names = [dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null, gl.getParameter(gl.RENDERER)];
+    rendererName = names.map((n) => (typeof n === 'string' ? n : '')).find((n) => n !== '') ?? '';
+    cached = !SOFTWARE_RENDERER.test(rendererName);
     // 釋放探測用 context（瀏覽器對同時存活的 WebGL context 數量有上限）
-    if (gl) gl.getExtension('WEBGL_lose_context')?.loseContext();
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
   } catch {
     cached = false;
   }
   return cached;
+}
+
+/** 偵測到的 GPU renderer 字串（要先呼叫過 isWebGLAvailable）。給 ?debug=perf 顯示用。 */
+export function getGpuRenderer(): string {
+  return rendererName;
+}
+
+/** 有 WebGL context 但是軟體渲染 → 提示使用者去開硬體加速 */
+export function isSoftwareRenderer(): boolean {
+  isWebGLAvailable();
+  return rendererName !== '' && SOFTWARE_RENDERER.test(rendererName);
 }

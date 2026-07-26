@@ -43,12 +43,16 @@
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
   transition: background 0.16s ease, transform 0.16s ease;
 }
-.vp-bigplay:hover, .vp-bigplay:focus-visible {
+.vp-bigplay:hover,
+.vp-bigplay:focus,
+.vp-bigplay:focus-visible {
   background: rgba(139, 124, 246, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
   transform: translate(-50%, -50%) scale(1.08);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
   outline: none;
 }
+.vp-bigplay:focus:not(:focus-visible) { background: rgba(18, 14, 30, 0.7); transform: translate(-50%, -50%); }
 
 /* 控制列：浮在影片底部的玻璃藥丸；播放中滑鼠離開會淡出 */
 .vp-bar {
@@ -93,12 +97,21 @@
   text-decoration: none;
   transition: background 0.14s ease, color 0.14s ease;
 }
-.vp-btn:hover, .vp-btn:focus-visible {
+/* ⚠ index.css 有全站的 `button:hover, button:focus { background:#6a4acf; box-shadow:… }`，
+   特異性 (0,1,1) 壓得過單純的 .vp-btn (0,1,0)——不明寫 :focus / :active 的話，按過的鍵會留下
+   一塊紫色底＋紫光。這裡把三個狀態一次蓋掉，只留 focus-visible 的細框給鍵盤使用者。 */
+.vp-btn:hover,
+.vp-btn:focus,
+.vp-btn:active,
+.vp-btn:focus-visible {
   background: rgba(255, 255, 255, 0.1);
+  border-color: transparent;
   color: #fff;
   box-shadow: none;
   outline: none;
 }
+.vp-btn:focus:not(:focus-visible) { background: transparent; color: rgba(255, 255, 255, 0.82); }
+.vp-btn:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.5); outline-offset: -1px; }
 
 /* 進度條 */
 .vp-progress {

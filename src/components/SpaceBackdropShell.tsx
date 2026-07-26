@@ -4,7 +4,7 @@ import { useRouterState } from '@tanstack/react-router';
 import IntroAnimation from './IntroAnimation';
 import BackdropErrorBoundary from './BackdropErrorBoundary';
 import DomSpaceEffects from './DomSpaceEffects';
-import { isWebGLAvailable } from '../lib/webglSupport';
+import { isSoftwareRenderer, isWebGLAvailable } from '../lib/webglSupport';
 import { stripLocalePrefix } from '../start-i18n';
 
 // WebGPU 太空背景（星空+土星單 canvas，three/webgpu 獨立 lazy chunk，不進主 bundle）。
@@ -28,8 +28,13 @@ export default function SpaceBackdropShell() {
   );
   // 3D pre-flight：WebGPU（renderer 首選）或 WebGL（自動 fallback backend）任一可用才掛 3D；
   // 都沒有（Chromium 137 移除 SwiftShader 後加速全壞的機器）→ 不下載 three chunk，降級純 DOM 特效。
+  //
+  // 另一種必須擋掉的情況：使用者在瀏覽器設定關掉硬體加速。此時 WebGL context 建得起來（跑
+  // SwiftShader）、navigator.gpu 也還在，兩個檢查都會過，結果 3D 用 CPU 光柵化整站卡死——降低
+  // 星星數量救不了，得完全不掛 3D。偵測到軟體渲染就直接走 DOM 特效（WebGPU 的 Dawn 在這種機器
+  // 上同樣只會拿到 SwiftShader/WARP，所以一個檢查擋兩條路）。
   // 本元件 client-only，可安全 probe。runtime 才炸的殘餘情況由 ErrorBoundary + worker error 通道接。
-  const gpu3dOk = useMemo(() => isWebGLAvailable() || 'gpu' in navigator, []);
+  const gpu3dOk = useMemo(() => !isSoftwareRenderer() && (isWebGLAvailable() || 'gpu' in navigator), []);
 
   const introCompleted = (() => {
     try { return sessionStorage.getItem('introCompleted') === 'true'; } catch { return false; }

@@ -59,6 +59,26 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
     };
   }, [scrubbing, seekTo]);
 
+  // metadata 可能在 hydrate 前就 load 完 → onLoadedMetadata 永遠不會進 React，總時長會卡在 0:00。
+  // mount 時主動補讀一次，並持續監聽 durationchange（部分 mp4 一開始回 Infinity，seek 後才定案）。
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const sync = () => {
+      if (Number.isFinite(v.duration) && v.duration > 0) setDuration(v.duration);
+      setMuted(v.muted);
+      setPlaying(!v.paused);
+      setTime(v.currentTime);
+    };
+    sync();
+    v.addEventListener('durationchange', sync);
+    v.addEventListener('loadedmetadata', sync);
+    return () => {
+      v.removeEventListener('durationchange', sync);
+      v.removeEventListener('loadedmetadata', sync);
+    };
+  }, []);
+
   useEffect(() => {
     const onFs = () => setFullscreen(document.fullscreenElement === wrapRef.current);
     document.addEventListener('fullscreenchange', onFs);
@@ -94,7 +114,6 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
           onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
           onVolumeChange={(e) => setMuted(e.currentTarget.muted)}
         />
 
