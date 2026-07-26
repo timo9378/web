@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react';
 import { useParams, useRouterState, useNavigate, ClientOnly } from '@tanstack/react-router';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { LocaleLink } from '../locale-link';
+import { useLocale, LocaleLink } from '../locale-link';
 import { postDetailQueryOptions, blogCategoriesDetailQueryOptions, recentPostsQueryOptions, postReactionsQueryOptions, seriesQueryOptions, type CategoryInfo } from '../blogList';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
@@ -39,7 +39,7 @@ import { MdxContent } from './MdxContent';
 // slugify / extractHeadings / computeReadTime：與 BlogPostPage（SSR fallback）共用同一份，
 // 確保 heading anchor id / TOC / 閱讀時間兩邊逐字一致。
 import { slugify, extractHeadings, computeReadTime } from '../lib/blogContent';
-import { useCategoryLabel } from '../lib/categoryLabel';
+import { useCategoryLabel, useTagLabel } from '../lib/categoryLabel';
 
 /// `GET /api/posts/:id` 的成功回應（型別由後端 Rust struct 生成），外加 client 端自己算的
 /// `date`（由 created_at 依語系格式化，見下方 setPost）。API 不回傳 date。
@@ -1065,13 +1065,14 @@ Reactions.displayName = 'Reactions';
    SeriesNav — 系列文導覽（若文章屬於某系列）
    ══════════════════════════ */
 const SeriesNav = React.memo(({ seriesName, currentId }: { seriesName: string; currentId: string | number }) => {
+  const { t } = useTranslation();
   const { data: posts = [] } = useQuery({ ...seriesQueryOptions(seriesName), enabled: !!seriesName });
   if (!seriesName || posts.length === 0) return null;
   const currentIdx = posts.findIndex(p => String(p.id) === String(currentId));
   return (
     <aside className="series-nav" aria-label={`系列文：${seriesName}`}>
       <header className="series-nav-header">
-        <span className="series-nav-label">系列文</span>
+        <span className="series-nav-label">{t('blog.seriesLabel')}</span>
         <h4 className="series-nav-name">{seriesName}</h4>
         <span className="series-nav-progress">
           共 {posts.length} 篇 · 你正在讀第 {currentIdx >= 0 ? currentIdx + 1 : '?'} 篇
@@ -1101,7 +1102,9 @@ SeriesNav.displayName = 'SeriesNav';
    PrevNextNav — 文章底部上/下一篇導覽
    ══════════════════════════ */
 const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) => {
-  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(200));
+  const { t } = useTranslation();
+  const navLocale = useLocale();
+  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(200, navLocale));
   const { prev, next } = useMemo<{ prev: PostListItem | null; next: PostListItem | null }>(() => {
     const published = allPosts.filter(p => p.status === 'published' || !p.status);
     const sorted = [...published].sort((a, b) => new Date(a.created_at ?? '').getTime() - new Date(b.created_at ?? '').getTime());
@@ -1119,13 +1122,13 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
     <nav className="prev-next-nav" aria-label="上一篇與下一篇">
       {prev ? (
         <LocaleLink to={`/blog/${prev.id}`} className="prev-next-card prev-next-prev" viewTransition>
-          <span className="prev-next-label">← 上一篇</span>
+          <span className="prev-next-label">← {t('blog.prevPost')}</span>
           <span className="prev-next-title">{prev.title}</span>
         </LocaleLink>
       ) : <span className="prev-next-placeholder" />}
       {next ? (
         <LocaleLink to={`/blog/${next.id}`} className="prev-next-card prev-next-next" viewTransition>
-          <span className="prev-next-label">下一篇 →</span>
+          <span className="prev-next-label">{t('blog.nextPost')} →</span>
           <span className="prev-next-title">{next.title}</span>
         </LocaleLink>
       ) : <span className="prev-next-placeholder" />}
@@ -1137,6 +1140,7 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
    PostsNav — Left sidebar showing OTHER article titles
    ══════════════════════════ */
 const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | number; postTitle?: string; postCategory?: string }) => {
+  const { t } = useTranslation();
   const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
 
   // 分類詳情改由 Query 讀（有 postCategory 才抓）。
@@ -1147,7 +1151,8 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
   );
 
   // 附近文章 + 同專欄文章：從 posts(limit 100) 依時間排序後開視窗，改由 Query + useMemo derive。
-  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(100));
+  const navLocale = useLocale();
+  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(100, navLocale));
   const { nearbyPosts, categoryPosts } = useMemo<{ nearbyPosts: PostListItem[]; categoryPosts: PostListItem[] }>(() => {
     if (!allPosts.length) return { nearbyPosts: [], categoryPosts: [] };
     // 按時間排序（最新在前）
@@ -1224,7 +1229,7 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
       {/* 此文章收錄於分類（接續瀑布索引） */}
       {postCategory && (
         <div className="posts-nav-category side-item-in mt-6 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', '--i': catBase } as React.CSSProperties}>
-          <span className="text-xs text-gray-600 block mb-1">此文章收錄於專欄：</span>
+          <span className="text-xs text-gray-600 block mb-1">{t('blog.inColumn')}</span>
           <CategoryTooltipTrigger
             postCategory={postCategory}
             categoryInfo={categoryInfo}
@@ -1238,7 +1243,7 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
       {/* 此專欄其他文章（逐行，索引接在分類區塊後；同樣有退場動畫） */}
       {categoryPosts.length > 0 && (
         <div className="posts-nav-list mt-4">
-          <span className="text-xs text-gray-600 block mb-2 side-item-in" style={{ '--i': catBase + 1 } as React.CSSProperties}>此專欄的其他文章：</span>
+          <span className="text-xs text-gray-600 block mb-2 side-item-in" style={{ '--i': catBase + 1 } as React.CSSProperties}>{t('blog.otherInColumn')}</span>
           <div className="flex flex-col gap-1">
             <AnimatePresence initial={false}>
               {categoryPosts.map((p, i) => (
@@ -1271,6 +1276,7 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
    TableOfContents — Right sidebar (TOC with reading progress)
    ══════════════════════════ */
 const TableOfContents = React.memo(({ headings, activeHeading, readingProgress, tocRef }: { headings: Heading[]; activeHeading: string; readingProgress: number; tocRef: React.RefObject<HTMLElement | null> }) => {
+  const { t } = useTranslation();
   const scrollToHeading = useCallback((headingId: string) => {
     setTimeout(() => {
       const el =
@@ -1284,7 +1290,7 @@ const TableOfContents = React.memo(({ headings, activeHeading, readingProgress, 
   return (
     <div className="table-of-contents">
       <div className="toc-header">
-        <h3>目錄</h3>
+        <h3>{t('blog.toc')}</h3>
         <div className="reading-progress-circle">
           <svg viewBox="0 0 36 36">
             <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
@@ -1309,7 +1315,7 @@ const TableOfContents = React.memo(({ headings, activeHeading, readingProgress, 
         ))}
       </nav>
       <button className="toc-bottom-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <FaArrowUp /> 回到文章頂部
+        <FaArrowUp /> {t('blog.backToArticleTop')}
       </button>
     </div>
   );
@@ -1664,6 +1670,7 @@ function postPathForLocale(id: string | number | undefined, locale: string, sour
    ═══════════════════════════════════ */
 function BlogPost() {
   const { t } = useTranslation();
+  const tagLabel = useTagLabel();
   const [readingProgress, setReadingProgress] = useState(0);
   // headings 改為同步 useMemo（在 post 定義後、下方 Extract headings 處）→ 第一幀就有值
   const [activeHeading, setActiveHeading] = useState('');
@@ -2087,7 +2094,7 @@ function BlogPost() {
           {postTags.length > 0 && (
             <div className="post-tags">
               {postTags.map((name) => (
-                <span key={name} className="tag">#{name}</span>
+                <span key={name} className="tag">#{tagLabel(name)}</span>
               ))}
             </div>
           )}

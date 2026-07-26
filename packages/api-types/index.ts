@@ -111,6 +111,11 @@ export type AdminTagRow = {
 	name: string,
 	created_at: string,
 	post_count: number,
+	/**  顯示用譯名（name 仍是資料鍵）。後台編輯用。 */
+	name_en: string | null,
+	name_ja: string | null,
+	name_ko: string | null,
+	name_zh_cn: string | null,
 };
 
 /**  `GET /api/admin/users`（**requireOwner**）。`{ users: [...] }`，顯式欄位。 */

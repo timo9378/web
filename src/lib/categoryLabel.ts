@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { blogCategoriesDetailQueryOptions } from '../blogList';
+import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions } from '../blogList';
 
 /** locale → CategoryInfo 上的譯名欄位名。預設語系（zh-TW）與未知語系都用 name。 */
 function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {
@@ -36,4 +36,29 @@ export function useCategoryLabel(): (name: string | null | undefined) => string 
     }
     return (name) => (name ? (map.get(name) ?? name) : '');
   }, [categories, locale]);
+}
+
+/**
+ * 標籤版：同一套邏輯（name 是資料鍵，只換顯示名）。
+ * 標籤清單在部落格頁本來就會抓，共用快取不會多打 API。
+ */
+export function useTagLabel(): (name: string | null | undefined) => string {
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const { data: tags } = useQuery(blogTagsQueryOptions);
+
+  return useMemo(() => {
+    const field = fieldFor(locale);
+    if (!field || !tags?.length) return (name) => name ?? '';
+    const map = new Map<string, string>();
+    for (const t of tags) {
+      // 標籤清單可能是字串或物件（兩種來源），只有物件那種才帶得到譯名。
+      if (typeof t !== 'object') continue;
+      const row = t as Record<string, unknown>;
+      const name = typeof row.name === 'string' ? row.name : '';
+      const translated = row[field];
+      if (name && typeof translated === 'string' && translated) map.set(name, translated);
+    }
+    return (name) => (name ? (map.get(name) ?? name) : '');
+  }, [tags, locale]);
 }

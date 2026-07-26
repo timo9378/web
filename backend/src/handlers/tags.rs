@@ -16,6 +16,11 @@ pub struct TagRow {
     /// 避免格式漂移（Express 也是原樣丟出 DATETIME 字串）。
     pub created_at: String,
     pub post_count: i64,
+    /// 顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。
+    pub name_en: Option<String>,
+    pub name_ja: Option<String>,
+    pub name_ko: Option<String>,
+    pub name_zh_cn: Option<String>,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -37,7 +42,8 @@ pub async fn list_tags(State(state): State<AppState>) -> Result<Json<TagsRespons
     let tags = sqlx::query_as::<_, TagRow>(
         r#"
         SELECT t.id, t.name, t.created_at,
-          COUNT(CASE WHEN p.status = 'published' THEN 1 END) as post_count
+          COUNT(CASE WHEN p.status = 'published' THEN 1 END) as post_count,
+          t.name_en, t.name_ja, t.name_ko, t.name_zh_cn
         FROM tags t
         LEFT JOIN post_tags pt ON t.id = pt.tag_id
         LEFT JOIN posts p ON pt.post_id = p.id

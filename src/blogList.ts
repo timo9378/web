@@ -84,12 +84,13 @@ export const seriesQueryOptions = (seriesName: string) =>
     staleTime: 5 * 60 * 1000,
   });
 
-// mega-menu「手記」用：最新 N 篇（無 sort/lang，menu 自己在 client 依 hover 分類過濾）。
-export const recentPostsQueryOptions = (limit: number) =>
+// mega-menu「手記」與文章頁側欄用：最新 N 篇（menu 自己在 client 依 hover 分類過濾）。
+// 帶 lang → 後端回該語系的標題（沒譯文自動 fallback 回原文）；locale 進 queryKey 才會換語系重抓。
+export const recentPostsQueryOptions = (limit: number, locale?: string) =>
   queryOptions({
-    queryKey: ['posts', 'recent', limit],
+    queryKey: ['posts', 'recent', limit, locale ?? ''],
     queryFn: async (): Promise<PostListItem[]> => {
-      const res = await fetch(apiUrl(`/api/posts?limit=${limit}`));
+      const res = await fetch(apiUrl(`/api/posts?limit=${limit}${locale ? `&lang=${encodeURIComponent(locale)}` : ''}`));
       if (!res.ok) throw new Error(`GET /api/posts ${res.status}`);
       const data = (await res.json()) as PostsListResponse;
       return data.posts;

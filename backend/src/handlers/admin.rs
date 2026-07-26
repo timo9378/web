@@ -25,6 +25,11 @@ pub struct AdminTagRow {
     pub created_at: String,
     #[specta(type = specta_typescript::Number)]
     pub post_count: i64,
+    /// 顯示用譯名（name 仍是資料鍵）。後台編輯用。
+    pub name_en: Option<String>,
+    pub name_ja: Option<String>,
+    pub name_ko: Option<String>,
+    pub name_zh_cn: Option<String>,
 }
 
 /// `GET /api/admin/tags` —— requireAdmin。回應為**裸陣列**（對齊 Express `res.json(rows)`）。
@@ -41,10 +46,11 @@ pub async fn admin_tags(
     require_admin(&headers, &state).await?;
 
     let rows = sqlx::query_as::<_, AdminTagRow>(
-        "SELECT t.id, t.name, t.created_at, COUNT(pt.post_id) as post_count \
+        "SELECT t.id, t.name, t.created_at, COUNT(pt.post_id) as post_count, \
+         t.name_en, t.name_ja, t.name_ko, t.name_zh_cn \
          FROM tags t \
          LEFT JOIN post_tags pt ON t.id = pt.tag_id \
-         GROUP BY t.id, t.name, t.created_at \
+         GROUP BY t.id, t.name, t.created_at, t.name_en, t.name_ja, t.name_ko, t.name_zh_cn \
          ORDER BY t.name ASC",
     )
     .fetch_all(&state.pool)
@@ -553,6 +559,11 @@ macro_rules! auth_or_return {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TagBody {
     name: Option<String>,
+    // 顯示用譯名（name 仍是資料鍵，不參與 join/比對）
+    name_en: Option<String>,
+    name_ja: Option<String>,
+    name_ko: Option<String>,
+    name_zh_cn: Option<String>,
 }
 
 #[utoipa::path(post, path = "/api/admin/tags", tag = "admin", security(("bearer" = [])),
@@ -570,8 +581,15 @@ pub async fn create_tag(
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "標籤名稱為必填" }))).into_response();
     }
-    match sqlx::query("INSERT INTO tags (name, created_at) VALUES (?, datetime('now'))")
-        .bind(&name)
+    match sqlx::query(
+        "INSERT INTO tags (name, name_en, name_ja, name_ko, name_zh_cn, created_at) \
+         VALUES (?, ?, ?, ?, ?, datetime('now'))",
+    )
+    .bind(&name)
+    .bind(body.name_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
         .execute(&state.pool)
         .await
     {
@@ -603,8 +621,14 @@ pub async fn update_tag(
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "標籤名稱為必填" }))).into_response();
     }
-    match sqlx::query("UPDATE tags SET name = ? WHERE id = ?")
-        .bind(&name)
+    match sqlx::query(
+        "UPDATE tags SET name = ?, name_en = ?, name_ja = ?, name_ko = ?, name_zh_cn = ? WHERE id = ?",
+    )
+    .bind(&name)
+    .bind(body.name_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
         .bind(&id)
         .execute(&state.pool)
         .await

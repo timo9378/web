@@ -518,22 +518,41 @@ export function makeTools(api: ApiClient): Tool[] {
       description: '建立標籤。name 必填。',
       inputSchema: {
         type: 'object',
-        properties: { name: { type: 'string' } },
+        properties: {
+          name: { type: 'string', description: '標籤名（同時是資料鍵：文章的標籤關聯與前台篩選都比對它）' },
+          name_en: { type: 'string', description: '英文顯示名（可選；不影響資料鍵）' },
+          name_ja: { type: 'string', description: '日文顯示名（可選）' },
+          name_ko: { type: 'string', description: '韓文顯示名（可選）' },
+          name_zh_cn: { type: 'string', description: '簡中顯示名（可選）' },
+        },
         required: ['name'],
         additionalProperties: false,
       },
-      handler: (a) => api.request('POST', '/api/admin/tags', { body: { name: a.name } }),
+      handler: (a) =>
+        api.request('POST', '/api/admin/tags', {
+          body: pick(a, ['name', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn']),
+        }),
     },
     {
       name: 'koimsurai_update_tag',
-      description: '重新命名標籤。id + name 必填。',
+      description: '重新命名標籤 / 補多語系顯示名。id + name 必填。',
       inputSchema: {
         type: 'object',
-        properties: { id: { type: 'number' }, name: { type: 'string' } },
+        properties: {
+          id: { type: 'number' },
+          name: { type: 'string', description: '標籤名（同時是資料鍵）' },
+          name_en: { type: 'string', description: '英文顯示名（可選；不影響資料鍵）' },
+          name_ja: { type: 'string', description: '日文顯示名（可選）' },
+          name_ko: { type: 'string', description: '韓文顯示名（可選）' },
+          name_zh_cn: { type: 'string', description: '簡中顯示名（可選）' },
+        },
         required: ['id', 'name'],
         additionalProperties: false,
       },
-      handler: (a) => api.request('PUT', `/api/admin/tags/${a.id}`, { body: { name: a.name } }),
+      handler: (a) =>
+        api.request('PUT', `/api/admin/tags/${a.id}`, {
+          body: pick(a, ['name', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn']),
+        }),
     },
     {
       name: 'koimsurai_delete_tag',

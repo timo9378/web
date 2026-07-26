@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LocaleLink } from '../../locale-link';
+import { useLocale, LocaleLink } from '../../locale-link';
 import { useTranslation } from 'react-i18next';
 import { blogCategoriesQueryOptions, recentPostsQueryOptions } from '../../blogList';
 import type { PostListItem } from '@koimsurai/api-types';
@@ -43,7 +43,8 @@ function RecentPostRow({ post }: { post: PostListItem }) {
 function BlogMenuContent() {
   const { t } = useTranslation();
   const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions);
-  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(50));
+  const navLocale = useLocale();
+  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(50, navLocale));
   const [activeCat, setActiveCat] = useState<string | null>(null); // null = 全部
 
   // 只顯示有文章的分類，避免空欄位佔版面

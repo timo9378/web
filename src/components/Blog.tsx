@@ -14,7 +14,7 @@ import type { PostListItem } from '@koimsurai/api-types';
 import { postsListQueryOptions, blogTagsQueryOptions, blogCategoriesQueryOptions } from '../blogList';
 import { usePrefetchArticle } from '../lib/usePrefetchArticle';
 import './Blog.css';
-import { useCategoryLabel } from '../lib/categoryLabel';
+import { useCategoryLabel, useTagLabel } from '../lib/categoryLabel';
 
 /** `GET /api/posts` 的單篇摘要，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 export type Post = PostListItem;
@@ -96,6 +96,7 @@ const stagger: Variants = {
 
 const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; index: number; onOpenComments?: (postId: string | number, postTitle: string, allowComments: boolean) => void }) => {
   const categoryLabel = useCategoryLabel();
+  const tagLabel = useTagLabel();
   const { t } = useTranslation();
   const prefetchArticle = usePrefetchArticle();
   const [liked, setLiked] = useState(false);
@@ -229,7 +230,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
         {post.tags.length > 0 && (
           <div className="note-tags">
             {post.tags.slice(0, 4).map((tag, i) => (
-              <span key={i} className="note-tag">#{tag}</span>
+              <span key={i} className="note-tag">#{tagLabel(tag)}</span>
             ))}
           </div>
         )}
@@ -352,6 +353,7 @@ function Blog() {
   const locale = useLocale();
   const prefetchArticle = usePrefetchArticle();
   const categoryLabel = useCategoryLabel();
+  const tagLabel = useTagLabel();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -362,7 +364,7 @@ function Blog() {
   const { data: allTags = [] } = useQuery(blogTagsQueryOptions);
   const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions);
   const loading = postsPending;
-  const error = postsError ? (postsError instanceof Error ? postsError.message : '載入失敗') : null;
+  const error = postsError ? (postsError instanceof Error ? postsError.message : t('blog.loadFailed')) : null;
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [floatingComment, setFloatingComment] = useState<{ postId: string; postTitle: string; allowComments: boolean } | null>(null);
   const search = useRouterState({ select: (s) => s.location.search }) as { category?: string; tag?: string };
@@ -503,11 +505,11 @@ function Blog() {
               ))}
             </div>
             <div className="stats-inline">
-              <span>文章 <em>{posts.length}</em></span>
+              <span>{t('blog.statPosts')} <em>{posts.length}</em></span>
               <span className="stats-sep">｜</span>
-              <span>標籤 <em>{allTags.length}</em></span>
+              <span>{t('blog.statTags')} <em>{allTags.length}</em></span>
               <span className="stats-sep">｜</span>
-              <span>閱讀 <em>{filteredPosts.reduce((sum, p) => sum + (p.view_count ?? 0), 0)}</em></span>
+              <span>{t('blog.statReads')} <em>{filteredPosts.reduce((sum, p) => sum + (p.view_count ?? 0), 0)}</em></span>
             </div>
           </motion.div>
 
@@ -532,7 +534,7 @@ function Blog() {
                   <button onClick={() => setSearchTerm('')}><FaTimes /></button>
                 </span>
               )}
-              <button className="clear-all-btn" onClick={clearFilters}>清除全部</button>
+              <button className="clear-all-btn" onClick={clearFilters}>{t('blog.clearAll')}</button>
             </motion.div>
           )}
         </div>
@@ -543,14 +545,14 @@ function Blog() {
           {filteredPosts.length === 0 ? (
             <motion.div className="blog-empty" variants={fadeUp} initial="hidden" animate="visible">
               <div className="empty-icon">📝</div>
-              <h3>{searchTerm || selectedTag || selectedCategory ? '找不到相關文章' : '暫無文章'}</h3>
+              <h3>{searchTerm || selectedTag || selectedCategory ? t('blog.emptyFiltered') : t('blog.emptyNone')}</h3>
               <p>
                 {searchTerm || selectedTag || selectedCategory
-                  ? '嘗試調整搜索條件或瀏覽其他分類'
-                  : '內容正在路上，敬請期待'}
+                  ? t('blog.emptyFilteredHint')
+                  : t('blog.emptyNoneHint')}
               </p>
               {(searchTerm || selectedTag || selectedCategory) && (
-                <button className="empty-clear-btn" onClick={clearFilters}>清除篩選</button>
+                <button className="empty-clear-btn" onClick={clearFilters}>{t('blog.clearFilters')}</button>
               )}
             </motion.div>
           ) : (
@@ -572,7 +574,7 @@ function Blog() {
           {/* 分類 */}
           {allCategories.length > 0 && (
             <div className="sidebar-section">
-              <h3 className="sidebar-heading">分類</h3>
+              <h3 className="sidebar-heading">{t('blog.sideCategories')}</h3>
               <div className="category-list">
                 <button
                   className={`category-item ${selectedCategory === '' ? 'active' : ''}`}
@@ -597,7 +599,7 @@ function Blog() {
           {/* 標籤雲 */}
           {allTags.length > 0 && (
             <div className="sidebar-section">
-              <h3 className="sidebar-heading">標籤</h3>
+              <h3 className="sidebar-heading">{t('blog.sideTags')}</h3>
               <div className="tag-cloud">
                 <button
                   className={`cloud-tag ${selectedTag === '' ? 'active' : ''}`}
@@ -614,14 +616,14 @@ function Blog() {
                       className={`cloud-tag ${selectedTag === name ? 'active' : ''}`}
                       onClick={() => setSelectedTag(name)}
                     >
-                      #{name}{count ? ` (${count})` : ''}
+                      #{tagLabel(name)}{count ? ` (${count})` : ''}
                     </button>
                   );
                 })}
               </div>
               {allTags.length > maxTagsShow && (
                 <button className="tags-toggle" onClick={() => setTagsExpanded(!tagsExpanded)}>
-                  {tagsExpanded ? '收起' : `展開全部 (${allTags.length})`}
+                  {tagsExpanded ? t('blog.collapse') : `${t('blog.expandAll')} (${allTags.length})`}
                   <FaChevronDown className={`toggle-icon ${tagsExpanded ? 'expanded' : ''}`} />
                 </button>
               )}
@@ -631,7 +633,7 @@ function Blog() {
           {/* 精選文章 */}
           {featuredPosts.length > 0 && (
             <div className="sidebar-section">
-              <h3 className="sidebar-heading">精選</h3>
+              <h3 className="sidebar-heading">{t('blog.sideFeatured')}</h3>
               <ul className="featured-list">
                 {featuredPosts.map(p => (
                   <li key={p.id}>
@@ -654,18 +656,18 @@ function Blog() {
 
           {/* 寫作活動熱圖 */}
           <div className="sidebar-section">
-            <h3 className="sidebar-heading">寫作活動</h3>
+            <h3 className="sidebar-heading">{t('blog.sideActivity')}</h3>
             <ActivityHeatmap posts={posts} />
           </div>
 
           {/* 快速導航 */}
           <div className="sidebar-section">
-            <h3 className="sidebar-heading">導航</h3>
+            <h3 className="sidebar-heading">{t('blog.sideNav')}</h3>
             <div className="quick-nav">
-              <LocaleLink to="/" className="nav-pill">🏠 首頁</LocaleLink>
-              <LocaleLink to="/messages" className="nav-pill">💬 留言</LocaleLink>
-              <LocaleLink to="/setup" className="nav-pill">🖥️ 配備</LocaleLink>
-              <LocaleLink to="/about#journey" className="nav-pill">🛤️ 旅程</LocaleLink>
+              <LocaleLink to="/" className="nav-pill">🏠 {t('blog.navHome')}</LocaleLink>
+              <LocaleLink to="/messages" className="nav-pill">💬 {t('blog.navMessages')}</LocaleLink>
+              <LocaleLink to="/setup" className="nav-pill">🖥️ {t('blog.navSetup')}</LocaleLink>
+              <LocaleLink to="/about#journey" className="nav-pill">🛤️ {t('blog.navJourney')}</LocaleLink>
             </div>
           </div>
           </aside>

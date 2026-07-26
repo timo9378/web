@@ -31,7 +31,20 @@ interface TagForm {
   name: string;
   slug: string;
   color: string;
+  // 顯示用譯名（name 仍是資料鍵：文章的標籤關聯與前台篩選都比對它）
+  name_en: string;
+  name_ja: string;
+  name_ko: string;
+  name_zh_cn: string;
 }
+
+/** 譯名欄位表：新增語系時只要改這裡（表單自動長出欄位）。 */
+const LOCALE_NAME_FIELDS = [
+  { key: 'name_en', label: 'English', placeholder: 'React' },
+  { key: 'name_ja', label: '日本語', placeholder: 'リアクト' },
+  { key: 'name_ko', label: '한국어', placeholder: '리액트' },
+  { key: 'name_zh_cn', label: '简体中文', placeholder: 'React' },
+] as const;
 
 export default function TagsManager() {
   const queryClient = useQueryClient();
@@ -45,6 +58,10 @@ export default function TagsManager() {
     name: '',
     slug: '',
     color: '#7f5af0',
+    name_en: '',
+    name_ja: '',
+    name_ko: '',
+    name_zh_cn: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,6 +110,10 @@ export default function TagsManager() {
     // AdminTagRow 無 slug/color（後端不存不回）→ 編輯時走預設，與舊行為一致
     setFormData({
       name: tag.name,
+      name_en: tag.name_en ?? '',
+      name_ja: tag.name_ja ?? '',
+      name_ko: tag.name_ko ?? '',
+      name_zh_cn: tag.name_zh_cn ?? '',
       slug: '',
       color: '#7f5af0',
     });
@@ -124,7 +145,7 @@ export default function TagsManager() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '', color: '#7f5af0' });
+    setFormData({ name: '', slug: '', color: '#7f5af0', name_en: '', name_ja: '', name_ko: '', name_zh_cn: '' });
     setEditingTag(null);
   };
 
@@ -174,6 +195,26 @@ export default function TagsManager() {
                     placeholder="React"
                     required
                   />
+                </div>
+
+                <div className="pt-2 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground mb-1">多語系顯示名（選填）</p>
+                  <p className="text-[11px] text-muted-foreground/60 mb-3">
+                    只影響各語系頁面上的顯示；「標籤名稱」仍是資料鍵（文章的標籤關聯與篩選都用它）。留空該語系就顯示原名。
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {LOCALE_NAME_FIELDS.map(({ key, label, placeholder }) => (
+                      <div className="space-y-2" key={key}>
+                        <Label htmlFor={key} className="text-xs">{label}</Label>
+                        <Input
+                          id={key}
+                          value={formData[key]}
+                          onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                          placeholder={placeholder}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="slug">URL 別名</Label>

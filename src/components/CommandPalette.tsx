@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Command } from 'cmdk';
-import { useLocaleNavigate } from '../locale-link';
+import { useLocale, useLocaleNavigate } from '../locale-link';
 import { useTranslation } from 'react-i18next';
 import {
   FileText, Hash, Folder, Music, BookOpen, Activity,
@@ -31,6 +31,7 @@ export default function CommandPalette() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const navigate = useLocaleNavigate();
+  const navLocale = useLocale();
 
   // ⌘K / Ctrl+K 開關
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function CommandPalette() {
   }, []);
 
   // 首次打開才載入（enabled: open，降低首屏成本）；三源改吃共用 query 快取。
-  const { data: postsData = [] } = useQuery({ ...recentPostsQueryOptions(200), enabled: open });
+  const { data: postsData = [] } = useQuery({ ...recentPostsQueryOptions(200, navLocale), enabled: open });
   const { data: categories = [] } = useQuery({ ...blogCategoriesQueryOptions, enabled: open });
   const { data: tags = [] } = useQuery({ ...blogTagsQueryOptions, enabled: open });
   const posts = useMemo(() => postsData.filter((p) => p.status === 'published' || !p.status), [postsData]);
