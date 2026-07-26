@@ -749,7 +749,19 @@
 
 /* ── Video ── */
 .mdx-video { margin: 1.75rem 0; }
-.mdx-video-el { display: block; width: 100%; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: #000; }
+.mdx-video-el {
+  display: block;
+  /* 直式影片（手機拍的）原始比例會被拉到上千 px 高、控制列跑到畫面外 →
+     限高並讓寬度自適應，橫式影片仍是滿版。 */
+  max-height: min(70vh, 620px);
+  max-width: 100%;
+  width: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #000;
+  cursor: pointer;
+}
 .mdx-video figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); }
 
 /* ── YouTube facade（點擊才載 iframe）── */

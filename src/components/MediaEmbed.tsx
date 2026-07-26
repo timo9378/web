@@ -6,9 +6,24 @@ import { useState } from 'react';
 
 export function Video({ src, poster, caption }: { src?: string; poster?: string; caption?: string }) {
   if (!src) return null;
+  // 點影片畫面就播放/暫停：<video controls> 預設「點畫面」不會播，只有控制列的按鈕會，
+  // 直式影片被拉很高時那顆按鈕常常在畫面外 → 讀者會以為影片壞了。
+  const toggle = (e: React.MouseEvent<HTMLVideoElement>) => {
+    const el = e.currentTarget;
+    if (el.paused) void el.play().catch(() => { /* 使用者手勢以外的失敗忽略 */ });
+    else el.pause();
+  };
   return (
     <figure className="mdx-video">
-      <video className="mdx-video-el" controls preload="metadata" poster={poster} src={src} />
+      <video
+        className="mdx-video-el"
+        controls
+        playsInline
+        preload="metadata"
+        poster={poster}
+        src={src}
+        onClick={toggle}
+      />
       {caption ? <figcaption>{caption}</figcaption> : null}
     </figure>
   );
