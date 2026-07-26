@@ -759,11 +759,12 @@
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
-  /* 圓角/外框放這層（不是 video 本身）→ 視覺相同但不會觸發影片的 GPU 遮罩黑畫面 */
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
   line-height: 0;
+  /* ⚠ 這層「不要」放 overflow:hidden 或 border-radius：兩者都會裁切 <video>，
+     一裁切就走 GPU 遮罩，硬體加速下畫面會被合成掉（全黑）。
+     實測：裸 <video> 正常 → 加圓角/裁切就黑。所以影片放棄圓角，換畫面能顯示。
+     border 是「畫在外面」不裁切內容，可以留。 */
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 /* 自訂播放鍵：置中偏上（避開底部原生控制列），播放後隱藏 */
 .mdx-video-play {
