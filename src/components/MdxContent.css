@@ -763,6 +763,7 @@
 /* 自訂播放鍵：置中偏上（避開底部原生控制列），播放後隱藏 */
 .mdx-video-play {
   position: absolute;
+  z-index: 2;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -792,9 +793,12 @@
   outline: none;
 }
 .mdx-video-el {
-  position: relative;
-  z-index: 1;
   display: block;
+  /* 解碼是好的（canvas 取得到正常畫面）但螢幕全黑 → Chrome 把影片丟進硬體 overlay，
+     而本站有 position:fixed 的大面積遮罩 + backdrop-filter 卡片，合成順序會讓 overlay
+     被蓋掉。translateZ(0) 強制它走一般的合成路徑（不用 overlay），實務上可解這類黑畫面。
+     ⚠ 不要在這裡加 z-index：會蓋掉同層的自訂播放鍵。 */
+  transform: translateZ(0);
   /* 直式影片（手機拍的）原始比例會被拉到上千 px 高、控制列跑到畫面外 →
      限高並讓寬度自適應，橫式影片仍是滿版。 */
   max-height: min(70vh, 620px);
@@ -803,7 +807,6 @@
   margin: 0 auto;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #000;
   cursor: pointer;
 }
 .mdx-video figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); }
