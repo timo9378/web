@@ -56,14 +56,14 @@ interface MermaidOption { value: string; label: string; icon?: string }
  * 「sidebar 文章連結」附帶 hover preview 行為
  * 因為要在 map iteration 內呼叫 hook，必須抽成子元件
  */
-const PreviewablePostLink = React.memo(({ post, className, children, viewTransition, style, current }: { post: { id: number | string; title: string }; className?: string; children?: React.ReactNode; viewTransition?: boolean; style?: React.CSSProperties; current?: boolean }) => {
+const PreviewablePostLink = React.memo(({ post, className, children, viewTransition, style, current }: { post: { id: number | string; slug?: string | null; title: string }; className?: string; children?: React.ReactNode; viewTransition?: boolean; style?: React.CSSProperties; current?: boolean }) => {
   // hover 預覽卡已移除（連同 article-preview 那整套）——側欄只是純連結。
   // current 也走同一個 <a>（只換 class）：若「目前這篇」改渲 <span>，換文章時該列的元素類型
   // 由 a→span，React 必定卸載重掛 → 新 DOM 節點 → 進場動畫重播 = 使用者看到「被點的那列
   // 整組消失再跑一次」。維持同型別才能讓 React 重用節點、只有真正新露出的列才播動畫。
   return (
     <LocaleLink
-      to={'/blog/' + post.id}
+      to={postPath(post)}
       className={className}
       title={post.title}
       viewTransition={viewTransition}
