@@ -749,6 +749,44 @@
 
 /* ── Video ── */
 .mdx-video { margin: 1.75rem 0; }
+/* 影片外框：讓自訂播放鍵可以絕對定位在畫面上（寬度跟著影片，所以用 fit-content 置中） */
+.mdx-video-frame {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+/* 自訂播放鍵：置中偏上（避開底部原生控制列），播放後隱藏 */
+.mdx-video-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  padding: 0 0 0 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(18, 14, 30, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+}
+.mdx-video-play:hover,
+.mdx-video-play:focus-visible {
+  background: rgba(139, 124, 246, 0.85);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
 .mdx-video-el {
   display: block;
   /* 直式影片（手機拍的）原始比例會被拉到上千 px 高、控制列跑到畫面外 →
