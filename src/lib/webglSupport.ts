@@ -48,8 +48,16 @@ export function getGpuRenderer(): string {
   return rendererName;
 }
 
-/** 有 WebGL context 但是軟體渲染 → 提示使用者去開硬體加速 */
+/**
+ * 「這台機器沒有可用的 GPU 合成」→ 該走最省的降級模式。
+ *
+ * 涵蓋兩種情況，因為兩種的結論一樣（所有合成都落在 CPU）：
+ *   1. 拿得到 WebGL context，但 renderer 是 SwiftShader/llvmpipe/WARP（使用者關掉硬體加速，
+ *      瀏覽器仍給一個 CPU 光柵化的 context）。
+ *   2. 完全拿不到 context——Chromium 137 之後硬體 context 失敗就直接回 null，不再靜默降到
+ *      SwiftShader。這代表 GPU 行程根本沒起來，同樣沒有 GPU 合成可言。
+ */
 export function isSoftwareRenderer(): boolean {
-  isWebGLAvailable();
-  return rendererName !== '' && SOFTWARE_RENDERER.test(rendererName);
+  const ok = isWebGLAvailable();
+  return !ok;
 }

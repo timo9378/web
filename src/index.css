@@ -374,6 +374,18 @@ html.no-gpu *::after {
 html.no-gpu *:not([class*='spinner']):not([class*='loading']):not([class*='skeleton']) {
   animation-iteration-count: 1 !important;
 }
+/* 每一個 will-change 都是一張獨立合成層。有 GPU 時這是最佳化，沒 GPU 時全部改由 CPU
+   光柵化＋合成——首頁往下捲、愈多區塊進場就愈多層，於是「滑久一點就卡爛」。全部收掉。 */
+html.no-gpu * {
+  will-change: auto !important;
+}
+/* 裝飾性模糊在 CPU 上一樣貴（光暈、朦朧球體之類），只留在需要遮蔽內容的地方 */
+html.no-gpu [class*='glow'],
+html.no-gpu [class*='blur'],
+html.no-gpu [class*='aurora'],
+html.no-gpu [class*='nebula'] {
+  filter: none !important;
+}
 /* 玻璃卡片沒了模糊會變太透 → 補一點不透明度，維持可讀性 */
 html.no-gpu .post-content-wrapper::before {
   background: rgba(18, 16, 28, 0.92);
