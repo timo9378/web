@@ -48,8 +48,13 @@
 }
 
 /* ── Dim overlay: uniform color over the starfield canvas ── */
+/* ⚠ 這層原本是 position:fixed —— 對 GPU 來說是一個「視窗大小的獨立合成層」。
+   影片在硬體加速下會被丟進自己的 overlay 平面，而這種 viewport 級的固定層會讓 overlay
+   被蓋掉：畫面全黑，但解碼是好的（canvas 取得到正常影像）、控制列也還在。
+   改成 absolute 貼著文章容器（容器本身 position:relative、高度涵蓋整篇），視覺效果一樣，
+   但不再是 viewport 級的合成層。 */
 .blog-post-dim-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: rgba(6, 5, 14, 0.75);
   pointer-events: none;
