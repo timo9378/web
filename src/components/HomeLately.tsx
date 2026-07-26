@@ -9,6 +9,7 @@ import type { TFunction } from 'i18next';
 import type { DigestTimeline } from '@koimsurai/api-types';
 import { homeDigestQueryOptions, dailyQuoteQueryOptions } from '../homeData';
 import './HomeLately.css';
+import SiteAppreciation from './SiteAppreciation';
 import { useCategoryLabel } from '../lib/categoryLabel';
 
 /** 相對時間（30 天內），更久就顯示日期 */
@@ -63,9 +64,12 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
         ))}
         {clusters.map(({ month, posts }) => {
           const open = openMonth === month;
-          // 篇數越多的月份，星球越大；4 篇以上給環（土星感）。
+          // 篇數越多的月份，星球越大。
           const size = Math.min(9 + (posts.length - 1) * 2, 18);
-          const ringed = posts.length >= 4;
+          // 星球「種類」依月份固定分配，避免每顆長得一樣：
+          // rocky（素球）／ringed（土星環）／banded（氣態巨行星條紋）／icy（亮環帶衛星感）
+          const KINDS = ['rocky', 'banded', 'ringed', 'icy'] as const;
+          const kind = KINDS[month % KINDS.length];
           // 每個月給不同色相，讓它們看起來是不同的星球（固定值，不隨渲染變）。
           const hue = 200 + ((month * 37) % 120); // 200~320：藍紫～粉紫，貼站上色調
           const label = `${monthName(month)} · ${posts.length}`;
@@ -87,7 +91,7 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
                 onFocus={() => openNow(month)}
               >
                 <span
-                  className={ringed ? 'orbit-month-dot orbit-month-dot--ringed' : 'orbit-month-dot'}
+                  className={`orbit-month-dot orbit-month-dot--${kind}`}
                   style={{ width: `${size}px`, height: `${size}px`, '--planet-hue': hue } as CSSProperties}
                   aria-hidden
                 />
@@ -232,6 +236,7 @@ export default function HomeLately() {
           <span className="orbit-stat-dot">·</span>
           <a href="mailto:timo9378@gmail.com" className="signal-mail">timo9378@gmail.com</a>
         </div>
+        <SiteAppreciation />
       </div>
     </section>
   );

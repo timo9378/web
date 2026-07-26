@@ -20,6 +20,7 @@ use koimsurai_web_backend::handlers::posts::{
 use koimsurai_web_backend::handlers::series::{
     SeriesDetailResponse, SeriesListResponse, SeriesPostRow, SeriesRow,
 };
+use koimsurai_web_backend::handlers::site::CountResponse;
 use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::watch::{
     AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, TvResponse, TvRow, WatchStatsResponse,
@@ -43,6 +44,7 @@ fn main() {
         .register::<ReactionsResponse>()
         .register::<PollOptionRow>()
         .register::<PollResponse>()
+        .register::<CountResponse>()
         // posts（admin）
         .register::<AdminPostFull>()
         .register::<AdminPostsResponse>()

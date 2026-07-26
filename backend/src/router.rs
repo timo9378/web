@@ -62,6 +62,9 @@ pub fn build_router(state: AppState) -> Router {
             "/api/posts/{id}/reactions",
             get(handlers::posts::post_reactions).post(handlers::posts::post_reaction),
         )
+        // 站台層級：首頁「留下印記」按讚 + GitHub 星數（後端代理 + 快取）
+        .route("/api/site/likes", get(handlers::site::get_site_likes).post(handlers::site::post_site_like))
+        .route("/api/site/github-stars", get(handlers::site::get_github_stars))
         // 文章內嵌投票（公開；防重複投票在 client 端做）
         .route("/api/polls/{id}", get(handlers::polls::get_poll))
         .route("/api/polls/{id}/vote", post(handlers::polls::vote_poll))

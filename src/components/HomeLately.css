@@ -215,7 +215,7 @@
     inset -1.5px -1.5px 3px hsl(var(--planet-hue, 260) 60% 18% / 0.65);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
-/* 產量高的月份給一圈環（土星感）。用 ::after 畫傾斜的細橢圓。 */
+/* 土星環：::after 畫傾斜的細橢圓。 */
 .orbit-month-dot--ringed::after {
   content: '';
   position: absolute;
@@ -229,6 +229,36 @@
   box-shadow: 0 0 6px hsl(var(--planet-hue, 260) 90% 75% / 0.3);
   pointer-events: none;
 }
+/* 氣態巨行星：兩道橫向雲帶（用重疊的線性漸層疊在球面上）。 */
+.orbit-month-dot--banded {
+  background:
+    linear-gradient(180deg,
+      transparent 26%, hsl(var(--planet-hue, 260) 45% 30% / 0.55) 26%, hsl(var(--planet-hue, 260) 45% 30% / 0.55) 38%,
+      transparent 38%, transparent 58%,
+      hsl(var(--planet-hue, 260) 45% 26% / 0.45) 58%, hsl(var(--planet-hue, 260) 45% 26% / 0.45) 68%, transparent 68%),
+    radial-gradient(circle at 32% 28%,
+      hsl(var(--planet-hue, 260) 100% 92%) 0%,
+      hsl(var(--planet-hue, 260) 85% 78%) 26%,
+      hsl(var(--planet-hue, 260) 70% 60%) 58%,
+      hsl(var(--planet-hue, 260) 60% 34%) 100%);
+}
+/* 冰質小星：偏冷白、有顆小衛星。 */
+.orbit-month-dot--icy {
+  background: radial-gradient(circle at 34% 26%,
+    #ffffff 0%, hsl(var(--planet-hue, 260) 40% 88%) 30%, hsl(var(--planet-hue, 260) 35% 70%) 62%, hsl(var(--planet-hue, 260) 30% 42%) 100%);
+}
+.orbit-month-dot--icy::after {
+  content: '';
+  position: absolute;
+  right: -55%;
+  top: 8%;
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  background: hsl(var(--planet-hue, 260) 25% 80%);
+  box-shadow: 0 0 4px hsl(var(--planet-hue, 260) 40% 75% / 0.7);
+}
+
 .orbit-month-btn:hover .orbit-month-dot,
 .orbit-month-btn:focus-visible .orbit-month-dot,
 .orbit-month--open .orbit-month-dot {
@@ -313,17 +343,38 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* 「今」— 彗星感的脈動標記 */
+/* 「今」— 北極星：亮核 + 四芒星芒，緩慢漸亮（比行星更「恆星」） */
 .orbit-now {
   position: absolute;
   top: 20px;
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: #d8b4fe;
-  box-shadow: 0 0 14px rgba(216, 180, 254, 0.9), 0 0 34px rgba(127, 90, 240, 0.5);
-  animation: orbit-now-pulse 2.6s ease-in-out infinite;
+  background: radial-gradient(circle, #ffffff 0%, #e9d5ff 45%, rgba(216, 180, 254, 0) 72%);
+  animation: orbit-now-pulse 3.4s ease-in-out infinite;
+}
+/* 四芒星的星芒：垂直與水平各一道，用兩個偽元素疊出十字（中心最亮、兩端收細） */
+.orbit-now::before,
+.orbit-now::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: linear-gradient(var(--beam-dir, 90deg),
+    transparent, rgba(233, 213, 255, 0.95) 50%, transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.orbit-now::before {
+  --beam-dir: 90deg;
+  width: 30px;
+  height: 1px;
+}
+.orbit-now::after {
+  --beam-dir: 180deg;
+  width: 1px;
+  height: 18px;
 }
 
 /* 彗星尾跡 */
@@ -339,8 +390,17 @@
 }
 
 @keyframes orbit-now-pulse {
-  0%, 100% { box-shadow: 0 0 14px rgba(216, 180, 254, 0.9), 0 0 34px rgba(127, 90, 240, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(216, 180, 254, 1), 0 0 52px rgba(127, 90, 240, 0.75); }
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(233, 213, 255, 0.55), 0 0 20px rgba(167, 139, 250, 0.3);
+    filter: brightness(0.85);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.95), 0 0 40px rgba(167, 139, 250, 0.6);
+    filter: brightness(1.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-now { animation: none; }
 }
 
 .orbit-stat {

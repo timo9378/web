@@ -238,6 +238,10 @@ export type CommentsResponse = {
 	comments: CommentRow[],
 };
 
+export type CountResponse = {
+	count: number,
+};
+
 export type DigestComment = {
 	id: number,
 	author: string,

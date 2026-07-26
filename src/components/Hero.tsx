@@ -62,6 +62,14 @@ function Hero() {
   // Innei 式三行：名字高亮 → accent + 發光 chip（打字機）→ 小描述行。
   // hero 文案統一英文（不跟語系走），只有 chip 文字打字。
   const { displayedText: typedChip, isTypingComplete: chipComplete } = useTypingEffect('products that feel right', 80, 900);
+  // 捲動提示只在頁面頂端有意義：一旦捲下去就淡出，免得那條細線一直杵在畫面上像雜訊。
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // 根據 Figma 設計和履歷內容
   return (
@@ -146,7 +154,7 @@ function Hero() {
       <div className="background-text">Koimsurai</div> {/* 加入背景文字 */}
 
       {/* scroll 提示線 — 跟 hero-actions 同步淡入 */}
-      <div className={`hero-scroll-cue ${chipComplete ? 'fade-in' : ''}`} aria-hidden="true"><span /></div>
+      <div className={`hero-scroll-cue ${chipComplete && !scrolled ? 'fade-in' : ''}`} aria-hidden="true"><span /></div>
     </section> // 結束 section
   );
 }

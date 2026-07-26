@@ -1,0 +1,45 @@
+/* 首頁收尾的「留下印記 / GitHub 星星」：刻意做低調——文字級的按鈕，不搶信箱那行。 */
+.site-appreciation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-top: 1.4rem;
+  flex-wrap: wrap;
+}
+.site-appr-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: none;
+  outline: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.78rem;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+.site-appr-item:hover:not(:disabled),
+.site-appr-item:focus-visible:not(:disabled) {
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  outline: none;
+}
+.site-appr-item:disabled { cursor: default; }
+.site-appr-icon { font-size: 0.85em; opacity: 0.75; }
+/* 按過之後：心變粉紅、留著（表示這台瀏覽器已經按過） */
+.site-appr-item--liked { color: rgba(255, 255, 255, 0.85); border-color: rgba(244, 114, 182, 0.35); }
+.site-appr-item--liked .site-appr-icon { color: #f472b6; opacity: 1; }
+.site-appr-count { font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.45); }
+.site-appr-item--liked .site-appr-count { color: rgba(255, 255, 255, 0.7); }
+.site-appr-sep { width: 1px; height: 14px; background: rgba(255, 255, 255, 0.12); }
+@media (max-width: 480px) {
+  .site-appr-sep { display: none; }
+}
