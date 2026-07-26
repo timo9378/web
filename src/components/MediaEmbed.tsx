@@ -6,15 +6,25 @@ import { useRef, useState } from 'react';
 
 export function Video({ src, poster, caption }: { src?: string; poster?: string; caption?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
+  // started：是否已經開始播過。未開始 → 只顯示自訂的大播放鍵（原生控制列先不出，
+  // 免得畫面上同時有兩顆播放鍵）；開始之後 → 交給原生控制列，並支援點畫面 toggle。
+  const [started, setStarted] = useState(false);
 
-  // 自己畫一顆置中的播放鍵，不依賴原生控制列的位置：
-  // 原生控制列在 shadow DOM 裡、只佔底部一條，直式影片或版面一變就容易變得難按（或根本看不到）。
-  // 這顆按鈕跟站上圖片燈箱一樣是實體元素，hover / 點擊行為明確；播放後就隱藏，不擋控制列。
-  const start = () => {
+  const play = () => {
     const el = ref.current;
     if (!el) return;
-    void el.play().catch(() => { /* 自動播放政策擋下時忽略；使用者仍可用原生控制列 */ });
+    void el.play().catch(() => { /* 自動播放政策擋下時忽略 */ });
+  };
+
+  // 點影片「畫面」播放/暫停。⚠ 原生控制列在 shadow DOM，點它的 click 會 retarget 成 video
+  // 本身 → 不排除的話會跟原生行為抵銷（按鈕看起來沒反應）。底部那條交給瀏覽器。
+  const CONTROLS_BAND = 44;
+  const toggleByPicture = (e: React.MouseEvent<HTMLVideoElement>) => {
+    const el = e.currentTarget;
+    if (!started) return; // 尚未開始：由上面那顆大按鈕負責
+    if (e.clientY > el.getBoundingClientRect().bottom - CONTROLS_BAND) return;
+    if (el.paused) void el.play().catch(() => { /* 忽略 */ });
+    else el.pause();
   };
 
   if (!src) return null;
@@ -24,16 +34,16 @@ export function Video({ src, poster, caption }: { src?: string; poster?: string;
         <video
           ref={ref}
           className="mdx-video-el"
-          controls
+          controls={started}
           playsInline
           preload="metadata"
           poster={poster}
           src={src}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
+          onPlay={() => setStarted(true)}
+          onClick={toggleByPicture}
         />
-        {!playing && (
-          <button type="button" className="mdx-video-play" onClick={start} aria-label="播放影片">
+        {!started && (
+          <button type="button" className="mdx-video-play" onClick={play} aria-label="播放影片">
             <span aria-hidden>▶</span>
           </button>
         )}
