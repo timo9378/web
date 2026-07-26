@@ -395,7 +395,8 @@
     "backToArticleTop": "글 맨 위로",
     "seriesLabel": "시리즈",
     "prevPost": "이전 글",
-    "nextPost": "다음 글"
+    "nextPost": "다음 글",
+    "lastUpdated": "최근 업데이트"
   },
   "thinking": {
     "title": "혼잣말",

@@ -37,7 +37,20 @@ interface CategoryForm {
   name_ja: string;
   name_ko: string;
   name_zh_cn: string;
+  description_en: string;
+  description_ja: string;
+  description_ko: string;
+  description_zh_cn: string;
+  short_description_en: string;
+  short_description_ja: string;
+  short_description_ko: string;
+  short_description_zh_cn: string;
 }
+
+/** 表單裡「描述類」譯文欄位的型別（給 keyof 索引用）。 */
+type TagLikeDesc = Pick<CategoryForm,
+  'description_en' | 'description_ja' | 'description_ko' | 'description_zh_cn' |
+  'short_description_en' | 'short_description_ja' | 'short_description_ko' | 'short_description_zh_cn'>;
 
 /** 譯名欄位表：新增語系時只要改這裡（表單自動長出欄位）。 */
 const LOCALE_NAME_FIELDS = [
@@ -63,6 +76,14 @@ export default function CategoriesManager() {
     name_ja: '',
     name_ko: '',
     name_zh_cn: '',
+    description_en: '',
+    description_ja: '',
+    description_ko: '',
+    description_zh_cn: '',
+    short_description_en: '',
+    short_description_ja: '',
+    short_description_ko: '',
+    short_description_zh_cn: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,6 +138,14 @@ export default function CategoriesManager() {
       name_ja: category.name_ja ?? '',
       name_ko: category.name_ko ?? '',
       name_zh_cn: category.name_zh_cn ?? '',
+      description_en: category.description_en ?? '',
+      description_ja: category.description_ja ?? '',
+      description_ko: category.description_ko ?? '',
+      description_zh_cn: category.description_zh_cn ?? '',
+      short_description_en: category.short_description_en ?? '',
+      short_description_ja: category.short_description_ja ?? '',
+      short_description_ko: category.short_description_ko ?? '',
+      short_description_zh_cn: category.short_description_zh_cn ?? '',
     });
     setDialogOpen(true);
   };
@@ -146,7 +175,7 @@ export default function CategoriesManager() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '', description: '', short_description: '', name_en: '', name_ja: '', name_ko: '', name_zh_cn: '' });
+    setFormData({ name: '', slug: '', description: '', short_description: '', name_en: '', name_ja: '', name_ko: '', name_zh_cn: '', description_en: '', description_ja: '', description_ko: '', description_zh_cn: '', short_description_en: '', short_description_ja: '', short_description_ko: '', short_description_zh_cn: '' });
     setEditingCategory(null);
   };
 
@@ -242,6 +271,39 @@ export default function CategoriesManager() {
                         />
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground mb-1">多語系簡述／描述（選填）</p>
+                  <p className="text-[11px] text-muted-foreground/60 mb-3">
+                    對應上方的「簡述」與「描述」，會顯示在各語系文章頁的分類 tooltip。留空該語系就顯示原文。
+                  </p>
+                  <div className="space-y-3">
+                    {LOCALE_NAME_FIELDS.map(({ key, label }) => {
+                      const shortKey = key.replace('name_', 'short_description_') as keyof TagLikeDesc;
+                      const descKey = key.replace('name_', 'description_') as keyof TagLikeDesc;
+                      return (
+                        <div key={key} className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor={shortKey} className="text-xs">{label}・簡述</Label>
+                            <Input
+                              id={shortKey}
+                              value={formData[shortKey]}
+                              onChange={(e) => setFormData({ ...formData, [shortKey]: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor={descKey} className="text-xs">{label}・描述</Label>
+                            <Input
+                              id={descKey}
+                              value={formData[descKey]}
+                              onChange={(e) => setFormData({ ...formData, [descKey]: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 // 首頁「動態帶」— 近期文章 / 碎念 / 留言迴聲 / 年度軌跡 / 今日訊號收尾。
 // 取代原本的 Contact section（聯絡資訊 hero 與 footer 已足夠），
 // 收尾的訊號區塊掛 id="contact" 讓既有錨點（hero CTA / footer / Messages）續用。
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LocaleLink } from '../locale-link';
 import { useTranslation } from 'react-i18next';
@@ -63,7 +63,11 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
         ))}
         {clusters.map(({ month, posts }) => {
           const open = openMonth === month;
-          const size = Math.min(8 + (posts.length - 1) * 2, 16);
+          // 篇數越多的月份，星球越大；4 篇以上給環（土星感）。
+          const size = Math.min(9 + (posts.length - 1) * 2, 18);
+          const ringed = posts.length >= 4;
+          // 每個月給不同色相，讓它們看起來是不同的星球（固定值，不隨渲染變）。
+          const hue = 200 + ((month * 37) % 120); // 200~320：藍紫～粉紫，貼站上色調
           const label = `${monthName(month)} · ${posts.length}`;
           return (
             <div
@@ -82,7 +86,11 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
                 onClick={() => setOpenMonth(open ? null : month)}
                 onFocus={() => openNow(month)}
               >
-                <span className="orbit-month-dot" style={{ width: `${size}px`, height: `${size}px` }} aria-hidden />
+                <span
+                  className={ringed ? 'orbit-month-dot orbit-month-dot--ringed' : 'orbit-month-dot'}
+                  style={{ width: `${size}px`, height: `${size}px`, '--planet-hue': hue } as CSSProperties}
+                  aria-hidden
+                />
               </button>
               {open && (
                 <div className="orbit-month-pop">

@@ -19,6 +19,15 @@ pub struct CategoryRow {
     pub name_ja: Option<String>,
     pub name_ko: Option<String>,
     pub name_zh_cn: Option<String>,
+    /// 描述的譯文（tooltip 用）。
+    pub description_en: Option<String>,
+    pub description_ja: Option<String>,
+    pub description_ko: Option<String>,
+    pub description_zh_cn: Option<String>,
+    pub short_description_en: Option<String>,
+    pub short_description_ja: Option<String>,
+    pub short_description_ko: Option<String>,
+    pub short_description_zh_cn: Option<String>,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -41,11 +50,14 @@ pub async fn list_categories(State(state): State<AppState>) -> Result<Json<Categ
           c.short_description,
           c.updated_at,
           COUNT(p.id) as post_count,
-          c.name_en, c.name_ja, c.name_ko, c.name_zh_cn
+          c.name_en, c.name_ja, c.name_ko, c.name_zh_cn,
+          c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn
         FROM categories c
         LEFT JOIN posts p ON p.category = c.name AND p.status = 'published'
         GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.updated_at,
-                 c.name_en, c.name_ja, c.name_ko, c.name_zh_cn
+                 c.name_en, c.name_ja, c.name_ko, c.name_zh_cn,
+                 c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn,
+          c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn
         ORDER BY post_count DESC, c.name ASC
         "#,
     )

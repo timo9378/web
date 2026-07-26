@@ -16,6 +16,14 @@ export type AdminCategoryRow = {
 	name_ja: string | null,
 	name_ko: string | null,
 	name_zh_cn: string | null,
+	description_en: string | null,
+	description_ja: string | null,
+	description_ko: string | null,
+	description_zh_cn: string | null,
+	short_description_en: string | null,
+	short_description_ja: string | null,
+	short_description_ko: string | null,
+	short_description_zh_cn: string | null,
 };
 
 /**

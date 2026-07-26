@@ -395,7 +395,8 @@
     "backToArticleTop": "記事の先頭へ戻る",
     "seriesLabel": "シリーズ",
     "prevPost": "前の記事",
-    "nextPost": "次の記事"
+    "nextPost": "次の記事",
+    "lastUpdated": "最終更新"
   },
   "thinking": {
     "title": "つぶやき",

@@ -39,7 +39,7 @@ import { MdxContent } from './MdxContent';
 // slugify / extractHeadings / computeReadTime：與 BlogPostPage（SSR fallback）共用同一份，
 // 確保 heading anchor id / TOC / 閱讀時間兩邊逐字一致。
 import { slugify, extractHeadings, computeReadTime } from '../lib/blogContent';
-import { useCategoryLabel, useTagLabel } from '../lib/categoryLabel';
+import { useCategoryLabel, useTagLabel, useLocalizedCategoryInfo } from '../lib/categoryLabel';
 
 /// `GET /api/posts/:id` 的成功回應（型別由後端 Rust struct 生成），外加 client 端自己算的
 /// `date`（由 created_at 依語系格式化，見下方 setPost）。API 不回傳 date。
@@ -925,6 +925,10 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
    ══════════════════════════ */
 const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnter, onLeave, linkClassName, compact = false }: { postCategory: string; categoryInfo: CategoryInfo | null; showTooltip: boolean; onEnter: () => void; onLeave: () => void; linkClassName?: string; compact?: boolean }) => {
   const categoryLabel = useCategoryLabel();
+  // tooltip 的簡述/描述也依語系取譯文（沒填就退回原文）
+  const { t, i18n } = useTranslation();
+  const localizeCategory = useLocalizedCategoryInfo();
+  const info = localizeCategory(categoryInfo);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -951,26 +955,26 @@ const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnt
       >
         {categoryLabel(postCategory)}
       </LocaleLink>
-      {showTooltip && categoryInfo && ReactDOM.createPortal(
+      {showTooltip && info && ReactDOM.createPortal(
         <div
           className={compact ? 'category-tooltip category-tooltip-compact' : 'category-tooltip'}
           style={{ position: 'absolute', top: pos.top, left: pos.left }}
           onMouseEnter={onEnter}
           onMouseLeave={onLeave}
         >
-          {categoryInfo.short_description && (
-            <p className="category-tooltip-short">{categoryInfo.short_description}</p>
+          {info.short_description && (
+            <p className="category-tooltip-short">{info.short_description}</p>
           )}
-          {!compact && categoryInfo.description && (
-            <p className="category-tooltip-desc">{categoryInfo.description}</p>
+          {!compact && info.description && (
+            <p className="category-tooltip-desc">{info.description}</p>
           )}
           {!compact && (
             <div className="category-tooltip-meta">
-              {categoryInfo.post_count != null && (
-                <span>共 {categoryInfo.post_count} 篇文章</span>
+              {info.post_count != null && (
+                <span>{t('blog.postCount', { count: info.post_count ?? 0 })}</span>
               )}
-              {categoryInfo.updated_at && (
-                <span>最近更新 {new Date(categoryInfo.updated_at).toLocaleDateString('zh-TW')}</span>
+              {info.updated_at && (
+                <span>{t('blog.lastUpdated')} {new Date(info.updated_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language)}</span>
               )}
             </div>
           )}

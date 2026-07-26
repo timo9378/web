@@ -77,6 +77,14 @@ pub struct AdminCategoryRow {
     pub name_ja: Option<String>,
     pub name_ko: Option<String>,
     pub name_zh_cn: Option<String>,
+    pub description_en: Option<String>,
+    pub description_ja: Option<String>,
+    pub description_ko: Option<String>,
+    pub description_zh_cn: Option<String>,
+    pub short_description_en: Option<String>,
+    pub short_description_ja: Option<String>,
+    pub short_description_ko: Option<String>,
+    pub short_description_zh_cn: Option<String>,
 }
 
 #[utoipa::path(get, path = "/api/admin/categories", tag = "admin", security(("bearer" = [])),
@@ -96,7 +104,7 @@ pub async fn admin_categories(
          FROM categories c \
          LEFT JOIN posts p ON p.category = c.name \
          GROUP BY c.id, c.name, c.slug, c.description, c.short_description, c.created_at, c.updated_at, \
-                  c.name_en, c.name_ja, c.name_ko, c.name_zh_cn \
+                  c.name_en, c.name_ja, c.name_ko, c.name_zh_cn, c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn \
          ORDER BY c.name ASC",
     )
     .fetch_all(&state.pool)
@@ -590,8 +598,8 @@ pub async fn create_tag(
     .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
-        .execute(&state.pool)
-        .await
+    .execute(&state.pool)
+    .await
     {
         Ok(r) => {
             (StatusCode::CREATED, Json(json!({ "id": r.last_insert_rowid(), "name": name, "post_count": 0 })))
@@ -629,9 +637,9 @@ pub async fn update_tag(
     .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
-        .bind(&id)
-        .execute(&state.pool)
-        .await
+    .bind(&id)
+    .execute(&state.pool)
+    .await
     {
         Ok(r) if r.rows_affected() == 0 => {
             (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response()
@@ -676,11 +684,19 @@ pub struct CategoryBody {
     description: Option<String>,
     slug: Option<String>,
     short_description: Option<String>,
-    // 顯示用譯名（name 仍是資料鍵，不參與 join/比對）
+    // 顯示用譯名／譯述（name 仍是資料鍵，不參與 join/比對）
     name_en: Option<String>,
     name_ja: Option<String>,
     name_ko: Option<String>,
     name_zh_cn: Option<String>,
+    description_en: Option<String>,
+    description_ja: Option<String>,
+    description_ko: Option<String>,
+    description_zh_cn: Option<String>,
+    short_description_en: Option<String>,
+    short_description_ja: Option<String>,
+    short_description_ko: Option<String>,
+    short_description_zh_cn: Option<String>,
 }
 
 /// slug = 提供的（非空）或由 name 生成。
@@ -711,8 +727,8 @@ pub async fn create_category(
     let short_description = body.short_description.clone().unwrap_or_default();
     match sqlx::query(
         "INSERT INTO categories (name, slug, description, short_description, \
-         name_en, name_ja, name_ko, name_zh_cn, created_at, updated_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+         name_en, name_ja, name_ko, name_zh_cn, description_en, description_ja, description_ko, description_zh_cn, short_description_en, short_description_ja, short_description_ko, short_description_zh_cn, created_at, updated_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
     )
     .bind(&name)
     .bind(&slug)
@@ -722,6 +738,14 @@ pub async fn create_category(
     .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_zh_cn.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_zh_cn.as_deref().filter(|v| !v.is_empty()))
     .execute(&state.pool)
     .await
     {
@@ -772,7 +796,7 @@ pub async fn update_category(
     let short_description = body.short_description.clone().unwrap_or_default();
     let updated = match sqlx::query(
         "UPDATE categories SET name = ?, slug = ?, description = ?, short_description = ?, \
-         name_en = ?, name_ja = ?, name_ko = ?, name_zh_cn = ?, updated_at = datetime('now') WHERE id = ?",
+         name_en = ?, name_ja = ?, name_ko = ?, name_zh_cn = ?, description_en = ?, description_ja = ?, description_ko = ?, description_zh_cn = ?, short_description_en = ?, short_description_ja = ?, short_description_ko = ?, short_description_zh_cn = ?, updated_at = datetime('now') WHERE id = ?",
     )
     .bind(&name)
     .bind(&slug)
@@ -782,6 +806,14 @@ pub async fn update_category(
     .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.description_zh_cn.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_en.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_ja.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_ko.as_deref().filter(|v| !v.is_empty()))
+    .bind(body.short_description_zh_cn.as_deref().filter(|v| !v.is_empty()))
     .bind(&id)
     .execute(&state.pool)
     .await

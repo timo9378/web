@@ -133,6 +133,14 @@ export interface CategoryInfo {
   name_ja?: string;
   name_ko?: string;
   name_zh_cn?: string;
+  description_en?: string;
+  description_ja?: string;
+  description_ko?: string;
+  description_zh_cn?: string;
+  short_description_en?: string;
+  short_description_ja?: string;
+  short_description_ko?: string;
+  short_description_zh_cn?: string;
 }
 export const blogCategoriesDetailQueryOptions = queryOptions({
   queryKey: ['categories', 'detail'],

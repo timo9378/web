@@ -395,7 +395,8 @@
     "backToArticleTop": "Back to top of article",
     "seriesLabel": "Series",
     "prevPost": "Previous",
-    "nextPost": "Next"
+    "nextPost": "Next",
+    "lastUpdated": "Updated"
   },
   "thinking": {
     "title": "Murmurs",

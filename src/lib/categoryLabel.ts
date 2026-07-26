@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions } from '../blogList';
+import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions, type CategoryInfo } from '../blogList';
 
 /** locale → CategoryInfo 上的譯名欄位名。預設語系（zh-TW）與未知語系都用 name。 */
 function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {
@@ -61,4 +61,35 @@ export function useTagLabel(): (name: string | null | undefined) => string {
     }
     return (name) => (name ? (map.get(name) ?? name) : '');
   }, [tags, locale]);
+}
+
+/** locale → 後綴（en / ja / ko / zh_cn）；預設語系回 null（用原欄位）。 */
+function suffixFor(locale: string): string | null {
+  if (locale.startsWith('en')) return 'en';
+  if (locale.startsWith('ja')) return 'ja';
+  if (locale.startsWith('ko')) return 'ko';
+  if (locale.toLowerCase().startsWith('zh-cn')) return 'zh_cn';
+  return null;
+}
+
+/**
+ * 分類 tooltip 用：把 CategoryInfo 的 name / short_description / description
+ * 換成當前語系的版本（沒譯文就退回原欄位）。
+ */
+export function useLocalizedCategoryInfo(): (info: CategoryInfo | null) => CategoryInfo | null {
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  return useMemo(() => {
+    const sfx = suffixFor(locale);
+    if (!sfx) return (info) => info;
+    return (info) => {
+      if (!info) return info;
+      const row = info as unknown as Record<string, unknown>;
+      const pick = (base: string) => {
+        const t = row[`${base}_${sfx}`];
+        return typeof t === 'string' && t ? t : (row[base] as string | undefined);
+      };
+      return { ...info, name: pick('name'), short_description: pick('short_description'), description: pick('description') };
+    };
+  }, [locale]);
 }
