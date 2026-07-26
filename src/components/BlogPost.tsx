@@ -2110,7 +2110,7 @@ function BlogPost() {
       <div className="post-body">
         {/* Left sidebar — other article titles */}
         <aside className="post-sidebar-left">
-          <PostsNav currentId={id} postTitle={post.title} postCategory={post.category ?? undefined} />
+          <PostsNav currentId={post.id} postTitle={post.title} postCategory={post.category ?? undefined} />
         </aside>
 
         <AnimatePresence mode="wait">
@@ -2179,17 +2179,17 @@ function BlogPost() {
             </div>
 
             {/* ── Emoji 反應 ── */}
-            <Reactions postId={id} />
+            <Reactions postId={post.id} />
 
             {/* ── Series 系列文導覽 ── */}
-            {post.series_name && <SeriesNav seriesName={post.series_name} currentId={id} />}
+            {post.series_name && <SeriesNav seriesName={post.series_name} currentId={post.id} />}
 
             {/* ── Prev / Next ── */}
-            <PrevNextNav currentId={id} />
+            <PrevNextNav currentId={post.id} />
 
             {/* ── Comments ── */}
             <div className="post-extras" id="comments">
-              <Comments postId={id} allowComments={post.allow_comments} />
+              <Comments postId={post.id} allowComments={post.allow_comments} />
             </div>
           </motion.div>
         </AnimatePresence>
