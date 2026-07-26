@@ -256,6 +256,7 @@ export type DigestComment = {
 
 export type DigestPost = {
 	id: number,
+	slug: string | null,
 	title: string,
 	category: string | null,
 	created_at: string,
@@ -278,6 +279,7 @@ export type DigestThought = {
 
 export type DigestTimeline = {
 	id: number,
+	slug: string | null,
 	title: string,
 	created_at: string,
 };
