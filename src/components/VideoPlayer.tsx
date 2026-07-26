@@ -188,7 +188,18 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
         </div>
       </div>
       {caption ? <figcaption>{caption}</figcaption> : null}
-      {diag ? <pre className="vp-diag">{diag}</pre> : null}
+      {diag ? (
+        <>
+          <button
+            type="button"
+            className="vp-diag-btn"
+            onClick={() => { void import('../lib/videoDiag').then(({ bisectVideo }) => bisectVideo(src)); }}
+          >
+            開對照組（8 個版本並排，截圖給我）
+          </button>
+          <pre className="vp-diag">{diag}</pre>
+        </>
+      ) : null}
     </figure>
   );
 }

@@ -199,3 +199,10 @@ a.vp-btn:focus-visible { color: #fff; }
   user-select: text;
   -webkit-user-select: text;
 }
+.vp-diag-btn {
+  display: block;
+  margin: 0.75rem auto 0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}

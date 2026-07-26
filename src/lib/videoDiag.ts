@@ -112,3 +112,65 @@ export function diagnoseVideo(video: HTMLVideoElement): string {
   out.push(`── 其他 ──\ndevicePixelRatio=${devicePixelRatio} UA=${navigator.userAgent.slice(0, 110)}`);
   return out.join('\n');
 }
+
+/* ── 一次比完所有假設的對照組（?debug=video 的「開對照組」按鈕）──
+ *
+ * 一次改一個變因、部署、等回報，已經來回太多次了。這裡直接在 document.body 最上層並排
+ * 開出同一支影片的多個版本，每個只差一項條件，全部 autoplay。哪一格黑、哪一格有畫面，
+ * 一張截圖就分辨得出來——不必再靠推論。
+ *
+ * 放在 body 底下、position:fixed，是為了完全脫離文章的祖先鏈（使用者先前實測這個位置的裸
+ * <video> 是正常的，所以它是這組對照的基準線）。
+ */
+const VARIANTS: { label: string; wrap?: Partial<CSSStyleDeclaration>; video?: Partial<CSSStyleDeclaration> }[] = [
+  { label: '1 裸' },
+  { label: '2 大尺寸', video: { width: '150px' } },
+  { label: '3 opacity.999', video: { opacity: '0.999' } },
+  { label: '4 圓角裁切', wrap: { overflow: 'hidden', borderRadius: '10px' } },
+  { label: '5 動畫祖先', wrap: { animation: 'post-enter 700ms linear' } },
+  { label: '6 遮罩在上', wrap: { position: 'relative' } },
+  { label: '7 濾鏡祖先', wrap: { filter: 'blur(0px)' } },
+  { label: '8 contain', wrap: { contain: 'paint' } },
+];
+
+export function bisectVideo(src: string): () => void {
+  const host = document.createElement('div');
+  host.style.cssText =
+    'position:fixed;inset:auto 0 0 0;z-index:2147483647;display:flex;flex-wrap:wrap;gap:6px;' +
+    'padding:8px;background:#000;font:11px system-ui;color:#fff;justify-content:center';
+
+  for (const v of VARIANTS) {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px';
+
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, v.wrap ?? {});
+
+    const video = document.createElement('video');
+    video.src = src;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.autoplay = true;
+    video.style.width = '80px';
+    video.style.display = 'block';
+    Object.assign(video.style, v.video ?? {});
+    wrap.appendChild(video);
+
+    // 版本 6：把文章那層 75% 近黑遮罩原樣蓋上去，確認它到底會不會把畫面壓成全黑
+    if (v.label.startsWith('6')) {
+      const dim = document.createElement('div');
+      dim.style.cssText = 'position:absolute;inset:0;background:rgba(6,5,14,0.75);pointer-events:none;z-index:0';
+      wrap.appendChild(dim);
+    }
+
+    const tagEl = document.createElement('span');
+    tagEl.textContent = v.label;
+    cell.append(wrap, tagEl);
+    host.appendChild(cell);
+    void video.play().catch(() => { /* autoplay 被擋就算了，靜音的通常不會 */ });
+  }
+
+  document.body.appendChild(host);
+  return () => host.remove();
+}
