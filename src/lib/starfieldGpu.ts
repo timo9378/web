@@ -29,8 +29,8 @@ export interface StarfieldInit {
   width: number;
   height: number;
   dpr: number;
-  /** 每秒回報一次渲染迴圈 fps / 平均幀時（?debug=perf 用） */
-  onPerf?: (fps: number, avgMs: number) => void;
+  /** 每秒回報一次渲染迴圈 fps / 平均幀時 / 目前品質等級（?debug=perf 用） */
+  onPerf?: (fps: number, avgMs: number, quality?: number) => void;
 }
 
 interface StarLayerCfg {
@@ -246,6 +246,22 @@ export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runn
   let last = -1;
   let frames = 0;
   let acc = 0;
+  // ── 效能自動降級 ──────────────────────────────────────────────
+  // 能力偵測（沒有 WebGPU/WebGL 就不掛 3D）之外，還要處理「有 GPU 但跑很慢」的機器：
+  // 例如關掉硬體加速 → 走軟體渲染，能力偵測會通過但幀率慘不忍睹。
+  // 連續數秒低於門檻就降一級（減少星數 → 再降就關土星）；**不自動升回**，避免在門檻附近抖動。
+  const LOW_FPS = 24;
+  const LOW_SECONDS_TO_DEGRADE = 3;
+  const QUALITY_FACTOR = [1, 0.5, 0.25];
+  let quality = 0;
+  let lowSeconds = 0;
+  const applyQuality = () => {
+    const factor = QUALITY_FACTOR[quality] ?? 1;
+    for (const l of layers) l.points.count = Math.max(1, Math.round(l.cfg.count * factor));
+    // 最低等級連土星也收掉（它是最貴的一塊）
+    if (saturn) saturn.group.visible = saturnVisible && quality < 2;
+  };
+
   const loop = (now: number) => {
     const delta = last < 0 ? 0.016 : Math.min((now - last) / 1000, 0.05);
     last = now;
@@ -258,7 +274,18 @@ export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runn
     frames += 1;
     acc += delta;
     if (acc >= 1) {
-      init.onPerf?.(frames / acc, (acc / frames) * 1000);
+      const fps = frames / acc;
+      init.onPerf?.(fps, (acc / frames) * 1000, quality);
+      if (fps < LOW_FPS && quality < QUALITY_FACTOR.length - 1) {
+        lowSeconds += 1;
+        if (lowSeconds >= LOW_SECONDS_TO_DEGRADE) {
+          quality += 1;
+          lowSeconds = 0;
+          applyQuality();
+        }
+      } else {
+        lowSeconds = 0;
+      }
       frames = 0;
       acc = 0;
     }
@@ -279,7 +306,8 @@ export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runn
       setSaturn(visible, animate) {
         saturnVisible = visible;
         saturnAnimate = animate;
-        if (saturn) saturn.group.visible = visible;
+        // 最低品質下即使呼叫顯示也不開（土星最貴）
+        if (saturn) saturn.group.visible = visible && quality < 2;
       },
       setRunning(running) {
         if (running) {

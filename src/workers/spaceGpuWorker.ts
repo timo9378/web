@@ -30,7 +30,7 @@ self.onmessage = (e: MessageEvent<InMsg>) => {
           width: msg.width,
           height: msg.height,
           dpr: msg.dpr,
-          onPerf: (fps, avgMs) => self.postMessage({ type: 'perf', fps, avgMs }),
+          onPerf: (fps, avgMs, quality) => self.postMessage({ type: 'perf', fps, avgMs, quality }),
         });
         runner = r;
         runner.setScroll(lastScroll);

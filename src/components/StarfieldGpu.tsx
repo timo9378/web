@@ -29,7 +29,7 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [backend, setBackend] = useState('初始化中…');
   const [failed, setFailed] = useState(false);
-  const [perf, setPerf] = useState<{ fps: number; avgMs: number } | null>(null);
+  const [perf, setPerf] = useState<{ fps: number; avgMs: number; quality?: number } | null>(null);
   const perfDebug = useMemo(() => new URLSearchParams(window.location.search).get('debug') === 'perf', []);
   // 統一控制介面：worker 路徑=postMessage、主執行緒路徑=直呼 runner（見下兩個 effect）
   const controlRef = useRef<{ scroll(y: number): void; saturn(v: boolean, a: boolean): void } | null>(null);
@@ -61,9 +61,9 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
         scroll: (y) => worker.postMessage({ type: 'scroll', y }),
         saturn: (v, a) => worker.postMessage({ type: 'saturn', visible: v, animate: a }),
       };
-      const onMsg = (e: MessageEvent<{ type: string; backend?: string; fps?: number; avgMs?: number; message?: string }>) => {
+      const onMsg = (e: MessageEvent<{ type: string; backend?: string; fps?: number; avgMs?: number; quality?: number; message?: string }>) => {
         if (e.data.type === 'ready') setBackend(`${e.data.backend} · worker`);
-        else if (e.data.type === 'perf') setPerf({ fps: e.data.fps ?? 0, avgMs: e.data.avgMs ?? 0 });
+        else if (e.data.type === 'perf') setPerf({ fps: e.data.fps ?? 0, avgMs: e.data.avgMs ?? 0, quality: e.data.quality });
         else if (e.data.type === 'error') {
           // canvas 已 transfer、無法回收給主執行緒重用 → 本 session 放棄（外層有 DOM 特效兜底）
           console.warn('[StarfieldGpu] worker 初始化失敗:', e.data.message);
@@ -90,7 +90,7 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       try {
         const { runner, backend: be } = await createStarfieldRunner({
           canvas, width, height, dpr: window.devicePixelRatio,
-          onPerf: (fps, avgMs) => setPerf({ fps, avgMs }),
+          onPerf: (fps, avgMs, quality) => setPerf({ fps, avgMs, quality }),
         });
         if (disposed) { runner.dispose(); return; }
         runnerHandle = runner;
@@ -131,7 +131,7 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
           font: '12px/1.5 monospace', borderRadius: 6, pointerEvents: 'none',
         }}>
           StarfieldGpu · {backend} · TSL bloom
-          {perf && ` · ${perf.fps.toFixed(0)} fps · ${perf.avgMs.toFixed(2)} ms`}
+          {perf && ` · ${perf.fps.toFixed(0)} fps · ${perf.avgMs.toFixed(2)} ms${perf.quality ? ` · 品質降級 L${perf.quality}` : ''}`}
         </div>
       )}
     </>
