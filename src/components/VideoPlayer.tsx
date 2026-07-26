@@ -28,6 +28,22 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
   const [fullscreen, setFullscreen] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
+  const [diag, setDiag] = useState('');
+
+  // ?debug=video → 播放 2 秒後掃一次，把祖先鏈的合成觸發屬性與覆蓋元素印出來（見 lib/videoDiag）
+  useEffect(() => {
+    if (typeof location === 'undefined' || !location.search.includes('debug=video')) return;
+    const t = setTimeout(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      void import('../lib/videoDiag').then(({ diagnoseVideo }) => {
+        const report = diagnoseVideo(v);
+        setDiag(report);
+        console.log(report);
+      });
+    }, 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   const toggle = useCallback(() => {
     const v = videoRef.current;
@@ -172,6 +188,7 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
         </div>
       </div>
       {caption ? <figcaption>{caption}</figcaption> : null}
+      {diag ? <pre className="vp-diag">{diag}</pre> : null}
     </figure>
   );
 }

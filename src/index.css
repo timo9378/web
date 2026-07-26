@@ -353,3 +353,35 @@ body::after {
   font-family: 'TASA Explorer Variable', 'TASA Orbiter Variable', var(--cjk-font), sans-serif;
   letter-spacing: 0.01em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   .no-gpu —— 使用者在瀏覽器設定關掉硬體加速時掛在 <html> 上（SpaceBackdropShell 偵測）。
+   這時所有合成都由 CPU 做，站上最貴的三樣東西會讓捲動直接爆掉：
+     1. backdrop-filter（全站約 30 處玻璃模糊）——每幀都要重新模糊底下的畫面，最貴。
+     2. filter: blur() 的裝飾性光暈。
+     3. 上百個 infinite 動畫——每個都逼著整層重繪。
+   3D 星空已經完全不掛（見 SpaceBackdropShell），這裡把剩下的 CSS 成本一起收掉。
+   純裝飾性的東西拿掉不影響閱讀，換來的是能用的捲動。
+   ═══════════════════════════════════════════════════════════════════ */
+html.no-gpu *,
+html.no-gpu *::before,
+html.no-gpu *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 只停「無限循環」的裝飾動畫；一次性的進場動畫留著（跑完就結束，不會持續耗 CPU），
+   loading spinner 也留著（使用者需要知道還在載）。 */
+html.no-gpu *:not([class*='spinner']):not([class*='loading']):not([class*='skeleton']) {
+  animation-iteration-count: 1 !important;
+}
+/* 玻璃卡片沒了模糊會變太透 → 補一點不透明度，維持可讀性 */
+html.no-gpu .post-content-wrapper::before {
+  background: rgba(18, 16, 28, 0.92);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.no-gpu .comet,
+  html.no-gpu [class*='comet'],
+  html.no-gpu [class*='shooting-star'] {
+    display: none !important;
+  }
+}

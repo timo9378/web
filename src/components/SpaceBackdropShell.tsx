@@ -34,7 +34,15 @@ export default function SpaceBackdropShell() {
   // 星星數量救不了，得完全不掛 3D。偵測到軟體渲染就直接走 DOM 特效（WebGPU 的 Dawn 在這種機器
   // 上同樣只會拿到 SwiftShader/WARP，所以一個檢查擋兩條路）。
   // 本元件 client-only，可安全 probe。runtime 才炸的殘餘情況由 ErrorBoundary + worker error 通道接。
-  const gpu3dOk = useMemo(() => !isSoftwareRenderer() && (isWebGLAvailable() || 'gpu' in navigator), []);
+  const softwareGpu = useMemo(() => isSoftwareRenderer(), []);
+  const gpu3dOk = useMemo(() => !softwareGpu && (isWebGLAvailable() || 'gpu' in navigator), [softwareGpu]);
+
+  // 軟體渲染 → 在 <html> 掛 .no-gpu，讓 CSS 一次關掉整站最貴的那些效果（見 index.css）
+  useEffect(() => {
+    if (!softwareGpu) return;
+    document.documentElement.classList.add('no-gpu');
+    return () => document.documentElement.classList.remove('no-gpu');
+  }, [softwareGpu]);
 
   const introCompleted = (() => {
     try { return sessionStorage.getItem('introCompleted') === 'true'; } catch { return false; }
@@ -97,8 +105,10 @@ export default function SpaceBackdropShell() {
           </Suspense>
         </BackdropErrorBoundary>
       )}
-      {/* DOM 特效（流星/UFO/游標尾跡，非 WebGL）：無論 3D 成敗都掛，頁面永遠有生命感 */}
-      {backdropReady && <DomSpaceEffects isMobile={isMobile} isOnHomePage={isOnHomePage} />}
+      {/* DOM 特效（流星/UFO/游標尾跡，非 WebGL）：無論 3D 成敗都掛，頁面永遠有生命感。
+          例外是「使用者關掉硬體加速」：整站合成、backdrop-filter、上百個 infinite 動畫全落在
+          CPU，連純 DOM 特效都會拖垮捲動——這種機器只留靜態背景。 */}
+      {backdropReady && !softwareGpu && <DomSpaceEffects isMobile={isMobile} isOnHomePage={isOnHomePage} />}
     </>
   );
 }

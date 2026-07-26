@@ -749,70 +749,8 @@
 
 /* ── Video ── */
 .mdx-video { margin: 1.75rem 0; }
-/* 影片外框：讓自訂播放鍵可以絕對定位在畫面上（寬度跟著影片，所以用 fit-content 置中）。
-   z-index 是防禦性的：<video> 在 Chrome 會被提升成獨立合成層，若頁面上有 position:fixed 的
-   大面積覆蓋層（本站的 .blog-post-dim-overlay），合成順序有機會讓影片畫面被蓋掉而只剩控制列
-   看得見。明確把影片放進自己的堆疊層可避免這一類問題。 */
-.mdx-video-frame {
-  position: relative;
-  z-index: 1;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  line-height: 0;
-  /* ⚠ 這層「不要」放 overflow:hidden 或 border-radius：兩者都會裁切 <video>，
-     一裁切就走 GPU 遮罩，硬體加速下畫面會被合成掉（全黑）。
-     實測：裸 <video> 正常 → 加圓角/裁切就黑。所以影片放棄圓角，換畫面能顯示。
-     border 是「畫在外面」不裁切內容，可以留。 */
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-/* 自訂播放鍵：置中偏上（避開底部原生控制列），播放後隱藏 */
-.mdx-video-play {
-  position: absolute;
-  z-index: 2;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.4rem;
-  height: 3.4rem;
-  padding: 0 0 0 0.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
-  background: rgba(18, 14, 30, 0.72);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: #fff;
-  font-size: 1.1rem;
-  cursor: pointer;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-  transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
-}
-.mdx-video-play:hover,
-.mdx-video-play:focus-visible {
-  background: rgba(139, 124, 246, 0.85);
-  border-color: rgba(255, 255, 255, 0.45);
-  transform: translate(-50%, -50%) scale(1.08);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-  outline: none;
-}
-.mdx-video-el {
-  display: block;
-  /* ⚠ 這個元素上「不要」放 border-radius / border / transform / filter：
-     實測（站長的 Edge + 硬體加速）只要 video 本身帶圓角或 transform，就會走 GPU 遮罩／
-     獨立合成層，畫面變全黑（但解碼是好的、canvas 取得到影像）。同一支影片在沒有任何樣式的
-     裸 <video> 上正常播放，證實是樣式造成的。
-     圓角與外框改由 .mdx-video-frame 負責（overflow:hidden 裁切），視覺一樣。 */
-  max-height: min(70vh, 620px);
-  max-width: 100%;
-  width: auto;
-  cursor: pointer;
-}
-.mdx-video figcaption { margin-top: 0.5rem; text-align: center; font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); }
+/* 影片播放器（控制列、進度條…）樣式全在 components/VideoPlayer.css。 */
 
-/* ── YouTube facade（點擊才載 iframe）── */
 .mdx-youtube {
   position: relative;
   margin: 1.75rem 0;

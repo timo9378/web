@@ -112,6 +112,18 @@
 }
 .vp-btn:focus:not(:focus-visible) { background: transparent; color: rgba(255, 255, 255, 0.82); }
 .vp-btn:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.5); outline-offset: -1px; }
+/* 下載鍵是 <a>：全站 `a { color: var(--clr-button) }` 跟 `a:hover,a:focus { text-shadow: … }`
+   會讓它變紫色還發光，跟旁邊的 <button> 不同調。明寫成跟其他鍵一樣。 */
+a.vp-btn,
+a.vp-btn:hover,
+a.vp-btn:focus,
+a.vp-btn:active {
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: none;
+  text-decoration: none;
+}
+a.vp-btn:hover,
+a.vp-btn:focus-visible { color: #fff; }
 
 /* 進度條 */
 .vp-progress {
@@ -157,4 +169,22 @@
 }
 @media (max-width: 480px) {
   .vp-time { display: none; }
+}
+
+/* ?debug=video 的診斷輸出 */
+.vp-diag {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  max-height: 22rem;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  -webkit-user-select: text;
 }
