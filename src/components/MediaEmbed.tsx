@@ -6,11 +6,16 @@ import { useState } from 'react';
 
 export function Video({ src, poster, caption }: { src?: string; poster?: string; caption?: string }) {
   if (!src) return null;
-  // 點影片畫面就播放/暫停：<video controls> 預設「點畫面」不會播，只有控制列的按鈕會，
-  // 直式影片被拉很高時那顆按鈕常常在畫面外 → 讀者會以為影片壞了。
+  // 點影片「畫面」就播放/暫停（<video controls> 預設點畫面不會播，只有控制列會）。
+  // ⚠ 控制列在 shadow DOM 裡，點它產生的 click 會 retarget 成 video 本身 → 這個 handler
+  // 也會收到。若不排除，會變成「原生開始播放 → 這裡立刻 pause()」互相抵銷＝點按鈕沒反應。
+  // 所以底部控制列那一條（約 44px）直接交給瀏覽器處理。
+  const CONTROLS_BAND = 44;
   const toggle = (e: React.MouseEvent<HTMLVideoElement>) => {
     const el = e.currentTarget;
-    if (el.paused) void el.play().catch(() => { /* 使用者手勢以外的失敗忽略 */ });
+    const rect = el.getBoundingClientRect();
+    if (e.clientY > rect.bottom - CONTROLS_BAND) return; // 控制列區：不插手
+    if (el.paused) void el.play().catch(() => { /* 非使用者手勢的失敗忽略 */ });
     else el.pause();
   };
   return (
