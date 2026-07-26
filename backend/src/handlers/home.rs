@@ -33,6 +33,7 @@ fn title_expr(locale: Option<&str>, prefix: &str) -> String {
 pub struct DigestPost {
     #[specta(type = specta_typescript::Number)]
     pub id: i64,
+    pub slug: Option<String>,
     pub title: String,
     pub category: Option<String>,
     pub created_at: String,
@@ -65,6 +66,7 @@ pub struct DigestComment {
 pub struct DigestTimeline {
     #[specta(type = specta_typescript::Number)]
     pub id: i64,
+    pub slug: Option<String>,
     pub title: String,
     pub created_at: String,
 }
@@ -91,7 +93,7 @@ pub async fn home_digest(
     let p_title = title_expr(q.locale.as_deref(), "p.");
 
     let posts = sqlx::query_as::<_, DigestPost>(sqlx::AssertSqlSafe(format!(
-        "SELECT id, {title} AS title, category, created_at FROM posts \
+        "SELECT id, slug, {title} AS title, category, created_at FROM posts \
          WHERE status = 'published' ORDER BY created_at DESC LIMIT 5"
     )))
     .fetch_all(&state.pool)
@@ -115,7 +117,7 @@ pub async fn home_digest(
     .await?;
 
     let timeline = sqlx::query_as::<_, DigestTimeline>(sqlx::AssertSqlSafe(format!(
-        "SELECT id, {title} AS title, created_at FROM posts \
+        "SELECT id, slug, {title} AS title, created_at FROM posts \
          WHERE status = 'published' AND created_at >= date('now', 'start of year') \
          ORDER BY created_at ASC"
     )))

@@ -1051,11 +1051,14 @@ export default function PostEditor() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs text-muted-foreground">
-                            自訂網址
+                            網址 slug
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="custom-url-slug" className="h-8 bg-accent/30" />
+                            <Input {...field} placeholder="blog-post-rendering-strategy" className="h-8 bg-accent/30" />
                           </FormControl>
+                          <p className="text-[10px] text-muted-foreground/60">
+                            文章網址是 /blog/&lt;slug&gt;。留空會自動從英文標題產生；改了也不會斷——舊網址會自動 301 到新的。
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}

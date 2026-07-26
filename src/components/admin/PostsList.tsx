@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { postPath } from '../../lib/postPath';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -196,7 +197,7 @@ export default function PostsList() {
                       </Link>
                       {/* 文章網址是 /blog/:id（posts 表沒有 slug 欄位） */}
                       <Link
-                        to={`/blog/${post.id}`}
+                        to={postPath(post)}
                         target="_blank"
                         className="size-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground/60 hover:bg-accent/40 transition-colors"
                       >

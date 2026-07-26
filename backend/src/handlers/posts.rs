@@ -43,6 +43,8 @@ fn parse_locale(raw: Option<&str>) -> Option<&'static str> {
 #[derive(Debug, FromRow)]
 pub struct PostRow {
     pub(crate) id: i64,
+    /// 網址用的英文 slug（canonical）。舊資料可能為 NULL → 前端退回用 id。
+    pub(crate) slug: Option<String>,
     pub(crate) title: String,
     pub(crate) content: String,
     pub(crate) excerpt: Option<String>,
@@ -174,6 +176,7 @@ fn parse_int(s: Option<&str>, default: i64) -> i64 {
 pub struct PostListItem {
     #[specta(type = specta_typescript::Number)]
     pub id: i64,
+    pub slug: Option<String>,
     pub title: String,
     pub excerpt: String,
     /// 該語系內文的前 260 個 UTF-16 code unit（= JS `content.substring(0,260)`）。
@@ -317,6 +320,7 @@ pub async fn list_posts(
         };
         posts.push(PostListItem {
             id: row.id,
+            slug: row.slug.clone(),
             title,
             excerpt,
             content_preview: crate::util::js_substring_prefix(&locale_content_str, 260),
@@ -363,6 +367,8 @@ pub struct PostDetailResponse {
     pub message: String,
     #[specta(type = specta_typescript::Number)]
     pub id: i64,
+    /// canonical 網址用的 slug；前端拿它把非 canonical 的網址 301 過去。
+    pub slug: Option<String>,
     pub title: String,
     pub content: String,
     pub excerpt: String,
@@ -400,17 +406,53 @@ pub async fn get_post(
     Path(id): Path<String>,
     Query(q): Query<LangQuery>,
 ) -> Result<Response, AppError> {
+    // 路徑參數可以是 slug、數字 id、或**改名前的舊 slug**（三者都要能進站）：
+    //   1) 先當 slug 找 → 2) 純數字就當 id 找 → 3) 查 post_slug_history 的舊 slug。
+    // 回應一律帶上目前的 canonical slug，前端據此把非 canonical 的網址 301 過去。
     let row = sqlx::query_as::<_, PostRow>(
         "SELECT p.*, GROUP_CONCAT(t.name) as tags \
          FROM posts p \
          LEFT JOIN post_tags pt ON p.id = pt.post_id \
          LEFT JOIN tags t ON pt.tag_id = t.id \
-         WHERE p.id = ? \
+         WHERE p.slug = ? \
          GROUP BY p.id",
     )
     .bind(&id)
     .fetch_optional(&state.pool)
     .await?;
+
+    let row = match row {
+        Some(r) => Some(r),
+        None => {
+            // 數字 → 當 id；否則查舊 slug 對應的 post_id
+            let by_id = id.parse::<i64>().ok();
+            let resolved_id = match by_id {
+                Some(n) => Some(n),
+                None => {
+                    sqlx::query_scalar::<_, i64>("SELECT post_id FROM post_slug_history WHERE old_slug = ?")
+                        .bind(&id)
+                        .fetch_optional(&state.pool)
+                        .await?
+                }
+            };
+            match resolved_id {
+                Some(n) => {
+                    sqlx::query_as::<_, PostRow>(
+                        "SELECT p.*, GROUP_CONCAT(t.name) as tags \
+                         FROM posts p \
+                         LEFT JOIN post_tags pt ON p.id = pt.post_id \
+                         LEFT JOIN tags t ON pt.tag_id = t.id \
+                         WHERE p.id = ? \
+                         GROUP BY p.id",
+                    )
+                    .bind(n)
+                    .fetch_optional(&state.pool)
+                    .await?
+                }
+                None => None,
+            }
+        }
+    };
 
     let Some(row) = row else {
         // 對齊 Express：404 + {"message":"Post not found"}
@@ -435,6 +477,7 @@ pub async fn get_post(
     let is_source = requested == source;
     Ok(Json(PostDetailResponse {
         message: "success".into(),
+        slug: row.slug.clone(),
         id: row.id,
         title,
         content,

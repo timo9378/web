@@ -4,6 +4,7 @@ import { FaYoutube, FaGithub, FaInstagram, FaExternalLinkAlt } from 'react-icons
 import { useLocale, LocaleLink } from '../locale-link';
 import { recentPostsQueryOptions } from '../blogList';
 import { thoughtDetailQueryOptions } from '../thoughtData';
+import { postPath } from '../lib/postPath';
 
 // 卡片形狀的載入骨架（保留與真卡相同的高度/結構）→ 資料未到時佔位不塌、client 補上時不位移。
 const LinkCardSkeleton = () => (
@@ -129,12 +130,13 @@ export const InternalLinkCard = ({ id }: { id: string }) => {
   // 清單裡找不到（例如連到 top-100 之外）才退回骨架，且骨架保留高度 → 換上時不位移。
   const navLocale = useLocale();
   const { data: posts } = useQuery(recentPostsQueryOptions(100, navLocale));
-  const post = posts?.find((p) => String(p.id) === id);
+  // 文章內的站內連結可能寫成 /blog/<id> 或 /blog/<slug>，兩種都要認得。
+  const post = posts?.find((p) => String(p.id) === id || p.slug === id);
 
   if (!post) return <LinkCardSkeleton />;
 
   return (
-    <LocaleLink to={`/blog/${id}`} className="link-card link-card-internal">
+    <LocaleLink to={postPath(post)} className="link-card link-card-internal">
       <div className="link-card-body">
         <div className="link-card-site">
           <span style={{ fontSize: '1rem', color: 'var(--post-accent)' }}>✦</span>

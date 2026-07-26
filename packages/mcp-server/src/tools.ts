@@ -49,6 +49,7 @@ const POST_WRITE_FIELDS = [
   'allow_comments',
   'send_newsletter',
   'source_language',
+  'slug',
   ...I18N_FIELDS,
 ] as const;
 
@@ -63,6 +64,13 @@ const postWriteProps = {
     enum: ['markdown', 'mdx'],
     description:
       "內容格式。用到自訂 block（<Note>/<Annot>/<Spoiler>/<BarChart>）或行內 JS {…} → 'mdx'；純文字/markdown → 'markdown'（預設）。用 mdx 前務必先讀 koimsurai_authoring_guide（有 <、{ 的跳脫規則）。",
+  },
+  slug: {
+    type: 'string',
+    description:
+      "網址用的**英文** slug（例 'blog-post-rendering-strategy'）。省略時後端會自動從 title_en（沒有就 title）產生。" +
+      '文章網址是 /blog/<slug>，所以請給精簡好讀的英文短語（3~8 個詞、全小寫、連字號分隔）。' +
+      '⚠ 之後改 slug 沒關係——舊網址會自動 301 到新的，不會斷。',
   },
   layout_type: { type: 'string', description: "版面型別，預設 'record'" },
   tags: { type: 'array', items: { type: 'string' }, description: '標籤名陣列（不存在的會自動建立）' },

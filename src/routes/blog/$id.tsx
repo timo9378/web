@@ -1,4 +1,5 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
+import { postIdent } from '../../lib/postPath';
 import { DEFAULT_LOCALE, LocaleProvider, buildAlternateLinks, toLocales } from '../../start-i18n';
 import FullBlogPost from '../../components/BlogPost';
 import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../blogList';
@@ -21,8 +22,16 @@ export const Route = createFileRoute('/blog/$id')({
         context.queryClient.prefetchQuery(recentPostsQueryOptions(100)),
         context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions),
       ]);
+      // 網址正規化：文章的 canonical 是 slug。用數字 id 或改名前的舊 slug 進來時
+      // 一律 301 到 canonical 網址——舊網址（含 GSC 已索引的 /blog/<id>）永遠有效，
+      // 且權重會轉移到新網址。
+      const ident = postIdent(post);
+      if (ident !== params.id) {
+        throw redirect({ href: `/blog/${ident}`, statusCode: 301 });
+      }
       return { post };
-    } catch {
+    } catch (e) {
+      if (e instanceof Response || (e as { isRedirect?: boolean }).isRedirect) throw e;
       throw notFound();
     }
   },
@@ -32,11 +41,11 @@ export const Route = createFileRoute('/blog/$id')({
     return {
       // og/twitter 也在這裡出 —— head() 是唯一會進 SSR HTML 的地方,而社群爬蟲不執行 JS。
       // (元件內的 <SEOHead> 走 helmet,hydrate 後才掛,爬蟲永遠看不到)
-      meta: articleMeta(post, `/blog/${post.id}`, DEFAULT_LOCALE),
+      meta: articleMeta(post, `/blog/${postIdent(post)}`, DEFAULT_LOCALE),
       // hreflang 逐篇照 available_locales —— 只連這篇真的有的語言,不造假 alternate。
-      links: buildAlternateLinks(`blog/${post.id}`, DEFAULT_LOCALE, toLocales(post.available_locales)),
+      links: buildAlternateLinks(`blog/${postIdent(post)}`, DEFAULT_LOCALE, toLocales(post.available_locales)),
       // BlogPosting 結構化資料進 SSR（取代退休的 SEOHead JSON-LD）。
-      scripts: [articleJsonLd(post, `/blog/${post.id}`)],
+      scripts: [articleJsonLd(post, `/blog/${postIdent(post)}`)],
     };
   },
   component: RouteComponent,

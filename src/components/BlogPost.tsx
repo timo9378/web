@@ -40,6 +40,7 @@ import { MdxContent } from './MdxContent';
 // 確保 heading anchor id / TOC / 閱讀時間兩邊逐字一致。
 import { slugify, extractHeadings, computeReadTime } from '../lib/blogContent';
 import { useCategoryLabel, useTagLabel, useLocalizedCategoryInfo } from '../lib/categoryLabel';
+import { postPath } from '../lib/postPath';
 
 /// `GET /api/posts/:id` 的成功回應（型別由後端 Rust struct 生成），外加 client 端自己算的
 /// `date`（由 created_at 依語系格式化，見下方 setPost）。API 不回傳 date。
@@ -1125,13 +1126,13 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
   return (
     <nav className="prev-next-nav" aria-label="上一篇與下一篇">
       {prev ? (
-        <LocaleLink to={`/blog/${prev.id}`} className="prev-next-card prev-next-prev" viewTransition>
+        <LocaleLink to={postPath(prev)} className="prev-next-card prev-next-prev" viewTransition>
           <span className="prev-next-label">← {t('blog.prevPost')}</span>
           <span className="prev-next-title">{prev.title}</span>
         </LocaleLink>
       ) : <span className="prev-next-placeholder" />}
       {next ? (
-        <LocaleLink to={`/blog/${next.id}`} className="prev-next-card prev-next-next" viewTransition>
+        <LocaleLink to={postPath(next)} className="prev-next-card prev-next-next" viewTransition>
           <span className="prev-next-label">{t('blog.nextPost')} →</span>
           <span className="prev-next-title">{next.title}</span>
         </LocaleLink>

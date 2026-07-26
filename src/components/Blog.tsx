@@ -15,6 +15,7 @@ import { postsListQueryOptions, blogTagsQueryOptions, blogCategoriesQueryOptions
 import { usePrefetchArticle } from '../lib/usePrefetchArticle';
 import './Blog.css';
 import { useCategoryLabel, useTagLabel } from '../lib/categoryLabel';
+import { postPath } from '../lib/postPath';
 
 /** `GET /api/posts` 的單篇摘要，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 export type Post = PostListItem;
@@ -214,7 +215,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
 
         {/* 標題 */}
         <LocaleLink
-          to={`/blog/${post.id}`}
+          to={postPath(post)}
           className="note-title-link"
           viewTransition
           onMouseEnter={() => prefetchArticle(post.id)}
@@ -638,7 +639,7 @@ function Blog() {
                 {featuredPosts.map(p => (
                   <li key={p.id}>
                     <LocaleLink
-                      to={`/blog/${p.id}`}
+                      to={postPath(p)}
                       className="featured-link"
                       onMouseEnter={() => prefetchArticle(p.id)}
                       onFocus={() => prefetchArticle(p.id)}

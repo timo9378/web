@@ -239,6 +239,8 @@ pub struct AdminPostsQuery {
 pub struct AdminPostFull {
     #[specta(type = specta_typescript::Number)]
     pub id: i64,
+    /// 網址用的英文 slug（canonical）。
+    pub slug: Option<String>,
     pub title: String,
     pub content: String,
     pub excerpt: Option<String>,
@@ -279,6 +281,7 @@ impl AdminPostFull {
     fn from_row(r: &PostRow) -> Self {
         Self {
             id: r.id,
+            slug: r.slug.clone(),
             title: r.title.clone(),
             content: r.content.clone(),
             excerpt: r.excerpt.clone(),
@@ -699,6 +702,44 @@ pub struct CategoryBody {
     short_description_ja: Option<String>,
     short_description_ko: Option<String>,
     short_description_zh_cn: Option<String>,
+}
+
+/// 產生文章網址用的唯一 slug。
+/// 優先序：呼叫端給的 slug → 英文標題 → 原標題；空的（例如純中文標題被清成空字串）
+/// 就退回 `post-<id>`。撞名時接 `-2`、`-3`…（slug 是 UNIQUE，不能重複）。
+async fn unique_post_slug(
+    pool: &sqlx::SqlitePool,
+    provided: Option<&str>,
+    title_en: Option<&str>,
+    title: &str,
+    exclude_id: Option<i64>,
+) -> String {
+    let base = provided
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(crate::util::gen_slug)
+        .filter(|s| !s.is_empty())
+        .or_else(|| title_en.map(crate::util::gen_slug).filter(|s| !s.is_empty()))
+        .or_else(|| Some(crate::util::gen_slug(title)).filter(|s| !s.is_empty()))
+        .unwrap_or_default();
+    let base = if base.is_empty() { "post".to_string() } else { base };
+
+    for n in 1..100 {
+        let candidate = if n == 1 { base.clone() } else { format!("{base}-{n}") };
+        let taken = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM posts WHERE slug = ? AND (? IS NULL OR id <> ?)",
+        )
+        .bind(&candidate)
+        .bind(exclude_id)
+        .bind(exclude_id)
+        .fetch_one(pool)
+        .await
+        .unwrap_or(0);
+        if taken == 0 {
+            return candidate;
+        }
+    }
+    format!("{base}-{}", chrono::Utc::now().timestamp())
 }
 
 /// slug = 提供的（非空）或由 name 生成。
@@ -1296,13 +1337,24 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
         1
     };
 
+    // 網址 slug：呼叫端沒給就由英文標題（或原標題）自動產生，並確保唯一。
+    let slug = unique_post_slug(
+        &state.pool,
+        b.get("slug").and_then(|v| v.as_str()),
+        b.get("title_en").and_then(|v| v.as_str()),
+        title.as_deref().unwrap_or_default(),
+        None,
+    )
+    .await;
+
     let mut q = sqlx::query(
-        "INSERT INTO posts (title, content, excerpt, category, status, author, layout_type, format, source_language, \
+        "INSERT INTO posts (slug, title, content, excerpt, category, status, author, layout_type, format, source_language, \
          title_en, content_en, excerpt_en, title_zh_cn, content_zh_cn, excerpt_zh_cn, \
          title_ja, content_ja, excerpt_ja, title_ko, content_ko, excerpt_ko, \
          series_name, series_order, allow_comments, created_at, updated_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
     )
+    .bind(&slug)
     .bind(&title)
     .bind(&content)
     .bind(&excerpt)
@@ -1344,6 +1396,7 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
     // data 物件：undefined（body 缺 key）→ 該 key 省略（JSON.stringify 語意）
     let mut data = Map::new();
     data.insert("id".into(), json!(post_id));
+    data.insert("slug".into(), json!(slug));
     data.insert("title".into(), b.get("title").cloned().unwrap_or(Value::Null));
     data.insert("content".into(), b.get("content").cloned().unwrap_or(Value::Null));
     if let Some(v) = b.get("excerpt") {
@@ -1433,6 +1486,39 @@ pub async fn admin_update_post(
         None => (0, None),
         Some(v) => (1, Some(if js_truthy(Some(v)) { 1 } else { 0 })),
     };
+
+    // slug：只有呼叫端明確帶 slug 才動。改名時把舊 slug 存進 post_slug_history，
+    // 舊網址就永遠不會斷（get_post 會查這張表，前端再 301 到新網址）。
+    if let Some(raw) = b.get("slug").and_then(|v| v.as_str()) {
+        let wanted = raw.trim();
+        if !wanted.is_empty() {
+            let pid = id.parse::<i64>().ok();
+            let current = sqlx::query_scalar::<_, Option<String>>("SELECT slug FROM posts WHERE id = ?")
+                .bind(&id)
+                .fetch_optional(&state.pool)
+                .await
+                .ok()
+                .flatten()
+                .flatten();
+            let next = unique_post_slug(&state.pool, Some(wanted), None, "", pid).await;
+            if current.as_deref() != Some(next.as_str()) {
+                if let Some(old) = current.filter(|c| !c.is_empty()) {
+                    let _ = sqlx::query(
+                        "INSERT OR IGNORE INTO post_slug_history (old_slug, post_id) VALUES (?, ?)",
+                    )
+                    .bind(&old)
+                    .bind(&id)
+                    .execute(&state.pool)
+                    .await;
+                }
+                let _ = sqlx::query("UPDATE posts SET slug = ? WHERE id = ?")
+                    .bind(&next)
+                    .bind(&id)
+                    .execute(&state.pool)
+                    .await;
+            }
+        }
+    }
 
     let mut q = sqlx::query(
         "UPDATE posts SET \

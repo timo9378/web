@@ -1,4 +1,5 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
+import { postIdent } from '../../../lib/postPath';
 import { LocaleProvider, buildAlternateLinks, localeFromPrefix, toLocales } from '../../../start-i18n';
 import FullBlogPost from '../../../components/BlogPost';
 import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../../blogList';
@@ -17,8 +18,14 @@ export const Route = createFileRoute('/$locale/blog/$id')({
         context.queryClient.prefetchQuery(recentPostsQueryOptions(100)),
         context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions),
       ]);
+      // 同 /blog/$id：非 canonical 的識別碼（數字 id / 舊 slug）一律 301 到 slug 網址。
+      const ident = postIdent(post);
+      if (ident !== params.id) {
+        throw redirect({ href: `/${params.locale}/blog/${ident}`, statusCode: 301 });
+      }
       return { post, locale };
-    } catch {
+    } catch (e) {
+      if (e instanceof Response || (e as { isRedirect?: boolean }).isRedirect) throw e;
       throw notFound();
     }
   },
@@ -27,9 +34,9 @@ export const Route = createFileRoute('/$locale/blog/$id')({
     const { post, locale } = loaderData;
     return {
       // og/twitter 也在這裡出（理由同 /blog/$id）
-      meta: articleMeta(post, `/${params.locale}/blog/${post.id}`, locale),
-      links: buildAlternateLinks(`blog/${post.id}`, locale, toLocales(post.available_locales)),
-      scripts: [articleJsonLd(post, `/${params.locale}/blog/${post.id}`)],
+      meta: articleMeta(post, `/${params.locale}/blog/${postIdent(post)}`, locale),
+      links: buildAlternateLinks(`blog/${postIdent(post)}`, locale, toLocales(post.available_locales)),
+      scripts: [articleJsonLd(post, `/${params.locale}/blog/${postIdent(post)}`)],
     };
   },
   component: RouteComponent,

@@ -11,6 +11,7 @@ import { homeDigestQueryOptions, dailyQuoteQueryOptions } from '../homeData';
 import './HomeLately.css';
 import SiteAppreciation from './SiteAppreciation';
 import { useCategoryLabel } from '../lib/categoryLabel';
+import { postPath } from '../lib/postPath';
 
 /** 相對時間（30 天內），更久就顯示日期 */
 function timeAgo(iso: string, t: TFunction) {
@@ -102,7 +103,7 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
                   <ul className="orbit-month-pop-list">
                     {posts.map((p) => (
                       <li key={p.id}>
-                        <LocaleLink to={`/blog/${p.id}`} className="orbit-month-link" onClick={() => setOpenMonth(null)}>
+                        <LocaleLink to={postPath(p)} className="orbit-month-link" onClick={() => setOpenMonth(null)}>
                           {p.title}
                         </LocaleLink>
                       </li>
@@ -160,7 +161,7 @@ export default function HomeLately() {
           <ol className="lately-post-list">
             {posts.map((p, i) => (
               <li key={p.id}>
-                <LocaleLink to={`/blog/${p.id}`} className="lately-post">
+                <LocaleLink to={postPath(p)} className="lately-post">
                   <span className="lately-post-no">{String(i + 1).padStart(2, '0')}</span>
                   <span className="lately-post-body">
                     <span className="lately-post-title">{p.title}</span>

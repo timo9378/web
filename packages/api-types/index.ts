@@ -74,6 +74,8 @@ export type AdminPostDetailResponse = {
  */
 export type AdminPostFull = {
 	id: number,
+	/**  網址用的英文 slug（canonical）。 */
+	slug: string | null,
 	title: string,
 	content: string,
 	excerpt: string | null,
@@ -335,6 +337,8 @@ export type PollResponse = {
 export type PostDetailResponse = {
 	message: string,
 	id: number,
+	/**  canonical 網址用的 slug；前端拿它把非 canonical 的網址 301 過去。 */
+	slug: string | null,
 	title: string,
 	content: string,
 	excerpt: string,
@@ -361,6 +365,7 @@ export type PostDetailResponse = {
 /**  `GET /api/posts` 的單篇摘要。`title`/`excerpt` 已依 `?lang=` 取好該語系內容。 */
 export type PostListItem = {
 	id: number,
+	slug: string | null,
 	title: string,
 	excerpt: string,
 	/**

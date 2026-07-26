@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { blogCategoriesQueryOptions, recentPostsQueryOptions } from '../../blogList';
 import type { PostListItem } from '@koimsurai/api-types';
 import { MegaMenuPanel, MegaMenuColumn } from './MegaMenu';
+import { postPath } from '../../lib/postPath';
 
 /**
  * 手記 menu 內容（categories + recent posts hover-linked）
@@ -29,7 +30,7 @@ function RecentPostRow({ post }: { post: PostListItem }) {
   }, [post.created_at, t]);
 
   return (
-    <LocaleLink to={`/blog/${post.id}`} className="mega-menu-post" viewTransition>
+    <LocaleLink to={postPath(post)} className="mega-menu-post" viewTransition>
       <div className="mega-menu-post-title">{post.title}</div>
       <div className="mega-menu-post-meta">
         {post.category && <span>{post.category}</span>}

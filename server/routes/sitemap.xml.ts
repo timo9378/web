@@ -18,6 +18,8 @@ const STATIC_PAGES: [string, string, string][] = [
 
 interface Post {
   id: number | string;
+  /** 網址用的 canonical slug；舊資料沒有就退回 id。 */
+  slug?: string | null;
   updated_at?: string;
   created_at?: string;
 }
@@ -43,7 +45,7 @@ export default defineEventHandler(async (event) => {
   for (const [loc, priority, changefreq] of STATIC_PAGES) xml += url(loc, today, changefreq, priority);
   for (const p of posts) {
     const lastmod = (p.updated_at ?? p.created_at ?? '').slice(0, 10) || today;
-    xml += url(`/blog/${p.id}`, lastmod, 'monthly', '0.8');
+    xml += url(`/blog/${p.slug || p.id}`, lastmod, 'monthly', '0.8');
   }
   xml += '</urlset>\n';
 
