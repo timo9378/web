@@ -70,7 +70,7 @@ export default function TagsManager() {
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const sortedTags = [...filteredTags].sort((a, b) => (b.post_count ?? 0) - (a.post_count ?? 0));
+  const sortedTags = [...filteredTags].sort((a, b) => b.post_count - a.post_count);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -270,7 +270,7 @@ export default function TagsManager() {
         <div className="glass rounded-xl p-5">
           <div className="flex flex-wrap gap-2">
             {sortedTags.map((tag) => {
-              const count = tag.post_count ?? 0;
+              const count = tag.post_count;
               const sizeClass = count >= 10
                 ? 'text-sm px-3 py-1.5'
                 : count >= 5

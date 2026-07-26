@@ -100,6 +100,8 @@ pub async fn admin_categories(
     let rows = sqlx::query_as::<_, AdminCategoryRow>(
         "SELECT c.id, c.name, c.slug, c.description, c.short_description, c.created_at, c.updated_at, \
          c.name_en, c.name_ja, c.name_ko, c.name_zh_cn, \
+         c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, \
+         c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn, \
                 COUNT(p.id) as post_count \
          FROM categories c \
          LEFT JOIN posts p ON p.category = c.name \

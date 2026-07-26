@@ -63,10 +63,10 @@ function Hero() {
   // hero 文案統一英文（不跟語系走），只有 chip 文字打字。
   const { displayedText: typedChip, isTypingComplete: chipComplete } = useTypingEffect('products that feel right', 80, 900);
   // 捲動提示只在頁面頂端有意義：一旦捲下去就淡出，免得那條細線一直杵在畫面上像雜訊。
-  const [scrolled, setScrolled] = useState(false);
+  // 初值由 state initializer 取（避免在 effect 同步段呼叫 setState）；之後交給 scroll 事件。
+  const [scrolled, setScrolled] = useState(() => typeof window !== 'undefined' && window.scrollY > 40);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);

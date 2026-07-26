@@ -19,23 +19,23 @@ export default function SiteAppreciation() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const ac = new AbortController();
     let already = false;
     try { already = localStorage.getItem(LIKED_KEY) === '1'; } catch { /* 不可用就當沒按過 */ }
     const apply = (n: number | null) => {
-      if (cancelled) return;
+      if (ac.signal.aborted) return;
       if (n !== null) setLikes(n);
       if (already) setLiked(true);
     };
-    fetch(apiUrl('/api/site/likes'))
+    fetch(apiUrl('/api/site/likes'), { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<{ count: number }>) : null))
       .then((d) => apply(d ? d.count : null))
       .catch(() => apply(null));
-    fetch(apiUrl('/api/site/github-stars'))
+    fetch(apiUrl('/api/site/github-stars'), { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<{ count: number }>) : null))
-      .then((d) => { if (!cancelled && d) setStars(d.count); })
+      .then((d) => { if (!ac.signal.aborted && d) setStars(d.count); })
       .catch(() => { /* 靜默：星數抓不到就不顯示數字 */ });
-    return () => { cancelled = true; };
+    return () => ac.abort();
   }, []);
 
   const like = useCallback(() => {
