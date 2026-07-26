@@ -749,9 +749,13 @@
 
 /* ── Video ── */
 .mdx-video { margin: 1.75rem 0; }
-/* 影片外框：讓自訂播放鍵可以絕對定位在畫面上（寬度跟著影片，所以用 fit-content 置中） */
+/* 影片外框：讓自訂播放鍵可以絕對定位在畫面上（寬度跟著影片，所以用 fit-content 置中）。
+   z-index 是防禦性的：<video> 在 Chrome 會被提升成獨立合成層，若頁面上有 position:fixed 的
+   大面積覆蓋層（本站的 .blog-post-dim-overlay），合成順序有機會讓影片畫面被蓋掉而只剩控制列
+   看得見。明確把影片放進自己的堆疊層可避免這一類問題。 */
 .mdx-video-frame {
   position: relative;
+  z-index: 1;
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
@@ -788,6 +792,8 @@
   outline: none;
 }
 .mdx-video-el {
+  position: relative;
+  z-index: 1;
   display: block;
   /* 直式影片（手機拍的）原始比例會被拉到上千 px 高、控制列跑到畫面外 →
      限高並讓寬度自適應，橫式影片仍是滿版。 */

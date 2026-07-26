@@ -36,7 +36,7 @@ export function Video({ src, poster, caption }: { src?: string; poster?: string;
           className="mdx-video-el"
           controls={started}
           playsInline
-          preload="metadata"
+          preload="auto"
           poster={poster}
           src={src}
           onPlay={() => setStarted(true)}
