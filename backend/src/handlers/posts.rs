@@ -25,7 +25,7 @@ pub(crate) fn locale_suffix(locale: &str) -> Option<&'static str> {
 }
 
 /// parseLocale：把 ?lang= 正規化成 canonical locale，無法辨識回 None。
-fn parse_locale(raw: Option<&str>) -> Option<&'static str> {
+pub(crate) fn parse_locale(raw: Option<&str>) -> Option<&'static str> {
     match raw?.to_lowercase().as_str() {
         "zh-tw" | "zh-hant" => Some("zh-TW"),
         "zh-cn" | "zh-hans" => Some("zh-CN"),
@@ -120,6 +120,25 @@ fn locale_content(row: &PostRow, locale: &str) -> Option<(String, String, String
     let c = nonempty(c)?;
     let excerpt = nonempty(e).unwrap_or("").to_string();
     Some((t.to_string(), c.to_string(), excerpt))
+}
+
+/// `locale_content` 的 SQL 版：「這篇有沒有該 locale 的內容」，給各種 COUNT 用。
+///
+/// **必須跟上面的 `locale_content` 同語意**（locale == source 一律算有；其餘要 title 與
+/// content 都非空），否則計數會跟列表對不起來：列表 `continue` 掉沒譯文的文章，計數卻照算，
+/// 讀者就會看到「分類寫 4 篇、點進去 0 篇」「分頁說有 11 篇卻翻到空白頁」。
+///
+/// locale 一律先過 `parse_locale`，是白名單裡的 `&'static str`，直接內插無注入風險。
+pub(crate) fn locale_available_sql(locale: &str, alias: &str) -> String {
+    let is_source = format!("COALESCE({alias}.source_language, 'zh-TW') = '{locale}'");
+    match locale_suffix(locale) {
+        // zh-TW 是來源語、沒有後綴欄位可查：只有 source_language 相符才算有內容。
+        None => format!("({is_source})"),
+        Some(sfx) => format!(
+            "({is_source} OR (COALESCE({alias}.title_{sfx}, '') <> '' \
+             AND COALESCE({alias}.content_{sfx}, '') <> ''))"
+        ),
+    }
 }
 
 /// availableLocales：列出該文實際有內容的 locale（source 永遠在最前）。
@@ -295,6 +314,12 @@ pub async fn list_posts(
     }
     if q.category.is_some() {
         count_sql.push_str(" AND p.category = ?");
+    }
+    // 帶 ?lang= 時列表會把沒該語系譯文的文章 continue 掉（見下面的迴圈），total 也要跟著扣，
+    // 否則分頁器會依一個永遠填不滿的數字多開空白頁。沒帶 lang＝取原文，不過濾。
+    if let Some(loc) = requested_locale {
+        count_sql.push_str(" AND ");
+        count_sql.push_str(&locale_available_sql(loc, "p"));
     }
     let mut count_q = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql.as_str())).bind(status);
     if let Some(s) = &q.search {

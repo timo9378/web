@@ -40,6 +40,77 @@ fn err(code: StatusCode, msg: &str) -> Response {
     (code, Json(json!({ "error": msg }))).into_response()
 }
 
+fn is_kana(c: char) -> bool {
+    let u = c as u32;
+    // 平假名 / 片假名 / 片假名語音擴充 / 半形片假名（長音符 ー U+30FC 已含在片假名區）
+    (0x3041..=0x309F).contains(&u)
+        || (0x30A0..=0x30FF).contains(&u)
+        || (0x31F0..=0x31FF).contains(&u)
+        || (0xFF66..=0xFF9F).contains(&u)
+}
+
+fn is_han(c: char) -> bool {
+    let u = c as u32;
+    (0x3400..=0x4DBF).contains(&u)
+        || (0x4E00..=0x9FFF).contains(&u)
+        || (0xF900..=0xFAFF).contains(&u)
+        || (0x20000..=0x2A6DF).contains(&u)
+}
+
+/// 漢字或假名——連在一起才算同一個「詞串」（々〆 是日文的疊字/略字記號）
+fn is_cjk_word_char(c: char) -> bool {
+    is_kana(c) || is_han(c) || c == '々' || c == '〆'
+}
+
+/// tw2s 轉換，但**跳過日文**。
+///
+/// 為什麼需要：站上的文章常整段引用日文（歌詞、書名、專有名詞），而 OpenCC 只看字不看語言，
+/// 會把日文漢字一起簡體化——`靴紐→靴纽`、`僕ら→仆ら`、`聞こえてる→闻こえてる`、
+/// `貴方→贵方`。等於把引文竄改掉，而且轉換仍然回 success，不特地檢查根本不會發現。
+///
+/// 判定方式：把文字切成「連續的漢字＋假名」詞串，**只要該串含任何假名就整串視為日文**保留原樣，
+/// 其餘部分照常轉換。漢字本身中日共用、無法單獨判斷語言，所以用假名當錨點。
+///
+/// 已知取捨：中文與日文之間沒有標點或空白時會過度保留（`聽ヨルシカ的歌` 整串被當日文，
+/// `聽/的/歌` 保持繁體）。寧可少轉幾個字，也不要把引用的日文改壞——後者是不可逆的內容錯誤。
+///
+/// 未被保留的部分會盡量整段送進 OpenCC（而不是逐字轉），讓詞組級的語境消歧（著作/著手 之類）
+/// 維持原本的行為。
+fn convert_preserving_japanese(cc: &OpenCC, text: &str) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::with_capacity(text.len());
+    let mut pending = String::new();
+    let mut i = 0;
+
+    while i < chars.len() {
+        if !is_cjk_word_char(chars[i]) {
+            pending.push(chars[i]);
+            i += 1;
+            continue;
+        }
+        let start = i;
+        let mut has_kana = false;
+        while i < chars.len() && is_cjk_word_char(chars[i]) {
+            has_kana |= is_kana(chars[i]);
+            i += 1;
+        }
+        let run: String = chars[start..i].iter().collect();
+        if has_kana {
+            if !pending.is_empty() {
+                out.push_str(&cc.convert(&pending));
+                pending.clear();
+            }
+            out.push_str(&run);
+        } else {
+            pending.push_str(&run);
+        }
+    }
+    if !pending.is_empty() {
+        out.push_str(&cc.convert(&pending));
+    }
+    out
+}
+
 /// `POST /api/admin/posts/:id/generate-zh-cn` —— requireAdmin。
 #[utoipa::path(post, path = "/api/admin/posts/{id}/generate-zh-cn", tag = "admin", security(("bearer" = [])),
     params(("id" = String, Path)),
@@ -85,9 +156,9 @@ pub async fn generate_zh_cn(
     };
     // 轉換為 CPU 工作（content 可達數十 KB）→ 丟 blocking 池，不卡 async worker
     let converted = tokio::task::spawn_blocking(move || {
-        let title_zh_cn = cc.convert(&title);
-        let content_zh_cn = cc.convert(&content);
-        let excerpt_zh_cn = excerpt.map(|e| cc.convert(&e));
+        let title_zh_cn = convert_preserving_japanese(&cc, &title);
+        let content_zh_cn = convert_preserving_japanese(&cc, &content);
+        let excerpt_zh_cn = excerpt.map(|e| convert_preserving_japanese(&cc, &e));
         (title_zh_cn, content_zh_cn, excerpt_zh_cn)
     })
     .await;
@@ -116,4 +187,62 @@ pub async fn generate_zh_cn(
         "excerpt_zh_cn": excerpt_zh_cn,
     }))
     .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cc() -> OpenCC {
+        OpenCC::from_config(BuiltinConfig::Tw2s).expect("載入 tw2s")
+    }
+
+    /// 純中文照常轉，行為不能因為這次改動而變
+    #[test]
+    fn 純中文照常轉簡體() {
+        let cc = cc();
+        assert_eq!(convert_preserving_japanese(&cc, "這是繁體中文的測試"), "这是繁体中文的测试");
+        assert_eq!(convert_preserving_japanese(&cc, "鞋帶鬆了開來"), "鞋带松了开来");
+    }
+
+    /// 迴歸：日文歌詞曾被轉成 `靴纽`/`仆ら`/`闻こえてる`，等於竄改引文
+    #[test]
+    fn 日文原樣保留() {
+        let cc = cc();
+        for s in [
+            "靴紐が解けてる",
+            "僕らは身体も脱ぎ去って",
+            "息を吸う音だけ聞こえてる",
+            "貴方は今立ち上がる",
+            "鳥の鳴く声だけ聞こえてる",
+            "貴方の眼は遠くを見る",
+            "ヨルシカ",
+            "老人と海",
+        ] {
+            assert_eq!(convert_preserving_japanese(&cc, s), s, "日文被改動了：{s}");
+        }
+    }
+
+    /// 同一行混排時，中文要轉、日文要留
+    #[test]
+    fn 中日混排各自處理() {
+        let cc = cc();
+        assert_eq!(
+            convert_preserving_japanese(&cc, "這首歌就是《老人と海》，聽了會平靜"),
+            "这首歌就是《老人と海》，听了会平静",
+        );
+        assert_eq!(
+            convert_preserving_japanese(&cc, "> (鞋帶鬆了開來 葉隙間流瀉的陽光)"),
+            "> (鞋带松了开来 叶隙间流泻的阳光)",
+        );
+    }
+
+    /// 詞組級消歧不能因為切段而失效（著作 vs 著手 是 tw2s 的經典案例）
+    #[test]
+    fn 詞組消歧維持原行為() {
+        let cc = cc();
+        for s in ["原著小說", "著手處理", "臺灣", "隻身一人"] {
+            assert_eq!(convert_preserving_japanese(&cc, s), cc.convert(s), "切段影響了消歧：{s}");
+        }
+    }
 }
