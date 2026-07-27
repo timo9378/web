@@ -1,0 +1,20 @@
+{
+  // Nitro server routes（sitemap/rss/robots/llms/_revalidate）跑在 production，
+  // 但根 tsconfig 的 include 只有 src，這些檔案過去完全沒被 tsc 檢查過。
+  // 必須叫 tsconfig.json 且放在這層：TS 的 project service 只認這個檔名，
+  // 靠檔案往上走找到它——eslint 的型別感知規則才不會 parsing error。
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["routes"]
+}

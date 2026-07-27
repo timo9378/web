@@ -5,10 +5,11 @@
 use axum::{
     Router,
     extract::DefaultBodyLimit,
-    http::Method,
+    http::{HeaderName, HeaderValue, Method},
     routing::{delete, get, patch, post, put},
 };
 use tower_http::cors::{AllowHeaders, Any, CorsLayer};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_scalar::{Scalar, Servable};
@@ -225,6 +226,17 @@ pub fn build_router(state: AppState) -> Router {
                 ])
                 .allow_headers(AllowHeaders::mirror_request()),
         )
+        // API 回應一律 `X-Robots-Tag: noindex`。
+        //
+        // 取代 robots.txt 裡的 `Disallow: /api/`：那行的本意是「別索引這些 JSON」，實際效果卻是
+        // 「別抓取」——Googlebot 連渲染時要用都不行。GSC 的網址審查會列出一整排「遭到 robots.txt
+        // 封鎖」（留言數、按讚數、文章清單…）。目前正文是 SSR 出來的所以沒實害，但只要有任何內容
+        // 改成客戶端載入就會安靜地出事。Google 官方建議正是：不要用 robots.txt 擋渲染需要的資源，
+        // 要防止被收錄改用這個標頭。
+        .layer(SetResponseHeaderLayer::overriding(
+            HeaderName::from_static("x-robots-tag"),
+            HeaderValue::from_static("noindex"),
+        ))
         // 對齊 Express `express.json({limit:'10mb'})`（axum 預設 2MB 會讓長文 PUT 413）
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
         // 文章內容變更後通知前端清 ISR 快取（fire-and-forget；未設 env 則不啟用）

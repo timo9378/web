@@ -17,7 +17,8 @@ serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 # sqlite feature 0.9 仍預設 bundled（vendored 靜態連,Docker 免裝 libsqlite3-dev）。
 sqlx = { version = "0.9", features = ["sqlite", "runtime-tokio", "tls-none", "macros"] }
 tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["trace", "cors"] }
+# set-header：API 回應掛 X-Robots-Tag: noindex（見 router.rs 的說明）
+tower-http = { version = "0.6", features = ["trace", "cors", "set-header"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"

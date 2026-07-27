@@ -214,6 +214,54 @@ async fn categories_tags_thoughts_books_stats() {
     assert_eq!(body["books"], json!([]));
 }
 
+/// 計數必須跟列表算同一套語系規則。
+///
+/// 回歸：`/api/posts?lang=` 會濾掉沒該語系譯文的文章，但 categories/tags 的 post_count 與
+/// pagination.total 原本都沒濾 → 側欄顯示「4 篇」點進去卻是空的，分頁也會多出翻不滿的空白頁。
+#[tokio::test]
+async fn counts_match_the_locale_filtered_list() {
+    let (app, pool) = test_app().await;
+    // seed 只有一篇 zh-TW 的「公開文章」（分類技術、標籤 rust）。再加一篇有 ja 譯文的。
+    sqlx::query(
+        "INSERT INTO posts (id, title, content, category, status, title_ja, content_ja) \
+         VALUES (3, '有日文的文章', '中文內文', '技術', 'published', '日本語の記事', '日本語の本文')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    // 不帶 lang：兩篇都算。
+    let (_, body) = get(&app, "/api/posts").await;
+    assert_eq!(body["posts"].as_array().unwrap().len(), 2);
+    assert_eq!(body["pagination"]["total"], 2);
+    let (_, body) = get(&app, "/api/categories").await;
+    assert_eq!(body["categories"][0]["post_count"], 2);
+
+    // lang=ja：只有 id=3 有日文 → 列表、total、分類計數三者都要是 1。
+    let (_, body) = get(&app, "/api/posts?lang=ja").await;
+    let posts = body["posts"].as_array().unwrap();
+    assert_eq!(posts.len(), 1, "ja 只有一篇有譯文");
+    assert_eq!(posts[0]["title"], "日本語の記事");
+    assert_eq!(body["pagination"]["total"], 1, "total 要跟列表長度一致，否則分頁會開出空白頁");
+
+    let (_, body) = get(&app, "/api/categories?lang=ja").await;
+    let tech = body["categories"].as_array().unwrap().iter().find(|c| c["name"] == "技術").expect("技術");
+    assert_eq!(tech["post_count"], 1, "分類計數要跟 ja 列表一致");
+
+    // 沒有任何 ja 文章的語系：分類仍要回傳（LEFT JOIN 不能退化成 INNER），只是計數 0，
+    // 由前端的 post_count > 0 隱藏。
+    let (_, body) = get(&app, "/api/categories?lang=ko").await;
+    let tech =
+        body["categories"].as_array().unwrap().iter().find(|c| c["name"] == "技術").expect("ko 也要有這列");
+    assert_eq!(tech["post_count"], 0);
+
+    // 標籤：rust 只掛在沒有 ja 譯文的 id=1 上 → ja 下計數 0，被 HAVING 收掉。
+    let (_, body) = get(&app, "/api/tags").await;
+    assert_eq!(body["tags"][0]["post_count"], 1);
+    let (_, body) = get(&app, "/api/tags?lang=ja").await;
+    assert_eq!(body["tags"].as_array().unwrap().len(), 0, "ja 下沒有文章的標籤不該出現");
+}
+
 // ── newsletter 全流程 ──────────────────────────────────────────
 
 #[tokio::test]
