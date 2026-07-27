@@ -18,7 +18,7 @@ const BASE_URL = 'https://koimsurai.com';
 const SITE_NAME = '宙と木 · Koimsurai';
 
 // 對齊 SEOHead 的既有對應表
-const LOCALE_TO_OG: Record<string, string> = {
+export const LOCALE_TO_OG: Record<string, string> = {
   'zh-TW': 'zh_TW',
   'zh-CN': 'zh_CN',
   en: 'en_US',
@@ -26,11 +26,10 @@ const LOCALE_TO_OG: Record<string, string> = {
   ko: 'ko_KR',
 };
 
-// ⚠ 沒有 og:locale:alternate：規格上它必須「重複出現」（一個語系一個標籤），但 TanStack 的
-// head 是用 `name ?? property` 當唯一 key 去重的（見 react-router 的 headContentUtils），
-// 同一個 property 只會留下一個 → 反而變成「只有韓文版」的錯誤宣告，比不寫更糟。
-// 搜尋引擎讀的是 <link rel="alternate" hreflang>（已完整輸出），這個 og 標籤只影響社群平台的
-// 語言判斷，價值不高，所以不為它去改寫 SSR HTML。等框架支援 keyed meta 再補。
+// og:locale:alternate 不在這裡出——它必須「一個語系一個標籤」重複出現，而 head() 的 meta 會被
+// 依 name/property 去重（官方文件明載：「meta tags with the same name or property will be
+// overridden by the last occurrence」，且沒有 key 之類的逃生口）。改寫在 __root 的
+// RootDocument，那裡是直接渲染 <head>，不經過這層去重。
 
 interface MetaTag {
   title?: string;

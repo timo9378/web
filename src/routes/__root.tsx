@@ -17,6 +17,8 @@ import { ParallaxProvider } from 'react-scroll-parallax';
 import { AuthProvider } from '../contexts/AuthContext';
 import { PageVisibilityProvider } from '../contexts/PageVisibilityContext';
 import { LocaleProvider, localeFromPathname } from '../start-i18n';
+import { SUPPORTED_LOCALES } from '../lib/locales';
+import { LOCALE_TO_OG } from '../seoMeta';
 import AppShell from '../components/AppShell';
 import NotFound from '../components/NotFound';
 import { localeWrap } from '../localePage';
@@ -89,6 +91,16 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
     <html lang={locale}>
       <head>
         <HeadContent />
+        {/* og:locale:alternate 依規格要「一語系一個標籤」重複出現，但 head() 的 meta 會被依
+            property 去重（官方文件：same name or property will be overridden by the last
+            occurrence），只留得下一個 → 等於錯誤宣告「只有某一種語言」。這裡直接寫進 document
+            head 繞過那層去重。
+            代價：RootDocument 拿不到單篇文章的 available_locales，所以一律列出其餘四語。
+            og 這個標籤只是給社群平台的語言提示，不像 hreflang 會有重複內容的風險，
+            過度宣告可以接受；hreflang 那邊仍然是逐篇照實際譯文輸出。 */}
+        {SUPPORTED_LOCALES.filter((l) => l !== locale).map((l) => (
+          <meta key={l} property="og:locale:alternate" content={LOCALE_TO_OG[l]} />
+        ))}
         {/* pre-paint:首訪+桌面+首頁時先藏內容(避免 client-only intro 掛上前先閃首頁);
             SpaceBackdropShell pre-reveal 移除,4s safety timeout 兜底(JS 失敗也不會卡住)。 */}
         <script
