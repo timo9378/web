@@ -40,6 +40,100 @@ fn compute_thumbhash(bytes: &[u8]) -> Option<String> {
     Some(base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&hash))
 }
 
+/// ffmpeg 最長跑多久（大檔重編可能要幾分鐘；超時就保留原檔，不讓上傳卡死）
+const FFMPEG_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
+
+/// 讀出影片的旋轉角度（0 表示不需要處理）。ffprobe 不在或讀不到 → None。
+async fn probe_rotation(path: &std::path::Path) -> Option<i32> {
+    let out = tokio::process::Command::new("ffprobe")
+        .args([
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            // 新版 ffmpeg 放在 side_data 的 rotation；舊檔可能只有 tags 的 rotate
+            "-show_entries",
+            "stream_side_data=rotation:stream_tags=rotate",
+            "-of",
+            "default=nw=1:nk=1",
+        ])
+        .arg(path)
+        .output()
+        .await
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    let deg = text.lines().filter_map(|l| l.trim().parse::<f64>().ok()).find(|d| *d != 0.0)?;
+    Some(deg.round() as i32)
+}
+
+/// 上傳影片正規化。
+///
+/// 手機拍的直式影片幾乎都是「橫向存放 + tkhd 旋轉矩陣」，靠播放器自己套矩陣把畫面轉正。
+/// 這條路徑在各家實作的差異很大——本站實測 Chromium 會整片黑：`canvas.drawImage()` 走軟體
+/// 路徑、自己算進旋轉，取得的畫面是亮的，但 `<video>` 元素的顯示路徑合成不出來。旋轉 metadata
+/// 是出了名的相容性地雷（Firefox / ExoPlayer / Safari HLS 各有各的坑），所以在上傳這一關就把
+/// 旋轉烘進畫素，之後沒有任何播放器需要處理矩陣。
+///
+/// 沒有旋轉的檔案只做 `-c copy` 重新封裝（無損），順便把 moov atom 搬到檔頭讓它能邊下邊播。
+/// ffmpeg 不在、失敗或超時 → 保留原檔，絕不讓上傳失敗。
+async fn normalize_video(path: &std::path::Path) {
+    let rotation = probe_rotation(path).await;
+    let tmp = path.with_extension("normalizing.mp4");
+
+    let mut cmd = tokio::process::Command::new("ffmpeg");
+    cmd.arg("-y").arg("-i").arg(path);
+    match rotation {
+        // 有旋轉 → 只能重編才能把畫面轉正（ffmpeg 解碼時預設就會套用顯示矩陣，
+        // 輸出因此是已轉正的畫素 + 單位矩陣，不需要再手動 transpose）
+        Some(deg) if deg != 0 => {
+            tracing::info!("影片帶 {deg}° 旋轉矩陣，重編以烘進畫素：{}", path.display());
+            cmd.args([
+                "-c:v",
+                "libx264",
+                "-profile:v",
+                "high",
+                "-pix_fmt",
+                "yuv420p",
+                "-crf",
+                "24",
+                "-preset",
+                "medium",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+            ]);
+        }
+        // 沒旋轉 → 無損重封裝就好
+        _ => {
+            cmd.args(["-c", "copy"]);
+        }
+    }
+    cmd.args(["-movflags", "+faststart"]).arg(&tmp);
+
+    let status = match tokio::time::timeout(FFMPEG_TIMEOUT, cmd.output()).await {
+        Ok(Ok(o)) if o.status.success() => Ok(()),
+        Ok(Ok(o)) => {
+            Err(format!("ffmpeg 失敗：{}", String::from_utf8_lossy(&o.stderr).lines().last().unwrap_or("")))
+        }
+        // ffmpeg 不在 image 裡（例如本機跑 cargo run）→ 保留原檔就好，不是錯誤
+        Ok(Err(e)) => Err(format!("ffmpeg 無法執行：{e}")),
+        Err(_) => Err("ffmpeg 超時".to_string()),
+    };
+    match status {
+        Ok(()) => {
+            if let Err(e) = tokio::fs::rename(&tmp, path).await {
+                tracing::warn!("影片正規化後換檔失敗，保留原檔：{e}");
+                let _ = tokio::fs::remove_file(&tmp).await;
+            }
+        }
+        Err(msg) => {
+            tracing::warn!("影片正規化跳過（保留原檔）：{msg}");
+            let _ = tokio::fs::remove_file(&tmp).await;
+        }
+    }
+}
+
 /// `POST /api/admin/upload` —— requireAdmin + multer.single('file')。
 /// ⚠️ Multipart 不能當參數 extractor：body extractor 在 handler 前跑，
 /// 無 auth 的非 multipart 請求會先吃 400、requireAdmin 沒機會回 401（順序與 Express 反）。
@@ -101,6 +195,11 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
     let path = dir.join(&filename);
     if let Err(e) = tokio::fs::write(&path, &bytes).await {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
+    }
+
+    // 影片：把旋轉矩陣烘進畫素（原地取代，檔名不變）
+    if mimetype.starts_with("video/") {
+        normalize_video(&path).await;
     }
 
     let mut file_url = format!("/uploads/{year}/{month}/{filename}");
