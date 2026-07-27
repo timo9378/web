@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale, localePathname } from './lib/locales';
 import { createInstance, type i18n as I18nInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { useMemo, type ReactNode } from 'react';
@@ -13,18 +14,9 @@ import ko from './locales/ko/common.json';
 // 零 hydration mismatch。每次 render 建「獨立 instance」避免 ISR 並發請求共用 singleton 互踩。
 // ──────────────────────────────────────────────────────────────
 
-export const SUPPORTED_LOCALES = ['zh-TW', 'zh-CN', 'en', 'ja', 'ko'] as const;
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = 'zh-TW';
-
-// 預設 zh-TW 不帶前綴(保留既有已索引 URL),其餘用小寫前綴。
-export const LOCALE_PREFIX: Record<Locale, string> = {
-  'zh-TW': '',
-  'zh-CN': 'zh-cn',
-  en: 'en',
-  ja: 'ja',
-  ko: 'ko',
-};
+// 語系常數（SUPPORTED_LOCALES / DEFAULT_LOCALE / LOCALE_PREFIX / Locale / localePathname）
+// 在 lib/locales.ts——純資料、無 React 相依，所以 Nitro 的 sitemap route 也能 import。
+// 這裡刻意「不」re-export：多一組 re-export 只會讓 react-refresh 多噴警告，消費端直接指過去更清楚。
 
 // 語言切換器（footer LanguagePicker）顯示用的原生語名。
 // key 放寬成 string：呼叫端拿到的 current language 是 i18next 的 string 型別。
@@ -106,8 +98,7 @@ export const SITE_URL = 'https://koimsurai.com';
 
 /** 某 locale 下、某邏輯路徑(無前綴,如 '' 或 'blog/39')的絕對 URL。 */
 export function localeUrl(locale: Locale, basePath = ''): string {
-  const segs = [LOCALE_PREFIX[locale], basePath.replace(/^\/+/, '')].filter(Boolean).join('/');
-  return segs ? `${SITE_URL}/${segs}` : `${SITE_URL}/`;
+  return `${SITE_URL}${localePathname(locale, basePath)}`;
 }
 
 /**

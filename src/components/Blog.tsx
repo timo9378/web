@@ -362,8 +362,8 @@ function Blog() {
   // 資料改由 TanStack Query 管理：route loader 已 prefetch 首屏（newest）→ SSR baked、
   // hydrate 後 useQuery 讀快取。切換排序 = 換 queryKey 自動 refetch（且帶 locale）。
   const { data: posts = [], isPending: postsPending, error: postsError } = useQuery(postsListQueryOptions(locale, sortBy));
-  const { data: allTags = [] } = useQuery(blogTagsQueryOptions);
-  const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions);
+  const { data: allTags = [] } = useQuery(blogTagsQueryOptions(locale));
+  const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions(locale));
   const loading = postsPending;
   const error = postsError ? (postsError instanceof Error ? postsError.message : t('blog.loadFailed')) : null;
   const [tagsExpanded, setTagsExpanded] = useState(false);

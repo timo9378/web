@@ -3,7 +3,7 @@ import { localeWrap } from '../../localePage';
 import ThinkingDetail from '../../components/ThinkingDetail';
 import { thoughtDetailQueryOptions, thoughtTitle } from '../../thoughtData';
 import { pageMeta } from '../../seoMeta';
-import { DEFAULT_LOCALE } from '../../start-i18n';
+import { DEFAULT_LOCALE } from '../../lib/locales';
 
 export const Route = createFileRoute('/thinking/$id')({
   loader: async ({ context, params }) => {

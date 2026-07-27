@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { postIdent } from '../../lib/postPath';
-import { DEFAULT_LOCALE, LocaleProvider, buildAlternateLinks, toLocales } from '../../start-i18n';
+import { LocaleProvider, buildAlternateLinks, toLocales } from '../../start-i18n';
+import { DEFAULT_LOCALE } from '../../lib/locales';
 import FullBlogPost from '../../components/BlogPost';
 import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../blogList';
 import { articleJsonLd, articleMeta } from '../../seoMeta';
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/blog/$id')({
       const [post] = await Promise.all([
         context.queryClient.ensureQueryData(postDetailQueryOptions(params.id, 'zh-TW')),
         context.queryClient.prefetchQuery(recentPostsQueryOptions(100)),
-        context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions),
+        context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions('zh-TW')),
       ]);
       // 網址正規化：文章的 canonical 是 slug。用數字 id 或改名前的舊 slug 進來時
       // 一律 301 到 canonical 網址——舊網址（含 GSC 已索引的 /blog/<id>）永遠有效，

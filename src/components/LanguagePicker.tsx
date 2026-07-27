@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { FaGlobe, FaCheck } from 'react-icons/fa';
-import { SUPPORTED_LOCALES, LOCALE_LABELS, LOCALE_PREFIX, stripLocalePrefix, type Locale } from '../start-i18n';
+import { LOCALE_LABELS, stripLocalePrefix } from '../start-i18n';
+import { SUPPORTED_LOCALES, LOCALE_PREFIX, type Locale } from '../lib/locales';
 import './LanguagePicker.css';
 
 /* ──────────────────────────────────────────────────────────────

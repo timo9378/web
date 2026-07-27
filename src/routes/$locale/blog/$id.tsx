@@ -16,7 +16,7 @@ export const Route = createFileRoute('/$locale/blog/$id')({
       const [post] = await Promise.all([
         context.queryClient.ensureQueryData(postDetailQueryOptions(params.id, locale)),
         context.queryClient.prefetchQuery(recentPostsQueryOptions(100)),
-        context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions),
+        context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions(locale)),
       ]);
       // 同 /blog/$id：非 canonical 的識別碼（數字 id / 舊 slug）一律 301 到 slug 網址。
       const ident = postIdent(post);

@@ -1147,16 +1147,16 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
 const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | number; postTitle?: string; postCategory?: string }) => {
   const { t } = useTranslation();
   const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
+  const navLocale = useLocale();
 
   // 分類詳情改由 Query 讀（有 postCategory 才抓）。
-  const { data: allCategories = [] } = useQuery({ ...blogCategoriesDetailQueryOptions, enabled: !!postCategory });
+  const { data: allCategories = [] } = useQuery({ ...blogCategoriesDetailQueryOptions(navLocale), enabled: !!postCategory });
   const categoryInfo = useMemo<CategoryInfo | null>(
     () => (postCategory ? (allCategories.find(c => c.name === postCategory) ?? null) : null),
     [allCategories, postCategory],
   );
 
   // 附近文章 + 同專欄文章：從 posts(limit 100) 依時間排序後開視窗，改由 Query + useMemo derive。
-  const navLocale = useLocale();
   const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(100, navLocale));
   const { nearbyPosts, categoryPosts } = useMemo<{ nearbyPosts: PostListItem[]; categoryPosts: PostListItem[] }>(() => {
     if (!allPosts.length) return { nearbyPosts: [], categoryPosts: [] };
@@ -1715,7 +1715,7 @@ function BlogPost() {
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Post not found') : null;
 
   // 專欄 tooltip 的分類詳情：與 PostsNav 共用同一份 categories detail 快取（單抓）。
-  const { data: metaCats = [] } = useQuery({ ...blogCategoriesDetailQueryOptions, enabled: !!postData?.category });
+  const { data: metaCats = [] } = useQuery({ ...blogCategoriesDetailQueryOptions(pathLocale), enabled: !!postData?.category });
   const metaCategoryInfo = useMemo<CategoryInfo | null>(
     () => (postData?.category ? (metaCats.find(c => c.name === postData.category) ?? null) : null),
     [metaCats, postData?.category],

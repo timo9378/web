@@ -43,8 +43,8 @@ function RecentPostRow({ post }: { post: PostListItem }) {
 
 function BlogMenuContent() {
   const { t } = useTranslation();
-  const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions);
   const navLocale = useLocale();
+  const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions(navLocale));
   const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(50, navLocale));
   const [activeCat, setActiveCat] = useState<string | null>(null); // null = 全部
 

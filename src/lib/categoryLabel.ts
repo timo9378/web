@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions, type CategoryInfo } from '../blogList';
+import { useLocale } from '../locale-link';
 
 /** locale → CategoryInfo 上的譯名欄位名。預設語系（zh-TW）與未知語系都用 name。 */
 function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {
@@ -24,7 +25,10 @@ function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_
 export function useCategoryLabel(): (name: string | null | undefined) => string {
   const { i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language;
-  const { data: categories } = useQuery(blogCategoriesDetailQueryOptions);
+  // 查詢用路徑 locale（與部落格頁/文章頁同一個 queryKey → 共用快取、不會多打一次 API）；
+  // 譯名欄位仍照 i18n 的語系挑。清單雖然被語系過濾過，但畫面上出現的分類必然有該語系文章。
+  const pathLocale = useLocale();
+  const { data: categories } = useQuery(blogCategoriesDetailQueryOptions(pathLocale));
 
   return useMemo(() => {
     const field = fieldFor(locale);
@@ -45,7 +49,8 @@ export function useCategoryLabel(): (name: string | null | undefined) => string 
 export function useTagLabel(): (name: string | null | undefined) => string {
   const { i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language;
-  const { data: tags } = useQuery(blogTagsQueryOptions);
+  const pathLocale = useLocale();
+  const { data: tags } = useQuery(blogTagsQueryOptions(pathLocale));
 
   return useMemo(() => {
     const field = fieldFor(locale);

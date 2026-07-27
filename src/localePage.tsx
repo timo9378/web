@@ -1,6 +1,7 @@
 import { ClientOnly, notFound } from '@tanstack/react-router';
 import { Suspense, lazy, type ComponentType, type ReactElement } from 'react';
-import { DEFAULT_LOCALE, LocaleProvider, buildAlternateLinks, localeFromPrefix } from './start-i18n';
+import { LocaleProvider, buildAlternateLinks, localeFromPrefix } from './start-i18n';
+import { DEFAULT_LOCALE } from './lib/locales';
 import { useLocale } from './locale-link';
 import KoimLoader from './components/KoimLoader';
 import { seoMetaFor } from './pageSeo';

@@ -2,20 +2,8 @@
 // 協商／bot 偵測，以及「每 render 獨立 i18n instance」的隔離保證（SSR 不互踩的關鍵）。
 import { describe, expect, it } from 'vitest';
 
-import {
-  DEFAULT_LOCALE,
-  LOCALE_LABELS,
-  SUPPORTED_LOCALES,
-  buildAlternateLinks,
-  createI18n,
-  isBotUserAgent,
-  localeFromPathname,
-  localeFromPrefix,
-  localeUrl,
-  pickLocaleFromAcceptLanguage,
-  stripLocalePrefix,
-  toLocales,
-} from './start-i18n';
+import { LOCALE_LABELS, buildAlternateLinks, createI18n, isBotUserAgent, localeFromPathname, localeFromPrefix, localeUrl, pickLocaleFromAcceptLanguage, stripLocalePrefix, toLocales } from './start-i18n';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from './lib/locales';
 
 describe('localeFromPrefix', () => {
   it('無前綴 → 預設 zh-TW', () => {

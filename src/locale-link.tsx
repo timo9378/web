@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
-import { LOCALE_PREFIX, localeFromPathname, type Locale } from './start-i18n';
+import { localeFromPathname } from './start-i18n';
+import { LOCALE_PREFIX, type Locale } from './lib/locales';
 
 /** 目前路由的 locale(由 URL pathname 推得)。 */
 export function useLocale(): Locale {

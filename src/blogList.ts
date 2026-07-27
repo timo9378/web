@@ -98,27 +98,34 @@ export const recentPostsQueryOptions = (limit: number, locale?: string) =>
     staleTime: STALE,
   });
 
-export const blogTagsQueryOptions = queryOptions({
-  queryKey: ['tags'],
-  queryFn: async (): Promise<Tag[]> => {
-    const res = await fetch(apiUrl('/api/tags'));
-    if (!res.ok) throw new Error(`GET /api/tags ${res.status}`);
-    const data = (await res.json()) as { tags?: Tag[] };
-    return data.tags ?? [];
-  },
-  staleTime: STALE,
-});
+// 分類／標籤的 post_count 一定要帶跟 /api/posts 同一個 lang：文章清單會濾掉沒該語系譯文的
+// 文章，計數不濾就會出現「側欄寫 4 篇、點進去 0 篇」。locale 也必須進 queryKey，否則切語系
+// 會拿到上一個語系的快取計數。
+const langQuery = (locale: string) => (locale ? `?lang=${encodeURIComponent(locale)}` : '');
 
-export const blogCategoriesQueryOptions = queryOptions({
-  queryKey: ['categories'],
-  queryFn: async (): Promise<Category[]> => {
-    const res = await fetch(apiUrl('/api/categories'));
-    if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
-    const data = (await res.json()) as { categories?: Category[] };
-    return data.categories ?? [];
-  },
-  staleTime: STALE,
-});
+export const blogTagsQueryOptions = (locale: string) =>
+  queryOptions({
+    queryKey: ['tags', locale],
+    queryFn: async (): Promise<Tag[]> => {
+      const res = await fetch(apiUrl(`/api/tags${langQuery(locale)}`));
+      if (!res.ok) throw new Error(`GET /api/tags ${res.status}`);
+      const data = (await res.json()) as { tags?: Tag[] };
+      return data.tags ?? [];
+    },
+    staleTime: STALE,
+  });
+
+export const blogCategoriesQueryOptions = (locale: string) =>
+  queryOptions({
+    queryKey: ['categories', locale],
+    queryFn: async (): Promise<Category[]> => {
+      const res = await fetch(apiUrl(`/api/categories${langQuery(locale)}`));
+      if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
+      const data = (await res.json()) as { categories?: Category[] };
+      return data.categories ?? [];
+    },
+    staleTime: STALE,
+  });
 
 // 分類詳情（含 description / short_description，文章頁 tooltip 用）。/api/categories 非 specta
 // 端點，型別手寫。與上面窄版共用同一端點但不同 queryKey；文章頁只掛這個、不會雙抓。
@@ -142,13 +149,15 @@ export interface CategoryInfo {
   short_description_ko?: string;
   short_description_zh_cn?: string;
 }
-export const blogCategoriesDetailQueryOptions = queryOptions({
-  queryKey: ['categories', 'detail'],
-  queryFn: async (): Promise<CategoryInfo[]> => {
-    const res = await fetch(apiUrl('/api/categories'));
-    if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
-    const data = (await res.json()) as { categories?: CategoryInfo[] };
-    return data.categories ?? [];
-  },
-  staleTime: STALE,
-});
+// 同樣帶 locale：這份的 post_count 會出現在文章頁的分類 tooltip，要跟部落格側欄同一個數字。
+export const blogCategoriesDetailQueryOptions = (locale: string) =>
+  queryOptions({
+    queryKey: ['categories', 'detail', locale],
+    queryFn: async (): Promise<CategoryInfo[]> => {
+      const res = await fetch(apiUrl(`/api/categories${langQuery(locale)}`));
+      if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
+      const data = (await res.json()) as { categories?: CategoryInfo[] };
+      return data.categories ?? [];
+    },
+    staleTime: STALE,
+  });

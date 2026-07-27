@@ -1,16 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getRequestHeader } from '@tanstack/react-start/server';
-import {
-  DEFAULT_LOCALE,
-  LOCALE_PREFIX,
-  LocaleProvider,
-  buildAlternateLinks,
-  isBotUserAgent,
-  localeFromPrefix,
-  pickLocaleFromAcceptLanguage,
-  type Locale,
-} from '../start-i18n';
+import { LocaleProvider, buildAlternateLinks, isBotUserAgent, localeFromPrefix, pickLocaleFromAcceptLanguage } from '../start-i18n';
+import { DEFAULT_LOCALE, LOCALE_PREFIX, type Locale } from '../lib/locales';
 import MainPage from '../components/MainPage';
 import { seoMetaFor } from '../pageSeo';
 

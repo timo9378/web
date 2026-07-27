@@ -49,8 +49,8 @@ export default function CommandPalette() {
 
   // 首次打開才載入（enabled: open，降低首屏成本）；三源改吃共用 query 快取。
   const { data: postsData = [] } = useQuery({ ...recentPostsQueryOptions(200, navLocale), enabled: open });
-  const { data: categories = [] } = useQuery({ ...blogCategoriesQueryOptions, enabled: open });
-  const { data: tags = [] } = useQuery({ ...blogTagsQueryOptions, enabled: open });
+  const { data: categories = [] } = useQuery({ ...blogCategoriesQueryOptions(navLocale), enabled: open });
+  const { data: tags = [] } = useQuery({ ...blogTagsQueryOptions(navLocale), enabled: open });
   const posts = useMemo(() => postsData.filter((p) => p.status === 'published' || !p.status), [postsData]);
 
   const go = (path: string) => { setOpen(false); void navigate(path); };

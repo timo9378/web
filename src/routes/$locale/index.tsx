@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { buildAlternateLinks, DEFAULT_LOCALE, localeFromPrefix, LocaleProvider } from '../../start-i18n';
+import { buildAlternateLinks, localeFromPrefix, LocaleProvider } from '../../start-i18n';
+import { DEFAULT_LOCALE } from '../../lib/locales';
 import MainPage from '../../components/MainPage';
 import { seoMetaFor } from '../../pageSeo';
 

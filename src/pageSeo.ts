@@ -1,4 +1,5 @@
-import { createI18n, type Locale } from './start-i18n';
+import { createI18n } from './start-i18n';
+import { type Locale } from './lib/locales';
 import { pageMeta } from './seoMeta';
 
 // 各頁的 SEO 標題／描述，以 localePage 的 basePath 為 key 集中管理。
