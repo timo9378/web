@@ -87,12 +87,7 @@ export function pickLocaleFromAcceptLanguage(header: string | undefined | null):
   return DEFAULT_LOCALE;
 }
 
-// 粗略 bot 偵測:爬蟲不自動導向(讓它看到預設 zh-TW + 靠 hreflang 索引各語言,避免只索引到一種)
-const BOT_UA_RE =
-  /bot|crawl|spider|slurp|bing|google|baidu|yandex|duckduck|facebookexternalhit|embedly|quora|whatsapp|telegram|discord|slack|lighthouse|headless|preview/i;
-export function isBotUserAgent(ua: string | undefined | null): boolean {
-  return !!ua && BOT_UA_RE.test(ua);
-}
+// bot 偵測搬到 lib/bot.ts（純函式、零相依，Web Vitals 上報也要用）。消費端直接從那裡 import。
 
 export const SITE_URL = 'https://koimsurai.com';
 

@@ -7,6 +7,8 @@
 // 不送任何 PII：只有 metric 名/值/rating/pathname/是否行動裝置。
 import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
 
+import { isBotUserAgent } from './bot';
+
 function send(m: Metric) {
   const body = JSON.stringify({
     metric: m.name,
@@ -33,6 +35,9 @@ let initialized = false;
 /** client-only、每頁面生命週期一次。各 metric 由 web-vitals 在定稿時機自行回呼。 */
 export function initWebVitals() {
   if (initialized) return;
+  // 爬蟲不上報：它的渲染環境沒有真實使用者互動、又常跑在受限機器上，測出來的數字會污染 p75。
+  // 另外 Googlebot 渲染時對 /api/vitals 發的 POST 會在 GSC 網址審查裡變成一筆「其他錯誤」。
+  if (isBotUserAgent(navigator.userAgent)) return;
   initialized = true;
   onCLS(send);
   onINP(send);
