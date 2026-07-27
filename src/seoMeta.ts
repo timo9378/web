@@ -146,13 +146,16 @@ export function articleJsonLd(
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   };
 
-  // 麵包屑：搜尋結果會顯示 koimsurai.com › 文章 › 標題，取代裸網址，對點擊率有實際幫助。
-  // 分類存在才多一層，避免造出點不到的路徑（分類目前沒有獨立可索引頁，所以只當標籤層不給 item）。
+  // 麵包屑：搜尋結果會顯示 koimsurai.com › Blog › 標題，取代裸網址，對點擊率有實際幫助。
+  //
+  // ⚠ 不要加「分類」那一層。Google 規定 `item` 對**除了最後一項以外**的每個 ListItem 都必填，
+  // 而分類目前沒有獨立可索引頁（/blog?category=… 的 canonical 指回 /blog），給不出正當網址。
+  // 曾經試過讓它只有 name 不給 item → Rich Results 測試直接判定「item 欄位未填」重大問題。
+  // 硬塞一個 canonical 指向別處的網址更糟。分類資訊留在 BlogPosting 的 articleSection 就好。
   const crumbs: Record<string, unknown>[] = [
     { '@type': 'ListItem', position: 1, name: SITE_NAME, item: `${BASE_URL}${localePathname(locale)}` },
     { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}${blogPath}` },
-    ...(post.category ? [{ '@type': 'ListItem', position: 3, name: post.category }] : []),
-    { '@type': 'ListItem', position: post.category ? 4 : 3, name: post.title, item: url },
+    { '@type': 'ListItem', position: 3, name: post.title, item: url },
   ];
 
   return {
