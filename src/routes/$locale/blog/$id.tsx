@@ -36,7 +36,7 @@ export const Route = createFileRoute('/$locale/blog/$id')({
       // og/twitter 也在這裡出（理由同 /blog/$id）
       meta: articleMeta(post, `/${params.locale}/blog/${postIdent(post)}`, locale),
       links: buildAlternateLinks(`blog/${postIdent(post)}`, locale, toLocales(post.available_locales)),
-      scripts: [articleJsonLd(post, `/${params.locale}/blog/${postIdent(post)}`)],
+      scripts: [articleJsonLd(post, `/${params.locale}/blog/${postIdent(post)}`, locale)],
     };
   },
   component: RouteComponent,

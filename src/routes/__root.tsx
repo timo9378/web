@@ -32,6 +32,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     // PWA:manifest 過去從沒被掛上 → 瀏覽器根本看不到它,站台不可安裝。
     links: [
       { rel: 'manifest', href: '/site.webmanifest' },
+      // feed 自動探索：瀏覽器擴充、聚合器、部分 AI 爬蟲都靠這一行才找得到 /rss.xml
+      { rel: 'alternate', type: 'application/rss+xml', title: '宙と木 · Koimsurai', href: '/rss.xml' },
       { rel: 'apple-touch-icon', href: '/pwa-192.png' },
     ],
   }),

@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from '@tanstack/react-router';
 import { buildAlternateLinks, localeFromPrefix, LocaleProvider } from '../../start-i18n';
 import { DEFAULT_LOCALE } from '../../lib/locales';
 import MainPage from '../../components/MainPage';
+import { siteJsonLd } from '../../seoMeta';
 import { seoMetaFor } from '../../pageSeo';
 
 // 帶前綴的 locale 首頁:/en、/ja、/ko、/zh-cn。
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/$locale/')({
     const locale = localeFromPrefix(params.locale) ?? DEFAULT_LOCALE;
     return {
       meta: seoMetaFor('', locale, `/${params.locale}`),
+      scripts: [siteJsonLd(locale)],
       links: buildAlternateLinks('', locale),
     };
   },

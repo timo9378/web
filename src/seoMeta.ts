@@ -1,6 +1,8 @@
 // PostData = 後端生成的單篇回應型別（原本繞道 BlogPostPage 的別名，該 fallback 元件已退役）。
 import type { PostDetailResponse as PostData } from '@koimsurai/api-types';
 
+import { DEFAULT_LOCALE, type Locale, localePathname } from './lib/locales';
+
 // 文章頁的完整 SEO meta，放在路由 head() —— 那是唯一會進 SSR HTML 的地方。
 //
 // 為什麼不用元件裡的 <SEOHead>：SEOHead 走 react-helmet-async，只在 client hydrate 後才把標籤掛上，
@@ -23,6 +25,12 @@ const LOCALE_TO_OG: Record<string, string> = {
   ja: 'ja_JP',
   ko: 'ko_KR',
 };
+
+// ⚠ 沒有 og:locale:alternate：規格上它必須「重複出現」（一個語系一個標籤），但 TanStack 的
+// head 是用 `name ?? property` 當唯一 key 去重的（見 react-router 的 headContentUtils），
+// 同一個 property 只會留下一個 → 反而變成「只有韓文版」的錯誤宣告，比不寫更糟。
+// 搜尋引擎讀的是 <link rel="alternate" hreflang>（已完整輸出），這個 og 標籤只影響社群平台的
+// 語言判斷，價值不高，所以不為它去改寫 SSR HTML。等框架支援 keyed meta 再補。
 
 interface MetaTag {
   title?: string;
@@ -111,23 +119,98 @@ export function articleMeta(post: PostData, canonicalPath: string, locale: strin
  * 過去這段結構化資料只在元件的 <SEOHead>（helmet）裡出 → hydrate 後才掛、爬蟲看不到。
  * SEOHead 退休後改由此在 SSR 出，結構化資料首次讓不執行 JS 的爬蟲讀得到。
  */
-export function articleJsonLd(post: PostData, canonicalPath: string): { type: string; children: string } {
+export function articleJsonLd(
+  post: PostData,
+  canonicalPath: string,
+  locale: Locale = DEFAULT_LOCALE,
+): { type: string; children: string } {
   const url = `${BASE_URL}${canonicalPath}`;
   const image = `${BASE_URL}/api/og/${post.id}.png`;
   const published = toIso(post.created_at);
-  const jsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
+  const blogPath = localePathname(locale, 'blog');
+
+  const blogPosting: Record<string, unknown> = {
     '@type': 'BlogPosting',
+    '@id': `${url}#article`,
     headline: post.title,
     description: post.excerpt ?? '',
     url,
     image,
+    // 五語站台一定要標：只靠 <html lang> 與 hreflang 推斷，Google 不見得會把各版本正確歸語言。
+    inLanguage: locale,
     author: { '@type': 'Person', name: post.author ?? 'Koimsurai', url: BASE_URL },
     publisher: { '@type': 'Person', name: 'Koimsurai', url: BASE_URL },
     ...(published ? { datePublished: published } : {}),
     dateModified: toIso(post.updated_at) ?? published,
     ...((post.tags?.length ?? 0) > 0 ? { keywords: post.tags.join(', ') } : {}),
+    ...(post.category ? { articleSection: post.category } : {}),
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   };
-  return { type: 'application/ld+json', children: JSON.stringify(jsonLd) };
+
+  // 麵包屑：搜尋結果會顯示 koimsurai.com › 文章 › 標題，取代裸網址，對點擊率有實際幫助。
+  // 分類存在才多一層，避免造出點不到的路徑（分類目前沒有獨立可索引頁，所以只當標籤層不給 item）。
+  const crumbs: Record<string, unknown>[] = [
+    { '@type': 'ListItem', position: 1, name: SITE_NAME, item: `${BASE_URL}${localePathname(locale)}` },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}${blogPath}` },
+    ...(post.category ? [{ '@type': 'ListItem', position: 3, name: post.category }] : []),
+    { '@type': 'ListItem', position: post.category ? 4 : 3, name: post.title, item: url },
+  ];
+
+  return {
+    type: 'application/ld+json',
+    children: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [blogPosting, { '@type': 'BreadcrumbList', itemListElement: crumbs }],
+    }),
+  };
+}
+
+/**
+ * 首頁的 WebSite + Person。
+ * WebSite 讓 Google 有機會給 sitelinks；Person 是知識面板／作者實體的訊號——站上本來就有完整的
+ * 個人資訊與外部帳號，宣告出來才連得起來。這兩個實體全站唯一，只掛首頁。
+ */
+export function siteJsonLd(locale: Locale = DEFAULT_LOCALE): { type: string; children: string } {
+  const home = `${BASE_URL}${localePathname(locale)}`;
+  return {
+    type: 'application/ld+json',
+    children: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': `${BASE_URL}/#website`,
+          url: home,
+          name: SITE_NAME,
+          inLanguage: locale,
+          publisher: { '@id': `${BASE_URL}/#person` },
+        },
+        {
+          '@type': 'Person',
+          '@id': `${BASE_URL}/#person`,
+          name: 'Koimsurai',
+          url: BASE_URL,
+          sameAs: ['https://github.com/timo9378'],
+        },
+      ],
+    }),
+  };
+}
+
+/** 文章列表頁的 Blog（CollectionPage 的專用型別），讓爬蟲知道這頁是文章集合而不是普通頁。 */
+export function blogListJsonLd(locale: Locale = DEFAULT_LOCALE): { type: string; children: string } {
+  const url = `${BASE_URL}${localePathname(locale, 'blog')}`;
+  return {
+    type: 'application/ld+json',
+    children: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      '@id': `${url}#blog`,
+      url,
+      name: SITE_NAME,
+      inLanguage: locale,
+      isPartOf: { '@id': `${BASE_URL}/#website` },
+      publisher: { '@id': `${BASE_URL}/#person` },
+    }),
+  };
 }

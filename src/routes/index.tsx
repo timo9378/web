@@ -4,6 +4,7 @@ import { getCookie, getRequestHeader } from '@tanstack/react-start/server';
 import { LocaleProvider, buildAlternateLinks, isBotUserAgent, localeFromPrefix, pickLocaleFromAcceptLanguage } from '../start-i18n';
 import { DEFAULT_LOCALE, LOCALE_PREFIX, type Locale } from '../lib/locales';
 import MainPage from '../components/MainPage';
+import { siteJsonLd } from '../seoMeta';
 import { seoMetaFor } from '../pageSeo';
 
 // server-only:讀 UA / cookie / Accept-Language → 決定首頁要導向哪個 locale。
@@ -24,6 +25,7 @@ const detectLocale = createServerFn({ method: 'GET' }).handler((): Locale => {
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: seoMetaFor('', DEFAULT_LOCALE, '/'),
+    scripts: [siteJsonLd(DEFAULT_LOCALE)],
     links: buildAlternateLinks('', DEFAULT_LOCALE),
   }),
   beforeLoad: async () => {

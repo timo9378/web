@@ -5,6 +5,7 @@ import { DEFAULT_LOCALE } from './lib/locales';
 import { useLocale } from './locale-link';
 import KoimLoader from './components/KoimLoader';
 import { seoMetaFor } from './pageSeo';
+import { blogListJsonLd } from './seoMeta';
 
 // 共用:把現有頁面元件包成 Start 路由 options(LocaleProvider 包覆 + 逐 locale hreflang)。
 // component 用 useLocale() 從 URL 推 locale,所以 default 與 $locale 路由共用同一個 wrapper。
@@ -27,6 +28,8 @@ export function localePage(basePath: string, Comp: ComponentType) {
     head: () => ({
       meta: seoMetaFor(basePath, DEFAULT_LOCALE, `/${basePath}`),
       links: buildAlternateLinks(basePath, DEFAULT_LOCALE),
+      // 文章列表宣告成 Blog（CollectionPage 的專用型別），爬蟲才知道這頁是集合而非普通頁
+      ...(basePath === 'blog' ? { scripts: [blogListJsonLd(DEFAULT_LOCALE)] } : {}),
     }),
     component: localeWrap(Comp),
   };
@@ -77,6 +80,7 @@ export function localePagePrefixed(basePath: string, Comp: ComponentType) {
       return {
         meta: seoMetaFor(basePath, locale, `/${params.locale}/${basePath}`),
         links: buildAlternateLinks(basePath, locale),
+        ...(basePath === 'blog' ? { scripts: [blogListJsonLd(locale)] } : {}),
       };
     },
     loader: ({ params }: { params: { locale: string } }) => {

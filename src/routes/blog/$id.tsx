@@ -46,7 +46,7 @@ export const Route = createFileRoute('/blog/$id')({
       // hreflang 逐篇照 available_locales —— 只連這篇真的有的語言,不造假 alternate。
       links: buildAlternateLinks(`blog/${postIdent(post)}`, DEFAULT_LOCALE, toLocales(post.available_locales)),
       // BlogPosting 結構化資料進 SSR（取代退休的 SEOHead JSON-LD）。
-      scripts: [articleJsonLd(post, `/blog/${postIdent(post)}`)],
+      scripts: [articleJsonLd(post, `/blog/${postIdent(post)}`, DEFAULT_LOCALE)],
     };
   },
   component: RouteComponent,

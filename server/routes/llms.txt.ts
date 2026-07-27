@@ -47,7 +47,8 @@ export default defineEventHandler(async (event) => {
 
   md += '\n## 使用說明\n\n';
   md += '- 內容為原創技術長文，歡迎 AI 檢索、摘要與引用；引用時請保留來源連結。\n';
-  md += `- 完整網址清單見 [sitemap](${SITE_URL}/sitemap.xml)。\n`;
+  md += `- 完整網址清單見 [sitemap](${SITE_URL}/sitemap.xml)（含各語系 hreflang）。\n`;
+  md += `- 訂閱新文章：[RSS](${SITE_URL}/rss.xml)；各語系加 \`?lang=en|ja|ko|zh-CN\`。\n`;
 
   setHeader(event, 'content-type', 'text/plain; charset=utf-8');
   setHeader(event, 'cache-control', 'public, max-age=3600');
