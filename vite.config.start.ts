@@ -20,6 +20,17 @@ const UI_PAGES = ['about', 'setup', 'bookshelf', 'activity', 'music', 'thinking'
 // ── ISR / SWR route rules ───────────────────────────────────────────────────
 // 一頁 → 該頁 5 個語系路徑(/x + /en/x …)。
 const localeVariants = (page: string): string[] => [`/${page}`, ...LOCALE_PREFIXES.map((l) => `/${l}/${page}`)];
+// 這裡只設 swr（伺服器端 ISR 快取），HTML 的 Cache-Control 不在這層管。
+//
+// 原因：nitro 的 `swr: n` 會吐出 `public, max-age=n, s-maxage=n`，那個 max-age 是**瀏覽器**端的，
+// 而部署後 assets 全換 hash、舊檔消失 → 這 n 秒內的回訪者從磁碟快取讀到舊 HTML → 動態 import
+// 去要已刪除的 chunk → 404 → mermaid／SketchBlock 整塊不渲染（2026-07-28 實測：10 支 chunk 404、
+// 圖表全空）。在 routeRules 加 `headers: { 'cache-control': ... }` 沒有用——SWR 會把整個回應連同
+// 自己算出的 header 存進快取、命中時重放，實測會覆蓋掉這裡設的值。
+//
+// 所以改在 nginx 處理（/etc/nginx/sites-available/koimsurai）：HTML 降到 max-age=60，
+// /assets/ 獨立一個 location 保住 immutable。改那邊時記得 nginx 的 add_header 不繼承，
+// 安全標頭要在該 block 內補齊。
 const swrRules = (paths: string[], seconds: number) =>
   Object.fromEntries(paths.map((p) => [p, { swr: seconds }]));
 
