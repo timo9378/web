@@ -51,8 +51,9 @@ jobs:
       # scripts/server/packages 過去完全沒被 lint（CI 只跑 eslint src）。
       # 不帶 --type-aware：它們不在根 tsconfig 的 include 裡，型別會全解析成 any，
       # 讓 no-unsafe-* 系列誤報 46 筆。型別由各自的 typecheck:* 步驟負責。
+      # --max-warnings 0：這三個目錄目前乾淨，直接鎖死，不留讓它從 0 無聲長大的空間。
       - name: oxlint (scripts + server + packages)
-        run: pnpm exec oxlint scripts server packages
+        run: pnpm exec oxlint scripts server packages --max-warnings 0
       - name: vitest
         run: pnpm test
       # 真正的建置驗證——tsc/lint 過不代表 Nitro/Vite build 不會炸

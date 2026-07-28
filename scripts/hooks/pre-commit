@@ -17,9 +17,11 @@ if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   echo "▶ tsc --noEmit"
   pnpm exec tsc --noEmit || fail=1
   echo "▶ oxlint src"
-  # 與 CI 一致：只掃 src。--quiet 只擋 error，不噴 300+ 個非阻擋 warning。
+  # 與 CI 一致：只掃 src。--quiet 不印 warning（免得每次 commit 噴兩百行），
+  # 但 --max-warnings 仍會計數 → 新增警告當場擋下，不必等推上去才被 CI 打回。
+  # 210 是「不帶 --type-aware」的存量（CI 那道 type-aware 的門檻是 292，兩者不同數）。
   # 不帶 --type-aware：pre-commit 要快（~0.3s vs ~3s），型別問題由上面的 tsc 擋。
-  pnpm exec oxlint src --quiet || fail=1
+  pnpm exec oxlint src --quiet --max-warnings 210 || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then
