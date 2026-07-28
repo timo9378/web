@@ -59,7 +59,9 @@ export default function SiteAppreciation() {
         className={liked ? 'site-appr-item site-appr-item--liked' : 'site-appr-item'}
         onClick={like}
         disabled={liked || busy}
-        aria-label={t('home.appreciation.likeAria')}
+        // 不加 aria-label：可見文字是「留下印記 <計數>」，而 likeAria 是「為這個站留下印記」，
+        // 兩者不一致會踩 WCAG 2.5.3 (Label in Name)（axe label-content-name-mismatch），
+        // 也讓語音控制使用者唸出可見文字時點不到。可見的 label + count 已足以命名這顆按鈕。
       >
         <FaHeart className="site-appr-icon" aria-hidden />
         <span className="site-appr-label">{t('home.appreciation.like')}</span>
