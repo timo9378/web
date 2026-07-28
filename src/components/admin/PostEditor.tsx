@@ -228,7 +228,7 @@ export default function PostEditor() {
         return;
       }
       const current = form.getValues();
-      if (((current.title ?? '') || (current.content ?? '')).trim()) return;
+      if (((current.title) || (current.content)).trim()) return;
       const ago = Math.round((Date.now() - savedAt) / 60000);
       toast(`偵測到 ${ago} 分鐘前的未儲存草稿`, {
         action: {

@@ -46,8 +46,8 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
     if (!q) return posts.slice(0, 50);
     return posts
       .filter((p) =>
-        (p.title ?? '').toLowerCase().includes(q) ||
-        (p.excerpt ?? '').toLowerCase().includes(q)
+        (p.title).toLowerCase().includes(q) ||
+        (p.excerpt).toLowerCase().includes(q)
       )
       .slice(0, 50);
   }, [posts, query]);

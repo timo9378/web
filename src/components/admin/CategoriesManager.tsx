@@ -348,7 +348,7 @@ export default function CategoriesManager() {
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/50 shrink-0 mr-2">
                 <FileText className="size-3" />
-                {cat.post_count ?? 0}
+                {cat.post_count}
               </div>
               <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button

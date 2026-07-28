@@ -101,7 +101,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
   const { t } = useTranslation();
   const prefetchArticle = usePrefetchArticle();
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes ?? 0);
+  const [likeCount, setLikeCount] = useState(post.likes);
   const [shareToast, setShareToast] = useState(false);
   const isColumn = post.layout_type === 'column';
 
@@ -177,7 +177,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
         .trim()
         .substring(0, 220) + '...'
     : '';
-  const dateObj = new Date(post.created_at ?? '');
+  const dateObj = new Date(post.created_at);
   const dayStr = dateObj.getDate();
   const monthStr = dateObj.toLocaleDateString('zh-TW', { month: 'short' });
   const fullDate = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -250,7 +250,7 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
             <FaShareAlt />
             <span>{shareToast ? t('blog.shareCopied') : t('blog.share')}</span>
           </button>
-          {(post.view_count ?? 0) > 0 && (
+          {(post.view_count) > 0 && (
             <span className="note-views">
               <FaRegEye />
               {post.view_count}
@@ -403,7 +403,7 @@ function Blog() {
   const groupedPosts = useMemo(() => {
     const groups: Record<string, PostGroup> = {};
     filteredPosts.forEach(post => {
-      const d = new Date(post.created_at ?? '');
+      const d = new Date(post.created_at);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!groups[key]) {
         groups[key] = {
@@ -510,7 +510,7 @@ function Blog() {
               <span className="stats-sep">｜</span>
               <span>{t('blog.statTags')} <em>{allTags.length}</em></span>
               <span className="stats-sep">｜</span>
-              <span>{t('blog.statReads')} <em>{filteredPosts.reduce((sum, p) => sum + (p.view_count ?? 0), 0)}</em></span>
+              <span>{t('blog.statReads')} <em>{filteredPosts.reduce((sum, p) => sum + (p.view_count), 0)}</em></span>
             </div>
           </motion.div>
 
@@ -646,7 +646,7 @@ function Blog() {
                     >
                       <span className="featured-text">{p.title}</span>
                       <span className="featured-date">
-                        {new Date(p.created_at ?? '').toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })}
+                        {new Date(p.created_at).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })}
                       </span>
                     </LocaleLink>
                   </li>

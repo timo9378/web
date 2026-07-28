@@ -82,7 +82,7 @@ export function pageMeta(
 
 /** 文章頁 head() 用的 meta。canonicalPath 例:/blog/39、/en/blog/39 */
 export function articleMeta(post: PostData, canonicalPath: string, locale: string): MetaTag[] {
-  const description = post.excerpt ?? '';
+  const description = post.excerpt;
   const url = `${BASE_URL}${canonicalPath}`;
   // OG 圖由後端 resvg 生成（CJK 已驗）。舊的前端 /og-image/:id（sharp）隨 serve.mjs 一起退役。
   const image = `${BASE_URL}/api/og/${post.id}.png`;
@@ -132,7 +132,7 @@ export function articleJsonLd(
     '@type': 'BlogPosting',
     '@id': `${url}#article`,
     headline: post.title,
-    description: post.excerpt ?? '',
+    description: post.excerpt,
     url,
     image,
     // 五語站台一定要標：只靠 <html lang> 與 hreflang 推斷，Google 不見得會把各版本正確歸語言。

@@ -1112,7 +1112,7 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
   const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(200, navLocale));
   const { prev, next } = useMemo<{ prev: PostListItem | null; next: PostListItem | null }>(() => {
     const published = allPosts.filter(p => p.status === 'published' || !p.status);
-    const sorted = [...published].sort((a, b) => new Date(a.created_at ?? '').getTime() - new Date(b.created_at ?? '').getTime());
+    const sorted = [...published].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     const idx = sorted.findIndex(p => String(p.id) === String(currentId));
     if (idx === -1) return { prev: null, next: null };
     return {
@@ -1161,7 +1161,7 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
   const { nearbyPosts, categoryPosts } = useMemo<{ nearbyPosts: PostListItem[]; categoryPosts: PostListItem[] }>(() => {
     if (!allPosts.length) return { nearbyPosts: [], categoryPosts: [] };
     // 按時間排序（最新在前）
-    const sorted = [...allPosts].sort((a, b) => new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime());
+    const sorted = [...allPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     const currentIndex = sorted.findIndex(p => String(p.id) === String(currentId));
     if (currentIndex === -1) return { nearbyPosts: [], categoryPosts: [] };
 
@@ -1704,11 +1704,11 @@ function BlogPost() {
   });
   const post = useMemo<Post | null>(() => {
     if (!postData) return null;
-    const dateLocale = LOCALE_TO_DATE_LOCALE[postData.locale ?? ''] ?? 'zh-TW';
+    const dateLocale = LOCALE_TO_DATE_LOCALE[postData.locale] ?? 'zh-TW';
     return {
       ...postData,
       // timeZone 固定 Asia/Taipei → server(UTC) 與 client 同一天、同 weekday，不 hydration mismatch。
-      date: new Date(postData.created_at ?? '').toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Taipei' }),
+      date: new Date(postData.created_at).toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Taipei' }),
     };
   }, [postData]);
   const loading = isPending;
@@ -1814,9 +1814,9 @@ function BlogPost() {
   useEffect(() => {
     if (!post) return;
     const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
-    const pid = post?.id ?? parseInt(id ?? '', 10);
+    const pid = post?.id ?? parseInt(id, 10);
     if (stored.includes(pid)) setLiked(true);
-    setLikeCount(post.likes ?? 0);
+    setLikeCount(post.likes);
   }, [post, id]);
 
   /* ── 排版優化：CJK-Latin 自動加空格 + 腳註 hover 浮窗 ── */
@@ -1840,7 +1840,7 @@ function BlogPost() {
           const id = li.id;
           const clone = li.cloneNode(true) as Element;
           clone.querySelectorAll('a.data-footnote-backref, a[href^="#user-content-fnref"], a[href^="#fnref"]').forEach((a) => a.remove());
-          const text = (clone.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 320);
+          const text = (clone.textContent).trim().replace(/\s+/g, ' ').slice(0, 320);
           fnMap.set(id, text);
         });
         root.querySelectorAll('sup a[data-footnote-ref], sup a.footnote-ref').forEach((a) => {
@@ -1870,7 +1870,7 @@ function BlogPost() {
 
   /* ── Like handler ── */
   const handleLike = async () => {
-    const pid = post?.id ?? parseInt(id ?? '', 10);
+    const pid = post?.id ?? parseInt(id, 10);
     const next = !liked;
     try {
       const res = await fetch('/api/posts/' + pid + '/' + (next ? 'like' : 'unlike'), { method: 'POST' });
@@ -2056,7 +2056,7 @@ function BlogPost() {
             )}
             <span className="meta-tip meta-author" data-tooltip="作者">✦ {post.author}</span>
             <span className="meta-sep">·</span>
-            <span className="meta-tip" data-tooltip="累計閱讀次數">📖 {post.view_count ?? 0}</span>
+            <span className="meta-tip" data-tooltip="累計閱讀次數">📖 {post.view_count}</span>
             <span className="meta-sep">·</span>
             <span className="meta-tip" data-tooltip="讀者喜歡數">❤️ {likeCount}</span>
             <span className="meta-sep">·</span>

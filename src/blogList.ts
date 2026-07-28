@@ -66,7 +66,7 @@ export const postReactionsQueryOptions = (postId: string | number) =>
       const res = await fetch(apiUrl(`/api/posts/${postId}/reactions`));
       if (!res.ok) throw new Error(`GET /api/posts/${postId}/reactions ${res.status}`);
       const data = (await res.json()) as ReactionsResponse;
-      return data.reactions ?? [];
+      return data.reactions;
     },
     staleTime: 60 * 1000,
   });
@@ -79,7 +79,7 @@ export const seriesQueryOptions = (seriesName: string) =>
       const res = await fetch(apiUrl(`/api/series/${encodeURIComponent(seriesName)}`));
       if (!res.ok) throw new Error(`GET /api/series ${res.status}`);
       const data = (await res.json()) as SeriesDetailResponse;
-      return data.posts ?? [];
+      return data.posts;
     },
     staleTime: 5 * 60 * 1000,
   });

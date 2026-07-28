@@ -320,7 +320,7 @@ export default function TagsManager() {
                     </div>
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <span className="text-[12px] text-muted-foreground/60">{tag.post_count ?? 0}</span>
+                    <span className="text-[12px] text-muted-foreground/60">{tag.post_count}</span>
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

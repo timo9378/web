@@ -148,15 +148,15 @@ function WatchLibrary() {
     const list = deduped[activeTab] ?? [];
     const term = search.trim().toLowerCase();
     const filtered = term
-      ? list.filter((it) => (it.title ?? '').toLowerCase().includes(term))
+      ? list.filter((it) => (it.title).toLowerCase().includes(term))
       : list;
     const sorted = filtered.slice();
     sorted.sort((a, b) => {
       const ad = a.isoDate ?? '';
       const bd = b.isoDate ?? '';
       switch (sortBy) {
-        case 'titleAsc': return (a.title ?? '').localeCompare(b.title ?? '');
-        case 'titleDesc': return (b.title ?? '').localeCompare(a.title ?? '');
+        case 'titleAsc': return (a.title).localeCompare(b.title);
+        case 'titleDesc': return (b.title).localeCompare(a.title);
         case 'oldest':
           if (!ad || !bd) return (!ad ? 1 : 0) - (!bd ? 1 : 0); // 無日期一律排最後
           return ad.localeCompare(bd);

@@ -52,7 +52,7 @@ function InfoPage({
     const els = contentRef.current.querySelectorAll('h2[id], h3[id]');
     const list = Array.from(els).map((el) => ({
       id: el.id,
-      text: el.textContent ?? '',
+      text: el.textContent,
       level: el.tagName === 'H2' ? 2 : 3,
     }));
     setHeadings(list);
