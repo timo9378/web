@@ -11,7 +11,7 @@
     "build": "vite build --config vite.config.start.ts",
     "dev": "BACKEND_URL=http://127.0.0.1:3009 vite dev --config vite.config.start.ts --port 13998 --host",
     "preview": "node .output/server/index.mjs",
-    "lint": "oxlint --type-aware --tsconfig=tsconfig.json src",
+    "lint": "oxlint --type-aware --tsconfig=tsconfig.json src && oxlint scripts server packages",
     "test": "vitest run",
     "typecheck:server": "tsc -p server/tsconfig.json --noEmit",
     "typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",

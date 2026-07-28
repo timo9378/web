@@ -16,11 +16,16 @@
     "promise"
   ],
   "ignorePatterns": [
-    "dist/**",
-    "build/**",
-    ".output/**",
     ".nitro/**",
-    "node_modules/**"
+    ".output/**",
+    "build/**",
+    "dev-dist/**",
+    "dist/**",
+    "node_modules/**",
+    "packages/*/index.ts",
+    "public/**",
+    "src/routeTree.gen.ts",
+    "stats.html"
   ],
   "rules": {
     "for-direction": "error",
@@ -82,11 +87,11 @@
     "no-irregular-whitespace": [
       "error",
       {
-        "skipComments": false,
-        "skipJSXText": false,
+        "skipComments": true,
+        "skipJSXText": true,
         "skipRegExps": false,
         "skipStrings": true,
-        "skipTemplates": false
+        "skipTemplates": true
       }
     ],
     "no-loss-of-precision": "error",
@@ -351,6 +356,16 @@
       ],
       "rules": {
         "react/only-export-components": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.cjs",
+        "*.config.js",
+        "scripts/**/*.cjs"
+      ],
+      "rules": {
+        "typescript/no-require-imports": "off"
       }
     }
   ]

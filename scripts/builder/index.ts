@@ -5,10 +5,11 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { loadConfig, BuilderConfig } from './config';
-import { extractExif, ExtractedExif } from './exif-extractor';
-import { processImage, isSupportedImageFormat, ProcessedImage } from './image-processor';
-import { PhotoManifest } from '../../src/types/photo';
+import type { BuilderConfig } from './config';
+import { loadConfig } from './config';
+import { extractExif } from './exif-extractor';
+import { processImage, isSupportedImageFormat } from './image-processor';
+import type { PhotoManifest } from '../../src/types/photo';
 
 interface BuildStats {
   total: number;
@@ -165,7 +166,7 @@ export async function build() {
     console.log(`  Manifest: ${config.output.manifestPath}\n`);
 
     // 讀取現有的 manifest 以支援增量構建
-    let existingManifests: Map<string, PhotoManifest> = new Map();
+    const existingManifests = new Map<string, PhotoManifest>();
     try {
       const existingData = await fs.readFile(config.output.manifestPath, 'utf-8');
       const parsed = JSON.parse(existingData);
@@ -173,7 +174,7 @@ export async function build() {
         parsed.photos.forEach((p: PhotoManifest) => existingManifests.set(p.id, p));
         console.log(`  📚 讀取到 ${existingManifests.size} 筆現有資料，將進行增量構建`);
       }
-    } catch (e) {
+    } catch {
       console.log('  ✨ 無現有 manifest，將進行完整構建');
     }
 
@@ -197,8 +198,8 @@ export async function build() {
       const photoId = path.basename(inputPath, path.extname(inputPath));
 
       // 檢查是否已存在且檔案完好
-      if (existingManifests.has(photoId)) {
-        const existing = existingManifests.get(photoId)!;
+      const existing = existingManifests.get(photoId);
+      if (existing) {
         // 簡單檢查輸出檔案是否還在
         const thumbPath = path.join(config.output.directory, path.basename(existing.thumbnailUrl));
         const highResPath = path.join(config.output.directory, path.basename(existing.originalUrl));
@@ -211,7 +212,7 @@ export async function build() {
           manifests.push(existing);
           stats.skipped++;
           continue;
-        } catch (err) {
+        } catch {
           // 檔案缺失，重新處理
           console.log(`Rule [${i + 1}] 檔案缺失，重新處理: ${path.basename(inputPath)}`);
         }

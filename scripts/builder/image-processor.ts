@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import { rgbaToThumbHash } from 'thumbhash';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { BuilderConfig } from './config';
+import type { BuilderConfig } from './config';
 
 export interface ProcessedImage {
   thumbnailPath: string;
@@ -26,7 +26,7 @@ export interface ProcessedImage {
  */
 export async function processImage(
   inputPath: string,
-  outputDir: string = '/mnt/hdd16tb_01/nas-storage/gallery', // Default to NAS path
+  outputDir = '/mnt/hdd16tb_01/nas-storage/gallery', // Default to NAS path
   config: BuilderConfig
 ): Promise<ProcessedImage> {
   const fileName = path.basename(inputPath, path.extname(inputPath));
@@ -60,16 +60,15 @@ export async function processImage(
   const thumbnailFileName = `${fileName}-thumb.${config.processing.thumbnail.format}`;
   const thumbnailPath = path.join(outputDir, thumbnailFileName);
 
-  await image
-    .clone()
-    .resize(config.processing.thumbnail.width, null, {
-      withoutEnlargement: true,
-      fit: 'inside',
-    })
-  [config.processing.thumbnail.format]({
+  // 輸出格式由 config 決定（webp/jpeg…），用動態方法呼叫；先落成變數，
+  // 避免 `})` 換行後接 `[...]` 被誤讀成陣列（no-unexpected-multiline）。
+  const thumbPipeline = image.clone().resize(config.processing.thumbnail.width, null, {
+    withoutEnlargement: true,
+    fit: 'inside',
+  });
+  await thumbPipeline[config.processing.thumbnail.format]({
     quality: config.processing.thumbnail.quality,
-  })
-    .toFile(thumbnailPath);
+  }).toFile(thumbnailPath);
 
   console.log(`✅ 縮圖生成: ${thumbnailFileName}`);
 
@@ -77,16 +76,13 @@ export async function processImage(
   const highResFileName = `${fileName}.${config.processing.highRes.format}`;
   const highResPath = path.join(outputDir, highResFileName);
 
-  const highResInfo = await image
-    .clone()
-    .resize(config.processing.highRes.maxWidth, null, {
-      withoutEnlargement: true,
-      fit: 'inside',
-    })
-  [config.processing.highRes.format]({
+  const highResPipeline = image.clone().resize(config.processing.highRes.maxWidth, null, {
+    withoutEnlargement: true,
+    fit: 'inside',
+  });
+  const highResInfo = await highResPipeline[config.processing.highRes.format]({
     quality: config.processing.highRes.quality,
-  })
-    .toFile(highResPath);
+  }).toFile(highResPath);
 
   console.log(`✅ 高解析度圖片生成: ${highResFileName}`);
 

@@ -48,6 +48,11 @@ jobs:
       # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調。
       - name: oxlint (src, type-aware)
         run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 379
+      # scripts/server/packages 過去完全沒被 lint（CI 只跑 eslint src）。
+      # 不帶 --type-aware：它們不在根 tsconfig 的 include 裡，型別會全解析成 any，
+      # 讓 no-unsafe-* 系列誤報 46 筆。型別由各自的 typecheck:* 步驟負責。
+      - name: oxlint (scripts + server + packages)
+        run: pnpm exec oxlint scripts server packages
       - name: vitest
         run: pnpm test
       # 真正的建置驗證——tsc/lint 過不代表 Nitro/Vite build 不會炸
