@@ -11,30 +11,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import KoimLoader from './KoimLoader';
 import './Music.css';
+import type {
+  NowPlayingResponse, RecentPlayItem, SpotifyTrack, TopGenre,
+} from '@koimsurai/api-types';
 
 interface RGB { r: number; g: number; b: number }
 
-interface SpotifyImage { url: string }
-interface SpotifyArtist { name: string }
-interface SpotifyAlbum { name: string; images: SpotifyImage[]; release_date?: string }
-interface SpotifyTrack {
-  id: string;
-  name: string;
-  artists: SpotifyArtist[];
-  album: SpotifyAlbum;
-  duration_ms: number;
-  external_urls: { spotify: string };
-  popularity?: number;
-  explicit?: boolean;
-}
-interface RecentItem { track: SpotifyTrack; played_at: string }
-export interface AudioFeature { id: string; energy: number; danceability: number; valence: number }
-interface Genre { genre: string; count: number }
-
-export interface NowPlaying { is_playing?: boolean; item?: SpotifyTrack; progress_ms?: number; played_at?: string }
-interface NowPlayingData extends NowPlaying { isLive: boolean }
-export interface RecentlyPlayedState { tracks?: RecentItem[]; configured?: boolean; error?: string }
-export interface TopGenresState { genres?: Genre[]; configured?: boolean; error?: string }
+// Spotify 相關型別全部改吃後端 specta 生成的（backend handlers::spotify）。
+// 後端不再原樣轉發 Spotify 的 JSON，而是先反序列化成自己的形狀再送出 ——
+// 型別由 Rust 定義、CI 的 drift gate 擋不同步，前端不再照著第三方文件手寫。
+// configured / error 是前端自己的載入狀態，不是 API 形狀，留在這裡。
+export type { AudioFeature } from '@koimsurai/api-types';
+export type NowPlaying = NowPlayingResponse;
+// 前端合成：沒在播時拿「最近播放」頂上顯示，因此多一個 played_at（API 本身沒有這欄）
+interface NowPlayingData extends NowPlayingResponse { isLive: boolean; played_at?: string }
+export interface RecentlyPlayedState { tracks?: RecentPlayItem[]; configured?: boolean; error?: string }
+export interface TopGenresState { genres?: TopGenre[]; configured?: boolean; error?: string }
 export interface TopTracksState { tracks?: SpotifyTrack[]; configured?: boolean; error?: string }
 
 /* ─── 色彩提取工具：從專輯封面取主色調 ─── */
@@ -126,12 +118,12 @@ const Music = () => {
     if (!tracks || tracks.length === 0) return null;
     const n = tracks.length;
 
-    const totalPopularity = tracks.reduce((s, t) => s + (t.popularity ?? 0), 0);
-    const totalDuration = tracks.reduce((s, t) => s + (t.duration_ms || 0), 0);
+    const totalPopularity = tracks.reduce((s, t) => s + t.popularity, 0);
+    const totalDuration = tracks.reduce((s, t) => s + t.duration_ms, 0);
     const explicitCount = tracks.filter(t => t.explicit).length;
 
     const years = tracks
-      .map(t => parseInt((t.album.release_date ?? '').slice(0, 4), 10))
+      .map(t => parseInt(t.album.release_date.slice(0, 4), 10))
       .filter(y => !Number.isNaN(y));
     const avgYear = years.length ? Math.round(years.reduce((s, y) => s + y, 0) / years.length) : null;
 
@@ -232,7 +224,7 @@ const Music = () => {
             <div className="np-content">
               <div className="np-cover-area">
                 <img
-                  src={npData.item?.album?.images?.[0]?.url}
+                  src={npData.item?.album.images.at(0)?.url}
                   alt={npData.item?.name}
                   className="np-cover"
                 />
@@ -274,7 +266,7 @@ const Music = () => {
                   <p className="np-last-played" suppressHydrationWarning>{formatDate(npData.played_at)}</p>
                 )}
                 <a
-                  href={npData.item?.external_urls?.spotify}
+                  href={npData.item?.external_urls.spotify}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="np-spotify-link"

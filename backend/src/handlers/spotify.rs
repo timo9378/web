@@ -1,6 +1,7 @@
 //! Spotify 代理（token refresh 快取 + top-*/audio-features 快取與 403/429 熔斷）。
 //! 狀態存 `state.spotify`（parking_lot 短臨界區，不跨 await 持鎖）。
 
+use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 
 use axum::{
@@ -10,8 +11,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use base64::Engine;
-use serde::Deserialize;
-use serde_json::{Map, Value, json};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 use crate::state::AppState;
 use crate::util::{js_normalize_numbers, js_truthy};
@@ -131,6 +132,123 @@ fn err_json(kind: &str, e: &SpErr) -> Response {
         .into_response()
 }
 
+// ──────────────────────────────────────────────────────────────
+// Spotify 回應的「我們自己的形狀」
+//
+// 這幾個端點原本把 Spotify 的 JSON 原樣轉發（Json<Value>），specta 生不出型別，
+// 前端只好照著 Spotify 文件手寫一份 interface。那份手寫型別沒有任何東西保證它
+// 跟實際回應一致——Spotify 改結構時前端不會炸在編譯期，而是某天畫面空掉。
+//
+// 改成先反序列化進這裡的 struct 再送出：
+//   1. 型別由 Rust 這邊定義，specta 生成給前端，CI 的 drift gate 擋不同步
+//   2. 只取前端真的用得到的欄位，回應體積也小一截
+//   3. Spotify 若改了欄位名，錯誤發生在後端這一處，不是前端到處
+// 刻意不加欄位層的 #[serde(default)]：它只影響「反序列化時可以缺」，卻會讓 specta 把
+// 生成型別標成 `id?: string` —— 前端又得回去猜、又要加防護，正是這次要消滅的東西。
+// 解析失敗的保險放在呼叫端的 unwrap_or_default()：Spotify 改結構時整個端點退成空資料，
+// 而不是送出半套資料讓前端各自處理。
+// ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct SpotifyExternalUrls {
+    pub spotify: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct SpotifyImage {
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct SpotifyArtist {
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct SpotifyAlbum {
+    pub name: String,
+    pub images: Vec<SpotifyImage>,
+    /// 'YYYY' / 'YYYY-MM' / 'YYYY-MM-DD'（Spotify 依 precision 給不同長度）—— 前端只取年份
+    pub release_date: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct SpotifyTrack {
+    pub id: String,
+    pub name: String,
+    pub artists: Vec<SpotifyArtist>,
+    pub album: SpotifyAlbum,
+    #[specta(type = specta_typescript::Number)]
+    pub duration_ms: i64,
+    pub external_urls: SpotifyExternalUrls,
+    /// 0–100，前端拿來算平均熱門度
+    #[specta(type = specta_typescript::Number)]
+    pub popularity: i64,
+    pub explicit: bool,
+}
+
+/// `GET /api/spotify/now-playing`。沒在播 / 未配置 / 抓取失敗一律回 is_playing:false。
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct NowPlayingResponse {
+    pub is_playing: bool,
+    // 不用 skip_serializing_if：欄位一律送出（沒在播就是 null）。
+    // 「有時候有這個 key、有時候沒有」對前端來說是更難處理的形狀，
+    // specta 的 unified mode 也表達不出條件省略。
+    pub item: Option<SpotifyTrack>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub progress_ms: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct RecentPlayItem {
+    pub track: SpotifyTrack,
+    pub played_at: String,
+}
+
+/// `GET /api/spotify/recently-played`
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct RecentlyPlayedResponse {
+    pub items: Vec<RecentPlayItem>,
+}
+
+/// `GET /api/spotify/top-tracks`
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct TopTracksResponse {
+    pub items: Vec<SpotifyTrack>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct TopGenre {
+    pub genre: String,
+    #[specta(type = specta_typescript::Number)]
+    pub count: i64,
+}
+
+/// `GET /api/spotify/top-genres`
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct TopGenresResponse {
+    pub genres: Vec<TopGenre>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct AudioFeature {
+    pub id: String,
+    // 標 Number：specta 預設把 f64 映成 `number | null`（JSON 表達不了 NaN/Infinity），
+    // 但這三個是 Spotify 給的 0–1 比例值，不會是非數。
+    #[specta(type = specta_typescript::Number)]
+    pub energy: f64,
+    #[specta(type = specta_typescript::Number)]
+    pub danceability: f64,
+    #[specta(type = specta_typescript::Number)]
+    pub valence: f64,
+}
+
+/// `GET /api/spotify/audio-features`。順序對齊請求的 ids；查不到的位置是 null。
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct AudioFeaturesResponse {
+    pub audio_features: Vec<Option<AudioFeature>>,
+}
+
 /// `GET /api/spotify/login` —— 302 至 Spotify 授權頁（URLSearchParams 編碼：空白→+）。
 #[utoipa::path(get, path = "/api/spotify/login", tag = "integrations",
     responses((status = 200, description = "Spotify 授權導向（302 轉跳授權頁，第三方 proxy）")))]
@@ -165,7 +283,11 @@ pub async fn recently_played(State(state): State<AppState>) -> Response {
     }
     .await;
     match r {
-        Ok(v) => Json(v).into_response(),
+        // 反序列化成自己的形狀再送出：只留前端用得到的欄位，且型別由這裡定義。
+        // 解析失敗（Spotify 改結構）退成空清單，不要讓整頁掛掉。
+        Ok(v) => {
+            Json(serde_json::from_value::<RecentlyPlayedResponse>(v).unwrap_or_default()).into_response()
+        }
         Err(e) => err_json("Failed to fetch Spotify recently played", &e),
     }
 }
@@ -176,26 +298,19 @@ pub async fn recently_played(State(state): State<AppState>) -> Response {
 pub async fn now_playing(State(state): State<AppState>) -> Response {
     let token = match access_token(&state).await {
         Ok(t) => t,
-        Err(SpErr::NotConfigured) => {
-            return Json(json!({ "is_playing": false, "error": "Spotify 未配置" })).into_response();
+        Err(SpErr::NotConfigured) | Err(_) => {
+            return Json(NowPlayingResponse::default()).into_response();
         }
-        Err(_) => return Json(json!({ "is_playing": false })).into_response(),
     };
     match sp_get(&state, "https://api.spotify.com/v1/me/player/currently-playing", &token, None).await {
         Ok((status, v)) => {
             // 204 或空 body = 沒在播
             if status == StatusCode::NO_CONTENT || !js_truthy(Some(&v)) {
-                return Json(json!({ "is_playing": false })).into_response();
+                return Json(NowPlayingResponse::default()).into_response();
             }
-            Json(json!({
-                "is_playing": v.get("is_playing").cloned().unwrap_or(Value::Null),
-                "item": v.get("item").cloned().unwrap_or(Value::Null),
-                "progress_ms": v.get("progress_ms").cloned().unwrap_or(Value::Null),
-                "currently_playing_type": v.get("currently_playing_type").cloned().unwrap_or(Value::Null),
-            }))
-            .into_response()
+            Json(serde_json::from_value::<NowPlayingResponse>(v).unwrap_or_default()).into_response()
         }
-        Err(_) => Json(json!({ "is_playing": false })).into_response(),
+        Err(_) => Json(NowPlayingResponse::default()).into_response(),
     }
 }
 
@@ -245,9 +360,13 @@ pub async fn top_genres(State(state): State<AppState>) -> Response {
                 }
             }
             counts.sort_by_key(|&(_, c)| std::cmp::Reverse(c)); // stable：同數保插入序（同 V8）
-            let top: Vec<Value> =
-                counts.iter().take(5).map(|(g, c)| json!({ "genre": g, "count": c })).collect();
-            let payload = json!({ "genres": top });
+            let payload = TopGenresResponse {
+                genres: counts
+                    .iter()
+                    .take(5)
+                    .map(|(g, c)| TopGenre { genre: g.clone(), count: *c })
+                    .collect(),
+            };
             *state.spotify.top_genres.lock() = Some((payload.clone(), now + TOP_GENRES_TTL));
             Json(payload).into_response()
         }
@@ -303,8 +422,9 @@ pub async fn top_tracks(State(state): State<AppState>, Query(q): Query<TopTracks
     .await;
     match r {
         Ok(v) => {
-            state.spotify.top_tracks.lock().insert(key, (v.clone(), now + TOP_TRACKS_TTL));
-            Json(v).into_response()
+            let payload = serde_json::from_value::<TopTracksResponse>(v).unwrap_or_default();
+            state.spotify.top_tracks.lock().insert(key, (payload.clone(), now + TOP_TRACKS_TTL));
+            Json(payload).into_response()
         }
         Err(e) => {
             if matches!(e.status(), Some(StatusCode::FORBIDDEN) | Some(StatusCode::TOO_MANY_REQUESTS)) {
@@ -333,7 +453,7 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
     let id_list: Vec<String> = ids.split(',').filter(|s| !s.is_empty()).map(String::from).collect();
     let now = now_ms();
 
-    let mut cached: Map<String, Value> = Map::new();
+    let mut cached: HashMap<String, AudioFeature> = HashMap::new();
     let mut missing: Vec<String> = Vec::new();
     {
         let g = state.spotify.audio_features.lock();
@@ -346,10 +466,12 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
             }
         }
     }
-    let respond = |cached: &Map<String, Value>| -> Response {
-        let list: Vec<Value> =
-            id_list.iter().map(|id| cached.get(id).cloned().unwrap_or(Value::Null)).collect();
-        Json(json!({ "audio_features": list })).into_response()
+    // 回應順序對齊請求的 ids，查不到的位置給 null（前端據此建 id → feature 的 map）
+    let respond = |cached: &HashMap<String, AudioFeature>| -> Response {
+        Json(AudioFeaturesResponse {
+            audio_features: id_list.iter().map(|id| cached.get(id).cloned()).collect(),
+        })
+        .into_response()
     };
     if state.spotify.af_disabled_until.load(Ordering::Relaxed) > now {
         return respond(&cached);
@@ -370,13 +492,14 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
     match r {
         Ok(v) => {
             let expires = now + AUDIO_FEATURES_TTL;
-            if let Some(features) = v.get("audio_features").and_then(|f| f.as_array()) {
+            if let Ok(parsed) = serde_json::from_value::<AudioFeaturesResponse>(v) {
                 let mut g = state.spotify.audio_features.lock();
-                for f in features {
-                    if let Some(id) = f.get("id").and_then(|i| i.as_str()).filter(|s| !s.is_empty()) {
-                        g.insert(id.to_string(), (f.clone(), expires));
-                        cached.insert(id.to_string(), f.clone());
+                for f in parsed.audio_features.into_iter().flatten() {
+                    if f.id.is_empty() {
+                        continue;
                     }
+                    g.insert(f.id.clone(), (f.clone(), expires));
+                    cached.insert(f.id.clone(), f);
                 }
             }
             respond(&cached)

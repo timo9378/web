@@ -162,6 +162,18 @@ export type AnimeRow = {
 	last_watched_at: string | null,
 };
 
+export type AudioFeature = {
+	id: string,
+	energy: number,
+	danceability: number,
+	valence: number,
+};
+
+/**  `GET /api/spotify/audio-features`。順序對齊請求的 ids；查不到的位置是 null。 */
+export type AudioFeaturesResponse = {
+	audio_features: (AudioFeature | null)[],
+};
+
 /**  `GET /api/auth/providers` 回應。兩個 provider 一律都在，用 enabled 區分。 */
 export type AuthProvidersResponse = {
 	google: OAuthProviderInfo,
@@ -321,6 +333,13 @@ export type KeywordFiltersResponse = {
 	filters: KeywordFilterRow[],
 };
 
+/**  `GET /api/spotify/now-playing`。沒在播 / 未配置 / 抓取失敗一律回 is_playing:false。 */
+export type NowPlayingResponse = {
+	is_playing: boolean,
+	item: SpotifyTrack | null,
+	progress_ms: number | null,
+};
+
 /**
  *  單一 OAuth provider 的公開設定。clientId 是公開值（前端組授權 URL 要用），
  *  沒設定時是空字串而不是缺欄位——所以 enabled 才是「這個 provider 能不能用」的判準。
@@ -421,6 +440,16 @@ export type ReactionsResponse = {
 	reactions: ReactionRow[],
 };
 
+export type RecentPlayItem = {
+	track: SpotifyTrack,
+	played_at: string,
+};
+
+/**  `GET /api/spotify/recently-played` */
+export type RecentlyPlayedResponse = {
+	items: RecentPlayItem[],
+};
+
 export type SeriesDetailResponse = {
 	name: string,
 	posts: SeriesPostRow[],
@@ -446,6 +475,37 @@ export type SeriesRow = {
 	count: number,
 	first_at: string | null,
 	last_at: string | null,
+};
+
+export type SpotifyAlbum = {
+	name: string,
+	images: SpotifyImage[],
+	/**  'YYYY' / 'YYYY-MM' / 'YYYY-MM-DD'（Spotify 依 precision 給不同長度）—— 前端只取年份 */
+	release_date: string,
+};
+
+export type SpotifyArtist = {
+	name: string,
+};
+
+export type SpotifyExternalUrls = {
+	spotify: string,
+};
+
+export type SpotifyImage = {
+	url: string,
+};
+
+export type SpotifyTrack = {
+	id: string,
+	name: string,
+	artists: SpotifyArtist[],
+	album: SpotifyAlbum,
+	duration_ms: number,
+	external_urls: SpotifyExternalUrls,
+	/**  0–100，前端拿來算平均熱門度 */
+	popularity: number,
+	explicit: boolean,
 };
 
 export type StatsResponse = {
@@ -477,6 +537,21 @@ export type SubscribersResponse = {
 	message: string,
 	subscribers: SubscriberRow[],
 	pagination: Pagination,
+};
+
+export type TopGenre = {
+	genre: string,
+	count: number,
+};
+
+/**  `GET /api/spotify/top-genres` */
+export type TopGenresResponse = {
+	genres: TopGenre[],
+};
+
+/**  `GET /api/spotify/top-tracks` */
+export type TopTracksResponse = {
+	items: SpotifyTrack[],
 };
 
 export type TvResponse = {

@@ -31,13 +31,18 @@ pub struct SpotifyState {
     /// (access_token, expiry_ms)
     pub token: parking_lot::Mutex<Option<(String, i64)>>,
     /// top-genres：(payload, expires_at)
-    pub top_genres: parking_lot::Mutex<Option<(serde_json::Value, i64)>>,
+    /// 存型別化的結構而非 serde_json::Value —— 快取的東西就是端點回應本身，
+    /// 兩者用同一個型別，就不可能快取到形狀不符的內容。
+    pub top_genres: parking_lot::Mutex<Option<(crate::handlers::spotify::TopGenresResponse, i64)>>,
     /// top-tracks：key = "time_range:limit" → (payload, expires_at)
-    pub top_tracks: parking_lot::Mutex<std::collections::HashMap<String, (serde_json::Value, i64)>>,
+    pub top_tracks: parking_lot::Mutex<
+        std::collections::HashMap<String, (crate::handlers::spotify::TopTracksResponse, i64)>,
+    >,
     /// top-* 熔斷到期（ms）
     pub top_disabled_until: std::sync::atomic::AtomicI64,
     /// audio-features：trackId → (data, expires_at)
-    pub audio_features: parking_lot::Mutex<std::collections::HashMap<String, (serde_json::Value, i64)>>,
+    pub audio_features:
+        parking_lot::Mutex<std::collections::HashMap<String, (crate::handlers::spotify::AudioFeature, i64)>>,
     /// audio-features 熔斷到期（ms）
     pub af_disabled_until: std::sync::atomic::AtomicI64,
 }

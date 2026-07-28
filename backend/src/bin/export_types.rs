@@ -22,6 +22,11 @@ use koimsurai_web_backend::handlers::series::{
     SeriesDetailResponse, SeriesListResponse, SeriesPostRow, SeriesRow,
 };
 use koimsurai_web_backend::handlers::site::CountResponse;
+use koimsurai_web_backend::handlers::spotify::{
+    AudioFeature, AudioFeaturesResponse, NowPlayingResponse, RecentPlayItem, RecentlyPlayedResponse,
+    SpotifyAlbum, SpotifyArtist, SpotifyExternalUrls, SpotifyImage, SpotifyTrack, TopGenre,
+    TopGenresResponse, TopTracksResponse,
+};
 use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::watch::{
     AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, TvResponse, TvRow, WatchStatsResponse,
@@ -30,6 +35,20 @@ use specta_typescript::Typescript;
 
 fn main() {
     let types = specta::Types::default()
+        // spotify（第三方回應重新塑形成自己的形狀，前端不再手寫）
+        .register::<SpotifyExternalUrls>()
+        .register::<SpotifyImage>()
+        .register::<SpotifyArtist>()
+        .register::<SpotifyAlbum>()
+        .register::<SpotifyTrack>()
+        .register::<NowPlayingResponse>()
+        .register::<RecentPlayItem>()
+        .register::<RecentlyPlayedResponse>()
+        .register::<TopTracksResponse>()
+        .register::<TopGenre>()
+        .register::<TopGenresResponse>()
+        .register::<AudioFeature>()
+        .register::<AudioFeaturesResponse>()
         .register::<OAuthProviderInfo>()
         .register::<AuthProvidersResponse>()
         .register::<AdminTagRow>()

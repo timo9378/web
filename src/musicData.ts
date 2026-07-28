@@ -7,6 +7,7 @@ import type {
   NowPlaying,
   AudioFeature,
 } from './components/Music';
+import type { AudioFeaturesResponse } from '@koimsurai/api-types';
 
 // 音樂頁資料改由 TanStack Query 管理（取代 loader + 元件內 fetch + 兩個 setInterval）。
 //
@@ -78,7 +79,9 @@ export const nowPlayingQueryOptions = queryOptions({
       const res = await fetch(apiUrl('/api/spotify/now-playing'));
       return (await res.json()) as NowPlaying;
     } catch {
-      return { is_playing: false };
+      // 欄位補齊：後端一律送出這三個 key（item/progress_ms 沒在播時是 null），
+      // 前端的 fallback 也要維持同樣形狀，別讓型別分岔。
+      return { is_playing: false, item: null, progress_ms: null };
     }
   },
   staleTime: 0,
@@ -89,11 +92,14 @@ export const nowPlayingQueryOptions = queryOptions({
 export const audioFeaturesQueryOptions = (ids: string[]) =>
   queryOptions({
     queryKey: ['spotify', 'audio-features', [...ids].sort()],
-    queryFn: async (): Promise<Record<string, AudioFeature>> => {
+    // Partial 不是保守寫法而是事實：Spotify 2024/11 起 audio-features 多半回 null，
+    // 這張表本來就不保證每個 id 都查得到。標成 Record<string, T> 會讓消費端的
+    // `feat ? ... : ...` 看起來多餘，實際上非有不可。
+    queryFn: async (): Promise<Partial<Record<string, AudioFeature>>> => {
       const res = await fetch(apiUrl(`/api/spotify/audio-features?ids=${ids.join(',')}`));
-      const data = (await res.json()) as { audio_features?: (AudioFeature | null)[] };
-      const map: Record<string, AudioFeature> = {};
-      (data.audio_features ?? []).forEach((f) => {
+      const data = (await res.json()) as AudioFeaturesResponse;
+      const map: Partial<Record<string, AudioFeature>> = {};
+      data.audio_features.forEach((f) => {
         if (f) map[f.id] = f;
       });
       return map;
