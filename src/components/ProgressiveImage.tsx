@@ -152,6 +152,9 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
 
 
   return (
+    // onMouseDown 是「拖曳平移放大後的圖片」，本質是指標手勢；
+    // 鍵盤沒有對應的平移概念（要做也是另開方向鍵功能，不是補 onKeyDown）
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={containerRef}
       className={`progressive-image-wrapper ${className}`}

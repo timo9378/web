@@ -63,11 +63,16 @@ export default function CommandPalette() {
     // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
     // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
     // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+    // 點遮罩關閉是滑鼠的便利路徑，不是唯一出口：cmdk 原生處理 Escape，
+        // 輸入框也在焦點序列內。遮罩本身不該進 Tab 序列（那反而多一個空的停留點）
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div className="cmdk-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <div className="cmdk-wrap">
         <Command label={t('commandPalette.label')} shouldFilter>
           <div className="cmdk-input-row">
             <Search className="cmdk-search-icon" size={16} />
+            {/* 命令面板一開就該能直接打字——autoFocus 正是使用者預期，少了它反而要多按一次 Tab */}
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
             <Command.Input placeholder={t('commandPalette.placeholder')} autoFocus />
             <kbd className="cmdk-kbd">ESC</kbd>
           </div>

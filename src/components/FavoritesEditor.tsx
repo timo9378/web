@@ -138,6 +138,8 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
     // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
     // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
     // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+    // 同上：本元件有 Escape 監聽與右上關閉鈕，遮罩點擊只是滑鼠便利
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div className="fe-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="fe-modal">
         <div className="fe-head">

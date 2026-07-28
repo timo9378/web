@@ -123,6 +123,9 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
+        {/* 站上的影片是無語音的畫面錄製（操作示範），沒有可字幕化的內容；
+            真的加語音旁白時要補 <track kind="captions"> */}
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video
           ref={videoRef}
           className="vp-video"

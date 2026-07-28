@@ -40,7 +40,9 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
       >
         {photos.map((photo, index) => (
           <SwiperSlide key={photo.id} className="gallery-thumbnail-slide">
-            <div
+            {/* 選擇這張縮圖（原本是可點的 div：不可聚焦、無鍵盤操作，報讀器也不知道它能按） */}
+            <button
+              type="button"
               className={`gallery-thumbnail-item ${index === activeIndex ? 'active' : ''
                 }`}
               onClick={() => onThumbnailClick(index)}
@@ -51,7 +53,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
                 loading="lazy"
               />
               {index === activeIndex && <div className="active-indicator" />}
-            </div>
+            </button>
           </SwiperSlide>
         ))}
       </Swiper>

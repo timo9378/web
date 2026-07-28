@@ -288,12 +288,24 @@ function PhotoGallery() {
                           setSelectedCategory(tab);
                           setDropdownOpen(false);
                         }}
+                        // onFocus/onBlur 與 hover 鏡像：原本只有滑鼠會有反白，
+                        // 鍵盤 Tab 過來完全看不出停在哪一項。
                         onMouseOver={(e) => {
                           if (selectedCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
                           }
                         }}
+                        onFocus={(e) => {
+                          if (selectedCategory !== tab) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+                          }
+                        }}
                         onMouseOut={(e) => {
+                          if (selectedCategory !== tab) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }
+                        }}
+                        onBlur={(e) => {
                           if (selectedCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }

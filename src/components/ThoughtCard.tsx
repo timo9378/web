@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { LocaleLink } from '../locale-link';
 import { Heart, ThumbsDown, MessageCircle } from 'lucide-react';
@@ -75,6 +75,15 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
     try { return localStorage.getItem(key) ?? ''; } catch { return ''; }
   });
   const [showComments, setShowComments] = useState(false);
+
+  // 評論 modal 少了 Escape 關閉——遮罩點擊只有滑鼠使用者用得到，鍵盤使用者
+  // 進到 modal 後只能靠 Tab 找關閉鈕。補上 Escape 才算兩邊都有路。
+  useEffect(() => {
+    if (!showComments) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowComments(false); };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); };
+  }, [showComments]);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(th.content);
 
@@ -175,6 +184,8 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
         // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
         // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+        // 同上：本次已補上 Escape 監聽（見 showComments 的 effect），另有關閉鈕
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
         <div className="tk-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowComments(false); }}>
           <div className="tk-modal">
             <div className="tk-modal-head">

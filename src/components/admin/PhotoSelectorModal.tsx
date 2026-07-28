@@ -135,6 +135,8 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                                 className="w-full bg-accent/30 border border-border/40 text-foreground/90 pl-9 pr-4 py-2 text-sm rounded-lg focus:outline-none focus:border-border/60 transition-colors placeholder:text-muted-foreground/50"
+                                // 同上：modal 打開就是為了搜尋照片，焦點直接進搜尋框
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                             />
                         </div>
@@ -160,10 +162,11 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                         : '';
 
                                     return (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={photo.id}
                                             onClick={() => onSelect(photo)}
-                                            className="group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer border border-border/30 hover:border-border/60 transition-all duration-300 bg-accent/20"
+                                            className="w-full text-left group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer border border-border/30 hover:border-border/60 transition-all duration-300 bg-accent/20"
                                         >
                                             {/* Blurhash Placeholder */}
                                             {!photo.thumbnailUrl && photo.blurhash && (
@@ -205,7 +208,7 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
                                                 </svg>
                                             </div>
-                                        </div>
+                                        </button>
                                     );
                                 })}
                             </div>

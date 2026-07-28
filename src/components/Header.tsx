@@ -123,6 +123,9 @@ function Header(_props: HeaderProps) {
       </LocaleLink>
       {/* 手機導覽（Innei 式手風琴）— 桌面用下面的 mega-menu */}
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      {/* onMouseMove 只用來讓高亮跟著游標，純視覺裝飾；
+          導覽列本身的連結都在焦點序列內，鍵盤不缺任何功能 */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <nav className="site-nav" onMouseMove={handleMouseMove}>
         <MegaMenuRoot className="nav-list nav-list-mega">
           <MegaMenuItem

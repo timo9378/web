@@ -40,7 +40,16 @@
 
 /* ── 行內作者註解 <Annot>：hover 底線由左長出 + 冒出小卡 ──
    刻意跟連結 hover 預覽卡區隔：琥珀色調、純文字小卡、無 OG 圖、體積小。 */
+/* 註解標記是行內的 <button>（見 mdx-blocks 的 Annot）：歸零按鈕預設樣式，
+   讓它在文章段落裡看起來就是一段帶虛線底的文字。 */
 .annot {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
   position: relative;
   cursor: help;
   outline: none;

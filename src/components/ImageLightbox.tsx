@@ -189,11 +189,18 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
         onMouseEnter={() => setShowInfo(true)}
         onMouseLeave={() => setShowInfo(false)}
       >
+        {/* 圖片包一層 <button>：原本 onClick 直接掛在 <img> 上，那既不可聚焦、
+            也沒有鍵盤操作，報讀器更不會提示它可以按開大圖。 */}
+        <button
+          type="button"
+          className="blog-image-zoom"
+          onClick={() => setShowLightbox(true)}
+          aria-label={alt ? `放大檢視：${alt}` : '放大檢視圖片'}
+        >
         <img
           {...props}
           src={displaySrc}
           alt={alt ?? ''}
-          onClick={() => setShowLightbox(true)}
           onLoad={() => setImgLoaded(true)}
           className={`blog-image-clickable${placeholder && !imgLoaded ? ' blog-image-loading' : ''}`}
           loading="lazy"
@@ -206,6 +213,7 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
             aspectRatio: placeholder.aspectRatio,
           } : props.style}
         />
+        </button>
         {/* NAS 圖片 hover overlay — 顯示完整 EXIF（從下滑入） */}
         {isNAS && exifData && hasExifContent && (
           <span className={`blog-image-exif${showExif ? ' blog-image-exif--visible' : ''}`}>

@@ -346,9 +346,10 @@ export default function BooksManager() {
                   <div className="max-h-[300px] overflow-y-auto space-y-2 p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm font-medium mb-2">搜尋結果 ({searchResults.length}):</p>
                     {searchResults.map((book) => (
-                      <div
+                      <button
+                        type="button"
                         key={book.isbn}
-                        className="flex gap-3 p-3 bg-background rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                        className="w-full text-left flex gap-3 p-3 bg-background rounded-lg hover:bg-accent cursor-pointer transition-colors"
                         onClick={() => handleSelectFromSearch(book)}
                       >
                         {book.cover_url && (
@@ -367,7 +368,7 @@ export default function BooksManager() {
                             <p className="text-xs text-muted-foreground">ISBN: {book.isbn}</p>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

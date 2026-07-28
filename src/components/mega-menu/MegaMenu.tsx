@@ -114,6 +114,9 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
   );
 
   return (
+    // hover 展開是滑鼠的加值路徑；<li> 裡的觸發器可聚焦，
+    // 鍵盤走 focus 事件開合（不靠這兩個 mouse handler）
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <li
       className="mega-menu-item"
       onMouseEnter={() => { setHovering(true); handleMouseEnter(); }}

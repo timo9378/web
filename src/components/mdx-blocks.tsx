@@ -54,7 +54,7 @@ const useIsoLayoutEffect = typeof document !== 'undefined' ? useLayoutEffect : u
 export function Annot({ children, note }: { children?: ReactNode; note?: ReactNode }) {
   const [open, setOpen] = useState(false); // 觸控：點擊 toggle
   const [hover, setHover] = useState(false); // 桌機：hover
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number; below: boolean } | null>(null);
   const show = open || hover;
 
@@ -81,29 +81,30 @@ export function Annot({ children, note }: { children?: ReactNode; note?: ReactNo
 
   return (
     <>
-      <span
+      {/* 用真的 <button>：原本是 span + role="note" + tabIndex={0} + 手刻 onKeyDown，
+          role="note" 本身是非互動語意，卻掛了 tabIndex 與鍵盤處理——名實不符。
+          <button> 直接拿到焦點、Enter/Space 與正確語意，下面的 onKeyDown 只需留 Escape。 */}
+      <button
         ref={ref}
+        type="button"
         className="annot"
         data-open={show ? 'true' : undefined}
-        tabIndex={0}
-        role="note"
+        aria-expanded={show}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onFocus={() => setHover(true)}
         onBlur={() => setHover(false)}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen((o) => !o);
-          } else if (e.key === 'Escape') {
+          // Enter/Space 由 <button> 原生處理，這裡只補 Escape 收起
+          if (e.key === 'Escape') {
             setOpen(false);
             setHover(false);
           }
         }}
       >
         <span className="annot-text">{children}</span>
-      </span>
+      </button>
       {show && pos
         ? createPortal(
             <div

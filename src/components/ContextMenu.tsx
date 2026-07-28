@@ -94,6 +94,9 @@ export default function ContextMenu() {
       ref={ref}
       className="ctx-menu"
       role="menu"
+      // role="menu" 是互動角色，必須能被聚焦（interactive-supports-focus）。
+      // -1：不進 Tab 序列，但選單開啟時可以用程式把焦點送進來。
+      tabIndex={-1}
       style={{ left: pos.left, top: pos.top }}
       onContextMenu={(e) => e.preventDefault()}
     >

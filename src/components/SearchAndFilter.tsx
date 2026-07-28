@@ -76,7 +76,7 @@ const SearchAndFilter = ({
       <div className="controls-row">
         {/* Sort By */}
         <div className="sort-control">
-          <label className="control-label">
+          <label className="control-label" htmlFor="sort-select">
             <svg className="control-icon" viewBox="0 0 24 24" fill="none">
               <line x1="4" y1="6" x2="20" y2="6" />
               <line x1="4" y1="12" x2="16" y2="12" />
@@ -85,6 +85,7 @@ const SearchAndFilter = ({
             排序方式
           </label>
           <select
+            id="sort-select"
             className="modern-select"
             value={sortBy ?? 'newest'}
             onChange={(e) => setSortBy?.(e.target.value)}
@@ -97,7 +98,9 @@ const SearchAndFilter = ({
 
         {/* View Mode Toggle */}
         <div className="view-mode-control">
-          <label className="control-label">
+          {/* 用 span + role="group" 而非 <label>：label 只能關聯到單一表單控制項，
+              關聯不到一組按鈕。改用 aria-labelledby 讓群組拿到名稱。 */}
+          <span className="control-label" id="view-mode-label">
             <svg className="control-icon" viewBox="0 0 24 24" fill="none">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
@@ -105,8 +108,11 @@ const SearchAndFilter = ({
               <rect x="14" y="14" width="7" height="7" />
             </svg>
             檢視模式
-          </label>
-          <div className="view-mode-buttons">
+          </span>
+          {/* role="group" + aria-labelledby 是標示按鈕群組的正解；
+              建議的 fieldset 需要 legend 且帶表單語意，用在這裡反而錯 */}
+          {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
+          <div className="view-mode-buttons" role="group" aria-labelledby="view-mode-label">
             <button
               className={`view-mode-btn ${(viewMode ?? 'card') === 'card' ? 'active' : ''}`}
               onClick={() => setViewMode?.('card')}

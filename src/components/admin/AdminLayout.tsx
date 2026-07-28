@@ -290,6 +290,8 @@ export const AdminLayout = () => {
 
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
+        // 手機側欄的遮罩，點它收起選單；鍵盤路徑是選單本身的開關鈕
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
