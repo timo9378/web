@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   frontend:
-    name: Frontend · tsc + eslint + vitest + build
+    name: Frontend · tsc + oxlint + vitest + build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -43,12 +43,14 @@ jobs:
         run: pnpm typecheck:server
       - name: scripts typecheck
         run: pnpm typecheck:scripts
-      # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調（404 → 398）
-      - name: eslint (src)
-        run: pnpm exec eslint src --max-warnings 398
+      # oxlint 取代 eslint（設定見 .oxlintrc.json，182 條規則自 eslint --print-config 對映而來；
+      # @eslint-react 整包經 jsPlugins 載入，命名空間保持 @eslint-react 讓既有 eslint-disable 註解續效）。
+      # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調。
+      - name: oxlint (src, type-aware)
+        run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 379
       - name: vitest
         run: pnpm test
-      # 真正的建置驗證——tsc/eslint 過不代表 Nitro/Vite build 不會炸
+      # 真正的建置驗證——tsc/lint 過不代表 Nitro/Vite build 不會炸
       - name: build (vite + nitro)
         run: pnpm build
 

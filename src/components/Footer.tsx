@@ -16,7 +16,7 @@ interface Stats {
 // 失敗 / 未載入時 data 為 undefined → 回 null，走 fallback 顯示（對齊舊 catch 靜默）。
 function useStats(): Stats | null {
   const { data } = useQuery(siteStatsQueryOptions);
-  if (!data || data.message !== 'success') return null;
+  if (data?.message !== 'success') return null;
   return { total: data.total_posts, days: data.days };
 }
 

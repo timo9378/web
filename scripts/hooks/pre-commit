@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 極簡 pre-commit（C4）：擋自己手滑——只跑 CI 裡最快、最常爆的那幾項。
-# 條件觸發：動到前端 ts/tsx 才跑 tsc+eslint；動到後端 rs 才跑 clippy。
+# 條件觸發：動到前端 ts/tsx 才跑 tsc+oxlint；動到後端 rs 才跑 clippy。
 # 跳過（趕時間/WIP commit）：git commit --no-verify
 set -euo pipefail
 
@@ -16,10 +16,10 @@ fail=0
 if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   echo "▶ tsc --noEmit"
   pnpm exec tsc --noEmit || fail=1
-  echo "▶ eslint src"
-  # 與 CI 一致：只掃 src（eslint . 會掃到 build 產物噴假錯）。
-  # --quiet：只擋 error，不噴 400+ 個非阻擋 warning（CI 也只看 error）。
-  pnpm exec eslint src --quiet || fail=1
+  echo "▶ oxlint src"
+  # 與 CI 一致：只掃 src。--quiet 只擋 error，不噴 300+ 個非阻擋 warning。
+  # 不帶 --type-aware：pre-commit 要快（~0.3s vs ~3s），型別問題由上面的 tsc 擋。
+  pnpm exec oxlint src --quiet || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then

@@ -102,7 +102,7 @@ function HomeMenuContent({ onSectionClick }: { onSectionClick?: (e: React.MouseE
   const { t } = useTranslation();
   // 站台統計改吃共用 siteStatsQueryOptions 快取（Footer 也用同一把）。
   const { data: statsData } = useQuery(siteStatsQueryOptions);
-  const stats: Stats | null = statsData && statsData.message === 'success'
+  const stats: Stats | null = statsData?.message === 'success'
     ? { total: statsData.total_posts, wordCount: statsData.total_chars, days: statsData.days }
     : null;
 
