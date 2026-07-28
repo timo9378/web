@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, createContext, useContext, useState, type ReactNode, type CSSProperties } from 'react';
+import React, { useRef, useCallback, createContext, use, useState, type ReactNode, type CSSProperties } from 'react';
 import { LocaleLink } from '../../locale-link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown } from 'react-icons/fa';
@@ -31,9 +31,9 @@ const MegaMenuContext = createContext<MegaMenuContextValue | null>(null);
 export function MegaMenuRoot({ children, className = '' }: { children: ReactNode; className?: string }) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
-    <MegaMenuContext.Provider value={{ openId, setOpenId }}>
+    <MegaMenuContext value={{ openId, setOpenId }}>
       <ul className={`mega-menu-bar ${className}`}>{children}</ul>
-    </MegaMenuContext.Provider>
+    </MegaMenuContext>
   );
 }
 
@@ -48,7 +48,7 @@ interface MegaMenuProps {
 }
 
 export function MegaMenu({ id, label, icon, active = false, to = null, children, onClick }: MegaMenuProps) {
-  const ctx = useContext(MegaMenuContext);
+  const ctx = use(MegaMenuContext);
   if (!ctx) throw new Error('<MegaMenu> must be inside <MegaMenuRoot>');
   const { openId, setOpenId } = ctx;
   const isOpen = openId === id;

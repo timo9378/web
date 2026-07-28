@@ -82,7 +82,7 @@ const staticAnimations: Record<string, Variants> = {
 const AnimateIconContext = React.createContext<AnimateIconContextValue | null>(null);
 
 function useAnimateIconContext(): AnimateIconContextValue {
-  const context = React.useContext(AnimateIconContext);
+  const context = React.use(AnimateIconContext);
   if (!context)
     return {
       controls: undefined,
@@ -397,7 +397,7 @@ function AnimateIcon({
   );
 
   return (
-    <AnimateIconContext.Provider
+    <AnimateIconContext
       value={{
         controls,
         animation: currentAnimation,
@@ -410,7 +410,7 @@ function AnimateIcon({
         delay,
       }}>
       {content}
-    </AnimateIconContext.Provider>
+    </AnimateIconContext>
   );
 }
 
@@ -442,7 +442,7 @@ function IconWrapper(
     ...props
   }: IconWrapperProps
 ) {
-  const context = React.useContext(AnimateIconContext);
+  const context = React.use(AnimateIconContext);
 
   if (context) {
     const {
@@ -509,7 +509,7 @@ function IconWrapper(
     const loopDelayToUse = parentLoopDelay;
 
     return (
-      <AnimateIconContext.Provider
+      <AnimateIconContext
         value={{
           controls,
           animation: animationToUse,
@@ -529,7 +529,7 @@ function IconWrapper(
               pathClassName
           )}
           {...props} />
-      </AnimateIconContext.Provider>
+      </AnimateIconContext>
     );
   }
 

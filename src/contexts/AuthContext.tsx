@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, use, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 export type UserRole = 'OWNER' | 'ADMIN' | 'USER';
 
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [providers]);
 
   return (
-    <AuthContext.Provider value={{
+    <AuthContext value={{
       user, loading, providers,
       getToken, loginWithOAuth, logout,
       getGoogleAuthUrl, getGitHubAuthUrl,
@@ -122,12 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isOwner: !!user && user.role === 'OWNER',
     }}>
       {children}
-    </AuthContext.Provider>
+    </AuthContext>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
+  const ctx = use(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 
 interface PageVisibilityValue {
   isVisible: boolean;
@@ -10,15 +10,15 @@ const PageVisibilityContext = createContext<PageVisibilityValue | undefined>(und
 // Provider 組件
 export const PageVisibilityProvider = ({ children, isVisible }: { children: ReactNode; isVisible: boolean }) => {
   return (
-    <PageVisibilityContext.Provider value={{ isVisible }}>
+    <PageVisibilityContext value={{ isVisible }}>
       {children}
-    </PageVisibilityContext.Provider>
+    </PageVisibilityContext>
   );
 };
 
 // Hook 來使用 Page Visibility Context
 export const usePageVisibility = () => {
-  const context = useContext(PageVisibilityContext);
+  const context = use(PageVisibilityContext);
   if (context === undefined) {
     throw new Error('usePageVisibility must be used within a PageVisibilityProvider');
   }

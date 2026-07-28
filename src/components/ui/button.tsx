@@ -32,24 +32,29 @@ const buttonVariants = cva(
   }
 )
 
+// ComponentProps<"button"> 而非 ButtonHTMLAttributes：前者含 ref。
+// 這個元件不再是 forwardRef（React 19 ref 是一般 prop），型別若停在
+// HTMLAttributes，呼叫端就無法傳 ref——runtime 能動但 tsc 會擋。
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends React.ComponentProps<"button">,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-Button.displayName = "Button"
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: ButtonProps) {
+  const Comp = asChild ? Slot : "button"
+  return (
+    <Comp
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
 
 export { Button, buttonVariants }
