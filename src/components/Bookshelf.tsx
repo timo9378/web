@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense, type CSSProperties, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaStarHalfAlt, FaBook, FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
@@ -114,7 +114,6 @@ const Bookshelf = () => {
   // hydrate 後 useQuery 讀同一份快取（不重抓）；15 分鐘輪詢 = queryOptions 的 refetchInterval。
   const { data: books = [], isPending } = useQuery(booksQueryOptions);
   const { data: stats = null } = useQuery(bookStatsQueryOptions);
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>(books);
   const loading = isPending;
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,11 +123,10 @@ const Bookshelf = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [is3DMode, setIs3DMode] = useState(false);
 
-  useEffect(() => {
-    filterAndSortBooks();
-  }, [books, searchTerm, statusFilter, ratingFilter, sortBy]);
-
-  const filterAndSortBooks = () => {
+  // filteredBooks 完全由 books + 四個篩選條件推導 —— 是衍生值不是狀態。
+  // 原本用 useEffect + setState：每次條件變動都要先繪一次舊清單、effect 再補繪一次，
+  // 而且中間那一幀顯示的是過期資料。改成 render 期計算就沒有這個窗口。
+  const filteredBooks = useMemo(() => {
     let filtered = [...books];
 
     // Search filter
@@ -169,8 +167,8 @@ const Bookshelf = () => {
       }
     });
 
-    setFilteredBooks(filtered);
-  };
+    return filtered;
+  }, [books, searchTerm, statusFilter, ratingFilter, sortBy]);
 
   const getStatusBadge = (status?: string | null) => {
     const badges: Record<'read' | 'reading' | 'to-read', { text: string; color: string }> = {

@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useRef, useCallback, useSyncExternalStore, type ReactNode } from 'react';
+import { subscribeScroll, scrollRatio } from '../lib/scrollStore';
 import { LocaleLink } from '../locale-link';
 import { motion } from 'framer-motion';
 import { FaArrowUp } from 'react-icons/fa';
@@ -43,8 +44,6 @@ function InfoPage({
   const contentRef = useRef<HTMLElement>(null);
   const tocRef = useRef<HTMLElement>(null);
   const [headings, setHeadings] = useState<Heading[]>([]);
-  const [activeId, setActiveId] = useState('');
-  const [progress, setProgress] = useState(0);
 
   // 從渲染後的 DOM 把 h2/h3 抓出來建 TOC
   useEffect(() => {
@@ -58,29 +57,27 @@ function InfoPage({
     setHeadings(list);
   }, [children]);
 
-  // 滾動進度 + scrollspy
-  useEffect(() => {
-    const onScroll = () => {
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      const y = window.scrollY;
-      setProgress(docH > 0 ? Math.min(100, (y / docH) * 100) : 0);
-
+  // 滾動進度 + scrollspy：兩者都是「訂閱捲動、每次讀快照」，交給 useSyncExternalStore。
+  // 兩個 getSnapshot 都回傳純量（number / string），不會因為每次新建物件而無限重繪。
+  // activeId 的快照閉包會隨 headings 變動而重建 —— 那正好是我們要的：headings 一改，
+  // 元件重繪、快照重算。
+  const progress = useSyncExternalStore(subscribeScroll, () => scrollRatio() * 100, () => 0);
+  const activeId = useSyncExternalStore(
+    subscribeScroll,
+    () => {
       // scrollspy: 找到 viewport 上半部第一個 heading
       const triggerY = window.innerHeight * 0.3;
       let current = '';
       for (const h of headings) {
         const el = document.getElementById(h.id);
         if (!el) continue;
-        const top = el.getBoundingClientRect().top;
-        if (top <= triggerY) current = h.id;
+        if (el.getBoundingClientRect().top <= triggerY) current = h.id;
         else break;
       }
-      setActiveId(current);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => { window.removeEventListener('scroll', onScroll); };
-  }, [headings]);
+      return current;
+    },
+    () => '',
+  );
 
   const scrollToHeading = useCallback((id: string) => {
     setTimeout(() => {

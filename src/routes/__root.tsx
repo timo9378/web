@@ -4,7 +4,7 @@ import '@fontsource-variable/tasa-orbiter';
 import '@fontsource-variable/tasa-explorer';
 import '../index.css';
 import '../App.css';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import {
   Outlet,
   createRootRouteWithContext,
@@ -46,15 +46,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: RootComponent,
 });
 
+// 訂閱 + 快照 + SSR 預設值,正是 useSyncExternalStore 的職責。
+// 原本是 useState + effect 裡先 onChange() 再訂閱:那個「先呼叫一次」會在 mount 時
+// 多觸發一次 render(document.hidden 在 render/SSR 期讀不到,只能等 effect)。
+// 換成 useSyncExternalStore 後 client 首次 render 就拿得到真值,不再有補丁式的第二次 render。
+const subscribeVisibility = (cb: () => void) => {
+  document.addEventListener('visibilitychange', cb);
+  return () => { document.removeEventListener('visibilitychange', cb); };
+};
+
 // PageVisibilityProvider 是受控的(需 isVisible)。SSR 預設 visible,client 端追蹤 document.hidden。
 function PageVisibilityBridge({ children }: Readonly<{ children: ReactNode }>) {
-  const [isVisible, setIsVisible] = useState(true);
-  useEffect(() => {
-    const onChange = () => setIsVisible(!document.hidden);
-    onChange();
-    document.addEventListener('visibilitychange', onChange);
-    return () => document.removeEventListener('visibilitychange', onChange);
-  }, []);
+  const isVisible = useSyncExternalStore(
+    subscribeVisibility,
+    () => !document.hidden,
+    () => true, // SSR:沒有 document,一律當可見
+  );
   return <PageVisibilityProvider isVisible={isVisible}>{children}</PageVisibilityProvider>;
 }
 

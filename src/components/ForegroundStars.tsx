@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import './ForegroundStars.css';
 
 interface Star {
@@ -8,7 +8,6 @@ interface Star {
   size: number;
   brightness: number;
   parallaxFactor: number;
-  transform?: string;
 }
 
 interface ForegroundStarsProps {
@@ -16,48 +15,34 @@ interface ForegroundStarsProps {
 }
 
 const ForegroundStars = ({ count = 50 }: ForegroundStarsProps) => {
-  const [stars, setStars] = useState<Star[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 初始化星星
-  useEffect(() => {
-    const newStars: Star[] = [];
-    for (let i = 0; i < count; i++) {
-      newStars.push({
-        id: i,
-        x: Math.random() * 100, // %
-        y: Math.random() * 100, // %
-        size: Math.random() * 2.5 + 1.5, // 1.5px to 4px
-        brightness: Math.random() * 0.5 + 0.5, // 0.5 to 1.0
-        parallaxFactor: Math.random() * 0.03 + 0.01, // 0.01 to 0.04 (adjust for sensitivity)
-      });
-    }
-    setStars(newStars);
-  }, [count]);
+  // 星星位置是純衍生值（只看 count），render 期算掉即可，不必先繪一次空畫面再由 effect 補繪。
+  // Math.random 在 render 期通常會造成 hydration mismatch，這裡安全：本元件掛在
+  // AppShell 的 <ClientOnly> → SpaceBackdropShell → DomSpaceEffects 底下，從不 SSR。
+  const stars = useMemo<Star[]>(
+    () => Array.from({ length: count }, (_, id) => ({
+      id,
+      x: Math.random() * 100, // %
+      y: Math.random() * 100, // %
+      size: Math.random() * 2.5 + 1.5, // 1.5px to 4px
+      brightness: Math.random() * 0.5 + 0.5, // 0.5 to 1.0
+      parallaxFactor: Math.random() * 0.03 + 0.01, // 0.01 to 0.04 (adjust for sensitivity)
+    })),
+    [count],
+  );
 
   // 處理滑鼠移動以實現視差效果
   useEffect(() => {
+    // 只把「滑鼠相對中心的位移」寫進容器的 CSS 變數，實際位移交給 CSS 逐顆星去算。
+    // 原本每次 mousemove 都 setStars(重建整個陣列) → React 重繪全部星星；
+    // 純裝飾效果不值得這個代價，而且滑鼠事件本來就密集。
     const handleMouseMove = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-
-      const { clientWidth, clientHeight } = containerRef.current;
+      const el = containerRef.current;
+      if (!el) return;
       // 計算滑鼠相對於容器中心的位置 (-0.5 to 0.5)
-      const mouseX = (event.clientX / clientWidth) - 0.5;
-      const mouseY = (event.clientY / clientHeight) - 0.5;
-
-      // 更新星星位置
-      setStars(prevStars =>
-        prevStars.map(star => {
-          // 移動方向與滑鼠相反，幅度由 parallaxFactor 決定
-          const offsetX = -mouseX * star.parallaxFactor * 100; // Convert factor to percentage offset
-          const offsetY = -mouseY * star.parallaxFactor * 100;
-
-          return {
-            ...star,
-            transform: `translate(${offsetX}%, ${offsetY}%)`,
-          };
-        })
-      );
+      el.style.setProperty('--mx', String((event.clientX / el.clientWidth) - 0.5));
+      el.style.setProperty('--my', String((event.clientY / el.clientHeight) - 0.5));
     };
 
     const currentRef = containerRef.current; // Capture ref value
@@ -86,9 +71,9 @@ const ForegroundStars = ({ count = 50 }: ForegroundStarsProps) => {
             width: `${star.size}px`,
             height: `${star.size}px`,
             opacity: star.brightness,
-            transform: star.transform ?? 'translate(0, 0)', // Apply transform for parallax
-            // Glow effect is now handled by CSS
-          }}
+            // 視差幅度交給 CSS：transform 由 --mx/--my（容器層）× --pf（本顆）算出
+            '--pf': star.parallaxFactor,
+          } as CSSProperties}
         />
       ))}
     </div>

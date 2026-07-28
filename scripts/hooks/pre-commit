@@ -22,7 +22,7 @@ if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   # 早期不帶 --type-aware 是因為它會吃爆記憶體；@types/three 打了 patch 之後
   # 實測 3.16s / 1.2GB，而同一個 hook 裡的 tsc 本來就要 7.9s / 1.1GB，不差這 1.4s。
   # --quiet 只影響印不印，不影響 --max-warnings 計數（免得每次 commit 噴兩百行）。
-  pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 209 || fail=1
+  pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 201 || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then

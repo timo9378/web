@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RocketIcon, type RocketIconHandle } from '@animateicons/react/lucide';
+import { subscribeScroll, scrollRatio } from '../lib/scrollStore';
 import './BackToTopButton.css';
 
 interface BackToTopButtonProps {
@@ -9,22 +10,11 @@ interface BackToTopButtonProps {
 
 function BackToTopButton({ isHomePage = false }: BackToTopButtonProps) {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [progress, setProgress] = useState(0);
+  // 兩個快照各自回傳純量（不是物件）—— getSnapshot 每次新建物件會被判定為變更 → 無限重繪。
+  const isVisible = useSyncExternalStore(subscribeScroll, () => window.pageYOffset > 300, () => false);
+  const progress = useSyncExternalStore(subscribeScroll, scrollRatio, () => 0);
   const [hover, setHover] = useState(false);
   const rocketRef = useRef<RocketIconHandle>(null);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.pageYOffset;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setIsVisible(y > 300);
-      setProgress(max > 0 ? Math.min(y / max, 1) : 0);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => { window.removeEventListener('scroll', onScroll); };
-  }, []);
 
   useEffect(() => {
     if (!rocketRef.current) return;
