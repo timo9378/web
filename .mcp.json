@@ -3,6 +3,13 @@
     "koimsurai-admin": {
       "command": "pnpm",
       "args": ["exec", "tsx", "packages/mcp-server/src/index.ts"]
+    },
+    "lighthouse": {
+      "command": "npx",
+      "args": ["-y", "@danielsogl/lighthouse-mcp@latest"],
+      "env": {
+        "CHROME_PATH": "/usr/bin/microsoft-edge"
+      }
     }
   }
 }
