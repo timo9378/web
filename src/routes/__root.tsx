@@ -92,6 +92,21 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
     <html lang={locale}>
       <head>
         <HeadContent />
+        {/* WebMCP origin trial。沒有 token，navigator.modelContext 不存在，Lighthouse 的
+            「已註冊的 WebMCP 工具 / 結構定義有效」永遠停在「不適用」。
+            兩顆並存是刻意的：各瀏覽器只驗自己簽的那顆、忽略其餘，Chrome 與 Edge 的 trial
+            是分開註冊的。都綁 https://koimsurai.com:443。
+            ⚠ 到期日不同，Edge 那顆先死 —— 到期後只會靜默失效，不會有任何錯誤訊息。
+              Edge   2026-09-11（不含子網域）
+              Chrome 2026-11-17（含子網域） */}
+        <meta
+          httpEquiv="origin-trial"
+          content="A1SldNowolVg1sn7ieRrEhM/+ptfGqSwkO9IJUZEx9FnvUqYS7TP3dn3k76moSbRXOsIriHl/qZaF79Nmc11UI8AAABNeyJvcmlnaW4iOiJodHRwczovL2tvaW1zdXJhaS5jb206NDQzIiwiZmVhdHVyZSI6IldlYk1DUCIsImV4cGlyeSI6MTc4OTA5MzU2Mn0="
+        />
+        <meta
+          httpEquiv="origin-trial"
+          content="A5pLccd3+DBvsAJK4qQsCeO0JYYH6byAGRIs9HSZt1L5aN6VxBxemVEVKDLMb6MUgVQKo0h45pK58LUHChNQeAkAAAB0eyJvcmlnaW4iOiJodHRwczovL2tvaW1zdXJhaS5jb206NDQzIiwiZmVhdHVyZSI6IldlYk1DUCIsImV4cGlyeSI6MTc5NDg3MzYwMCwiaXNTdWJkb21haW4iOnRydWUsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="
+        />
         {/* og:locale:alternate 依規格要「一語系一個標籤」重複出現，但 head() 的 meta 會被依
             property 去重（官方文件：same name or property will be overridden by the last
             occurrence），只留得下一個 → 等於錯誤宣告「只有某一種語言」。這裡直接寫進 document

@@ -211,8 +211,16 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
           </div>
         )}
 
+        {/* WebMCP 宣告式工具：這張表單「載入即在 DOM 裡」，跟藏在 modal 的訂閱表單不同，
+            瀏覽器內的 agent 與 Lighthouse 的 Agentic Browsing 稽核才掃得到。
+            注意：下面的欄位仍受 commentMode 控制，未展開時只有表單本身帶標註、參數還看不到。 */}
         {allowComments && (
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="comment-form">
+        <form
+          onSubmit={(e) => { void handleSubmit(e); }}
+          className="comment-form"
+          toolname="post_comment"
+          tooldescription="在這篇文章底下留言，可具名或匿名"
+        >
           {/* ── 模式切換 ── */}
           <div className="comment-mode-switch">
             {isLoggedIn ? (
@@ -281,6 +289,8 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
               <div className="field-group">
                 <input
                   type="text"
+                  name="author"
+                  toolparamdescription="留言者顯示名稱（必填）"
                   placeholder={t('comments.namePlaceholder')}
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
@@ -291,6 +301,8 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
               <div className="field-group">
                 <input
                   type="email"
+                  name="email"
+                  toolparamdescription="聯絡用 email（選填，不公開）"
                   placeholder={t('comments.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -300,6 +312,8 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
               <div className="field-group">
                 <input
                   type="url"
+                  name="website"
+                  toolparamdescription="個人網站網址（選填）"
                   placeholder={t('comments.websitePlaceholder')}
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
@@ -320,6 +334,8 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
                   </div>
                 )}
                 <textarea
+                  name="content"
+                  toolparamdescription="留言內容（必填）"
                   placeholder={t('comments.contentPlaceholder')}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
