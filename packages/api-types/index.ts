@@ -162,6 +162,12 @@ export type AnimeRow = {
 	last_watched_at: string | null,
 };
 
+/**  `GET /api/auth/providers` 回應。兩個 provider 一律都在，用 enabled 區分。 */
+export type AuthProvidersResponse = {
+	google: OAuthProviderInfo,
+	github: OAuthProviderInfo,
+};
+
 export type BlacklistResponse = {
 	blacklist: BlacklistRow[],
 };
@@ -313,6 +319,15 @@ export type KeywordFilterRow = {
 
 export type KeywordFiltersResponse = {
 	filters: KeywordFilterRow[],
+};
+
+/**
+ *  單一 OAuth provider 的公開設定。clientId 是公開值（前端組授權 URL 要用），
+ *  沒設定時是空字串而不是缺欄位——所以 enabled 才是「這個 provider 能不能用」的判準。
+ */
+export type OAuthProviderInfo = {
+	clientId: string,
+	enabled: boolean,
 };
 
 export type Pagination = {

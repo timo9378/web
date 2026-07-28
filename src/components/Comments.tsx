@@ -258,7 +258,7 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
                       <button type="button" className="back-btn" onClick={() => setCommentMode('initial')}>← {t('comments.back')}</button>
                     </div>
                     <div className="login-providers">
-                      {providers.github?.enabled && (
+                      {providers.github.enabled && (
                         <button type="button" className="provider-btn" onClick={() => {
                           sessionStorage.setItem('oauth_return_to', window.location.pathname);
                           window.location.href = getGitHubAuthUrl(`${window.location.origin}/auth/callback`) + '&state=github';
@@ -266,7 +266,7 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
                           <FaGithub /> <span>GitHub</span>
                         </button>
                       )}
-                      {providers.google?.enabled && (
+                      {providers.google.enabled && (
                         <button type="button" className="provider-btn" onClick={() => {
                           sessionStorage.setItem('oauth_return_to', window.location.pathname);
                           window.location.href = getGoogleAuthUrl(`${window.location.origin}/auth/callback`) + '&state=google';

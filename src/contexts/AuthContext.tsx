@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { AuthContext, TOKEN_KEY, type User, type AuthProviders } from './auth';
+import { AuthContext, TOKEN_KEY, type User, type AuthProvidersResponse } from './auth';
 
 // 本檔只 export AuthProvider 元件；型別／context／useAuth 在 ./auth。
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [providers, setProviders] = useState<AuthProviders>({ google: { enabled: false }, github: { enabled: false } });
+  const [providers, setProviders] = useState<AuthProvidersResponse>({ google: { enabled: false, clientId: '' }, github: { enabled: false, clientId: '' } });
 
   // 載入 OAuth 提供者設定
   useEffect(() => {
     const ac = new AbortController();
     fetch('/api/auth/providers', { signal: ac.signal })
-      .then((r) => r.json() as Promise<AuthProviders>)
+      .then((r) => r.json() as Promise<AuthProvidersResponse>)
       .then(setProviders)
       .catch(() => { /* 提供者設定載入失敗、或 unmount 中止 — 皆靜默 */ });
     return () => { ac.abort(); };
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 產生 OAuth 授權 URL
   const getGoogleAuthUrl = useCallback((redirectUri: string) => {
     const params = new URLSearchParams({
-      client_id: providers.google.clientId ?? '',
+      client_id: providers.google.clientId,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: 'openid email profile',
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getGitHubAuthUrl = useCallback((redirectUri: string) => {
     const params = new URLSearchParams({
-      client_id: providers.github.clientId ?? '',
+      client_id: providers.github.clientId,
       redirect_uri: redirectUri,
       scope: 'read:user user:email',
     });

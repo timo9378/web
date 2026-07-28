@@ -215,7 +215,7 @@ function Header(_props: HeaderProps) {
                       <span className="user-dropdown-name">{t('user.signInLabel')}</span>
                     </div>
                     <div className="user-dropdown-divider" />
-                    {providers.github?.enabled && (
+                    {providers.github.enabled && (
                       <button className="user-dropdown-item" onClick={() => {
                         sessionStorage.setItem('oauth_return_to', location.pathname);
                         const redirectUri = `${window.location.origin}/auth/callback`;
@@ -224,7 +224,7 @@ function Header(_props: HeaderProps) {
                         <FaGithub /> {t('user.signInWithGithub')}
                       </button>
                     )}
-                    {providers.google?.enabled && (
+                    {providers.google.enabled && (
                       <button className="user-dropdown-item" onClick={() => {
                         sessionStorage.setItem('oauth_return_to', location.pathname);
                         const redirectUri = `${window.location.origin}/auth/callback`;
@@ -233,7 +233,7 @@ function Header(_props: HeaderProps) {
                         <FaGoogle /> {t('user.signInWithGoogle')}
                       </button>
                     )}
-                    {!providers.github?.enabled && !providers.google?.enabled && (
+                    {!providers.github.enabled && !providers.google.enabled && (
                       <div className="user-dropdown-item disabled">{t('user.notConfigured')}</div>
                     )}
                   </>

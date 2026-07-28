@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::{
@@ -95,17 +95,36 @@ pub async fn login(State(state): State<AppState>, Json(body): Json<LoginBody>) -
     .into_response())
 }
 
+/// 單一 OAuth provider 的公開設定。clientId 是公開值（前端組授權 URL 要用），
+/// 沒設定時是空字串而不是缺欄位——所以 enabled 才是「這個 provider 能不能用」的判準。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct OAuthProviderInfo {
+    #[serde(rename = "clientId")]
+    pub client_id: String,
+    pub enabled: bool,
+}
+
+/// `GET /api/auth/providers` 回應。兩個 provider 一律都在，用 enabled 區分。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct AuthProvidersResponse {
+    pub google: OAuthProviderInfo,
+    pub github: OAuthProviderInfo,
+}
+
 /// `GET /api/auth/providers` —— 回前端 OAuth 設定（clientId 為公開值；enabled = clientId 非空）。
 /// clientId 由 env `GOOGLE_CLIENT_ID`/`GITHUB_CLIENT_ID` 提供（與 Express 同源）。
+/// 原本回 `Json<serde_json::Value>`（json! 手捏）→ specta 生不出型別，前端只好手寫一份
+/// 對應的 interface，而手寫的那份把 clientId 標成可選、把 provider 標成可能缺席，
+/// 都與後端實際行為不符。改成 struct 之後前端直接吃生成型別。
 #[utoipa::path(get, path = "/api/auth/providers", tag = "auth",
-    responses((status = 200, description = "可用 OAuth provider 清單（動態 JSON）")))]
-pub async fn providers() -> Json<serde_json::Value> {
+    responses((status = 200, description = "可用 OAuth provider 清單", body = AuthProvidersResponse)))]
+pub async fn providers() -> Json<AuthProvidersResponse> {
     let g = std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default();
     let gh = std::env::var("GITHUB_CLIENT_ID").unwrap_or_default();
-    Json(json!({
-        "google": { "clientId": g, "enabled": !g.is_empty() },
-        "github": { "clientId": gh, "enabled": !gh.is_empty() },
-    }))
+    Json(AuthProvidersResponse {
+        google: OAuthProviderInfo { enabled: !g.is_empty(), client_id: g },
+        github: OAuthProviderInfo { enabled: !gh.is_empty(), client_id: gh },
+    })
 }
 
 /// `POST /api/auth/logout` —— JWT 無狀態，前端清 token 即可；這裡僅回 ok。

@@ -7,6 +7,7 @@ use koimsurai_web_backend::handlers::admin::{
     AdminPostsResponse, AdminTagRow, AdminUserRow, AdminUsersResponse, BlacklistResponse, BlacklistRow,
     CommentCounts, KeywordFilterRow, KeywordFiltersResponse,
 };
+use koimsurai_web_backend::handlers::auth::{AuthProvidersResponse, OAuthProviderInfo};
 use koimsurai_web_backend::handlers::books::{BookDetailResponse, BookRow, BooksListResponse};
 use koimsurai_web_backend::handlers::home::{
     DigestComment, DigestPost, DigestResponse, DigestThought, DigestTimeline,
@@ -29,6 +30,8 @@ use specta_typescript::Typescript;
 
 fn main() {
     let types = specta::Types::default()
+        .register::<OAuthProviderInfo>()
+        .register::<AuthProvidersResponse>()
         .register::<AdminTagRow>()
         .register::<AdminCategoryRow>()
         .register::<AdminUserRow>()
