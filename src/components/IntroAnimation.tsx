@@ -112,9 +112,10 @@ const IntroAnimation = ({
   }, [ending]);
 
   useEffect(() => {
+    // matchMedia 全瀏覽器都有，?. 是死碼；typeof window 那道是 SSR 守衛，不同回事，保留。
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
-      !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     let raf = 0;

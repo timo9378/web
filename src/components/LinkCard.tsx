@@ -197,6 +197,9 @@ export const LinkCard = ({ href }: { href: string }) => {
     return (
       <div className="link-card link-card-spotify">
         <iframe
+          // 螢幕閱讀器只靠 title 得知 iframe 內容是什麼；沒有的話只會念「框架」。
+          // Lighthouse 的 frame-title 稽核就是在檢查這個。
+          title={`Spotify 播放器：${meta.id ?? href}`}
           src={meta.embedUrl + '?theme=0'}
           width="100%"
           height="152"
@@ -216,6 +219,7 @@ export const LinkCard = ({ href }: { href: string }) => {
       <div className="link-card link-card-bilibili">
         <div className="link-card-embed-wrapper">
           <iframe
+            title={`Bilibili 影片：${meta.bvid}`}
             src={`https://player.bilibili.com/player.html?bvid=${meta.bvid}&high_quality=1&danmaku=0`}
             scrolling="no"
             frameBorder="0"

@@ -20,7 +20,8 @@ function send(m: Metric) {
   // sendBeacon：頁面卸載期也保證送達（LCP/CLS 在 pagehide 才定稿）。
   // Blob 帶 content-type 讓 axum 的 Json extractor 收得進。
   const blob = new Blob([body], { type: 'application/json' });
-  if (!navigator.sendBeacon?.('/api/vitals', blob)) {
+  // sendBeacon 全瀏覽器都有，?. 是死碼；但回傳 false（佇列滿/payload 過大）要退 fetch，! 保留。
+  if (!navigator.sendBeacon('/api/vitals', blob)) {
     void fetch('/api/vitals', {
       method: 'POST',
       body,

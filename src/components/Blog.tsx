@@ -138,9 +138,13 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
     e.stopPropagation();
     const shareUrl = `${window.location.origin}/blog/${post.id}`;
     const shareData = { title: post.title, url: shareUrl };
-    if (navigator.share) {
+    // lib.dom 把 Web Share API 宣告成必然存在，桌面 Firefox 實際沒有 → 收窄成可選型別，
+    // 讓守衛在型別上也成立（否則 no-unnecessary-condition 會誤判它多餘）。
+    // 必須留在 nav 上呼叫：Navigator 不是 [Global] 介面，解構後呼叫會 Illegal invocation。
+    const nav: Partial<Navigator> = navigator;
+    if (nav.share) {
       try {
-        await navigator.share(shareData);
+        await nav.share(shareData);
       } catch (err) {
         // 使用者取消分享，不做處理
         if (!(err instanceof Error && err.name === 'AbortError')) {

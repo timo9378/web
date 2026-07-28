@@ -737,7 +737,10 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
   useEffect(() => {
     if (inline || isMermaid || !match) return;
     let cancelled = false;
-    const idle = (cb: () => void) => (window.requestIdleCallback ? window.requestIdleCallback(cb, { timeout: 1500 }) : setTimeout(cb, 80));
+    // lib.dom 宣告 requestIdleCallback 必存在，舊版 Safari 實際沒有 → 可選型別讓守衛誠實。
+    // Window 是 [Global] 介面，解構後直接呼叫不會 Illegal invocation（同 AppShell 手法）。
+    const ric = (window as Partial<Window>).requestIdleCallback;
+    const idle = (cb: () => void) => (ric ? ric(cb, { timeout: 1500 }) : setTimeout(cb, 80));
     idle(() => {
       highlightCode(codeText, lang).then((html) => {
         if (!cancelled) setHighlighted(html);
@@ -1078,7 +1081,8 @@ const SeriesNav = React.memo(({ seriesName, currentId }: { seriesName: string; c
     <aside className="series-nav" aria-label={`系列文：${seriesName}`}>
       <header className="series-nav-header">
         <span className="series-nav-label">{t('blog.seriesLabel')}</span>
-        <h4 className="series-nav-name">{seriesName}</h4>
+        {/* 同上：這塊 aside 排在文章 h1 之後，用 h4 會跳級 */}
+        <h2 className="series-nav-name">{seriesName}</h2>
         <span className="series-nav-progress">
           共 {posts.length} 篇 · 你正在讀第 {currentIdx >= 0 ? currentIdx + 1 : '?'} 篇
         </span>
@@ -1910,8 +1914,10 @@ function BlogPost() {
   };
 
   const handleNativeShare = () => {
-    if (navigator.share) {
-      void navigator.share({ title: shareTitle, url: shareUrl }).catch(() => { /* ignore */ });
+    // 同 Blog.tsx：lib.dom 宣告 share 必存在，桌面 Firefox 沒有 → 用可選型別讓守衛誠實。
+    const nav: Partial<Navigator> = navigator;
+    if (nav.share) {
+      void nav.share({ title: shareTitle, url: shareUrl }).catch(() => { /* ignore */ });
     } else {
       handleCopyLink();
     }
@@ -2139,7 +2145,10 @@ function BlogPost() {
               {post.excerpt && (
                 <div className="post-ai-summary-inline">
                   <div className="ai-summary-top-row">
-                    <h4>🔑 {t('blog.keyInsights')}</h4>
+                    {/* h2 而非 h4：它緊接在文章 h1 之後，跳級到 h4 會讓輔助科技讀到
+                        「缺了兩層」的結構（Lighthouse heading-order 稽核會判定失敗）。
+                        字級由 .ai-summary-top-row h2 控制，外觀不變。 */}
+                    <h2>🔑 {t('blog.keyInsights')}</h2>
                     <span className="ai-badge">✦ AI·GEN</span>
                   </div>
                   <p>{post.excerpt}</p>
