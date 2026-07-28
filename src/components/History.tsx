@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import InfoPage from './InfoPage';
 import { LinkCard } from './LinkCard';
+import { pickByLang } from '../lib/pickByLang';
 
 const SITE_BIRTH = new Date('2025-04-01T00:00:00+08:00');
 
@@ -219,7 +220,7 @@ const HISTORY_EXTRAS = {
 function useUptime(lang: string) {
   const [text, setText] = useState('');
   useEffect(() => {
-    const units = UPTIME_UNITS[lang as keyof typeof UPTIME_UNITS] ?? UPTIME_UNITS['zh-TW'];
+    const units = pickByLang(UPTIME_UNITS, lang, UPTIME_UNITS['zh-TW']);
     const fmt = () => {
       const now = new Date();
       const diffMs = now.getTime() - SITE_BIRTH.getTime();
@@ -243,9 +244,9 @@ function History() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
   const uptime = useUptime(lang);
-  const extras = HISTORY_EXTRAS[lang as keyof typeof HISTORY_EXTRAS] ?? HISTORY_EXTRAS['zh-TW'];
-  const uptimeUnits = UPTIME_UNITS[lang as keyof typeof UPTIME_UNITS] ?? UPTIME_UNITS['zh-TW'];
-  const texts = MILESTONE_TEXTS[lang as keyof typeof MILESTONE_TEXTS] ?? MILESTONE_TEXTS['zh-TW'];
+  const extras = pickByLang(HISTORY_EXTRAS, lang, HISTORY_EXTRAS['zh-TW']);
+  const uptimeUnits = pickByLang(UPTIME_UNITS, lang, UPTIME_UNITS['zh-TW']);
+  const texts = pickByLang(MILESTONE_TEXTS, lang, MILESTONE_TEXTS['zh-TW']);
   const milestones = MILESTONE_META.map((m, i) => ({ ...m, text: texts[i] }));
 
   return (

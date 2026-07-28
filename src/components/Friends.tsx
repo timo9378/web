@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import InfoPage from './InfoPage';
+import { pickByLang } from '../lib/pickByLang';
 
 interface Friend { name: string; url: string; avatar?: string; tagline?: string }
 interface FailedSite { name: string; url: string }
@@ -241,7 +242,7 @@ const FORM_BY_LANG: Record<string, Record<string, string>> = {
 function ApplicationForm({ onClose }: { onClose: () => void }) {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const f = FORM_BY_LANG[lang] || FORM_BY_LANG['zh-TW'];
+  const f = pickByLang(FORM_BY_LANG, lang, FORM_BY_LANG['zh-TW']);
   const [form, setForm] = useState<FriendForm>({
     name: '', site: '', url: '', avatar: '', email: '', tagline: '',
   });
@@ -362,7 +363,7 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
 function Friends() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const c = FRIENDS_BY_LANG[lang] || FRIENDS_BY_LANG['zh-TW'];
+  const c = pickByLang(FRIENDS_BY_LANG, lang, FRIENDS_BY_LANG['zh-TW']);
   const [showForm, setShowForm] = useState(false);
 
   return (

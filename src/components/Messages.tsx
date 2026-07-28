@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import InfoPage from './InfoPage';
+import { pickByLang } from '../lib/pickByLang';
 
 const MESSAGES_BY_LANG: Record<string, Record<string, string>> = {
   'zh-TW': {
@@ -112,7 +113,7 @@ const MESSAGES_BY_LANG: Record<string, Record<string, string>> = {
 function Messages() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const c = MESSAGES_BY_LANG[lang] || MESSAGES_BY_LANG['zh-TW'];
+  const c = pickByLang(MESSAGES_BY_LANG, lang, MESSAGES_BY_LANG['zh-TW']);
 
   return (
     <InfoPage

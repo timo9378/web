@@ -4,6 +4,7 @@ interface Experience { title: string; role: string; groups?: ExpGroup[]; bullets
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import './WorkExperience.css';
+import { pickByLang } from '../lib/pickByLang';
 
 // 期間 + tags 穩定（技術名英文）, 其餘隨語系
 const PERIODS = ['2025/7 — Now', '2024/9 — Now', '2024/10 — 2025/6'];
@@ -69,7 +70,7 @@ const EXPERIENCES_BY_LANG: Record<string, Experience[]> = {
 const WorkExperience = () => {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const list = (EXPERIENCES_BY_LANG[lang] || EXPERIENCES_BY_LANG['zh-TW']);
+  const list = pickByLang(EXPERIENCES_BY_LANG, lang, EXPERIENCES_BY_LANG['zh-TW']);
   const EXPERIENCES = list.map((e, i) => ({ ...e, period: PERIODS[i], tags: TAGS[i] }));
   return (
   <section id="work-experience" className="home-section work-v2">

@@ -3,6 +3,7 @@ interface QuickFact { label: string; value: string }
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import './AboutMe.css';
+import { pickByLang } from '../lib/pickByLang';
 
 // Quick Facts label 是英文(不翻),value 隨語系變
 const QUICK_FACTS_BY_LANG: Record<string, QuickFact[]> = {
@@ -79,8 +80,8 @@ const PARAGRAPHS_BY_LANG: Record<string, string[]> = {
 const AboutMe = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const QUICK_FACTS = QUICK_FACTS_BY_LANG[lang] || QUICK_FACTS_BY_LANG['zh-TW'];
-  const PARAGRAPHS = PARAGRAPHS_BY_LANG[lang] || PARAGRAPHS_BY_LANG['zh-TW'];
+  const QUICK_FACTS = pickByLang(QUICK_FACTS_BY_LANG, lang, QUICK_FACTS_BY_LANG['zh-TW']);
+  const PARAGRAPHS = pickByLang(PARAGRAPHS_BY_LANG, lang, PARAGRAPHS_BY_LANG['zh-TW']);
   return (
   <section id="about-me" className="home-section about-me-v2">
     <div className="home-section-eyebrow">

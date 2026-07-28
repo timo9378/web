@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FaUniversity, FaGuitar, FaCamera } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import './SchoolClubs.css';
+import { pickByLang } from '../lib/pickByLang';
 
 interface ClubEntry {
   name: string;
@@ -45,7 +46,7 @@ const CLUBS_BY_LANG: Record<string, ClubEntry[]> = {
 function SchoolClubs() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const CLUBS = (CLUBS_BY_LANG[lang] || CLUBS_BY_LANG['zh-TW']).map((c, i) => ({
+  const CLUBS = pickByLang(CLUBS_BY_LANG, lang, CLUBS_BY_LANG['zh-TW']).map((c, i) => ({
     ...c, icon: CLUB_ICONS[i], period: CLUB_PERIODS[i],
   }));
   const [openIndex, setOpenIndex] = useState<number | null>(null);

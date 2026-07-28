@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { YEAR_LABELS, JOURNEY_UI, MILESTONE_STATIC, MILESTONES_BY_LANG } from '../data/journeyData';
 import './JourneyTimeline.css';
+import { pickByLang } from '../lib/pickByLang';
 
 const reveal = {
   initial: { opacity: 0, y: 18 },
@@ -21,9 +22,9 @@ const DEDUP_WITH_EXPERIENCE = new Set([4, 5, 7]);
 function JourneyTimeline() {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const ylabels = YEAR_LABELS[lang] || YEAR_LABELS['zh-TW'];
-  const ui = JOURNEY_UI[lang] || JOURNEY_UI['zh-TW'];
-  const locale = MILESTONES_BY_LANG[lang] || MILESTONES_BY_LANG['zh-TW'];
+  const ylabels = pickByLang(YEAR_LABELS, lang, YEAR_LABELS['zh-TW']);
+  const ui = pickByLang(JOURNEY_UI, lang, JOURNEY_UI['zh-TW']);
+  const locale = pickByLang(MILESTONES_BY_LANG, lang, MILESTONES_BY_LANG['zh-TW']);
   const milestones = MILESTONE_STATIC.map((s, i) => ({
     ...s,
     year: s.year === 'NOW' ? ylabels.NOW : s.year === 'FUTURE' ? ylabels.FUTURE : s.year,

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/auth';
 import FavoritesEditor from './FavoritesEditor';
 import './Watch.css';
+import { pickByLang } from '../lib/pickByLang';
 
 /* ──────────────────────────────────────────────────────────────
    在看什麼 — 編輯風「品味展示」
@@ -264,7 +265,7 @@ function Watch() {
     .slice(0, 14);
   const recentGrouped = groupByWeek(recentAll);
 
-  const epTemplate = EP_LABEL[lang] || EP_LABEL['zh-TW'];
+  const epTemplate = pickByLang(EP_LABEL, lang, EP_LABEL['zh-TW']);
   const renderRecentRow = (r: WatchEntry, prev?: WatchEntry): ReactElement => {
     const showDate = !prev || prev.date !== r.date;
     const Inner: ElementType = r.externalUrl ? 'a' : 'div';
@@ -305,7 +306,7 @@ function Watch() {
     );
   };
 
-  const serviceLabel = SERVICE_LABEL[lang] || SERVICE_LABEL['zh-TW'];
+  const serviceLabel = pickByLang(SERVICE_LABEL, lang, SERVICE_LABEL['zh-TW']);
   const hero = liveNow
     ? {
         isLive: true,
