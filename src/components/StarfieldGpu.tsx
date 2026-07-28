@@ -79,6 +79,9 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       return () => {
         window.removeEventListener('resize', onResize);
         document.removeEventListener('visibilitychange', onVis);
+        // terminate() 已經讓 worker 連同監聽器一起消失，但明寫出來才對稱、也不必讓
+        // 讀者去推敲 addEventListener 的對應在哪。
+        worker.removeEventListener('message', onMsg);
         worker.terminate();
       };
     }

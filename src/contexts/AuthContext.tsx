@@ -52,21 +52,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 載入 OAuth 提供者設定
   useEffect(() => {
-    fetch('/api/auth/providers')
+    const ac = new AbortController();
+    fetch('/api/auth/providers', { signal: ac.signal })
       .then((r) => r.json() as Promise<AuthProviders>)
       .then(setProviders)
-      .catch(() => { /* 提供者設定載入失敗時靜默 */ });
+      .catch(() => { /* 提供者設定載入失敗、或 unmount 中止 — 皆靜默 */ });
+    return () => { ac.abort(); };
   }, []);
 
   // 恢復 session
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) { setLoading(false); return; }
-    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+    const ac = new AbortController();
+    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })
       .then((r) => { if (!r.ok) throw new Error(); return r.json() as Promise<User>; })
       .then((u) => setUser(u))
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
-      .finally(() => setLoading(false));
+      // 關鍵：中止不等於驗證失敗。少了這道守衛，unmount 會把使用者的 token 洗掉＝被登出。
+      .catch(() => { if (!ac.signal.aborted) localStorage.removeItem(TOKEN_KEY); })
+      .finally(() => { if (!ac.signal.aborted) setLoading(false); });
+    return () => { ac.abort(); };
   }, []);
 
   const getToken = useCallback(() => localStorage.getItem(TOKEN_KEY), []);

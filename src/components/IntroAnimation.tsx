@@ -122,6 +122,13 @@ const IntroAnimation = ({
         : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
+    // 統一走 later()：排程與登記綁在一起，不會有漏 push 的路徑
+    // （也讓 web-api-no-leaked-timeout 看得到 setTimeout 的回傳有被接住）。
+    const later = (fn: () => void, ms: number) => {
+      const id = setTimeout(fn, ms);
+      timers.push(id);
+    };
+    const clearTimers = () => { timers.forEach((id) => { clearTimeout(id); }); };
     let raf = 0;
     let explosionFired = false;
     let completeFired = false;
@@ -146,33 +153,29 @@ const IntroAnimation = ({
     if (skipped || prefersReducedMotion) {
       firePreReveal();
       fireExplosion();
-      timers.push(
-        setTimeout(() => {
-          setEnding(true);
-          fireComplete();
-        }, 80)
-      );
-      timers.push(setTimeout(() => setDone(true), 380));
-      return () => timers.forEach(clearTimeout);
-    }
-
-    timers.push(setTimeout(firePreReveal, TIMINGS.preReveal));
-    timers.push(setTimeout(fireExplosion, TIMINGS.explosion));
-    timers.push(
-      setTimeout(() => {
+      later(() => {
         setEnding(true);
         fireComplete();
-      }, TIMINGS.endStart)
-    );
-    timers.push(setTimeout(() => setDone(true), TIMINGS.unmount));
+      }, 80);
+      later(() => setDone(true), 380);
+      return clearTimers;
+    }
+
+    later(firePreReveal, TIMINGS.preReveal);
+    later(fireExplosion, TIMINGS.explosion);
+    later(() => {
+      setEnding(true);
+      fireComplete();
+    }, TIMINGS.endStart);
+    later(() => setDone(true), TIMINGS.unmount);
 
     const canvas = canvasRef.current;
     if (!canvas) {
-      return () => timers.forEach(clearTimeout);
+      return clearTimers;
     }
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      return () => timers.forEach(clearTimeout);
+      return clearTimers;
     }
 
     let width = window.innerWidth;
@@ -334,7 +337,7 @@ const IntroAnimation = ({
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
-      timers.forEach(clearTimeout);
+      clearTimers();
     };
   }, [skipped]);
 

@@ -72,7 +72,7 @@ const MeteorShower = () => {
 
     return () => {
       clearInterval(interval);
-      timeouts.forEach(clearTimeout);
+      timeouts.forEach((id) => { clearTimeout(id); });
       timeouts.clear();
       // 清理所有現存的流星
       if (containerRef.current) {

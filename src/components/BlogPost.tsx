@@ -740,13 +740,25 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
     // lib.dom 宣告 requestIdleCallback 必存在，舊版 Safari 實際沒有 → 可選型別讓守衛誠實。
     // Window 是 [Global] 介面，解構後直接呼叫不會 Illegal invocation（同 AppShell 手法）。
     const ric = (window as Partial<Window>).requestIdleCallback;
-    const idle = (cb: () => void) => (ric ? ric(cb, { timeout: 1500 }) : setTimeout(cb, 80));
-    idle(() => {
-      highlightCode(codeText, lang).then((html) => {
+    // 排程 handle 要接住：只靠 cancelled 旗標的話，unmount 後 callback 仍會跑完
+    // 整個 highlightCode（shiki 反白不便宜），只是把結果丟掉。取消掉才是真的省。
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (ric) {
+      idleId = ric(() => { void run(); }, { timeout: 1500 });
+    } else {
+      timeoutId = setTimeout(() => { void run(); }, 80);
+    }
+    function run() {
+      return highlightCode(codeText, lang).then((html) => {
         if (!cancelled) setHighlighted(html);
       }).catch(() => { /* fallback 留 plain pre */ });
-    });
-    return () => { cancelled = true; };
+    }
+    return () => {
+      cancelled = true;
+      if (idleId !== undefined) (window as Partial<Window>).cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
   }, [codeText, lang, inline, isMermaid, match]);
 
   if (!inline && isMermaid) {
@@ -1802,7 +1814,11 @@ function BlogPost() {
   useEffect(() => {
     if (!postData?.id) return;
     setLiked(false);
-    fetch('/api/posts/' + postData.id + '/view', { method: 'POST' }).catch(console.error);
+    // 刻意不用 AbortController：瀏覽數是 fire-and-forget，使用者讀完隨即跳頁正是常態，
+    // 中止等於把要記的那一筆丟掉。sendBeacon 就是為這種卸載期送出設計的，
+    // 後端 post_view 只吃 Path(id)、不讀 body，空 POST 即可。
+    // 佇列滿時會回 false，那一筆就放掉——瀏覽數不值得為此再開一條 fetch。
+    navigator.sendBeacon('/api/posts/' + postData.id + '/view');
   }, [postData?.id]);
 
   /* 註：原本這裡有「preview commit 過來自動 scroll 到使用者讀到那段」的邏輯，

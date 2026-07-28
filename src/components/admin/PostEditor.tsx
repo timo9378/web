@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminCategoriesQueryOptions, adminTagsQueryOptions, adminPostDetailQueryOptions } from '../../adminData';
 import { useForm } from 'react-hook-form';
@@ -148,6 +148,16 @@ export default function PostEditor() {
   const [autosaveStatus, setAutosaveStatus] = useState(''); // '', 'saved', 'restoring'
   const submitLockRef = useRef(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 狀態字（'saved'/'restoring'）1.8s 後自己消失。用 ref 追蹤才能在 unmount 時清掉，
+  // 也避免連續存檔時多個計時器互相搶著把狀態清空。
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // useCallback：只碰 ref 與 setState（兩者本身穩定），空依賴即恆等，
+  // 才能誠實地列進下面 effect 的依賴陣列而不會每次 render 重跑 effect。
+  const flashStatus = useCallback((s: string) => {
+    setAutosaveStatus(s);
+    if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    statusTimerRef.current = setTimeout(() => { setAutosaveStatus(''); }, 1800);
+  }, []);
   const autosaveKey = `postEditor:autosave:${id ?? 'new'}`;
 
   const form = useForm({
@@ -206,13 +216,18 @@ export default function PostEditor() {
           const hasContent = (values.title ?? '').trim() || (values.content ?? '').trim();
           if (!hasContent) return;
           localStorage.setItem(autosaveKey, JSON.stringify({ values, savedAt: Date.now() }));
-          setAutosaveStatus('saved');
-          setTimeout(() => setAutosaveStatus(''), 1800);
+          flashStatus('saved');
         } catch { /* quota exceeded 等 — 忽略 */ }
       }, 1200);
     });
-    return () => sub.unsubscribe?.();
-  }, [autosaveKey, form]);
+    // 除了退訂，兩個計時器也要收：debounce 中途 unmount 會留下 1.2s 的排程，
+    // 狀態字的 1.8s 同理。
+    return () => {
+      sub.unsubscribe?.();
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    };
+  }, [autosaveKey, form, flashStatus]);
 
   // ── 還原草稿：新文章載入時若有備份且尚未填內容，提示還原 ──
   useEffect(() => {
@@ -235,14 +250,13 @@ export default function PostEditor() {
           label: '還原',
           onClick: () => {
             form.reset(values);
-            setAutosaveStatus('restoring');
-            setTimeout(() => setAutosaveStatus(''), 1800);
+            flashStatus('restoring');
           },
         },
         duration: 8000,
       });
     } catch { /* 損毀的 JSON 等 — 忽略 */ }
-  }, [autosaveKey, form, id]);
+  }, [autosaveKey, form, id, flashStatus]);
 
   // ── Zen 模式：F11 / Esc 切換 ──
   useEffect(() => {

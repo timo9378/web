@@ -35,7 +35,8 @@ export default function PollBlock({ id, question, options = [], showTotal = true
       setMyVote(prev);
       setRevealed(true);
     };
-    fetch(`/api/polls/${encodeURIComponent(id)}`)
+    const ac = new AbortController();
+    fetch(`/api/polls/${encodeURIComponent(id)}`, { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<Counts>) : null))
       .then((d) => {
         if (cancelled) return;
@@ -43,7 +44,8 @@ export default function PollBlock({ id, question, options = [], showTotal = true
         applyPrev();
       })
       .catch(applyPrev); // 抓票數失敗仍要標出「已投過」，且題目與選項照樣顯示
-    return () => { cancelled = true; };
+                         // （中止時 applyPrev 會被 cancelled 擋掉，不會亂動狀態）
+    return () => { cancelled = true; ac.abort(); };
   }, [id]);
 
   const vote = useCallback((optKey: string) => {
