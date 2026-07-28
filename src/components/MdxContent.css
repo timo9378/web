@@ -951,3 +951,24 @@
 }
 .mdx-poll-peek:hover, .mdx-poll-peek:focus-visible { background: transparent; box-shadow: none; color: #c4b5fd; outline: none; }
 .mdx-poll-voted { margin-left: auto; color: rgba(255, 255, 255, 0.35); }
+
+/* ⚠ index.css 的 @layer base 有全站 `button:hover, button:focus { background:#6a4acf;
+   border-color:#6a4acf; box-shadow:0 0 12px 2px }`（specificity 0,1,1）。本檔這顆是
+   <button>，光靠 .class（0,1,0）壓不過互動態 → 必須用 .class:hover/:focus（0,2,0）。 */
+.annot:hover,
+.annot:focus,
+.annot:focus-visible {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+/* .spoiler:hover 只換了背景，全域那條的紫框與紫光暈仍會漏進來 */
+.spoiler:hover,
+.spoiler:focus,
+.spoiler:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+.spoiler:focus {
+  background: rgba(255, 255, 255, 0.1);
+}

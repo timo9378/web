@@ -79,6 +79,16 @@ export function Annot({ children, note }: { children?: ReactNode; note?: ReactNo
     setPos({ left, top: below ? last.bottom + 9 : first.top - 9, below });
   }, [show]);
 
+  // 小卡是 portal 到 body 的 fixed 定位：捲動時文字走了、卡片會留在原地
+  // （點擊開啟後按鈕仍保有焦點 → onFocus 讓它一直是 show，於是卡在畫面上）。
+  // 捲動就收起來，比追著重算位置單純，也符合預期。
+  useEffect(() => {
+    if (!show) return;
+    const close = () => { setOpen(false); setHover(false); };
+    window.addEventListener('scroll', close, { passive: true });
+    return () => { window.removeEventListener('scroll', close); };
+  }, [show]);
+
   return (
     <>
       {/* 用真的 <button>：原本是 span + role="note" + tabIndex={0} + 手刻 onKeyDown，

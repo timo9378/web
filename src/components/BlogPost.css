@@ -3113,3 +3113,14 @@ a.series-nav-title:hover {
   max-width: 100%;
   cursor: zoom-in;
 }
+
+/* ⚠ index.css 的 @layer base 有全站 `button:hover, button:focus { background:#6a4acf;
+   border-color:#6a4acf; box-shadow:0 0 12px 2px }`（specificity 0,1,1）。本檔這顆是
+   <button>，光靠 .class（0,1,0）壓不過互動態 → 必須用 .class:hover/:focus（0,2,0）。 */
+.blog-image-zoom:hover,
+.blog-image-zoom:focus,
+.blog-image-zoom:focus-visible {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}

@@ -26,6 +26,18 @@
   transition: opacity 300ms ease-out;
 }
 
+/* ⚠ index.css 的 @layer base 有全站 `button:hover, button:focus { background:#6a4acf;
+   border-color:#6a4acf; box-shadow:0 0 12px 2px }`（specificity 0,1,1）。本檔這顆是
+   <button>，光靠 .class（0,1,0）壓不過互動態 → 必須用 .class:hover/:focus（0,2,0）。 */
+.intro-stage:hover,
+.intro-stage:focus,
+.intro-stage:focus-visible {
+  background:
+    radial-gradient(ellipse at center, #050620 0%, #02020a 70%);
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .intro-stage--ending {
   opacity: 0;
   pointer-events: none;

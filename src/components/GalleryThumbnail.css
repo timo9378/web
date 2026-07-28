@@ -22,7 +22,14 @@
   height: 100%;
 }
 
+/* 這是 <button>（見 GalleryThumbnail：原本是可點的 div，鍵盤按不到）→ 歸零預設樣式 */
 .gallery-thumbnail-item {
+  appearance: none;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  display: block;
   position: relative;
   width: 90px;
   height: 90px;
@@ -80,4 +87,18 @@
     width: 75px;
     height: 75px;
   }
+}
+
+/* ⚠ index.css 的 @layer base 有全站 `button:hover, button:focus { background:#6a4acf;
+   border-color:#6a4acf; box-shadow:0 0 12px 2px }`（specificity 0,1,1）。本檔這顆是
+   <button>，光靠 .class（0,1,0）壓不過互動態 → 必須用 .class:hover/:focus（0,2,0）。 */
+.gallery-thumbnail-item:hover,
+.gallery-thumbnail-item:focus,
+.gallery-thumbnail-item:focus-visible {
+  background: none;
+  border-color: transparent;
+}
+/* 原本就有的抬升效果要留著，只是不要全域那圈紫光暈 */
+.gallery-thumbnail-item:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
