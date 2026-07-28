@@ -50,8 +50,13 @@ export default function CommentsManager() {
   const [newKeyword, setNewKeyword] = useState('');
   const [newKeywordAction, setNewKeywordAction] = useState('spam');
 
-  const token = localStorage.getItem('koimsurai_user_token');
-  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  // 呼叫時才讀 token，不在 render 期讀：localStorage 是外部可變狀態，render 必須是純的
+  //（react-hooks/purity）。順帶修掉一個實質問題——原本 token 在 render 當下就固定了，
+  // session 中途重新登入會繼續帶舊的。
+  const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('koimsurai_user_token') ?? ''}`,
+    'Content-Type': 'application/json',
+  });
 
   // 留言列表改由 TanStack Query 讀（分頁/篩選進 queryKey），blacklist/keywords 依 activeTab 才抓。
   const commentsQuery = useMemo(() => {
@@ -76,7 +81,7 @@ export default function CommentsManager() {
   const updateStatus = async (id: number | string, status: string) => {
     try {
       const res = await fetch(`/api/admin/comments/${id}/status`, {
-        method: 'PATCH', headers, body: JSON.stringify({ status }),
+        method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ status }),
       });
       if (res.ok) { toast.success(STATUS_CONFIG[status].label); void invalidateComments(); }
     } catch { toast.error('操作失敗'); }
@@ -86,7 +91,7 @@ export default function CommentsManager() {
     if (!replyText.trim()) return;
     try {
       const res = await fetch(`/api/admin/comments/${replyDialog.comment?.id}/reply`, {
-        method: 'POST', headers, body: JSON.stringify({ content: replyText }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ content: replyText }),
       });
       if (res.ok) { toast.success('回覆成功'); setReplyDialog({ open: false, comment: null }); setReplyText(''); void invalidateComments(); }
     } catch { toast.error('回覆失敗'); }
@@ -96,7 +101,7 @@ export default function CommentsManager() {
     if (!editText.trim()) return;
     try {
       const res = await fetch(`/api/admin/comments/${editDialog.comment?.id}`, {
-        method: 'PUT', headers, body: JSON.stringify({ content: editText }),
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ content: editText }),
       });
       if (res.ok) { toast.success('已修改'); setEditDialog({ open: false, comment: null }); void invalidateComments(); }
     } catch { toast.error('修改失敗'); }
@@ -104,7 +109,7 @@ export default function CommentsManager() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/admin/comments/${deleteId}`, { method: 'DELETE', headers });
+      const res = await fetch(`/api/admin/comments/${deleteId}`, { method: 'DELETE', headers: authHeaders() });
       if (res.ok) { toast.success('已永久刪除'); setDeleteId(null); void invalidateComments(); }
     } catch { toast.error('刪除失敗'); }
   };
@@ -112,7 +117,7 @@ export default function CommentsManager() {
   const blockIp = async (ip: string) => {
     try {
       const res = await fetch('/api/admin/blacklist', {
-        method: 'POST', headers, body: JSON.stringify({ ip, reason: '來自留言管理封鎖' }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ ip, reason: '來自留言管理封鎖' }),
       });
       if (res.ok) { toast.success(`已封鎖 IP: ${ip}`); }
     } catch { toast.error('封鎖失敗'); }
@@ -122,7 +127,7 @@ export default function CommentsManager() {
     if (!newBlacklistIp.trim()) return;
     try {
       const res = await fetch('/api/admin/blacklist', {
-        method: 'POST', headers, body: JSON.stringify({ ip: newBlacklistIp, reason: newBlacklistReason }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ ip: newBlacklistIp, reason: newBlacklistReason }),
       });
       if (res.ok) { toast.success('已加入黑名單'); setNewBlacklistIp(''); setNewBlacklistReason(''); void invalidateBlacklist(); }
     } catch { toast.error('操作失敗'); }
@@ -130,7 +135,7 @@ export default function CommentsManager() {
 
   const removeBlacklist = async (id: number | string) => {
     try {
-      const res = await fetch(`/api/admin/blacklist/${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`/api/admin/blacklist/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (res.ok) { toast.success('已移除'); void invalidateBlacklist(); }
     } catch { toast.error('操作失敗'); }
   };
@@ -139,7 +144,7 @@ export default function CommentsManager() {
     if (!newKeyword.trim()) return;
     try {
       const res = await fetch('/api/admin/keyword-filters', {
-        method: 'POST', headers, body: JSON.stringify({ keyword: newKeyword, action: newKeywordAction }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ keyword: newKeyword, action: newKeywordAction }),
       });
       if (res.ok) { toast.success('已新增過濾詞'); setNewKeyword(''); void invalidateKeywords(); }
     } catch { toast.error('操作失敗'); }
@@ -147,7 +152,7 @@ export default function CommentsManager() {
 
   const removeKeyword = async (id: number | string) => {
     try {
-      const res = await fetch(`/api/admin/keyword-filters/${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`/api/admin/keyword-filters/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (res.ok) { toast.success('已移除'); void invalidateKeywords(); }
     } catch { toast.error('操作失敗'); }
   };

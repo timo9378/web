@@ -379,7 +379,6 @@ export default function ArticleGenerator() {
     const [progressText, setProgressText] = useState('');
     const [viewMode, setViewMode] = useState('preview'); // 'preview' | 'source'
     const [copied, setCopied] = useState(false);
-    const [, setIsSaving] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const [logs, setLogs] = useState<string[]>([]);
@@ -455,8 +454,6 @@ export default function ArticleGenerator() {
     const handleSendToEditor = async () => {
         if (!generatedContent.trim()) return;
 
-        setIsSaving(true);
-
         // 從 Markdown 中提取標題
         const titleMatch = /^#\s+(.+)$/m.exec(generatedContent);
         const title = titleMatch ? titleMatch[1].trim() : '未命名文章';
@@ -528,7 +525,6 @@ export default function ArticleGenerator() {
         const encoded = encodeURIComponent(JSON.stringify(articleData));
         void navigate(`/admin/posts/create?n8n_data=${encoded}`);
         toast.success('已匯入文章編輯器（含 AI 摘要與標籤）');
-        setIsSaving(false);
     };
 
     // ── 重來 ──

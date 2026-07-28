@@ -56,15 +56,19 @@ const fetchManifest = (): Promise<Map<string, Photo>> => {
       } else {
         _manifestCache = new Map();
       }
-      _manifestCallbacks.forEach((cb) => cb(_manifestCache!));
+      // 透過區域變數傳給 callback，不用 _manifestCache!：模組層級的 let 在 TS 眼中
+      // 隨時可能被別處改掉，賦值後的窄化不會留到閉包裡，只好靠斷言。改綁區域值就沒這問題。
+      const ready = _manifestCache;
+      _manifestCallbacks.forEach((cb) => cb(ready));
       _manifestCallbacks = [];
-      return _manifestCache;
+      return ready;
     })
     .catch(() => {
-      _manifestCache = new Map();
-      _manifestCallbacks.forEach((cb) => cb(_manifestCache!));
+      const empty = new Map<string, Photo>();
+      _manifestCache = empty;
+      _manifestCallbacks.forEach((cb) => cb(empty));
       _manifestCallbacks = [];
-      return _manifestCache;
+      return empty;
     });
 };
 

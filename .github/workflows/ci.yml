@@ -47,7 +47,7 @@ jobs:
       # @eslint-react 整包經 jsPlugins 載入，命名空間保持 @eslint-react 讓既有 eslint-disable 註解續效）。
       # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調。
       - name: oxlint (src, type-aware)
-        run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 166
+        run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 153
       # scripts/server/packages 過去完全沒被 lint（CI 只跑 eslint src）。
       # 不帶 --type-aware：它們不在根 tsconfig 的 include 裡，型別會全解析成 any，
       # 讓 no-unsafe-* 系列誤報 46 筆。型別由各自的 typecheck:* 步驟負責。

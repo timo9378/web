@@ -140,7 +140,10 @@ export default function MonacoEditor({
           h = Math.round(h * ratio);
         }
         const canvas = new OffscreenCanvas(w, h);
-        const ctx = canvas.getContext('2d')!;
+        // getContext 可能回 null（同時開太多 context 時瀏覽器會拒絕），
+        // 斷言掉只是把錯誤延到執行期。取不到就跳過縮圖、沿用原圖。
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
         ctx.drawImage(bitmap, 0, 0, w, h);
         blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.85 });
         bitmap.close();
@@ -339,7 +342,10 @@ export default function MonacoEditor({
             h = Math.round(h * ratio);
           }
           const canvas = new OffscreenCanvas(w, h);
-          const ctx = canvas.getContext('2d')!;
+          // getContext 可能回 null（同時開太多 context 時瀏覽器會拒絕），
+          // 斷言掉只是把錯誤延到執行期。取不到就跳過縮圖、沿用原圖。
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
           ctx.drawImage(bitmap, 0, 0, w, h);
           const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
           bitmap.close();
@@ -409,7 +415,10 @@ export default function MonacoEditor({
               h = Math.round(h * ratio);
             }
             const canvas = new OffscreenCanvas(w, h);
-            const ctx = canvas.getContext('2d')!;
+            // getContext 可能回 null（同時開太多 context 時瀏覽器會拒絕），
+            // 斷言掉只是把錯誤延到執行期。取不到就跳過縮圖、沿用原圖。
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
             ctx.drawImage(bitmap, 0, 0, w, h);
             blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.85 });
             bitmap.close();

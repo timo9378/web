@@ -86,6 +86,8 @@ export function articleMeta(post: PostData, canonicalPath: string, locale: strin
   const url = `${BASE_URL}${canonicalPath}`;
   // OG 圖由後端 resvg 生成（CJK 已驗）。舊的前端 /og-image/:id（sharp）隨 serve.mjs 一起退役。
   const image = `${BASE_URL}/api/og/${post.id}.png`;
+  const publishedIso = toIso(post.created_at);
+  const modifiedIso = toIso(post.updated_at);
 
   return [
     { title: `${post.title} - 宙と木` },
@@ -107,8 +109,10 @@ export function articleMeta(post: PostData, canonicalPath: string, locale: strin
     { name: 'twitter:image', content: image },
     { name: 'twitter:url', content: url },
 
-    ...(toIso(post.created_at) ? [{ property: 'article:published_time', content: toIso(post.created_at)! }] : []),
-    ...(toIso(post.updated_at) ? [{ property: 'article:modified_time', content: toIso(post.updated_at)! }] : []),
+    // 先存成區域變數：原本寫成 toIso(x) ? [...toIso(x)!] 不只要 ! 斷言，還把同一個
+    // 轉換跑了兩次；存下來後窄化自然成立，斷言可以拿掉。
+    ...(publishedIso ? [{ property: 'article:published_time', content: publishedIso }] : []),
+    ...(modifiedIso ? [{ property: 'article:modified_time', content: modifiedIso }] : []),
     ...(post.author ? [{ property: 'article:author', content: post.author }] : []),
   ];
 }

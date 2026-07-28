@@ -49,7 +49,9 @@ function loadLocalPhotos(): PhotoManifest[] {
   });
 
   return Object.entries(imageModules).map(([path, module], index) => {
-    const fileName = path.split('/').pop()!.split('.')[0];
+    // 用 at(-1) ?? '' 取代 pop()!：split 對非空字串必有元素，但那是人腦知道、
+    // 型別系統不知道，用斷言等於把「我確定」寫進程式碼裡而不是讓它自然成立。
+    const fileName = (path.split('/').at(-1) ?? '').split('.')[0];
     const imageUrl = (module as { default: string }).default;
 
     let shootTime: number | undefined;

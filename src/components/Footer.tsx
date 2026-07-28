@@ -32,10 +32,13 @@ const ExternalArrow = () => (
   </svg>
 );
 
+// 模組載入時算一次，不在 render 期呼叫 new Date()：render 必須是純的
+//（react-hooks/purity）。年份一年才變一次，模組層級足夠。
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_RANGE = CURRENT_YEAR > START_YEAR ? `${START_YEAR}-${CURRENT_YEAR}` : String(START_YEAR);
+
 function Footer() {
   const { t } = useTranslation();
-  const currentYear = new Date().getFullYear();
-  const yearRange = currentYear > START_YEAR ? `${START_YEAR}-${currentYear}` : String(START_YEAR);
   const stats = useStats();
   const online = useOnline();
 
@@ -49,7 +52,7 @@ function Footer() {
             <h3 className="app-footer-brand-name brand-wordmark">Koimsurai</h3>
             <p className="app-footer-brand-tagline">{t('footer.tagline')}</p>
             <p className="app-footer-copy">
-              © {yearRange} {t('footer.poweredBy')}{' '}
+              © {YEAR_RANGE} {t('footer.poweredBy')}{' '}
               <a href="https://github.com/timo9378/web" target="_blank" rel="noopener noreferrer">
                 Koim Stack
               </a>
@@ -137,7 +140,7 @@ function Footer() {
           <div className="app-footer-bottom-right">
             <LanguagePicker />
             <span className="app-footer-bottom-sep">·</span>
-            <span className="app-footer-bottom-meta brand-wordmark">Koimsurai © {currentYear}</span>
+            <span className="app-footer-bottom-meta brand-wordmark">Koimsurai © {CURRENT_YEAR}</span>
           </div>
         </div>
       </div>

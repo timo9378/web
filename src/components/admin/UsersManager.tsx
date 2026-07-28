@@ -36,8 +36,13 @@ export default function UsersManager() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleChangeDialog, setRoleChangeDialog] = useState<{ open: boolean; user: AdminUser | null; newRole: string }>({ open: false, user: null, newRole: '' });
 
-  const token = localStorage.getItem('koimsurai_user_token');
-  const headers = { 'Authorization': `Bearer ${token ?? ''}`, 'Content-Type': 'application/json' };
+  // 呼叫時才讀 token，不在 render 期讀：localStorage 是外部可變狀態，render 必須是純的
+  //（react-hooks/purity）。順帶修掉一個實質問題——原本 token 在 render 當下就固定了，
+  // session 中途重新登入會繼續帶舊的。
+  const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('koimsurai_user_token') ?? ''}`,
+    'Content-Type': 'application/json',
+  });
 
   const handleRoleChange = async () => {
     const { user: targetUser, newRole } = roleChangeDialog;
@@ -46,7 +51,7 @@ export default function UsersManager() {
     try {
       const res = await fetch(`/api/admin/users/${targetUser.id}/role`, {
         method: 'PUT',
-        headers,
+        headers: authHeaders(),
         body: JSON.stringify({ role: newRole }),
       });
       if (res.ok) {
