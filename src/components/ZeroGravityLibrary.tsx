@@ -21,29 +21,29 @@ interface Book {
 function useDragObject() {
   const [isDragging, setIsDragging] = useState(false);
   const { camera, gl } = useThree();
-  const dragPlane = useRef(new THREE.Plane());
-  const offset = useRef(new THREE.Vector3());
-  const intersection = useRef(new THREE.Vector3());
-  const currentPosition = useRef(new THREE.Vector3());
+  const dragPlaneRef = useRef(new THREE.Plane());
+  const offsetRef = useRef(new THREE.Vector3());
+  const intersectionRef = useRef(new THREE.Vector3());
+  const currentPositionRef = useRef(new THREE.Vector3());
 
   const bind = useMemo(() => {
     const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
 
       // 保存當前位置
-      currentPosition.current.copy(e.object.position);
+      currentPositionRef.current.copy(e.object.position);
 
       // 設定拖動平面 (平行於相機視角)
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlane.current.setFromNormalAndCoplanarPoint(
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
         cameraDirection,
-        currentPosition.current
+        currentPositionRef.current
       );
 
       // 計算點擊點與物體中心的偏移
-      dragPlane.current.projectPoint(e.point, intersection.current);
-      offset.current.copy(intersection.current).sub(currentPosition.current);
+      dragPlaneRef.current.projectPoint(e.point, intersectionRef.current);
+      offsetRef.current.copy(intersectionRef.current).sub(currentPositionRef.current);
 
       setIsDragging(true);
       gl.domElement.style.cursor = 'grabbing';
@@ -80,8 +80,8 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
   const { onPointerDown, onPointerUp, isDragging } = useDragObject();
   const { camera, raycaster } = useThree();
 
-  const dragPlane = useRef(new THREE.Plane());
-  const offset = useRef(new THREE.Vector3());
+  const dragPlaneRef = useRef(new THREE.Plane());
+  const offsetRef = useRef(new THREE.Vector3());
 
   // 通知父組件拖動狀態改變
   useEffect(() => {
@@ -111,8 +111,8 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
     // 拖動時更新位置
     if (isDragging && groupRef.current) {
       const intersection = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane.current, intersection);
-      groupRef.current.position.copy(intersection.sub(offset.current));
+      raycaster.ray.intersectPlane(dragPlaneRef.current, intersection);
+      groupRef.current.position.copy(intersection.sub(offsetRef.current));
     }
   });
 
@@ -124,15 +124,15 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
       // 設定拖動平面
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlane.current.setFromNormalAndCoplanarPoint(
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
         cameraDirection,
         groupRef.current.position
       );
 
       // 計算偏移
       const intersection = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane.current, intersection);
-      offset.current.copy(intersection).sub(groupRef.current.position);
+      raycaster.ray.intersectPlane(dragPlaneRef.current, intersection);
+      offsetRef.current.copy(intersection).sub(groupRef.current.position);
     }
 
     onPointerDown(e);
@@ -226,8 +226,8 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
   const { onPointerDown, onPointerUp, isDragging } = useDragObject();
   const { camera, raycaster } = useThree();
 
-  const dragPlane = useRef(new THREE.Plane());
-  const offset = useRef(new THREE.Vector3());
+  const dragPlaneRef = useRef(new THREE.Plane());
+  const offsetRef = useRef(new THREE.Vector3());
 
   // 通知父組件拖動狀態改變
   useEffect(() => {
@@ -247,8 +247,8 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
     // 拖動時更新位置
     if (isDragging && groupRef.current) {
       const intersection = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane.current, intersection);
-      groupRef.current.position.copy(intersection.sub(offset.current));
+      raycaster.ray.intersectPlane(dragPlaneRef.current, intersection);
+      groupRef.current.position.copy(intersection.sub(offsetRef.current));
     }
   });
 
@@ -260,15 +260,15 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
       // 設定拖動平面
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlane.current.setFromNormalAndCoplanarPoint(
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
         cameraDirection,
         groupRef.current.position
       );
 
       // 計算偏移
       const intersection = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane.current, intersection);
-      offset.current.copy(intersection).sub(groupRef.current.position);
+      raycaster.ray.intersectPlane(dragPlaneRef.current, intersection);
+      offsetRef.current.copy(intersection).sub(groupRef.current.position);
     }
 
     onPointerDown(e);

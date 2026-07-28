@@ -47,14 +47,14 @@ const GAP = 12;
 export function LinkHoverPreview({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number; above: boolean } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const anchorRef = useRef<HTMLAnchorElement>(null);
 
   const { data, isPending } = useQuery({ ...linkPreviewQueryOptions(href), enabled: open });
 
   const openSoon = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       const el = anchorRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
@@ -74,12 +74,12 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
 
   // 延遲關閉：滑鼠從連結移到卡片之間有空隙，立刻關會讓卡片永遠碰不到
   const closeSoon = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY);
   }, []);
 
   const cancelClose = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
   const isInternal = /^\/(blog|thinking)\//.test(href) || href.includes('koimsurai.com');

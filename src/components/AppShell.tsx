@@ -27,7 +27,9 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
   useEffect(() => {
     const warm = () => { void import('./BlogPost'); };
     const ric = (window as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
-    if (ric) { ric(warm); } else { setTimeout(warm, 1500); }
+    if (ric) { ric(warm); return; }
+    const warmTimer = setTimeout(warm, 1500);
+    return () => clearTimeout(warmTimer);
   }, []);
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });

@@ -1785,13 +1785,13 @@ function BlogPost() {
   /* ── 換文章才捲頂（初次掛載/重整不搶捲動，交給 scrollRestoration 還原）──
      否則 reload 時序會變成：首幀頂端 → scrollRestoration 還原到原位 → 這裡又 smooth 捲頂，
      使用者看到「上→下→上」。用 ref 記前一個 key，只有真的換文章（key 變）才捲頂。 */
-  const prevScrollKey = useRef<string | null>(null);
+  const prevScrollKeyRef = useRef<string | null>(null);
   useEffect(() => {
     const key = `${id}:${pathLocale}`;
-    if (prevScrollKey.current !== null && prevScrollKey.current !== key) {
+    if (prevScrollKeyRef.current !== null && prevScrollKeyRef.current !== key) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    prevScrollKey.current = key;
+    prevScrollKeyRef.current = key;
   }, [id, pathLocale]);
 
   /* ── 成功載入一篇：重置 liked + 增加瀏覽數（每次載入新文章打一次）── */

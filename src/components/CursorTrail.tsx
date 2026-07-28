@@ -39,15 +39,15 @@ class Particle {
 
 const CursorTrail = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particles = useRef<Particle[]>([]);
-  const mousePos = useRef({ x: 0, y: 0 });
-  const animationFrameId = useRef<number>(0);
+  const particlesRef = useRef<Particle[]>([]);
+  const mousePosRef = useRef({ x: 0, y: 0 });
+  const animationFrameIdRef = useRef<number>(0);
 
   // 更新滑鼠位置
   const handleMouseMove = useCallback((event: MouseEvent) => {
-    mousePos.current = { x: event.clientX, y: event.clientY };
+    mousePosRef.current = { x: event.clientX, y: event.clientY };
     if (Math.random() > 0.5) { // 50% 機率添加
-       particles.current.push(new Particle(mousePos.current.x, mousePos.current.y));
+       particlesRef.current.push(new Particle(mousePosRef.current.x, mousePosRef.current.y));
     }
   }, []);
 
@@ -62,19 +62,19 @@ const CursorTrail = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 更新和繪製粒子
-    particles.current = particles.current.filter(p => p.opacity > 0 && p.size > 0.1); // 移除消失的粒子
-    particles.current.forEach(p => {
+    particlesRef.current = particlesRef.current.filter(p => p.opacity > 0 && p.size > 0.1); // 移除消失的粒子
+    particlesRef.current.forEach(p => {
       p.update();
       p.draw(ctx);
     });
 
     // 限制粒子數量，避免效能問題
-    if (particles.current.length > 100) {
-        particles.current = particles.current.slice(particles.current.length - 100);
+    if (particlesRef.current.length > 100) {
+        particlesRef.current = particlesRef.current.slice(particlesRef.current.length - 100);
     }
 
 
-    animationFrameId.current = requestAnimationFrame(animateParticles);
+    animationFrameIdRef.current = requestAnimationFrame(animateParticles);
   }, []);
 
   // 設定和清理
@@ -93,13 +93,13 @@ const CursorTrail = () => {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
-    animationFrameId.current = requestAnimationFrame(animateParticles);
+    animationFrameIdRef.current = requestAnimationFrame(animateParticles);
 
     // 清理函數
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId.current);
+      cancelAnimationFrame(animationFrameIdRef.current);
     };
   }, [handleMouseMove, animateParticles]);
 

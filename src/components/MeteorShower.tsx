@@ -13,6 +13,17 @@ const MeteorShower = () => {
       return;
     }
 
+    // 追蹤所有 setTimeout，unmount / isVisible 變動時一併清掉，
+    // 否則流星移除與初始排程的計時器會殘留到 effect 重跑之後。
+    const timeouts = new Set<ReturnType<typeof setTimeout>>();
+    const laterFn = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => {
+        timeouts.delete(id);
+        fn();
+      }, ms);
+      timeouts.add(id);
+    };
+
     const createMeteor = () => {
       if (!containerRef.current || !isVisible) return;
 
@@ -36,7 +47,7 @@ const MeteorShower = () => {
       containerRef.current.appendChild(meteor);
 
       // 動畫結束後移除元素
-      setTimeout(() => {
+      laterFn(() => {
         if (meteor.parentNode) {
           meteor.parentNode.removeChild(meteor);
         }
@@ -52,7 +63,7 @@ const MeteorShower = () => {
 
     // 減少初始流星數量
     for (let i = 0; i < 2; i++) {
-      setTimeout(() => {
+      laterFn(() => {
         if (isVisible) {
           createMeteor();
         }
@@ -61,6 +72,8 @@ const MeteorShower = () => {
 
     return () => {
       clearInterval(interval);
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
       // 清理所有現存的流星
       if (containerRef.current) {
         const meteors = containerRef.current.querySelectorAll('.meteor');

@@ -34,10 +34,11 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
   );
 
   useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!isOpen) return;
+    setQuery('');
+    // 等 Dialog 動畫掛上再 focus；modal 快速關閉時要清掉，避免殘留計時器
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(focusTimer);
   }, [isOpen]);
 
   const filtered = useMemo(() => {
