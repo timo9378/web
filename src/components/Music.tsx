@@ -239,6 +239,8 @@ const Music = () => {
                 {/* Audio Visualizer */}
                 <div className={`np-visualizer ${npData.isLive ? 'active' : ''}`}>
                   {Array.from({ length: 5 }).map((_, i) => (
+                    // 固定 5 根等化器條，純裝飾、無資料身分可用，index 是唯一的 key
+                    // eslint-disable-next-line @eslint-react/no-array-index-key
                     <div key={i} className="eq-bar" style={{ animationDelay: `${i * 0.12}s` }} />
                   ))}
                 </div>
@@ -362,6 +364,8 @@ const Music = () => {
                       const feat = audioFeatures[item.track.id];
                       return (
                         <motion.a
+                          // 同一首歌可能在「最近播放」出現多次 → 光靠 track.id 會重複，必須加 index 才唯一
+                          // eslint-disable-next-line @eslint-react/no-array-index-key
                           key={`${item.track.id}-${index}`}
                           href={item.track.external_urls.spotify}
                           target="_blank"

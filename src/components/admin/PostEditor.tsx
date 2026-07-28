@@ -307,7 +307,9 @@ export default function PostEditor() {
     // reset 完成 → 讓下方 Select 依 key 重新 mount、以正確值初始化（此 set-state 是刻意的）
     // eslint-disable-next-line @eslint-react/set-state-in-effect
     setHydrated(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 只跟著 postData 跑：form 是 react-hook-form 的實例，進依賴會讓每次 render 都重灌表單。
+    // （原本的 react-hooks/ 命名空間在換 oxlint 後已失效。）
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [postData]);
 
   // 從 URL 參數載入 N8N 自動匯入的資料
@@ -324,6 +326,9 @@ export default function PostEditor() {
         toast.error('匯入資料格式錯誤');
       }
     }
+    // 刻意只跑一次：n8n_data 是開啟編輯器當下網址帶進來的一次性匯入資料，
+    // 重跑會把使用者後續的編輯整個蓋掉。
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, []);
 
   /**

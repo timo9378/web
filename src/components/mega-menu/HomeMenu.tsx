@@ -102,9 +102,14 @@ function HomeMenuContent({ onSectionClick }: { onSectionClick?: (e: React.MouseE
   const { t } = useTranslation();
   // 站台統計改吃共用 siteStatsQueryOptions 快取（Footer 也用同一把）。
   const { data: statsData } = useQuery(siteStatsQueryOptions);
-  const stats: Stats | null = statsData?.message === 'success'
-    ? { total: statsData.total_posts, wordCount: statsData.total_chars, days: statsData.days }
-    : null;
+  // 要 useMemo：否則每次 render 都是一個新物件，下面 wordCountLabel 的 useMemo
+  // 依賴它就永遠命中不了，等於白寫。
+  const stats: Stats | null = useMemo(
+    () => (statsData?.message === 'success'
+      ? { total: statsData.total_posts, wordCount: statsData.total_chars, days: statsData.days }
+      : null),
+    [statsData],
+  );
 
   const wordCountLabel = useMemo(() => {
     if (!stats?.wordCount) return '—';

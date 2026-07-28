@@ -193,6 +193,8 @@ const MarqueeRow = ({ items, reverse, duration }: { items: string[]; reverse?: b
       }}
     >
       {[...items, ...items].map((item, i) => (
+        // 跑馬燈把 items 接兩份 → 同名項目必然重複，只能靠 index 區分前後兩份
+        // eslint-disable-next-line @eslint-react/no-array-index-key
         <SkillIcon key={`${item}-${i}`} name={item} />
       ))}
     </div>

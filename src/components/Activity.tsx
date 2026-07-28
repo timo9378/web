@@ -558,6 +558,8 @@ const Activity = () => {
             <div className="commits-list">
               {(githubData?.recentCommits?.length ?? 0) === 0
                 ? Array.from({ length: 4 }).map((_, i) => (
+                    // 骨架屏佔位，載入完就整批換掉，不存在重排問題
+                    // eslint-disable-next-line @eslint-react/no-array-index-key
                     <div key={`sk-${i}`} className="commit-event commit-skeleton" aria-hidden>
                       <div className="commit-event-header">
                         <div className="commit-dot" />

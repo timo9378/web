@@ -349,9 +349,13 @@ const MermaidDiagram = ({ code, theme, look, layout, direction, onError, onRende
   // 掛載的多張圖就會撞成同一個 id。改用 useId()：每個實例唯一且 SSR 安全。
   const reactId = useId();
   const idRef = useRef(0);
-  // 以 ref 存 onRendered，避免它進 effect deps 而重跑渲染（與既有 onError 同慣例）。
+  // 以 ref 存 onRendered / onError，避免它們進 effect deps 而重跑渲染。
+  // （原本註解說 onError 已照此慣例，實際上沒有——它直接進了 effect body，
+  //   所以 exhaustive-deps 一直在報；補上後名實相符。）
   const onRenderedRef = useRef(onRendered);
   onRenderedRef.current = onRendered;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   const parsed = useMemo(() => parseMermaidFrontmatter(code), [code]);
 
@@ -397,12 +401,12 @@ const MermaidDiagram = ({ code, theme, look, layout, direction, onError, onRende
               svgEl.style.maxWidth = 'none';
             }
           }
-          onError?.(null);
+          onErrorRef.current?.(null);
           onRenderedRef.current?.();
         }
       } catch (e) {
         console.warn('Mermaid render error:', e);
-        onError?.(e instanceof Error ? e.message : 'Mermaid 渲染失敗');
+        onErrorRef.current?.(e instanceof Error ? e.message : 'Mermaid 渲染失敗');
         const errNode = document.getElementById('d' + id);
         if (errNode) errNode.remove();
       }
@@ -499,8 +503,11 @@ const MermaidFullscreen = ({ code, theme, look, layout, direction, onTheme, onLo
       window.scrollTo(0, scrollY);
       window.removeEventListener('keydown', esc);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  // mount/unmount only — onClose is stable via useCallback
+  // 只在 mount/unmount 跑：onClose 由呼叫端 useCallback 固定住。
+  // （原本寫 react-hooks/exhaustive-deps，那是舊 ESLint 的命名空間，
+  //   換成 oxlint 之後形同虛設 —— 這條規則現在叫 @eslint-react/exhaustive-deps。）
+  // eslint-disable-next-line @eslint-react/exhaustive-deps
+  }, []);
 
   const [err, setErr] = useState<string | null>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
@@ -1245,6 +1252,8 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
       ) : allPosts.length === 0 ? (
         <div className="posts-nav-nearby" aria-hidden="true">
           {[88, 72, 94, 63, 80].map((w, i) => (
+            // 骨架屏佔位，載入完就整批換掉，不存在重排問題
+            // eslint-disable-next-line @eslint-react/no-array-index-key
             <div key={`skel-${w}-${i}`} className="bp-skel" style={{ height: 13, width: `${w}%`, margin: '0 0 12px' }} />
           ))}
         </div>
@@ -1700,6 +1709,7 @@ function BlogPost() {
   const [readingProgress, setReadingProgress] = useState(0);
   // headings 改為同步 useMemo（在 post 定義後、下方 Extract headings 處）→ 第一幀就有值
   const [activeHeading, setActiveHeading] = useState('');
+  const lastActiveRef = useRef('');
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -1964,7 +1974,8 @@ function BlogPost() {
   useEffect(() => {
     if (!post) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    let lastActive = activeHeading;
+    // 用 ref 而非 state 當「上一個 active」：讀 activeHeading 會讓它成為 effect 依賴，
+    // 每次高亮變動就重掛一次 scroll listener——正好抵銷這個 debounce 的用意。
 
     const handleScroll = () => {
       const wh = window.innerHeight;
@@ -1992,8 +2003,8 @@ function BlogPost() {
             if (t > 0 && t < wh) { cur = el.id; break; }
           }
         }
-        if (cur && cur !== lastActive) {
-          lastActive = cur;
+        if (cur && cur !== lastActiveRef.current) {
+          lastActiveRef.current = cur;
           setActiveHeading(cur);
           if (tocRef.current) {
             const item = tocRef.current.querySelector('[data-heading-id="' + cur + '"]');

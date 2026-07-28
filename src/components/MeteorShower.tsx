@@ -13,6 +13,9 @@ const MeteorShower = () => {
       return;
     }
 
+    // 在 effect 執行當下抓住節點，cleanup 用這個而不是再讀 ref（見下方 cleanup 註解）
+    const container = containerRef.current;
+
     // 追蹤所有 setTimeout，unmount / isVisible 變動時一併清掉，
     // 否則流星移除與初始排程的計時器會殘留到 effect 重跑之後。
     const timeouts = new Set<ReturnType<typeof setTimeout>>();
@@ -74,10 +77,11 @@ const MeteorShower = () => {
       clearInterval(interval);
       timeouts.forEach((id) => { clearTimeout(id); });
       timeouts.clear();
-      // 清理所有現存的流星
-      if (containerRef.current) {
-        const meteors = containerRef.current.querySelectorAll('.meteor');
-        meteors.forEach(meteor => { meteor.remove(); });
+      // 清理所有現存的流星。用 effect 執行當下抓到的 container，不是 cleanup 當下的
+      // containerRef.current —— 後者在 cleanup 時可能已經指向別的節點或變成 null，
+      // 那樣就會漏清這一輪真正產生的流星。
+      if (container) {
+        container.querySelectorAll('.meteor').forEach(meteor => { meteor.remove(); });
       }
     };
   }, [isVisible]);

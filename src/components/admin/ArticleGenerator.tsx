@@ -760,6 +760,8 @@ export default function ArticleGenerator() {
                             </div>
                             <div className="p-3 max-h-48 overflow-y-auto">
                                 {logs.map((log, i) => (
+                                    // log 只會往後追加、不會重排或插入，index 即穩定身分
+                                    // eslint-disable-next-line @eslint-react/no-array-index-key
                                     <div key={i} className="text-[10px] text-muted-foreground/40 font-mono py-0.5">{log}</div>
                                 ))}
                             </div>

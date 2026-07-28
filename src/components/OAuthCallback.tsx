@@ -34,6 +34,9 @@ function OAuthCallback() {
         console.error('OAuth login error:', err);
         setAsyncError(t('oauth.errorGeneric'));
       });
+    // 刻意只跑一次：OAuth 的 code 是一次性授權碼，effect 重跑等於拿已失效的 code
+    // 再送一次登入請求。search/t/loginWithOAuth 進依賴都會造成這個結果。
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, []);
 
   if (error) {
