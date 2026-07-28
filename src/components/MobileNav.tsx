@@ -55,6 +55,9 @@ export default function MobileNav({ open, onClose }: MobileNavProps) {
   return (
     <div
       className={`mnav ${open ? 'mnav--open' : ''}`}
+      // <dialog> 有自己的 top-layer 與 showModal/close 生命週期，換過去等於重寫開關邏輯
+      // 與焦點管理；目前 role="dialog" + aria-modal + inert 已達成同樣的可存取行為
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="dialog"
       aria-modal="true"
       aria-label={t('nav.menu')}

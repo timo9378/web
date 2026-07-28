@@ -323,6 +323,9 @@ const ActivityHeatmap = React.memo(({ posts }: { posts: Post[] }) => {
         <span className="heatmap-total">{totalPosts}</span>
         <span className="heatmap-total-label">{t('blog.heatmapTotal')}</span>
       </div>
+      {/* heatmap 是一堆 div 拼出來的圖形，沒有 img 可換；role="img" + aria-label
+          把整塊當單一圖像報讀，正是 ARIA 為這種合成圖形設計的用法 */}
+      {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
       <div className="heatmap-grid" role="img" aria-label={t('blog.heatmapAria')}>
         {cells.map((week) => (
           <div key={week[0]?.date.toISOString()} className="heatmap-col">

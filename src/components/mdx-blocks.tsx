@@ -294,22 +294,21 @@ export function Sketch(props: { chart?: string; title?: string }) {
 /** 防劇透：內容模糊，點擊揭開。純視覺遮擋（非加密），適合劇情/答案。 */
 export function Spoiler({ children }: { children?: ReactNode }) {
   const [revealed, setRevealed] = useState(false);
+  // 揭開前是真的 <button>：焦點、Enter/Space、報讀器語意全部免費拿到，
+  // 原本 span + role="button" 得自己刻 tabIndex 與 onKeyDown（而且 role 只是「宣稱」
+  // 是按鈕，行為仍要自己補）。揭開後回到 <span>，讓文字可以正常選取。
+  if (revealed) {
+    return <span className="spoiler spoiler--revealed">{children}</span>;
+  }
   return (
-    <span
-      className={revealed ? 'spoiler spoiler--revealed' : 'spoiler'}
-      role="button"
-      tabIndex={revealed ? -1 : 0}
-      title={revealed ? undefined : '點擊顯示'}
+    <button
+      type="button"
+      className="spoiler"
+      title="點擊顯示"
       onClick={() => setRevealed(true)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setRevealed(true);
-        }
-      }}
     >
       {children}
-    </span>
+    </button>
   );
 }
 

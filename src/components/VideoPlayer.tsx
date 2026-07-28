@@ -151,6 +151,9 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
 
           <div
             className="vp-progress"
+            // 自訂進度條，ARIA 是完整的（valuemin/valuemax/valuenow + tabIndex + onKeyDown）。
+            // <input type="range"> 語意雖對，但自訂軌道/滑塊的外觀要整套重刻，換不划算
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
             role="slider"
             tabIndex={0}
             aria-label="播放進度"

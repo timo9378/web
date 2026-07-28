@@ -347,7 +347,11 @@ const Activity = () => {
               </span>
               <span className="steam-recent-count">{t('activity.titlesUnit', { count: steamData?.recentGames?.length ?? 0 })}</span>
             </header>
-            <div className="steam-recent-scroll" role="list">
+            {/* 不掛 role="list"/"listitem"：原本 role="listitem" 蓋在 <a> 上會覆寫連結語意，
+                報讀器不再說「連結」，反而比沒有 list 語意更糟。這裡是一排連結卡片，
+                <a> 自己的語意就夠用；要補回 list 語意得改成 ul/li，但外層是
+                grid-auto-flow:column，插一層 li 會讓 grid item 換人、版面跟著跑。 */}
+            <div className="steam-recent-scroll">
               {steamData?.recentGames?.map((g, idx) => {
                 const isCurrent = String(steamData.playerInfo?.gameid ?? '') === String(g.appid);
                 return (
@@ -357,7 +361,6 @@ const Activity = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`steam-recent-card${isCurrent ? ' is-current' : ''}${idx === 0 && !isCurrent ? ' is-featured' : ''}`}
-                    role="listitem"
                   >
                     <div className="steam-recent-cover">
                       <img

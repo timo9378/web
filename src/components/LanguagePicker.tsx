@@ -63,16 +63,19 @@ function LanguagePicker() {
         <span>{LOCALE_LABELS[current] || current}</span>
       </button>
 
+      {/* 不用 role="listbox"/"option"：那組 role 承諾的是完整 listbox 鍵盤語意
+          （方向鍵移動 + aria-activedescendant），這裡並沒有實作；而且 role="option"
+          蓋在 button 上會覆寫按鈕語意。ul > li > button 本身就正確——報讀器會念
+          「清單，5 個項目」→「繁體中文，按鈕」，目前語言用 aria-current 標示。 */}
       {open && (
-        <ul className="lang-picker-popup" role="listbox">
+        <ul className="lang-picker-popup">
           {SUPPORTED_LOCALES.map((code) => (
             <li key={code}>
               <button
                 type="button"
                 className={`lang-picker-item${code === current ? ' is-current' : ''}`}
                 onClick={() => select(code)}
-                role="option"
-                aria-selected={code === current}
+                aria-current={code === current ? 'true' : undefined}
               >
                 <span lang={code}>{LOCALE_LABELS[code]}</span>
                 {code === current && <FaCheck className="lang-picker-check" />}

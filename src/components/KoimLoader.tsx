@@ -23,6 +23,9 @@ function KoimLoader({ size = 'md', text, fullscreen = false, inline = false }: K
   ].filter(Boolean).join(' ');
 
   return (
+    // role="status" + aria-live 是載入指示器的標準 live-region 寫法；
+    // <output> 的語意是「表單運算結果」，跟這裡不是同一回事
+    // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
     <div className={cls} role="status" aria-busy="true" aria-live="polite">
       <div className="koim-loader" aria-hidden>
         <div className="koim-loader-orbit koim-loader-orbit-1" />

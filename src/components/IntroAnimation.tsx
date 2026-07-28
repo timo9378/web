@@ -346,16 +346,20 @@ const IntroAnimation = ({
   const handleSkip = () => setSkipped(true);
 
   return (
-    <div
+    // 整塊就是「跳過」按鈕。原本是 div + onClick + role="img"：畫面明明寫著
+    // click anywhere to skip，鍵盤使用者卻完全跳不過（div 不可聚焦、沒有 keydown），
+    // 而且 role="img" 會把一個可互動的東西報讀成圖片。改成 <button> 後
+    // 焦點、Enter/Space、語意全部原生具備。
+    <button
+      type="button"
       className={`intro-stage ${ending ? 'intro-stage--ending' : ''}`}
       onClick={handleSkip}
-      role="img"
-      aria-label="開場動畫"
+      aria-label="跳過開場動畫"
     >
       <canvas ref={canvasRef} className="intro-canvas" />
       <div className="intro-flash" aria-hidden />
-      <div className="intro-skip-hint">click anywhere to skip</div>
-    </div>
+      <div className="intro-skip-hint" aria-hidden>click anywhere to skip</div>
+    </button>
   );
 };
 

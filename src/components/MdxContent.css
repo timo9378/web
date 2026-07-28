@@ -153,7 +153,13 @@
 }
 
 /* ── 防劇透 <Spoiler>：模糊，點擊揭開 ── */
+/* 未揭開時是 <button>（見 mdx-blocks 的 Spoiler）：要把瀏覽器預設樣式歸零，
+   才能維持「行內文字被模糊遮住」的外觀。揭開後換成 <span>，這些歸零不影響它。 */
 .spoiler {
+  font: inherit;
+  color: inherit;
+  border: none;
+  text-align: inherit;
   cursor: pointer;
   border-radius: 4px;
   padding: 0 3px;

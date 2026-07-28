@@ -1068,6 +1068,9 @@ const Reactions = React.memo(({ postId }: { postId: string | number }) => {
   }, [mine, postId, patchCount]);
 
   return (
+    // role="group" + aria-label 把一排 emoji 按鈕歸成一組；建議的 fieldset/optgroup
+    // 都帶有表單語意，用在這裡反而錯
+    // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
     <div className="reaction-bar" role="group" aria-label="Emoji 反應">
       {REACTIONS.map(e => {
         const n = counts[e] || 0;
@@ -1650,7 +1653,9 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
         <div
           id="blog-lang-menu"
           className="lang-menu"
-          role="listbox"
+          // 同 LanguagePicker：不掛 role="listbox"/"option"。那組 role 承諾完整的 listbox
+          // 鍵盤語意（方向鍵 + aria-activedescendant），這裡沒實作；role="option" 蓋在
+          // button 上還會覆寫按鈕語意。一組按鈕本身就可存取，目前語言用 aria-current 標。
           style={{ position: 'absolute', top: menuPos.top, left: menuPos.left, minWidth: menuPos.minWidth }}
         >
           {LANG_OPTIONS.map(opt => {
@@ -1660,8 +1665,7 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
               <button
                 key={opt.code}
                 type="button"
-                role="option"
-                aria-selected={opt.code === current}
+                aria-current={opt.code === current ? 'true' : undefined}
                 className={`lang-item ${isAvailable ? '' : 'disabled'} ${opt.code === current ? 'active' : ''}`}
                 onClick={() => {
                   setOpen(false);
