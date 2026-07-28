@@ -159,7 +159,7 @@ export default function BooksManager() {
     try {
       const token = localStorage.getItem('koimsurai_user_token');
       const url = editingBook 
-        ? `/api/books/${editingBook?.id}`
+        ? `/api/books/${editingBook.id}`
         : '/api/books';
       const method = editingBook ? 'PUT' : 'POST';
 

@@ -1814,7 +1814,7 @@ function BlogPost() {
   useEffect(() => {
     if (!post) return;
     const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
-    const pid = post?.id ?? parseInt(id, 10);
+    const pid = post.id;
     if (stored.includes(pid)) setLiked(true);
     setLikeCount(post.likes);
   }, [post, id]);
@@ -2011,9 +2011,9 @@ function BlogPost() {
   // title/description/og/JSON-LD 由路由 head()（articleMeta + articleJsonLd）出，進 SSR。
   // 舊的 seoDescription/selfPath/alternates/xDefaultPath 只餵已退休的 <SEOHead>，一併移除。
   const postTags: string[] = post.tags;
-  const sourceLang = post.source_language ?? 'zh-TW';
-  const availableLocales = post.available_locales ?? [sourceLang];
-  const currentLocale = post.locale ?? pathLocale;
+  const sourceLang = post.source_language;
+  const availableLocales = post.available_locales;
+  const currentLocale = post.locale;
   const titleParts = splitTitle(post.title);
 
   return (

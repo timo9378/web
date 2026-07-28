@@ -235,7 +235,7 @@ async function generateLongForm(systemPrompt: string, userContent: string, guide
     const outlineMessages: LLMMessage[] = [
         { role: 'system', content: outlineSystem },
     ];
-    if (guide?.trim()) {
+    if (guide.trim()) {
         outlineMessages.push({ role: 'system', content: `## 導演指令（優先遵守）\n${guide.trim()}` });
     }
     outlineMessages.push({
@@ -263,7 +263,7 @@ async function generateLongForm(systemPrompt: string, userContent: string, guide
         onProgress?.('✍️ 素材較少，使用單次生成...');
         onLog?.('⚠️ Outline parse failed or too few sections, falling back to single pass.');
         const messages: LLMMessage[] = [{ role: 'system', content: systemPrompt }];
-        if (guide?.trim()) {
+        if (guide.trim()) {
             messages.push({ role: 'system', content: `## 導演指令（優先遵守）\n${guide.trim()}` });
         }
         messages.push({
@@ -310,7 +310,7 @@ async function generateLongForm(systemPrompt: string, userContent: string, guide
         if (completedHeadings.length > 0) {
             expandSystem += `## 已完成段落（嚴禁重複這些段落的內容）\n` +
                 `以下段落已經寫完，你**絕對不可以**重複或改寫這些段落涵蓋的主題和細節：\n` +
-                completedHeadings.map((h, i) => `${i + 1}. ${h.heading ?? '開場段'}：${h.brief}`).join('\n') + '\n\n';
+                completedHeadings.map((h, i) => `${i + 1}. ${h.heading}：${h.brief}`).join('\n') + '\n\n';
         }
 
         expandSystem += '## 展開約束\n' +
@@ -336,7 +336,7 @@ async function generateLongForm(systemPrompt: string, userContent: string, guide
             '- 每段專注挖掘大綱中指定的**獨立主題**，絕不回頭複述已寫過的內容\n';
 
         const expandMessages: LLMMessage[] = [{ role: 'system', content: expandSystem }];
-        if (guide?.trim()) {
+        if (guide.trim()) {
             expandMessages.push({ role: 'system', content: `## 導演指令（優先遵守）\n${guide.trim()}` });
         }
 

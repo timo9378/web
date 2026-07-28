@@ -117,7 +117,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
                       <FaFileAlt className="text-zinc-500 mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm text-zinc-100 truncate">
-                          {p.title ?? `(無標題) #${p.id}`}
+                          {p.title}
                         </div>
                         {p.excerpt && (
                           <div className="text-xs text-zinc-500 truncate mt-0.5">

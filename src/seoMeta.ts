@@ -141,7 +141,7 @@ export function articleJsonLd(
     publisher: { '@type': 'Person', name: 'Koimsurai', url: BASE_URL },
     ...(published ? { datePublished: published } : {}),
     dateModified: toIso(post.updated_at) ?? published,
-    ...((post.tags?.length ?? 0) > 0 ? { keywords: post.tags.join(', ') } : {}),
+    ...(post.tags.length > 0 ? { keywords: post.tags.join(', ') } : {}),
     ...(post.category ? { articleSection: post.category } : {}),
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   };

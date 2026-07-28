@@ -235,7 +235,7 @@ export default function CommentsManager() {
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div className="size-7 rounded-full bg-accent/60 flex items-center justify-center text-xs font-semibold text-foreground/80 shrink-0">
-                            {c.author?.charAt(0)?.toUpperCase() || '?'}
+                            {c.author.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
@@ -255,14 +255,14 @@ export default function CommentsManager() {
                         {c.post_title && (
                           <a href={`/blog/${c.post_id}`} target="_blank" rel="noreferrer"
                             className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground/70 shrink-0 transition-colors">
-                            <ExternalLink className="size-3" /> {c.post_title?.substring(0, 20)}{c.post_title?.length > 20 ? '...' : ''}
+                            <ExternalLink className="size-3" /> {c.post_title.substring(0, 20)}{c.post_title.length > 20 ? '...' : ''}
                           </a>
                         )}
                       </div>
 
                       {/* Content */}
                       <p className="text-sm text-foreground/70 leading-relaxed mb-3 pl-9">
-                        {c.content?.length > 200 ? c.content.substring(0, 200) + '...' : c.content}
+                        {c.content.length > 200 ? c.content.substring(0, 200) + '...' : c.content}
                       </p>
 
                       {/* Quick Actions */}
@@ -397,7 +397,7 @@ export default function CommentsManager() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="text-xs text-muted-foreground bg-accent/30 p-3 rounded-lg">
-              「{replyDialog.comment?.content?.substring(0, 100)}...」
+              「{replyDialog.comment?.content.substring(0, 100)}...」
             </div>
             <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="輸入回覆內容..."
               className="w-full min-h-[100px] rounded-lg border border-border/40 bg-transparent p-3 text-sm text-foreground/90 resize-none outline-none focus:border-purple-500/40" />
