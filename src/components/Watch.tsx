@@ -127,6 +127,10 @@ function Watch() {
   // （用 useQuery 的 dataUpdatedAt 取 delta，而非絕對 startedAt）→ 免疫 client 時鐘偏差、
   // poll 當下值 100% 對齊後端。沒 startedAt/endsAt（bahamut 動畫）就退回靜態快照。
   const [liveProgress, setLiveProgress] = useState<number | null>(null);
+  // 每秒跳動的計時器，set-state-in-effect 無解：改 useSyncExternalStore 會踩硬傷——
+  // getSnapshot 含 Date.now() 時每次 render 都回傳新值 → React 判定變更 → 無限重繪。
+  // 要避開就得自己做快照快取，machinery 比 setInterval + setState 還重。
+  /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
     if (!liveNow) { setLiveProgress(null); return; }
     const base = liveNow.progressPct;
@@ -141,6 +145,7 @@ function Watch() {
     compute();
     const id = setInterval(compute, 1000);
     return () => clearInterval(id);
+    /* eslint-enable @eslint-react/set-state-in-effect */
   }, [liveNow, liveNowUpdatedAt]);
 
   const [favEditing, setFavEditing] = useState(false);

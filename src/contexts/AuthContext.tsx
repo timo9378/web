@@ -21,6 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 恢復 session
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
+    // token 存在 localStorage，server 上讀不到 → 這個判斷只能在 effect 做（同 Comments）
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     if (!token) { setLoading(false); return; }
     const ac = new AbortController();
     fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })

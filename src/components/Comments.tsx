@@ -39,6 +39,11 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
 
   const { user, isLoggedIn, providers, getGoogleAuthUrl, getGitHubAuthUrl, getToken } = useAuth();
 
+  // set-state-in-effect 在 SSR 站台無解，不是缺陷：localStorage 在 server 上不存在，
+  // 改用 useState 的 lazy initializer 會炸；就算加 typeof window 守衛，也只會變成
+  // server 繪預設值、client 繪儲存值 → hydration mismatch。讀 client-only 儲存
+  // 本來就該在 effect。captcha 同理（Math.random 進 render 期會 server/client 不一致）。
+  /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
     const liked = JSON.parse(localStorage.getItem('liked_comments_' + basePath + '_' + postId) ?? '[]') as number[];
     setLikedComments(liked);
@@ -57,6 +62,7 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
     const num2 = Math.floor(Math.random() * 10) + 1;
     setCaptchaQuestion({ num1, num2 });
   };
+  /* eslint-enable @eslint-react/set-state-in-effect */
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

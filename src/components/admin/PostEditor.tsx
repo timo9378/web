@@ -204,6 +204,9 @@ export default function PostEditor() {
   // 若 sourceLanguage 切到目前 activeLocale 不合法時（例如原本 source=zh-TW, activeLocale=en，之後改 source=en
   // 則 en 的編輯欄位切到 base 欄位），這裡確保 activeLocale 仍然指向有效 tab
   useEffect(() => {
+    // 修正失效的 tab 選擇：LOCALE_TABS 由 sourceLanguage 推導，改動時舊的 activeLocale
+    // 可能已不在清單裡。這是「校正外部變動造成的無效選擇」，不是可推導的衍生值。
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     if (!LOCALE_TABS.find(t => t.code === activeLocale)) setActiveLocale(sourceLanguage);
   }, [activeLocale, sourceLanguage]);
 
@@ -298,6 +301,8 @@ export default function PostEditor() {
       send_newsletter: false,
     };
     form.reset(formattedData as PostFormInput);
+    // 載入既有文章 → 把編輯器狀態同步成該篇的值。資料是非同步來的，render 期沒有。
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     setActiveLocale(postData.source_language ?? 'zh-TW');
     // reset 完成 → 讓下方 Select 依 key 重新 mount、以正確值初始化（此 set-state 是刻意的）
     // eslint-disable-next-line @eslint-react/set-state-in-effect

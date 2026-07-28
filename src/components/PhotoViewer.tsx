@@ -54,7 +54,11 @@ const PhotoViewer: React.FC = () => {
     }
   }, [imageScale, mainSwiper]);
 
-  // 重置狀態當檢視器關閉
+  // 重置狀態當檢視器關閉。
+  // thumbsSwiper / mainSwiper 是 Swiper 透過 onSwiper callback 回傳的實例，只能在
+  // 生命週期裡收；關閉時整個 overlay 已 unmount（見下方 isOpen && currentPhoto），
+  // 使用者看不到重設前的畫面。這裡是「丟掉失效的外部實例」，不是可推導的衍生值。
+  /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
     if (!isOpen) {
       setThumbsSwiper(null);
@@ -62,6 +66,7 @@ const PhotoViewer: React.FC = () => {
       setImageScale(1); // Reset scale state
     }
   }, [isOpen]);
+  /* eslint-enable @eslint-react/set-state-in-effect */
 
   // 當前照片是純衍生值：索引有效時取該張，否則沿用開啟時選中的那張。
   // 原本用 useEffect + setState，等於每次換頁都先繪一次舊照片、effect 再補繪。

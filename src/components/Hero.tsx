@@ -13,6 +13,10 @@ const useTypingEffect = (text: string, speed = 100, startDelay = 0) => {
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const hasStartedRef = React.useRef(false); // Use useRef to track if started
 
+  /* eslint-disable @eslint-react/set-state-in-effect */
+  // 重設與「啟動打字動畫」是同一個動作的兩半，拆到 render 期只會把它們分開、更難讀。
+  // 首次 mount 時這兩行是 no-op（值本來就是 '' / false，React 會 bail out 不重繪），
+  // 真正會多一次 render 的只有 text/speed 變動時 —— 那本來就要重跑動畫。
   useEffect(() => {
     // Always reset state when dependencies change
     setDisplayedText('');

@@ -108,6 +108,8 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
 
   useEffect(() => {
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
+    // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     if (likedPosts.includes(post.id)) setLiked(true);
   }, [post.id]);
 
@@ -383,11 +385,17 @@ function Blog() {
     });
   }, []);
 
-  // 讀取 URL 參數自動帶入篩選
+  // 讀取 URL 參數自動帶入篩選。
+  // 不能改成 useState 的 lazy initializer：這兩個值有本地設定點（下方的清除鈕、
+  // 標籤/分類按鈕），不是純衍生值；而 effect 要處理的是「已掛載時 URL 才變動」——
+  // 例如當下已在 /blog，再從 mega-menu 點 /blog?category=X。lazy initializer 只跑一次，
+  // 會漏掉這條路徑。
+  /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
     if (search.category) setSelectedCategory(search.category);
     if (search.tag) setSelectedTag(search.tag);
   }, [search.category, search.tag]);
+  /* eslint-enable @eslint-react/set-state-in-effect */
 
   // posts / tags / categories 都改由 useQuery 管理（見檔案上方）；
   // 排序切換由 sortBy 進 queryKey 自動 refetch，不再需要手動 fetch useEffect。

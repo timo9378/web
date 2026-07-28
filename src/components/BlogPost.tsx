@@ -1020,6 +1020,8 @@ const Reactions = React.memo(({ postId }: { postId: string | number }) => {
   // SSR-safe：初始空 Set（server 無 localStorage），掛載後才讀本地已按過的 reactions → 不 mismatch。
   const [mine, setMine] = useState<Set<string>>(() => new Set<string>());
   useEffect(() => {
+    // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     try { setMine(new Set<string>(JSON.parse(localStorage.getItem(`reactions:${postId}`) ?? '[]') as string[])); }
     catch { /* localStorage 不可用就維持空 */ }
   }, [postId]);
@@ -1602,6 +1604,8 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
     const compute = () => {
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
+      // getBoundingClientRect 要等元素真的掛上才量得到，render 期無解 → 只能在 effect。
+      // eslint-disable-next-line @eslint-react/set-state-in-effect
       setMenuPos({
         top: rect.bottom + window.scrollY + 6,
         left: rect.left + window.scrollX,
@@ -1752,6 +1756,8 @@ function BlogPost() {
   // 掛載後補讀本地字體偏好（見上方 currentFont 的 SSR-safe 初始）。
   useEffect(() => {
     const stored = localStorage.getItem('blogFont');
+    // 使用者偏好存在 localStorage，server 讀不到（同 Comments 的說明）
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     if (stored) setCurrentFont(stored);
   }, []);
 
@@ -1814,6 +1820,8 @@ function BlogPost() {
   /* ── 成功載入一篇：重置 liked + 增加瀏覽數（每次載入新文章打一次）── */
   useEffect(() => {
     if (!postData?.id) return;
+    // 換文章時把讚的狀態歸零。postData 是非同步載入的，render 期還沒有值可推導。
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     setLiked(false);
     // 刻意不用 AbortController：瀏覽數是 fire-and-forget，使用者讀完隨即跳頁正是常態，
     // 中止等於把要記的那一筆丟掉。sendBeacon 就是為這種卸載期送出設計的，
@@ -1835,9 +1843,13 @@ function BlogPost() {
   useEffect(() => {
     if (!post) return;
     const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
+    // 同上：likedPosts 在 localStorage；likeCount 之後會被按讚/取消在本地改動，
+    // 不是純衍生值，這裡是拿伺服器值做初始化。
+    /* eslint-disable @eslint-react/set-state-in-effect */
     const pid = post.id;
     if (stored.includes(pid)) setLiked(true);
     setLikeCount(post.likes);
+    /* eslint-enable @eslint-react/set-state-in-effect */
   }, [post, id]);
 
   /* ── 排版優化：CJK-Latin 自動加空格 + 腳註 hover 浮窗 ── */

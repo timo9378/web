@@ -40,6 +40,8 @@ function Thinking() {
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem('thinking_prefill');
+      // sessionStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
+      // eslint-disable-next-line @eslint-react/set-state-in-effect
       if (raw) { setPrefill(JSON.parse(raw) as Prefill); sessionStorage.removeItem('thinking_prefill'); }
     } catch { /* ignore */ }
   }, []);

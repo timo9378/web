@@ -47,12 +47,14 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
   // currentIndex ±2），使用者看不到重設前的那一幀，沒有「render 期調整」的必要。
   // 試過改寫成官方的 prev-props 比較法，反而多一個警告（規則會把 render 期的
   // setState 也報成 in-an-effect），程式碼也更繞。
+  /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
     if (!isCurrentImage) {
       setScale(1);
       setPosition({ x: 0, y: 0 });
     }
   }, [src, isCurrentImage]);
+  /* eslint-enable @eslint-react/set-state-in-effect */
 
 
   // Preload high-res image only when it's the current image

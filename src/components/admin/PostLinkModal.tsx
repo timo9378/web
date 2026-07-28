@@ -35,6 +35,9 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
 
   useEffect(() => {
     if (!isOpen) return;
+    // 每次開啟清空搜尋字。父層用 Dialog 常駐掛載（不是條件渲染），拿不到「重新 mount
+    // 自動重設」的效果；而且這一幀 modal 才剛開始淡入，使用者看不到清空前的舊字。
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
     setQuery('');
     // 等 Dialog 動畫掛上再 focus；modal 快速關閉時要清掉，避免殘留計時器
     const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);

@@ -80,12 +80,16 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    // <video> 的 muted/paused/currentTime 是 DOM 元素自己的狀態，render 期讀不到
+    // （元素還沒掛上），只能在 effect 裡同步一次再訂閱事件。set-state-in-effect 無解。
+    /* eslint-disable @eslint-react/set-state-in-effect */
     const sync = () => {
       if (Number.isFinite(v.duration) && v.duration > 0) setDuration(v.duration);
       setMuted(v.muted);
       setPlaying(!v.paused);
       setTime(v.currentTime);
     };
+    /* eslint-enable @eslint-react/set-state-in-effect */
     sync();
     v.addEventListener('durationchange', sync);
     v.addEventListener('loadedmetadata', sync);

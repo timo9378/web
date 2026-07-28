@@ -227,6 +227,9 @@ function useUptime(lang: string) {
       const hours = Math.floor((diffMs % 86400000) / 3600000);
       const mins = Math.floor((diffMs % 3600000) / 60000);
       const secs = Math.floor((diffMs % 60000) / 1000);
+      // 同 Watch 的 liveProgress：每秒跳動的計時器改 useSyncExternalStore 會無限重繪
+      // （getSnapshot 含 Date.now() → 每次 render 都是新值）。維持 setInterval + setState。
+      // eslint-disable-next-line @eslint-react/set-state-in-effect
       setText(`${days} ${units.d} ${hours} ${units.h} ${mins} ${units.m} ${secs} ${units.s}`);
     };
     fmt();
