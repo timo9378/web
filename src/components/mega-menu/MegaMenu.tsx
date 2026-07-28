@@ -9,7 +9,7 @@ import './mega-menu.css';
  *
  * 結構：
  *   <MegaMenuRoot>          // 管理「目前哪個 menu 開著」，確保最多 1 個同時打開
- *     <MegaMenu id="home" label="首頁" icon={...}>
+ *     <MegaMenu id="home" label="首頁" icon={(hover) => <Icon hover={hover} />}>
  *       <MegaMenuPanel>
  *         <MegaMenuColumn>...</MegaMenuColumn>
  *         <MegaMenuColumn>...</MegaMenuColumn>
@@ -40,7 +40,10 @@ export function MegaMenuRoot({ children, className = '' }: { children: ReactNode
 interface MegaMenuProps {
   id: string;
   label: ReactNode;
-  icon?: ReactNode;
+  /** 收 render prop 而非 ReactElement：MegaMenu 要把 hover 狀態餵給 icon，
+   *  原本用 React.cloneElement 注入——那是 React 文件標為不建議的 API
+   *  （型別不安全、prop 從哪來看不出來）。改成呼叫端自己決定怎麼用 hover。 */
+  icon?: (hover: boolean) => ReactNode;
   active?: boolean;
   to?: string | null;
   children?: ReactNode;
@@ -104,8 +107,7 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
     <>
       {icon && (
         <span className="mega-menu-trigger-icon">
-          {/* clone 注入 hover：icon 元件（如 TriggerAnimIcon）可據此播放動畫 */}
-          {React.isValidElement<{ hover?: boolean }>(icon) ? React.cloneElement(icon, { hover: hovering || isOpen }) : icon}
+          {icon(hovering || isOpen)}
         </span>
       )}
       <span className="mega-menu-trigger-label">{label}</span>

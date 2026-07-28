@@ -838,6 +838,10 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
    Custom paragraph — detect standalone link lines for LinkCard
    ══════════════════════════ */
 export const CustomParagraph = ({ children, node: _node, ...props }: { children?: React.ReactNode; node?: unknown } & React.HTMLAttributes<HTMLParagraphElement>) => {
+  // Children.toArray 一般不建議（會遮蔽 key、鼓勵去操作 children），但這裡是
+  // markdown 渲染器：要判斷「這個段落是不是只有一個裸連結」才能決定換成 LinkCard，
+  // 除了檢查 children 結構沒有別的辦法——react-markdown 就是這樣把節點交給我們的。
+  // eslint-disable-next-line @eslint-react/no-children-to-array
   const childArray = React.Children.toArray(children);
 
   const extractFirstUrlFromText = (text: string | null | undefined) => {

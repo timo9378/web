@@ -22,7 +22,9 @@ function useStats(): Stats | null {
 
 // 在線人數：目前後端沒有 endpoint，直接回傳 null 走 fallback 顯示文章數 / 天數
 // 之後想做即時人數，可加 SSE / WebSocket，或前端 fetch /api/online
-function useOnline(): number | null {
+// 不叫 useOnline：它沒有呼叫任何 hook，掛 use 前綴會讓讀者（與 lint）誤以為
+// 它受 hook 規則約束。真的改成訂閱式再改回 hook。
+function readOnlineCount(): number | null {
   return null;
 }
 
@@ -40,7 +42,7 @@ const YEAR_RANGE = CURRENT_YEAR > START_YEAR ? `${START_YEAR}-${CURRENT_YEAR}` :
 function Footer() {
   const { t } = useTranslation();
   const stats = useStats();
-  const online = useOnline();
+  const online = readOnlineCount();
 
   return (
     <footer className="app-footer">

@@ -131,7 +131,7 @@ function Header(_props: HeaderProps) {
           <MegaMenuItem
             id="home"
             label={t('nav.home')}
-            icon={<TriggerAnimIcon Comp={HouseIcon} />}
+            icon={(hover) => <TriggerAnimIcon Comp={HouseIcon} hover={hover} />}
             to="/"
             active={(isHomePage && !location.hash)
                  || bare.startsWith('about-site')
@@ -150,7 +150,7 @@ function Header(_props: HeaderProps) {
           <MegaMenuItem
             id="blog"
             label={t('nav.notes')}
-            icon={<TriggerAnimIcon Comp={BookOpenTextIcon} />}
+            icon={(hover) => <TriggerAnimIcon Comp={BookOpenTextIcon} hover={hover} />}
             to="/blog"
             active={bare.startsWith('blog')
                  || bare.startsWith('bookshelf')
@@ -162,7 +162,7 @@ function Header(_props: HeaderProps) {
           <MegaMenuItem
             id="more"
             label={t('nav.more')}
-            icon={<TriggerAnimIcon Comp={LayoutGridIcon} />}
+            icon={(hover) => <TriggerAnimIcon Comp={LayoutGridIcon} hover={hover} />}
             active={bare.startsWith('photos')
                  || bare.startsWith('activity')
                  || bare.startsWith('setup')

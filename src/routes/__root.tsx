@@ -128,6 +128,10 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         {/* pre-paint:首訪+桌面+首頁時先藏內容(避免 client-only intro 掛上前先閃首頁);
             SpaceBackdropShell pre-reveal 移除,4s safety timeout 兜底(JS 失敗也不會卡住)。 */}
         <script
+          // 這裡是唯一選項：這段必須在 paint 之前「同步」跑完（<script src> 或 useEffect
+          // 都太晚，首頁會先閃一下）。內容是原始碼寫死的字串常量，沒有變數插值、
+          // 沒有使用者輸入，不存在注入面。
+          // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
           dangerouslySetInnerHTML={{
             __html:
               "(function(){try{var d=sessionStorage.getItem('introCompleted')==='true';var m=matchMedia('(max-width:768px)').matches;var p=location.pathname;var h=p==='/'||/^\\/(en|ja|ko|zh-cn)\\/?$/.test(p);if(!d&&!m&&h){document.documentElement.classList.add('intro-pending');setTimeout(function(){document.documentElement.classList.remove('intro-pending')},4000);}}catch(e){}})()",
