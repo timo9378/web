@@ -112,10 +112,14 @@ const IntroAnimation = ({
   }, [ending]);
 
   useEffect(() => {
-    // matchMedia 全瀏覽器都有，?. 是死碼；typeof window 那道是 SSR 守衛，不同回事，保留。
+    // matchMedia 全瀏覽器都有，原本的 ?. 是死碼；typeof window 那道是 SSR 守衛，不同回事，保留。
+    // 寫成三元式而非 `typeof window !== 'undefined' && window.matchMedia(…)`：後者會被
+    // prefer-optional-chain 要求改成 window?.matchMedia(…)，但 SSR 下 window 這個識別字
+    // 根本沒宣告，optional chain 一樣 ReferenceError（同 src/api.ts 對 process 的註記）。
     const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      typeof window === 'undefined'
+        ? false
+        : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     let raf = 0;
