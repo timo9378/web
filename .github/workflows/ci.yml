@@ -73,20 +73,23 @@ jobs:
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           components: clippy, rustfmt
-      # prefix-key 是實驗性的一刀：rust-cache 在 `full match: true` 時不會重新儲存，
-      # 而 cache key 由 Cargo.lock + rustc 版本決定、長期不變 —— 等於第一次建立快取時
-      # 存進去什麼，之後就永遠是什麼。懷疑那份舊快取沒涵蓋到 *-sys 的 C 建置輸出。
+      # workspaces 必須指向真正的 workspace root。這個 repo 的 Cargo.toml 在根目錄
+      # （members = ["backend"]），所以 target/ 也在根目錄——backend/target 根本不存在。
+      # 原本寫 backend 導致 rust-cache 找不到 target/，只快取了 ~/.cargo 的 registry。
       #
-      # 依據（2026-07-28 本機實測，16 核冷編譯）：全量 268 CPU 秒，其中 tikv-jemalloc-sys
-      # 27.3s、libwebp-sys 13.7s、libsqlite3-sys 9.0s 全是 C 編譯，自有 crate 只佔 7.2%。
-      # 268 ÷ 2 核 ≈ 134s 是 runner 的理想值，而 CI 三步實測 111+147+124=382s
-      # → 幾乎每步都在做接近完整的重編。
+      # 證據（2026-07-28）：GitHub 上的快取 76 MB，而同一份冷編譯在本機是 3.5 GB
+      # → 編譯產物一個都沒進去，每次 CI 都在從零重編 453 個依賴。
+      # 這也解釋了為什麼還原只要 1–3 秒、每步卻要 100 秒以上，以及為什麼上一次
+      # 只換 prefix-key（382s → 350s）幾乎沒用：陳舊的不是內容，是根本沒存。
       #
-      # 判讀方式：換前綴後的「下一次」run 會變慢（要重存），再下一次才是真實水準。
-      # 若第三次仍接近 382s，代表快取不是主因，回頭查 rust-cache 的 clean 行為。
+      # 本機 16 核冷編譯 268 CPU 秒：tikv-jemalloc-sys 27.3s、libwebp-sys 13.7s、
+      # libsqlite3-sys 9.0s 都是 C 建置，自有 crate 只佔 7.2%（依賴全熱時 clippy 只要 5.3s）。
+      #
+      # 判讀：改完的「第一次」run 會慢（要建立並上傳 GB 級快取），第二次才是真實水準。
+      # 快取大小若沒從 76 MB 跳到 GB 級，代表這個假設也錯了。
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
-          workspaces: backend
+          workspaces: .
           prefix-key: v1-rust
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
