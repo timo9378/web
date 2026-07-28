@@ -329,9 +329,9 @@ function Setup() {
               whileInView="visible"
               viewport={{ once: true, margin: '-30px' }}
             >
-              {category.items.map((item, idx) => (
+              {category.items.map((item) => (
                 <motion.div
-                  key={`${category.id}-${idx}`}
+                  key={`${category.id}-${item.title}`}
                   className="setup-card"
                   variants={cardVariants}
                   whileHover={{ y: -5 }}
@@ -380,7 +380,7 @@ function Setup() {
               <div className="setup-base-specs">
                 {baseIISpecs.map((spec, idx) => (
                   <motion.div
-                    key={idx}
+                    key={spec.label}
                     className="setup-base-spec-item"
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}

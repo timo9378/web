@@ -570,8 +570,8 @@ const Activity = () => {
                       </div>
                     </div>
                   ))
-                : githubData?.recentCommits?.slice(0, 8).map((event, i) => (
-                <div key={`${event.id}-${i}`} className="commit-event">
+                : githubData?.recentCommits?.slice(0, 8).map((event) => (
+                <div key={event.id} className="commit-event">
                   <div className="commit-event-header">
                     <div className="commit-dot" />
                     <span className="commit-repo">{event.repo.name.split('/')[1]}</span>
@@ -580,9 +580,9 @@ const Activity = () => {
                   <div className="commit-messages">
                     {(event.payload.commits ?? []).length > 0 ? (
                       <>
-                        {event.payload.commits?.slice(0, 3).map((commit, ci) => (
+                        {event.payload.commits?.slice(0, 3).map((commit) => (
                           <a
-                            key={ci}
+                            key={commit.sha}
                             className="commit-msg-row"
                             href={`https://github.com/${event.repo.name}/commit/${commit.sha}`}
                             target="_blank"
@@ -626,7 +626,7 @@ const Activity = () => {
             <span className="section-label">WEEKLY PROJECTS</span>
             <div className="projects-bars">
               {wakatimeData?.week?.projects?.slice(0, 6).map((project, i) => (
-                <div key={i} className="project-row">
+                <div key={project.name} className="project-row">
                   <div className="project-row-meta">
                     <span className="project-row-name">{project.name}</span>
                     <span className="project-row-time">{project.text}</span>
@@ -661,9 +661,9 @@ const Activity = () => {
               </div>
               <div className="game-marquee-wrapper">
                 <div className="game-marquee-track">
-                  {[...sortedOwnedGames, ...sortedOwnedGames].map((game, i) => (
+                  {[...sortedOwnedGames, ...sortedOwnedGames].map((game) => (
                     <a
-                      key={`${game.appid}-${i}`}
+                      key={game.appid}
                       href={`https://store.steampowered.com/app/${game.appid}`}
                       target="_blank"
                       rel="noopener noreferrer"

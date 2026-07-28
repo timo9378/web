@@ -93,8 +93,8 @@ function SchoolClubs() {
               {/* 展開動畫：CSS grid-rows 0fr→1fr（framer 的 height:auto 量測會卡） */}
               <div className={`club-activities-wrap ${isOpen ? 'open' : ''}`}>
                 <ul className="club-activities-list">
-                  {club.activities.map((a, j) => (
-                    <li key={j} className="club-activity-item">{a}</li>
+                  {club.activities.map((a) => (
+                    <li key={a} className="club-activity-item">{a}</li>
                   ))}
                 </ul>
               </div>

@@ -111,7 +111,7 @@ const WorkExperience = () => {
                   <div key={g.heading} className="work-group">
                     <span className="section-label work-group-label">{g.heading}</span>
                     <ul className="work-bullets">
-                      {g.items.map((it, j) => <li key={j}>{it}</li>)}
+                      {g.items.map((it) => <li key={it}>{it}</li>)}
                     </ul>
                   </div>
                 ))}
@@ -120,7 +120,7 @@ const WorkExperience = () => {
 
             {exp.bullets && (
               <ul className="work-bullets work-bullets-flat">
-                {exp.bullets.map((it, j) => <li key={j}>{it}</li>)}
+                {exp.bullets.map((it) => <li key={it}>{it}</li>)}
               </ul>
             )}
           </div>

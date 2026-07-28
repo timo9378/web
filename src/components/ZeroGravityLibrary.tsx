@@ -667,7 +667,7 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
         {/* Controls hint — bottom center */}
         <div className="zg-hints">
           {hints.map((h, i) => (
-            <React.Fragment key={i}>
+            <React.Fragment key={h}>
               {i > 0 && <span className="zg-hint-dot" />}
               <span>{h}</span>
             </React.Fragment>

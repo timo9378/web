@@ -208,8 +208,8 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
           <div className="exif-section">
             <h3 className="exif-section-title">標籤</h3>
             <div className="exif-tags">
-              {photo.tags.map((tag, index) => (
-                <span key={index} className="exif-tag">
+              {photo.tags.map((tag) => (
+                <span key={tag} className="exif-tag">
                   #{tag}
                 </span>
               ))}

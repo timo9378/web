@@ -230,8 +230,8 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
         {/* 標籤 */}
         {post.tags.length > 0 && (
           <div className="note-tags">
-            {post.tags.slice(0, 4).map((tag, i) => (
-              <span key={i} className="note-tag">#{tagLabel(tag)}</span>
+            {post.tags.slice(0, 4).map((tag) => (
+              <span key={tag} className="note-tag">#{tagLabel(tag)}</span>
             ))}
           </div>
         )}
@@ -317,11 +317,11 @@ const ActivityHeatmap = React.memo(({ posts }: { posts: Post[] }) => {
         <span className="heatmap-total-label">{t('blog.heatmapTotal')}</span>
       </div>
       <div className="heatmap-grid" role="img" aria-label={t('blog.heatmapAria')}>
-        {cells.map((week, wi) => (
-          <div key={wi} className="heatmap-col">
-            {week.map((cell, di) => (
+        {cells.map((week) => (
+          <div key={week[0]?.date.toISOString()} className="heatmap-col">
+            {week.map((cell) => (
               <span
-                key={di}
+                key={cell.date.toISOString()}
                 className={`heatmap-cell heatmap-level-${cell.level}`}
                 title={cell.level >= 0 ? `${formatDate(cell.date)} · ${cell.count} 篇` : ''}
               />
