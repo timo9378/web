@@ -37,6 +37,12 @@ jobs:
         run: pnpm exec tsc --noEmit
       - name: mcp-server typecheck
         run: pnpm --filter @koimsurai/mcp-server typecheck
+      # server/routes 與 scripts/ 不在根 tsconfig 的 include（只收 src），過去完全沒被檢查。
+      # 各自有 tsconfig.json（檔名固定：eslint 的 projectService 只認這個名字）。
+      - name: server routes typecheck
+        run: pnpm typecheck:server
+      - name: scripts typecheck
+        run: pnpm typecheck:scripts
       # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調（404 → 398）
       - name: eslint (src)
         run: pnpm exec eslint src --max-warnings 398

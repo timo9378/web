@@ -53,7 +53,13 @@ export default tseslint.config(
     ],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          // 根目錄的 config 檔不在任何 tsconfig 的 include 裡（tsconfig.json 只收 src、
+          // tsconfig.scripts.json 只收 scripts），projectService 找不到 program 就會
+          // 直接 parsing error。這裡讓它們走 default project 拿推斷型別。
+          // 不改 tsconfig 的 include：那會把它們一起拉進 `tsc --noEmit` 的檢查範圍（CI 有跑）。
+          allowDefaultProject: ['vitest.config.ts', 'vite.config.start.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

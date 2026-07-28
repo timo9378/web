@@ -1,0 +1,18 @@
+{
+  // 取代根目錄的 tsconfig.scripts.json：那個檔名 project service 不認（只認 tsconfig.json），
+  // 所以 scripts/ 底下的檔案雖然被它 include，eslint 依然找不到 program。
+  // 這些 script 由 tsx 直接執行，不需要 emit，設定只服務型別檢查。
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}
