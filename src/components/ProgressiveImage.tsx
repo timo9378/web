@@ -42,7 +42,11 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     }
   }, [scale, onScaleChange]);
 
-  // Reset state when image source changes or it's no longer the current image
+  // Reset state when image source changes or it's no longer the current image.
+  // 刻意留在 effect：!isCurrentImage 代表這張已經不是當前 slide（PhotoViewer 只渲染
+  // currentIndex ±2），使用者看不到重設前的那一幀，沒有「render 期調整」的必要。
+  // 試過改寫成官方的 prev-props 比較法，反而多一個警告（規則會把 render 期的
+  // setState 也報成 in-an-effect），程式碼也更繞。
   useEffect(() => {
     if (!isCurrentImage) {
       setScale(1);

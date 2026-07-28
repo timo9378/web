@@ -16,6 +16,7 @@ import {
   photosAtom,
   currentIndexAtom,
 } from '../store/photoStore';
+import type { PhotoManifest } from '../types/photo';
 import ProgressiveImage from './ProgressiveImage';
 import GalleryThumbnail from './GalleryThumbnail';
 import EXIFPanel from './EXIFPanel';
@@ -32,7 +33,6 @@ const PhotoViewer: React.FC = () => {
 
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
   const [mainSwiper, setMainSwiper] = useState<SwiperType | null>(null);
-  const [currentPhoto, setCurrentPhoto] = useState(selectedPhoto);
   const [imageScale, setImageScale] = useState(1);
 
   // 鍵盤快捷鍵（原生實作，取代 react-use 的 useKey — 整包只用到這一個 hook）
@@ -63,12 +63,15 @@ const PhotoViewer: React.FC = () => {
     }
   }, [isOpen]);
 
-  // 更新當前照片
-  useEffect(() => {
-    if (photos.length > 0 && currentIndex >= 0 && currentIndex < photos.length) {
-      setCurrentPhoto(photos[currentIndex]);
-    }
-  }, [currentIndex, photos]);
+  // 當前照片是純衍生值：索引有效時取該張，否則沿用開啟時選中的那張。
+  // 原本用 useEffect + setState，等於每次換頁都先繪一次舊照片、effect 再補繪。
+  // 用明確的邊界檢查而非 photos[i] ?? fallback：沒開 noUncheckedIndexedAccess 時
+  // TS 把 photos[i] 當成必然存在，?? 會被判成多餘——但執行期越界就是 undefined。
+  // 這裡的條件與原本 effect 裡的守衛一字對應。
+  const currentPhoto: PhotoManifest | undefined =
+    currentIndex >= 0 && currentIndex < photos.length
+      ? photos[currentIndex]
+      : (selectedPhoto ?? undefined);
 
   // 初始化 Swiper 索引
   useEffect(() => {

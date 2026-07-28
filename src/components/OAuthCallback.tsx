@@ -8,17 +8,18 @@ function OAuthCallback() {
   const { t } = useTranslation();
   const search = useRouterState({ select: (s) => s.location.search }) as { code?: string; state?: string };
   const { loginWithOAuth } = useAuth();
-  const [error, setError] = useState('');
+  // 「網址沒帶 code」是純粹從 props 看得出來的事實，不需要繞一趟 state：
+  // 原本在 effect 裡 setError，等於先繪一次 loading 畫面、effect 再補繪成錯誤畫面。
+  // asyncError 才是真狀態（登入請求失敗後才知道）。
+  const [asyncError, setAsyncError] = useState('');
+  const error = search.code ? asyncError : t('oauth.errorNoCode');
 
   useEffect(() => {
     const code = search.code;
     const state = search.state; // provider name
     const provider = state ?? 'google'; // fallback
 
-    if (!code) {
-      setError(t('oauth.errorNoCode'));
-      return;
-    }
+    if (!code) return;
 
     const redirectUri = `${window.location.origin}/auth/callback`;
 
@@ -31,7 +32,7 @@ function OAuthCallback() {
       })
       .catch((err: unknown) => {
         console.error('OAuth login error:', err);
-        setError(t('oauth.errorGeneric'));
+        setAsyncError(t('oauth.errorGeneric'));
       });
   }, []);
 
