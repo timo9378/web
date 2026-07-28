@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Command } from 'cmdk';
-import { useLocale, useLocaleNavigate } from '../locale-link';
+import { useLocale, useLocaleNavigate } from '../lib/useLocale';
 import { useTranslation } from 'react-i18next';
 import {
   FileText, Hash, Folder, Music, BookOpen, Activity,

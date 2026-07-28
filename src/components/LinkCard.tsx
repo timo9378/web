@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { IconType } from 'react-icons';
 import { FaYoutube, FaGithub, FaInstagram, FaExternalLinkAlt } from 'react-icons/fa';
-import { useLocale, LocaleLink } from '../locale-link';
+import { LocaleLink } from '../locale-link';
+import { useLocale } from '../lib/useLocale';
 import { recentPostsQueryOptions } from '../blogList';
 import { thoughtDetailQueryOptions } from '../thoughtData';
 import { postPath } from '../lib/postPath';

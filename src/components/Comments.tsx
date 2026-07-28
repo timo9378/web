@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import KoimLoader from './KoimLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import { FaGithub, FaGoogle } from 'react-icons/fa';
 import type { CommentRow } from '@koimsurai/api-types';
 import { commentsQueryOptions } from '../commentsData';

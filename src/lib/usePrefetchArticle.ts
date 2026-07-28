@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocale } from '../locale-link';
+import { useLocale } from './useLocale';
 import { postDetailQueryOptions } from '../blogList';
 import { prefetchPostChunk } from './prefetchPost';
 

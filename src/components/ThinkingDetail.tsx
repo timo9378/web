@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LocaleLink } from '../locale-link';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import KoimLoader from './KoimLoader';
 import ThoughtCard from './ThoughtCard';
 import Comments from './Comments';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import KoimLoader from './KoimLoader';
 
 function OAuthCallback() {

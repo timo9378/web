@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocale, LocaleLink } from '../../locale-link';
+import { LocaleLink } from '../../locale-link';
+import { useLocale } from '../../lib/useLocale';
 import { useTranslation } from 'react-i18next';
 import { blogCategoriesQueryOptions, recentPostsQueryOptions } from '../../blogList';
 import type { PostListItem } from '@koimsurai/api-types';

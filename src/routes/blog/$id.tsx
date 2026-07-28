@@ -1,6 +1,7 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { postIdent } from '../../lib/postPath';
-import { LocaleProvider, buildAlternateLinks, toLocales } from '../../start-i18n';
+import { buildAlternateLinks, toLocales } from '../../start-i18n';
+import { LocaleProvider } from '../../LocaleProvider';
 import { DEFAULT_LOCALE } from '../../lib/locales';
 import FullBlogPost from '../../components/BlogPost';
 import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../blogList';

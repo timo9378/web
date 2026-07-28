@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import './FavoritesEditor.css';
 
 const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';

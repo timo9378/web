@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Rss } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import ThoughtCard from './ThoughtCard';
 import { thoughtsListQueryOptions } from '../thinkingData';
 import './Thinking.css';

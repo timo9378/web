@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import KoimLoader from './KoimLoader';
 
 // 後台子應用(私有、無 SEO):整包保留 react-router,以 ClientOnly island 掛在 TanStack 的 /admin/$ 之下。

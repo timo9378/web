@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, createElement, type ElementType, type MouseEvent } from 'react';
 import { useRouterState } from '@tanstack/react-router';
-import { LocaleLink, useLocaleNavigate } from '../locale-link';
+import { LocaleLink } from '../locale-link';
+import { useLocaleNavigate } from '../lib/useLocale';
 import { stripLocalePrefix } from '../start-i18n';
 import { useTranslation } from 'react-i18next';
 import { FaUser,
@@ -8,7 +9,7 @@ import { FaUser,
 } from 'react-icons/fa';
 import { HouseIcon, BookOpenTextIcon, LayoutGridIcon } from '@animateicons/react/lucide';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import { MegaMenuRoot, MegaMenu as MegaMenuItem } from './mega-menu/MegaMenu';
 import HomeMenuContent from './mega-menu/HomeMenu';
 import BlogMenuContent from './mega-menu/BlogMenu';

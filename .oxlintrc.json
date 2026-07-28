@@ -25,7 +25,11 @@
     "packages/*/index.ts",
     "public/**",
     "src/routeTree.gen.ts",
-    "stats.html"
+    "stats.html",
+
+    "src/components/ui/**",
+    "src/components/animate-ui/**",
+    "src/hooks/use-is-in-view.ts"
   ],
   "rules": {
     "for-direction": "error",

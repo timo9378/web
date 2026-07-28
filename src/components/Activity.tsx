@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslation, Trans } from 'react-i18next';
-import { usePageVisibility } from '../contexts/PageVisibilityContext';
+import { usePageVisibility } from '../contexts/pageVisibility';
 import {
   steamQueryOptions,
   wakatimeQueryOptions,

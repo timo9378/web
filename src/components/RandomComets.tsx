@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './RandomComets.css'; // 引入彗星的 CSS
-import { usePageVisibility } from '../contexts/PageVisibilityContext';
+import { usePageVisibility } from '../contexts/pageVisibility';
 
 const getRandomValue = (min: number, max: number) => Math.random() * (max - min) + min;
 

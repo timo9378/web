@@ -26,7 +26,9 @@ export interface LinkPreviewData {
 }
 
 // enabled 由呼叫端控制 → 只有真的 hover 才發請求；同一連結全站共用快取。
-export const linkPreviewQueryOptions = (url: string) =>
+// 只有本檔的 useQuery 用得到，不 export：混在元件檔裡的非元件 export 會讓
+// Fast Refresh 對整支檔案退回整頁重載。
+const linkPreviewQueryOptions = (url: string) =>
   queryOptions({
     queryKey: ['link-preview', url],
     queryFn: async (): Promise<LinkPreviewData> => {

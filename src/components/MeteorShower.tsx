@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import './MeteorShower.css';
-import { usePageVisibility } from '../contexts/PageVisibilityContext';
+import { usePageVisibility } from '../contexts/pageVisibility';
 
 const MeteorShower = () => {
   const containerRef = useRef<HTMLDivElement>(null);

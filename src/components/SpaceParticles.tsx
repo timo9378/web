@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import './SpaceParticles.css';
-import { usePageVisibility } from '../contexts/PageVisibilityContext';
+import { usePageVisibility } from '../contexts/pageVisibility';
 
 const SpaceParticles = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

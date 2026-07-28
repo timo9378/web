@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react';
 import { useParams, useRouterState, useNavigate, ClientOnly } from '@tanstack/react-router';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { useLocale, LocaleLink } from '../locale-link';
+import { LocaleLink } from '../locale-link';
+import { useLocale } from '../lib/useLocale';
 import { postDetailQueryOptions, blogCategoriesDetailQueryOptions, recentPostsQueryOptions, postReactionsQueryOptions, seriesQueryOptions, type CategoryInfo } from '../blogList';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';

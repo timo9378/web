@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, type ElementType, type ReactElement } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AnimeRow } from '@koimsurai/api-types';
-import { LocaleLink, useLocaleNavigate } from '../locale-link';
+import { LocaleLink } from '../locale-link';
+import { useLocaleNavigate } from '../lib/useLocale';
 import {
   animeHistoryQueryOptions,
   filmsQueryOptions,
@@ -12,7 +13,7 @@ import {
 } from '../watchData';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth';
 import FavoritesEditor from './FavoritesEditor';
 import './Watch.css';
 

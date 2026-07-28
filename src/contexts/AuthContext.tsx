@@ -1,49 +1,7 @@
-import { createContext, use, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { AuthContext, TOKEN_KEY, type User, type AuthProviders } from './auth';
 
-export type UserRole = 'OWNER' | 'ADMIN' | 'USER';
-
-export interface User {
-  id: string;
-  role: UserRole;
-  email?: string;
-  name?: string;
-  displayName?: string;
-  display_name?: string;
-  avatar?: string;
-  avatar_url?: string;
-  login?: string;
-  html_url?: string;
-  public_repos?: number;
-  provider?: string;
-}
-
-interface OAuthProvider {
-  enabled: boolean;
-  clientId?: string;
-}
-
-interface AuthProviders {
-  google: OAuthProvider;
-  github: OAuthProvider;
-}
-
-interface AuthContextValue {
-  user: User | null;
-  loading: boolean;
-  providers: AuthProviders;
-  getToken: () => string | null;
-  loginWithOAuth: (provider: string, code: string, redirectUri: string) => Promise<User>;
-  logout: () => void;
-  getGoogleAuthUrl: (redirectUri: string) => string;
-  getGitHubAuthUrl: (redirectUri: string) => string;
-  isLoggedIn: boolean;
-  isAdmin: boolean;
-  isOwner: boolean;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
-
-const TOKEN_KEY = 'koimsurai_user_token';
+// 本檔只 export AuthProvider 元件；型別／context／useAuth 在 ./auth。
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -129,10 +87,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext>
   );
-}
-
-export function useAuth() {
-  const ctx = use(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
 }
