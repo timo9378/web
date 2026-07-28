@@ -60,8 +60,11 @@ export default function CommandPalette() {
   if (!open) return null;
 
   return (
-    <div className="cmdk-backdrop" onClick={() => setOpen(false)}>
-      <div className="cmdk-wrap" onClick={(e) => e.stopPropagation()}>
+    // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
+    // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
+    // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+    <div className="cmdk-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <div className="cmdk-wrap">
         <Command label={t('commandPalette.label')} shouldFilter>
           <div className="cmdk-input-row">
             <Search className="cmdk-search-icon" size={16} />

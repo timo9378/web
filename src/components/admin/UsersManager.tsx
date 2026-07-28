@@ -175,6 +175,8 @@ export default function UsersManager() {
                   return (
                     <tr key={u.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
                       {/* User */}
+                      {/* 這格有可見文字（使用者名稱），但巢狀在第 3 層，超過規則預設只看 2 層的 depth → 誤報 */}
+                      {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
                       <td className="p-3">
                         <div className="flex items-center gap-2.5">
                           <Avatar className="size-8 shrink-0">

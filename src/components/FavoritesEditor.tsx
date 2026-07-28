@@ -135,8 +135,11 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
   };
 
   return createPortal(
-    <div className="fe-overlay" onClick={onClose}>
-      <div className="fe-modal" onClick={(e) => e.stopPropagation()}>
+    // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
+    // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
+    // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+    <div className="fe-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="fe-modal">
         <div className="fe-head">
           <h3>{t('watch.favManage')}</h3>
           <button className="fe-close" onClick={onClose} aria-label="close">✕</button>

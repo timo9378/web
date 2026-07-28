@@ -390,6 +390,9 @@ function Friends() {
               target="_blank"
               rel="noopener noreferrer"
               className="friend-card"
+              // 卡片文字在巢狀第 3 層，規則的 depth 只看 2 層；補上 aria-label 之後
+              // 報讀器念的是朋友名稱，而不是「名稱＋一句標語」黏成一串
+              aria-label={fr.name}
             >
               <img src={fr.avatar} alt="" width="40" height="40" className="friend-card-avatar" loading="lazy" />
               <div className="friend-card-info">

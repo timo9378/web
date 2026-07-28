@@ -172,8 +172,11 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
       </div>
 
       {showComments && createPortal(
-        <div className="tk-modal-overlay" onClick={() => setShowComments(false)}>
-          <div className="tk-modal" onClick={(e) => e.stopPropagation()}>
+        // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
+        // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
+        // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+        <div className="tk-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowComments(false); }}>
+          <div className="tk-modal">
             <div className="tk-modal-head">
               <span>評論</span>
               <button className="tk-modal-close" onClick={() => setShowComments(false)} aria-label="關閉">✕</button>

@@ -119,17 +119,20 @@ const PhotoViewer: React.FC = () => {
           />
 
           {/* 頂部照片資訊 */}
-          <div className="photo-viewer-info" onClick={(e) => e.stopPropagation()}>
+          {/* 沒有 onClick 了：外層 .photo-viewer-overlay 本來就沒掛點擊關閉，
+              這裡的 stopPropagation 沒有任何冒泡可擋，是死碼 */}
+          <div className="photo-viewer-info">
             <div className="photo-title">
               照片 {currentPhoto.exif?.DateTimeOriginal ?? currentPhoto.title ?? currentPhoto.id}
             </div>
           </div>
 
           {/* 右上角按鈕組 */}
-          <div className="viewer-top-right-buttons" onClick={(e) => e.stopPropagation()}>
+          <div className="viewer-top-right-buttons">
             {/* 分享按鈕 */}
             <button
               className="action-btn action-btn-share"
+              aria-label="分享這張照片"
               onClick={(e) => {
                 e.stopPropagation();
                 if (navigator.share) {
@@ -152,6 +155,7 @@ const PhotoViewer: React.FC = () => {
             {/* 關閉按鈕 */}
             <button
               className="action-btn action-btn-close"
+              aria-label="關閉檢視器"
               onClick={(e) => {
                 e.stopPropagation();
                 closeViewer();
@@ -175,12 +179,12 @@ const PhotoViewer: React.FC = () => {
           {/* 主圖輪播區域 */}
           <div className="photo-viewer-main">
             {/* 自訂導航按鈕 - 上一張 */}
-            <button className="custom-swiper-button-prev" onClick={(e) => e.stopPropagation()}>
+            <button aria-label="上一張照片" className="custom-swiper-button-prev" onClick={(e) => e.stopPropagation()}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <button className="custom-swiper-button-next" onClick={(e) => e.stopPropagation()}>
+            <button aria-label="下一張照片" className="custom-swiper-button-next" onClick={(e) => e.stopPropagation()}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>

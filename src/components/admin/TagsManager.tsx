@@ -314,6 +314,8 @@ export default function TagsManager() {
             <tbody className="divide-y divide-border/15">
               {sortedTags.map((tag) => (
                 <tr key={tag.id} className="group hover:bg-accent/15 transition-colors">
+                  {/* 這格有可見文字（標籤名稱），但巢狀在第 3 層，超過規則預設只看 2 層的 depth → 誤報 */}
+                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-2">
                       <span className="text-[13px] text-foreground/70 font-mono">{tag.name}</span>
@@ -322,6 +324,8 @@ export default function TagsManager() {
                   <td className="px-4 py-2 text-right">
                     <span className="text-[12px] text-muted-foreground/60">{tag.post_count}</span>
                   </td>
+                  {/* 這格有可見文字（「編輯」「刪除」按鈕文字），但巢狀在第 3 層，超過規則預設只看 2 層的 depth → 誤報 */}
+                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button

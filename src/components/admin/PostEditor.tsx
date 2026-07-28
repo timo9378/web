@@ -722,6 +722,7 @@ export default function PostEditor() {
             {/* Hidden buttons for AdminLayout header to trigger */}
             <button
               id="save-draft-btn"
+              aria-hidden tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
@@ -729,6 +730,7 @@ export default function PostEditor() {
             />
             <button
               id="save-exit-btn"
+              aria-hidden tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
@@ -736,6 +738,7 @@ export default function PostEditor() {
             />
             <button
               id="publish-btn"
+              aria-hidden tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}

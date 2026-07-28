@@ -53,6 +53,7 @@ const SearchAndFilter = ({
           {searchTerm && (
             <button
               className="clear-search-btn"
+              aria-label="清除搜尋"
               onClick={() => setSearchTerm('')}
             >
               <svg viewBox="0 0 24 24" fill="none">
@@ -109,6 +110,7 @@ const SearchAndFilter = ({
             <button
               className={`view-mode-btn ${(viewMode ?? 'card') === 'card' ? 'active' : ''}`}
               onClick={() => setViewMode?.('card')}
+              aria-label="卡片模式"
               title="卡片模式"
             >
               <svg viewBox="0 0 24 24" fill="none">
@@ -121,6 +123,7 @@ const SearchAndFilter = ({
             <button
               className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode?.('list')}
+              aria-label="列表模式"
               title="列表模式"
             >
               <svg viewBox="0 0 24 24" fill="none">
@@ -135,6 +138,7 @@ const SearchAndFilter = ({
             <button
               className={`view-mode-btn ${viewMode === 'timeline' ? 'active' : ''}`}
               onClick={() => setViewMode?.('timeline')}
+              aria-label="時間軸模式"
               title="時間軸模式"
             >
               <svg viewBox="0 0 24 24" fill="none">

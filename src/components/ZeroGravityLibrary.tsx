@@ -677,7 +677,7 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
         {/* Book details panel */}
         {selectedBook && (
           <div className="zg-detail-panel">
-            <button className="zg-detail-close" onClick={() => setSelectedBook(null)}>
+            <button className="zg-detail-close" aria-label="關閉書籍詳情" onClick={() => setSelectedBook(null)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
             {selectedBook.coverUrl && (
