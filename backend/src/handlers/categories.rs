@@ -8,14 +8,16 @@ use sqlx::FromRow;
 use crate::{error::AppError, state::AppState};
 
 /// `GET /api/categories` 單列。欄位順序對齊 Express SELECT。
-#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema, specta::Type)]
 pub struct CategoryRow {
+    #[specta(type = specta_typescript::Number)]
     pub id: i64,
     pub name: String,
     pub slug: String,
     pub description: Option<String>,
     pub short_description: Option<String>,
     pub updated_at: Option<String>,
+    #[specta(type = specta_typescript::Number)]
     pub post_count: i64,
     /// 顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。
     pub name_en: Option<String>,
@@ -33,7 +35,7 @@ pub struct CategoryRow {
     pub short_description_zh_cn: Option<String>,
 }
 
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, utoipa::ToSchema, specta::Type)]
 pub struct CategoriesResponse {
     pub message: &'static str,
     pub categories: Vec<CategoryRow>,

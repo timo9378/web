@@ -1000,9 +1000,7 @@ const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnt
           )}
           {!compact && (
             <div className="category-tooltip-meta">
-              {info.post_count != null && (
-                <span>{t('blog.postCount', { count: info.post_count ?? 0 })}</span>
-              )}
+              <span>{t('blog.postCount', { count: info.post_count })}</span>
               {info.updated_at && (
                 <span>{t('blog.lastUpdated')} {new Date(info.updated_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language)}</span>
               )}

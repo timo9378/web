@@ -224,6 +224,36 @@ export type BooksListResponse = {
 	books: BookRow[],
 };
 
+export type CategoriesResponse = {
+	message: string,
+	categories: CategoryRow[],
+};
+
+/**  `GET /api/categories` 單列。欄位順序對齊 Express SELECT。 */
+export type CategoryRow = {
+	id: number,
+	name: string,
+	slug: string,
+	description: string | null,
+	short_description: string | null,
+	updated_at: string | null,
+	post_count: number,
+	/**  顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。 */
+	name_en: string | null,
+	name_ja: string | null,
+	name_ko: string | null,
+	name_zh_cn: string | null,
+	/**  描述的譯文（tooltip 用）。 */
+	description_en: string | null,
+	description_ja: string | null,
+	description_ko: string | null,
+	description_zh_cn: string | null,
+	short_description_en: string | null,
+	short_description_ja: string | null,
+	short_description_ko: string | null,
+	short_description_zh_cn: string | null,
+};
+
 /**
  *  全站留言的狀態計數（**不受 status/search/post_id 過濾影響**，永遠是全域分佈）。
  *  status 受限於這四種（見 comments.rs 建立邏輯 + admin 審核端點），故可 typed 成固定欄位。
@@ -331,6 +361,15 @@ export type KeywordFilterRow = {
 
 export type KeywordFiltersResponse = {
 	filters: KeywordFilterRow[],
+};
+
+export type MetricStat = {
+	metric: string,
+	count: number,
+	p75: number | null,
+	good: number,
+	needs_improvement: number,
+	poor: number,
 };
 
 /**  `GET /api/spotify/now-playing`。沒在播 / 未配置 / 抓取失敗一律回 is_playing:false。 */
@@ -537,6 +576,33 @@ export type SubscribersResponse = {
 	message: string,
 	subscribers: SubscriberRow[],
 	pagination: Pagination,
+};
+
+/**
+ *  公開標籤列表的單列。欄位順序 = SELECT 欄位順序 = Express JSON key 順序，
+ *  以確保 byte-level 對拍等價（serde 依宣告順序序列化）。
+ *  One row of the public tag list. Field order = SELECT column order = Express JSON key
+ *  order, so serialization is byte-equivalent (serde serializes in declaration order).
+ */
+export type TagRow = {
+	id: number,
+	name: string,
+	/**
+	 *  直接保留 sqlite 原始 TEXT（例 `"2026-04-04 19:16:29"`），不經 chrono 解析，
+	 *  避免格式漂移（Express 也是原樣丟出 DATETIME 字串）。
+	 */
+	created_at: string,
+	post_count: number,
+	/**  顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。 */
+	name_en: string | null,
+	name_ja: string | null,
+	name_ko: string | null,
+	name_zh_cn: string | null,
+};
+
+export type TagsResponse = {
+	message: string,
+	tags: TagRow[],
 };
 
 export type TopGenre = {

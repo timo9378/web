@@ -9,6 +9,7 @@ use koimsurai_web_backend::handlers::admin::{
 };
 use koimsurai_web_backend::handlers::auth::{AuthProvidersResponse, OAuthProviderInfo};
 use koimsurai_web_backend::handlers::books::{BookDetailResponse, BookRow, BooksListResponse};
+use koimsurai_web_backend::handlers::categories::{CategoriesResponse, CategoryRow};
 use koimsurai_web_backend::handlers::home::{
     DigestComment, DigestPost, DigestResponse, DigestThought, DigestTimeline,
 };
@@ -28,6 +29,8 @@ use koimsurai_web_backend::handlers::spotify::{
     TopGenresResponse, TopTracksResponse,
 };
 use koimsurai_web_backend::handlers::stats::StatsResponse;
+use koimsurai_web_backend::handlers::tags::{TagRow, TagsResponse};
+use koimsurai_web_backend::handlers::vitals::MetricStat;
 use koimsurai_web_backend::handlers::watch::{
     AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, TvResponse, TvRow, WatchStatsResponse,
 };
@@ -51,6 +54,12 @@ fn main() {
         .register::<AudioFeaturesResponse>()
         .register::<OAuthProviderInfo>()
         .register::<AuthProvidersResponse>()
+        // 公開的分類 / 標籤 / vitals：struct 本來就有，只是沒 register
+        .register::<CategoryRow>()
+        .register::<CategoriesResponse>()
+        .register::<TagRow>()
+        .register::<TagsResponse>()
+        .register::<MetricStat>()
         .register::<AdminTagRow>()
         .register::<AdminCategoryRow>()
         .register::<AdminUserRow>()

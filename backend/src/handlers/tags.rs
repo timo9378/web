@@ -11,13 +11,15 @@ use crate::{error::AppError, state::AppState};
 /// 以確保 byte-level 對拍等價（serde 依宣告順序序列化）。
 /// One row of the public tag list. Field order = SELECT column order = Express JSON key
 /// order, so serialization is byte-equivalent (serde serializes in declaration order).
-#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema, specta::Type)]
 pub struct TagRow {
+    #[specta(type = specta_typescript::Number)]
     pub id: i64,
     pub name: String,
     /// 直接保留 sqlite 原始 TEXT（例 `"2026-04-04 19:16:29"`），不經 chrono 解析，
     /// 避免格式漂移（Express 也是原樣丟出 DATETIME 字串）。
     pub created_at: String,
+    #[specta(type = specta_typescript::Number)]
     pub post_count: i64,
     /// 顯示用譯名（name 仍是資料鍵）。沒填就由前端 fallback 回 name。
     pub name_en: Option<String>,
@@ -26,7 +28,7 @@ pub struct TagRow {
     pub name_zh_cn: Option<String>,
 }
 
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, utoipa::ToSchema, specta::Type)]
 pub struct TagsResponse {
     pub message: &'static str,
     pub tags: Vec<TagRow>,

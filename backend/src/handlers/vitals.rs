@@ -70,13 +70,17 @@ pub struct StatsQuery {
     pub days: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct MetricStat {
     pub metric: String,
+    #[specta(type = specta_typescript::Number)]
     pub count: i64,
     pub p75: Option<f64>,
+    #[specta(type = specta_typescript::Number)]
     pub good: i64,
+    #[specta(type = specta_typescript::Number)]
     pub needs_improvement: i64,
+    #[specta(type = specta_typescript::Number)]
     pub poor: i64,
 }
 

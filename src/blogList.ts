@@ -1,11 +1,20 @@
 import { queryOptions } from '@tanstack/react-query';
 import type {
-  PostDetailResponse, PostListItem, PostsListResponse,
-  ReactionRow, SeriesPostRow, SeriesDetailResponse, ReactionsResponse,
+  CategoriesResponse,
+  CategoryRow,
+  PostDetailResponse,
+  PostListItem,
+  PostsListResponse,
+  ReactionRow,
+  ReactionsResponse,
+  SeriesDetailResponse,
+  SeriesPostRow,
+  TagRow,
+  TagsResponse,
 } from '@koimsurai/api-types';
 import { apiUrl } from './api';
 import { compileMdx } from './lib/mdx-compile';
-import type { Post, Tag, Category } from './components/Blog';
+import type { Post } from './components/Blog';
 
 // format='mdx' 的文章多帶一個 server 端編譯好的 function-body（前端用 runSync 執行）。
 export type PostDetail = PostDetailResponse & { compiledMdx?: string };
@@ -106,11 +115,11 @@ const langQuery = (locale: string) => (locale ? `?lang=${encodeURIComponent(loca
 export const blogTagsQueryOptions = (locale: string) =>
   queryOptions({
     queryKey: ['tags', locale],
-    queryFn: async (): Promise<Tag[]> => {
+    queryFn: async (): Promise<TagRow[]> => {
       const res = await fetch(apiUrl(`/api/tags${langQuery(locale)}`));
       if (!res.ok) throw new Error(`GET /api/tags ${res.status}`);
-      const data = (await res.json()) as { tags?: Tag[] };
-      return data.tags ?? [];
+      const data = (await res.json()) as TagsResponse;
+      return data.tags;
     },
     staleTime: STALE,
   });
@@ -118,37 +127,19 @@ export const blogTagsQueryOptions = (locale: string) =>
 export const blogCategoriesQueryOptions = (locale: string) =>
   queryOptions({
     queryKey: ['categories', locale],
-    queryFn: async (): Promise<Category[]> => {
+    queryFn: async (): Promise<CategoryRow[]> => {
       const res = await fetch(apiUrl(`/api/categories${langQuery(locale)}`));
       if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
-      const data = (await res.json()) as { categories?: Category[] };
-      return data.categories ?? [];
+      const data = (await res.json()) as CategoriesResponse;
+      return data.categories;
     },
     staleTime: STALE,
   });
 
-// 分類詳情（含 description / short_description，文章頁 tooltip 用）。/api/categories 非 specta
-// 端點，型別手寫。與上面窄版共用同一端點但不同 queryKey；文章頁只掛這個、不會雙抓。
-export interface CategoryInfo {
-  name?: string;
-  short_description?: string;
-  description?: string;
-  post_count?: number;
-  updated_at?: string;
-  // 顯示用譯名（name 仍是資料鍵）。解析見 lib/categoryLabel 的 useCategoryLabel。
-  name_en?: string;
-  name_ja?: string;
-  name_ko?: string;
-  name_zh_cn?: string;
-  description_en?: string;
-  description_ja?: string;
-  description_ko?: string;
-  description_zh_cn?: string;
-  short_description_en?: string;
-  short_description_ja?: string;
-  short_description_ko?: string;
-  short_description_zh_cn?: string;
-}
+// 分類詳情（含 description / short_description，文章頁 tooltip 用）。
+// 型別改吃後端 specta 生成的 CategoryRow —— 原本手寫的那份只列了 16 個欄位、
+// 而且全標成可選；實際回應有 20 個欄位，id / name / slug / post_count 一定在。
+export type CategoryInfo = CategoryRow;
 // 同樣帶 locale：這份的 post_count 會出現在文章頁的分類 tooltip，要跟部落格側欄同一個數字。
 export const blogCategoriesDetailQueryOptions = (locale: string) =>
   queryOptions({
@@ -156,8 +147,8 @@ export const blogCategoriesDetailQueryOptions = (locale: string) =>
     queryFn: async (): Promise<CategoryInfo[]> => {
       const res = await fetch(apiUrl(`/api/categories${langQuery(locale)}`));
       if (!res.ok) throw new Error(`GET /api/categories ${res.status}`);
-      const data = (await res.json()) as { categories?: CategoryInfo[] };
-      return data.categories ?? [];
+      const data = (await res.json()) as CategoriesResponse;
+      return data.categories;
     },
     staleTime: STALE,
   });

@@ -20,8 +20,9 @@ import { postPath } from '../lib/postPath';
 
 /** `GET /api/posts` 的單篇摘要，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 export type Post = PostListItem;
-export type Tag = string | { name: string; post_count?: number };
-export interface Category { name: string; post_count?: number }
+// Tag / Category 的手寫型別已移除：兩個端點都吃後端 specta 生成的
+// TagRow / CategoryRow（見 blogList.ts）。手寫那份把 post_count 標成可選、
+// 還允許 Tag 是裸字串，都與實際回應不符。
 interface PostGroup { year: number; month: number; label: string; posts: Post[] }
 interface HeatmapCell { date: Date; count: number; level: number }
 
@@ -603,7 +604,7 @@ function Blog() {
                 >
                   全部
                 </button>
-                {allCategories.filter(cat => (cat.post_count ?? 0) > 0).map(cat => (
+                {allCategories.filter(cat => cat.post_count > 0).map(cat => (
                   <button
                     key={cat.name}
                     className={`category-item ${selectedCategory === cat.name ? 'active' : ''}`}

@@ -50,7 +50,7 @@ function BlogMenuContent() {
   const [activeCat, setActiveCat] = useState<string | null>(null); // null = 全部
 
   // 只顯示有文章的分類，避免空欄位佔版面
-  const categories = useMemo(() => allCategories.filter((c) => (c.post_count ?? 0) > 0), [allCategories]);
+  const categories = useMemo(() => allCategories.filter((c) => c.post_count > 0), [allCategories]);
   const posts = useMemo(
     () => allPosts.filter((p) => p.status === 'published' || !p.status),
     [allPosts],
@@ -80,7 +80,7 @@ function BlogMenuContent() {
             onMouseEnter={() => setActiveCat(c.name)}
           >
             <span>{c.name}</span>
-            <span className="mega-menu-category-count">{c.post_count ?? 0}</span>
+            <span className="mega-menu-category-count">{c.post_count}</span>
           </LocaleLink>
         ))}
       </MegaMenuColumn>

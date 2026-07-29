@@ -89,12 +89,20 @@ export function useLocalizedCategoryInfo(): (info: CategoryInfo | null) => Categ
     if (!sfx) return (info) => info;
     return (info) => {
       if (!info) return info;
+      // 譯文欄位（name_en / description_ja …）用動態 key 取，沒有就回 null；
+      // 由呼叫端 `?? info.xxx` 退回原欄位 —— 這樣回傳型別跟著原欄位走
+      //（name 是 string、description 是 string | null），不會整批被放寬成 undefined。
       const row = info as unknown as Record<string, unknown>;
-      const pick = (base: string) => {
+      const tr = (base: string): string | null => {
         const t = row[`${base}_${sfx}`];
-        return typeof t === 'string' && t ? t : (row[base] as string | undefined);
+        return typeof t === 'string' && t ? t : null;
       };
-      return { ...info, name: pick('name'), short_description: pick('short_description'), description: pick('description') };
+      return {
+        ...info,
+        name: tr('name') ?? info.name,
+        short_description: tr('short_description') ?? info.short_description,
+        description: tr('description') ?? info.description,
+      };
     };
   }, [locale]);
 }

@@ -120,7 +120,7 @@ export default function CommandPalette() {
                   >
                     <Folder size={14} className="cmdk-icon" />
                     <span>{c.name}</span>
-                    {c.post_count != null && <span className="cmdk-meta">{c.post_count} {t('blog.postCount')}</span>}
+                    {<span className="cmdk-meta">{c.post_count} {t('blog.postCount')}</span>}
                   </Command.Item>
                 ))}
               </Command.Group>
