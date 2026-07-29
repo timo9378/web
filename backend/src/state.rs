@@ -65,8 +65,10 @@ pub struct SteamState {
 /// watch 域的 in-process 狀態（now-watching + Trakt slug + TMDb detail 快取）。
 #[derive(Default)]
 pub struct WatchState {
-    /// 目前即時觀看（完整物件含 expiresAt；輸出時移除）。
-    pub now: parking_lot::Mutex<Option<serde_json::Value>>,
+    /// 目前即時觀看：(對外資料, 過期時間 epoch ms)。
+    /// 過期時間刻意不放進 NowWatching —— 那是伺服器記帳，不是 API 欄位。
+    /// 舊寫法把 expiresAt 塞在同一個 JSON 裡、serve 時再 remove()，靠「記得移除」維持正確。
+    pub now: parking_lot::Mutex<Option<(crate::handlers::watch::NowWatching, i64)>>,
     /// 上次 Trakt /watching 輪詢時間（ms；25s 節流）
     pub last_trakt_poll: std::sync::atomic::AtomicI64,
     /// Trakt user slug（首次查 /users/settings 後常駐）

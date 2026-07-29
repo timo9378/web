@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, type ElementType, type ReactElement } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AnimeRow } from '@koimsurai/api-types';
+import type { AnimeRow, NowWatching } from '@koimsurai/api-types';
 import { LocaleLink } from '../locale-link';
 import { useLocaleNavigate } from '../lib/useLocale';
 import {
@@ -45,7 +45,10 @@ interface WatchEntry {
 
 // AnimeRow/FilmRow/TvRow/WatchStatsResponse 改由後端 specta 生成（見 backend/SPECTA_PLAN.md）。
 // LiveNow（watch/now 即時狀態，動態組）與 WatchFavorite（favorites TMDb 在地化）維持手寫（非 row_to_json 端點）。
-export interface LiveNow { cover?: string; title: string; externalUrl?: string; progressPct?: number | null; episode?: number | string; source?: string; type?: string; startedAt?: number; endsAt?: number | null }
+// 改吃後端 specta 生成的型別（backend handlers::watch::NowWatching）。
+// 手寫那份把大半欄位標成可選、episode 還標成 number | string —— 實際上後端兩個寫入點
+// （擴充 heartbeat、Trakt 輪詢）都給字串，title/source/type/startedAt 也一定在。
+export type LiveNow = NowWatching;
 export interface WatchFavorite { id: number; title: string; rating: number; poster?: string; quote?: string; year?: number; externalUrl?: string }
 
 /* 連結通通走 TMDb */
@@ -137,7 +140,8 @@ function Watch() {
     const base = liveNow.progressPct;
     const s = liveNow.startedAt;
     const e = liveNow.endsAt;
-    if (base == null || s == null || e == null || e <= s) { setLiveProgress(base ?? null); return; }
+    // startedAt 在生成型別裡是必填（兩個寫入點都一定給），只有 progressPct / endsAt 可能沒有
+    if (base == null || e == null || e <= s) { setLiveProgress(base); return; }
     const durationMs = e - s;
     const compute = () => {
       const elapsed = Date.now() - liveNowUpdatedAt;

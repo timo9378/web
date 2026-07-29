@@ -110,6 +110,54 @@ pub struct WatchStatsResponse {
     pub tv_episodes: i64,
 }
 
+/// `GET /api/watch/now` 的 `watching`。原本是 in-memory 的 serde_json::Value，
+/// specta 生不出型別，前端只好手寫一份 LiveNow。
+///
+/// 兩個寫入點（動畫瘋擴充的 heartbeat、Trakt 輪詢）欄位集合本來就一致，
+/// 各欄位的正規型別也是確定的，不是猜的：
+///   episode  —— 擴充送的是 `ep ? ep[1] : null`（regex 捕獲組，必為字串）；
+///               anime_history.episode 是 TEXT（anigamer SDK 已正規化成 Option<String>）；
+///               Trakt 那條是 format!("S{:02}E{:02}")。三個來源都是字串。
+///   tmdbId   —— anime_history.tmdb_id 是 INTEGER；Trakt 的 /ids/tmdb 是數字。
+///   progressPct —— 兩條路徑都先 round 成整數才存。
+///
+/// ⚠ expiresAt 不在這裡：那是伺服器記帳（TTL），不是 API 資料。
+/// 舊寫法把它塞進同一個 JSON、serve 時再 remove("expiresAt")，靠「記得移除」維持正確；
+/// 現在改由 WatchState 以 (NowWatching, expires_at_ms) 分開存，型別上就不可能洩漏。
+#[derive(Debug, Clone, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct NowWatching {
+    /// "anime"（bahamut）/ "movie" / "tv"（trakt）
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub title: String,
+    pub cover: Option<String>,
+    #[serde(rename = "tmdbId")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub tmdb_id: Option<i64>,
+    pub episode: Option<String>,
+    #[serde(rename = "progressPct")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub progress_pct: Option<i64>,
+    /// "bahamut" | "trakt"
+    pub source: String,
+    #[serde(rename = "externalUrl")]
+    pub external_url: Option<String>,
+    /// epoch ms；與 endsAt 一起給前端做 client 端進度插值
+    #[serde(rename = "startedAt")]
+    #[specta(type = specta_typescript::Number)]
+    pub started_at: i64,
+    /// 只有 Trakt 那條算得出結束時間；bahamut heartbeat 沒有
+    #[serde(rename = "endsAt")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub ends_at: Option<i64>,
+}
+
+/// `GET /api/watch/now`
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WatchNowResponse {
+    pub watching: Option<NowWatching>,
+}
+
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -622,11 +670,9 @@ async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), 
     crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
 }
 
-fn current_now_watching(state: &AppState) -> Option<Value> {
+fn current_now_watching(state: &AppState) -> Option<NowWatching> {
     let g = state.watch.now.lock();
-    g.as_ref()
-        .filter(|w| w.get("expiresAt").and_then(|v| v.as_i64()).map(|e| now_ms() < e).unwrap_or(false))
-        .cloned()
+    g.as_ref().filter(|(_, expires_at)| now_ms() < *expires_at).map(|(w, _)| w.clone())
 }
 
 fn tmdb_url_for(kind: &str, id: &Value) -> Value {
@@ -655,7 +701,7 @@ pub async fn heartbeat(
     if b.get("playing") == Some(&Value::Bool(false)) {
         {
             let mut g = state.watch.now.lock();
-            if g.as_ref().and_then(|w| w.get("source")).and_then(|s| s.as_str()) == Some("bahamut") {
+            if g.as_ref().is_some_and(|(w, _)| w.source == "bahamut") {
                 *g = None;
             }
         }
@@ -707,31 +753,30 @@ pub async fn heartbeat(
     } else {
         Value::Null
     };
+    let title_s = js_interp(&title);
     // 同一部持續播放 → 保留 startedAt
     let started = {
         let g = state.watch.now.lock();
         match g.as_ref() {
-            Some(w)
-                if w.get("source").and_then(|s| s.as_str()) == Some("bahamut")
-                    && w.get("title") == Some(&title) =>
-            {
-                w.get("startedAt").cloned().unwrap_or(json!(now))
-            }
-            _ => json!(now),
+            Some((w, _)) if w.source == "bahamut" && w.title == title_s => w.started_at,
+            _ => now,
         }
     };
-    *state.watch.now.lock() = Some(json!({
-        "type": "anime",
-        "title": title,
-        "cover": cover,
-        "tmdbId": tmdb_id,
-        "episode": episode.unwrap_or(Value::Null),
-        "progressPct": progress,
-        "source": "bahamut",
-        "externalUrl": external,
-        "startedAt": started,
-        "expiresAt": now + NOW_WATCHING_TTL_MS,
-    }));
+    let entry = NowWatching {
+        kind: "anime".into(),
+        title: title_s,
+        cover: cover.as_str().map(str::to_owned),
+        tmdb_id: tmdb_id.as_i64(),
+        // 擴充送的 episode 必為字串（regex 捕獲組），anime_history.episode 是 TEXT；
+        // 用 js_interp 保險：若哪天有數字進來也折成字串，型別不會分岔。
+        episode: episode.filter(|v| js_truthy(Some(v))).map(|v| js_interp(&v)),
+        progress_pct: progress.as_i64(),
+        source: "bahamut".into(),
+        external_url: external.as_str().map(str::to_owned),
+        started_at: started,
+        ends_at: None,
+    };
+    *state.watch.now.lock() = Some((entry, now + NOW_WATCHING_TTL_MS));
     Json(json!({ "ok": true })).into_response()
 }
 
@@ -868,7 +913,7 @@ async fn poll_trakt_watching(state: &AppState) {
     let clear_trakt = |state: &AppState| {
         let was_watching = {
             let mut g = state.watch.now.lock();
-            if g.as_ref().and_then(|w| w.get("source")).and_then(|s| s.as_str()) == Some("trakt") {
+            if g.as_ref().is_some_and(|(w, _)| w.source == "trakt") {
                 *g = None;
                 true
             } else {
@@ -968,19 +1013,20 @@ async fn poll_trakt_watching(state: &AppState) {
     } else {
         Value::Null
     };
-    *state.watch.now.lock() = Some(json!({
-        "type": kind,
-        "title": title,
-        "cover": cover,
-        "tmdbId": tmdb_id,
-        "episode": episode,
-        "progressPct": progress,
-        "source": "trakt",
-        "externalUrl": tmdb_url_for(kind, &tmdb_id),
-        "startedAt": started,
-        "endsAt": ends,
-        "expiresAt": now + NOW_WATCHING_TTL_MS,
-    }));
+    let entry = NowWatching {
+        kind: kind.to_owned(),
+        title: js_interp(&title),
+        cover: cover.as_str().map(str::to_owned),
+        tmdb_id: tmdb_id.as_i64(),
+        // movie 分支給 Value::Null；episode 分支給 "S01E02"
+        episode: episode.as_str().map(str::to_owned),
+        progress_pct: progress.as_i64(),
+        source: "trakt".into(),
+        external_url: tmdb_url_for(kind, &tmdb_id).as_str().map(str::to_owned),
+        started_at: started,
+        ends_at: Some(ends),
+    };
+    *state.watch.now.lock() = Some((entry, now + NOW_WATCHING_TTL_MS));
 }
 
 /// RFC3339（`2026-07-03T12:34:56.000Z` / 帶 offset）→ epoch ms。
@@ -1016,18 +1062,12 @@ fn parse_rfc3339_ms(s: &str) -> Option<i64> {
     responses((status = 200, description = "目前正在看（動態 JSON）")))]
 pub async fn watch_now(State(state): State<AppState>) -> Response {
     let cur = current_now_watching(&state);
-    let is_baha = cur.as_ref().and_then(|w| w.get("source")).and_then(|s| s.as_str()) == Some("bahamut");
+    let is_baha = cur.as_ref().is_some_and(|w| w.source == "bahamut");
     if !is_baha && now_ms() - state.watch.last_trakt_poll.load(Ordering::Relaxed) > TRAKT_POLL_MIN_MS {
         poll_trakt_watching(&state).await;
     }
-    match current_now_watching(&state) {
-        None => Json(json!({ "watching": Value::Null })).into_response(),
-        Some(w) => {
-            let mut pub_w = w.as_object().cloned().unwrap_or_default();
-            pub_w.remove("expiresAt");
-            Json(json!({ "watching": Value::Object(pub_w) })).into_response()
-        }
-    }
+    // 不再需要 remove("expiresAt")：過期時間存在 state 的另一半，本來就不在這個型別裡。
+    Json(WatchNowResponse { watching: current_now_watching(&state) }).into_response()
 }
 
 // ── Trakt 歷史同步 worker（cron 遷移；ENABLE_TRAKT_SYNC=1 才啟動）─────────

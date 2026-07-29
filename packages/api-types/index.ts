@@ -393,6 +393,39 @@ export type NowPlayingResponse = {
 };
 
 /**
+ *  `GET /api/watch/now` 的 `watching`。原本是 in-memory 的 serde_json::Value，
+ *  specta 生不出型別，前端只好手寫一份 LiveNow。
+ * 
+ *  兩個寫入點（動畫瘋擴充的 heartbeat、Trakt 輪詢）欄位集合本來就一致，
+ *  各欄位的正規型別也是確定的，不是猜的：
+ *    episode  —— 擴充送的是 `ep ? ep[1] : null`（regex 捕獲組，必為字串）；
+ *                anime_history.episode 是 TEXT（anigamer SDK 已正規化成 Option<String>）；
+ *                Trakt 那條是 format!("S{:02}E{:02}")。三個來源都是字串。
+ *    tmdbId   —— anime_history.tmdb_id 是 INTEGER；Trakt 的 /ids/tmdb 是數字。
+ *    progressPct —— 兩條路徑都先 round 成整數才存。
+ * 
+ *  ⚠ expiresAt 不在這裡：那是伺服器記帳（TTL），不是 API 資料。
+ *  舊寫法把它塞進同一個 JSON、serve 時再 remove("expiresAt")，靠「記得移除」維持正確；
+ *  現在改由 WatchState 以 (NowWatching, expires_at_ms) 分開存，型別上就不可能洩漏。
+ */
+export type NowWatching = {
+	/**  "anime"（bahamut）/ "movie" / "tv"（trakt） */
+	type: string,
+	title: string,
+	cover: string | null,
+	tmdbId: number | null,
+	episode: string | null,
+	progressPct: number | null,
+	/**  "bahamut" | "trakt" */
+	source: string,
+	externalUrl: string | null,
+	/**  epoch ms；與 endsAt 一起給前端做 client 端進度插值 */
+	startedAt: number,
+	/**  只有 Trakt 那條算得出結束時間；bahamut heartbeat 沒有 */
+	endsAt: number | null,
+};
+
+/**
  *  單一 OAuth provider 的公開設定。clientId 是公開值（前端組授權 URL 要用），
  *  沒設定時是空字串而不是缺欄位——所以 enabled 才是「這個 provider 能不能用」的判準。
  */
@@ -647,6 +680,11 @@ export type TvRow = {
 	poster_url: string | null,
 	genres: string | null,
 	source: string | null,
+};
+
+/**  `GET /api/watch/now` */
+export type WatchNowResponse = {
+	watching: NowWatching | null,
 };
 
 /**  `GET /api/watch/stats` —— 5 個 count（key 為 camelCase）。 */
