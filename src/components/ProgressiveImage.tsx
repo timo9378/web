@@ -104,9 +104,10 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     const newY = e.clientY - startPos.y;
 
     // Boundary checks to prevent panning too far
+    // container 在函式開頭的 `if (!isPanning || !containerRef.current) return` 已經確定非 null
     const container = containerRef.current;
     const image = imageRef.current;
-    if (container && image) {
+    if (image) {
       const containerRect = container.getBoundingClientRect();
       const imageWidth = image.naturalWidth * scale;
       const imageHeight = image.naturalHeight * scale;

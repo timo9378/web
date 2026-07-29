@@ -226,7 +226,7 @@ export default function PostEditor() {
     // 除了退訂，兩個計時器也要收：debounce 中途 unmount 會留下 1.2s 的排程，
     // 狀態字的 1.8s 同理。
     return () => {
-      sub.unsubscribe?.();
+      sub.unsubscribe();
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
       if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
     };

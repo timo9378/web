@@ -47,7 +47,9 @@ self.onmessage = (e: MessageEvent<InMsg>) => {
   } else if (msg.type === 'scroll') {
     lastScroll = msg.y;
     runner?.setScroll(msg.y);
-  } else if (msg.type === 'saturn') {
+  } else {
+    // 到這裡 union 只剩 SaturnMsg，再比對一次 msg.type 是恆真。
+    // 日後新增訊息型別時，下面存取 msg.visible/msg.animate 會編譯失敗——不會被靜默吞掉。
     lastSaturn = { visible: msg.visible, animate: msg.animate };
     runner?.setSaturn(msg.visible, msg.animate);
   }

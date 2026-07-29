@@ -117,7 +117,7 @@ function PhotoGallery() {
 
   // 靜態與動態計算標籤 (Top 4 + 其他)
   const { topTags, otherTags } = useMemo(() => {
-    if (!photos || photos.length === 0) return { topTags: [], otherTags: [] };
+    if (photos.length === 0) return { topTags: [], otherTags: [] };
     const counts: Record<string, number> = {};
     photos.forEach(p => {
       p.tags?.forEach(t => {

@@ -1,6 +1,7 @@
 import { createI18n } from './start-i18n';
 import { type Locale } from './lib/locales';
 import { pageMeta } from './seoMeta';
+import { lookup } from './lib/tableLookup';
 
 // 各頁的 SEO 標題／描述，以 localePage 的 basePath 為 key 集中管理。
 //
@@ -60,7 +61,7 @@ function i18nFor(locale: Locale) {
 
 /** 依 basePath 產出該頁的 SSR meta；沒登記的頁回 undefined（維持現有行為，不強加預設）。 */
 export function seoMetaFor(basePath: string, locale: Locale, canonicalPath: string) {
-  const entry = PAGE_SEO[basePath];
+  const entry = lookup(PAGE_SEO, basePath);
   if (!entry) return undefined;
   const t = i18nFor(locale).t;
   const title = entry.titleKey ? t(entry.titleKey) : (entry.title ?? null);

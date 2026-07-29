@@ -38,7 +38,8 @@ function LanguagePicker() {
     };
   }, [open]);
 
-  const current = i18n.resolvedLanguage ?? i18n.language ?? 'zh-TW';
+  // i18next 的 language 是必填（resolvedLanguage 才可能沒有），不必再兜一層預設
+  const current = i18n.resolvedLanguage ?? i18n.language;
 
   const select = (code: string) => {
     void i18n.changeLanguage(code); // 記住偏好（localStorage），並讓外殼即時反應

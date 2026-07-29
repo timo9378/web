@@ -17,12 +17,12 @@ if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   echo "▶ tsc --noEmit"
   pnpm exec tsc --noEmit || fail=1
   echo "▶ oxlint src (type-aware)"
-  # 指令與門檻都跟 CI 那道一字不差 —— 兩邊若用不同規則集，就會有兩個各自漂移的
+  # 指令與門檻都跟 CI 那道一字不差 —— 兩邊若用不同規則集，就會有兩份各自漂移的認知。
   # 存量數字要維護（曾經是 193 vs 270，差額 77 全是 type-aware 專屬規則）。
   # 早期不帶 --type-aware 是因為它會吃爆記憶體；@types/three 打了 patch 之後
   # 實測 3.16s / 1.2GB，而同一個 hook 裡的 tsc 本來就要 7.9s / 1.1GB，不差這 1.4s。
   # --quiet 只影響印不印，不影響 --max-warnings 計數（免得每次 commit 噴兩百行）。
-  pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 22 || fail=1
+  pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 0 || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then

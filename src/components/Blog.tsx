@@ -417,21 +417,25 @@ function Blog() {
 
   // 按年月分組
   const groupedPosts = useMemo(() => {
-    const groups: Record<string, PostGroup> = {};
+    // 用 Map 而非物件當累加器：Map.get 的型別本來就是 PostGroup | undefined，
+    // 「還沒建過這個月份」的判斷在型別上自然成立，不必靠 Record 索引存取的謊言。
+    const groups = new Map<string, PostGroup>();
     filteredPosts.forEach(post => {
       const d = new Date(post.created_at);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!groups[key]) {
-        groups[key] = {
+      let group = groups.get(key);
+      if (!group) {
+        group = {
           year: d.getFullYear(),
           month: d.getMonth(),
           label: d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' }),
           posts: [],
         };
+        groups.set(key, group);
       }
-      groups[key].posts.push(post);
+      group.posts.push(post);
     });
-    return Object.values(groups).sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
+    return [...groups.values()].sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
   }, [filteredPosts]);
 
   const clearFilters = useCallback(() => {

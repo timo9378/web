@@ -28,7 +28,9 @@ const MeteorShower = () => {
     };
 
     const createMeteor = () => {
-      if (!containerRef.current || !isVisible) return;
+      // 不再檢查 isVisible：effect 開頭已經 `if (!isVisible) return`，而 isVisible 在
+      // 依賴陣列裡——值一變 effect 就整個重掛，同一次執行內它恆為 true。
+      if (!containerRef.current) return;
 
       const meteor = document.createElement('div');
       meteor.className = 'meteor';
@@ -58,19 +60,11 @@ const MeteorShower = () => {
     };
 
     // 減少流星創建頻率以提升效能
-    const interval = setInterval(() => {
-      if (isVisible) {
-        createMeteor();
-      }
-    }, 5000); // 從 3 秒增加到 5 秒
+    const interval = setInterval(createMeteor, 5000); // 從 3 秒增加到 5 秒
 
     // 減少初始流星數量
     for (let i = 0; i < 2; i++) {
-      laterFn(() => {
-        if (isVisible) {
-          createMeteor();
-        }
-      }, i * 2000); // 間隔增加到 2 秒
+      laterFn(createMeteor, i * 2000); // 間隔增加到 2 秒
     }
 
     return () => {

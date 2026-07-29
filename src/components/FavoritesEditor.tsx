@@ -123,8 +123,11 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
 
   // 移動排序：跟相鄰項互換 sort_order
   const move = async (idx: number, dir: number) => {
-    const a = favorites[idx], b = favorites[idx + dir];
-    if (!a || !b) return;
+    // 明確檢查邊界，不用 favorites.at()：at(-1) 會回傳「最後一個元素」而不是 undefined，
+    // idx=0 往上移時就會跟清單尾端互換 —— 那是 bug 不是防護。
+    const j = idx + dir;
+    if (idx < 0 || idx >= favorites.length || j < 0 || j >= favorites.length) return;
+    const a = favorites[idx], b = favorites[j];
     setBusy(true);
     try {
       await Promise.all([

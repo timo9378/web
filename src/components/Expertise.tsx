@@ -31,7 +31,10 @@ type IconComp = ComponentType<{ className?: string; style?: CSSProperties }>;
 
 // Each entry: [Icon, brandColor]. Color preserved per react-icons convention
 // so the marquee looks like a constellation of brand chips, not monochrome.
-const ICON_MAP: Record<string, [IconComp, string]> = {
+// 標 Partial：技能名稱是資料來的字串，不保證每個都有對應圖示——這樣 `if (!entry)`
+// 在型別上就成立，不需要繞 lookup()。繞了反而讓 static-components 追不到 Icon 的
+// 來源（誤判成 render 期建立的元件）。
+const ICON_MAP: Partial<Record<string, [IconComp, string]>> = {
   'Next.js':         [SiNextdotjs,     '#ffffff'],
   'React':           [SiReact,         '#61DAFB'],
   'TypeScript':      [SiTypescript,    '#3178C6'],

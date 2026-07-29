@@ -259,7 +259,9 @@ function Watch() {
   // 不再只看動畫——否則看完 Trakt 電影，hero 仍顯示上一部動畫（史萊姆）。
   const recentMost: WatchEntry | null = [now, filmItems[0], tvItems[0]]
     .filter((e): e is WatchEntry => e != null)
-    .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? ''))[0] ?? null;
+    // .at(0) 而非 [0]：陣列索引在型別上永遠非空，?? null 會被判成多餘，
+    // 而 recentMost 也就跟著被當成必然存在（下面的 hero fallback 判斷失去意義）。
+    .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? '')).at(0) ?? null;
   const recentAll = dedupeByTmdb([...recentAnime, ...filmItems, ...tvItems])
     .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? ''))
     .slice(0, 14);
@@ -375,7 +377,7 @@ function Watch() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {hero.poster && <img className="w-now-banner-img" src={hero.poster ?? undefined} alt={hero.title} />}
+              {hero.poster && <img className="w-now-banner-img" src={hero.poster} alt={hero.title} />}
               <div className="w-now-overlay">
                 <span className={'w-eyebrow ' + (hero.isLive ? 'w-eyebrow--live' : 'w-eyebrow--last')}>
                   {hero.isLive ? t('watch.eyebrowLive') : t('watch.eyebrowLast')}

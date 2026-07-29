@@ -123,7 +123,7 @@ const PhotoViewer: React.FC = () => {
               這裡的 stopPropagation 沒有任何冒泡可擋，是死碼 */}
           <div className="photo-viewer-info">
             <div className="photo-title">
-              照片 {currentPhoto.exif?.DateTimeOriginal ?? currentPhoto.title ?? currentPhoto.id}
+              照片 {currentPhoto.exif?.DateTimeOriginal ?? currentPhoto.title}
             </div>
           </div>
 
@@ -135,8 +135,11 @@ const PhotoViewer: React.FC = () => {
               aria-label="分享這張照片"
               onClick={(e) => {
                 e.stopPropagation();
-                if (navigator.share) {
-                  navigator.share({
+                // lib.dom 把 Web Share API 宣告成必然存在，桌面 Firefox 實際沒有。
+                // 必須留在 nav 上呼叫：Navigator 不是 [Global] 介面，解構後會 Illegal invocation。
+                const nav: Partial<Navigator> = navigator;
+                if (nav.share) {
+                  nav.share({
                     title: currentPhoto.title || '照片分享',
                     text: `查看我的照片作品`,
                     url: window.location.href,

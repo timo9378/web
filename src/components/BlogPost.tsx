@@ -42,6 +42,7 @@ import { MdxContent } from './MdxContent';
 import { slugify, extractHeadings, computeReadTime } from '../lib/blogContent';
 import { useCategoryLabel, useTagLabel, useLocalizedCategoryInfo } from '../lib/categoryLabel';
 import { postPath } from '../lib/postPath';
+import { lookup } from '../lib/tableLookup';
 
 /// `GET /api/posts/:id` 的成功回應（型別由後端 Rust struct 生成），外加 client 端自己算的
 /// `date`（由 created_at 依語系格式化，見下方 setPost）。API 不回傳 date。
@@ -583,7 +584,8 @@ const MermaidBlock = ({ code }: { code: string }) => {
   const [fullscreen, setFullscreen] = useState(false);
 
   const parsed = useMemo(() => parseMermaidFrontmatter(code), [code]);
-  const initCfg = parsed.config.config ?? parsed.config;
+  // frontmatter 可能有巢狀的 config:，也可能就是扁平的一層——查不到就用外層那份
+  const initCfg = lookup(parsed.config, 'config') ?? parsed.config;
   const cfgStr = (key: string): string | null =>
     (typeof initCfg === 'object' && typeof initCfg[key] === 'string') ? initCfg[key] : null;
   const initLayout = cfgStr('layout') ?? 'dagre';
@@ -2068,6 +2070,8 @@ function BlogPost() {
   const sourceLang = post.source_language;
   const availableLocales = post.available_locales;
   const currentLocale = post.locale;
+  // 只有真的有這個語系的譯文提示才顯示；查三次改成查一次
+  const translationNotice = lookup(AI_TRANSLATION_NOTICE, currentLocale);
   const titleParts = splitTitle(post.title);
 
   return (
@@ -2181,11 +2185,11 @@ function BlogPost() {
           >
             {/* 非原文語系 → AI 翻譯提示（連回原文）。放卡片「外」：.post-ai-summary-inline 用負 margin
                 貼齊卡片頂邊、圓角只在上方，必須是卡片第一個子元素，banner 插進去會壓壞它。 */}
-            {currentLocale !== sourceLang && AI_TRANSLATION_NOTICE[currentLocale] && (
+            {currentLocale !== sourceLang && translationNotice && (
               <div className="ai-translation-notice">
                 <span className="ai-translation-icon" aria-hidden>🌐</span>
-                <span className="ai-translation-text">{AI_TRANSLATION_NOTICE[currentLocale].text}</span>
-                <a className="ai-translation-original" href={`/blog/${id}`}>{AI_TRANSLATION_NOTICE[currentLocale].original} →</a>
+                <span className="ai-translation-text">{translationNotice.text}</span>
+                <a className="ai-translation-original" href={`/blog/${id}`}>{translationNotice.original} →</a>
               </div>
             )}
             <div className="post-content-wrapper">

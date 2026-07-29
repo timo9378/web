@@ -68,17 +68,16 @@ const RandomUFOs = ({ count = 1 }: RandomUFOsProps) => { // UFO 數量減少為 
       return;
     }
 
+    // 不再檢查 isVisible：effect 開頭已經 `if (!isVisible) return`，而 isVisible 在
+    // 依賴陣列裡——值一變 effect 就整個重掛，同一次執行內它恆為 true。
     const interval = setInterval(() => {
-      // 只在頁面可見時更新 UFO
-      if (isVisible) {
-        setUfos(prevUfos => {
-          const newUfos = [...prevUfos];
-          const randomIndex = Math.floor(Math.random() * newUfos.length);
-          newUfos[randomIndex] = createUFO();
-          newUfos[randomIndex].delay = getRandomValue(10, 30); // 確保較長延遲
-          return newUfos;
-        });
-      }
+      setUfos(prevUfos => {
+        const newUfos = [...prevUfos];
+        const randomIndex = Math.floor(Math.random() * newUfos.length);
+        newUfos[randomIndex] = createUFO();
+        newUfos[randomIndex].delay = getRandomValue(10, 30); // 確保較長延遲
+        return newUfos;
+      });
     }, 25000); // 每 25 秒嘗試更新一個 UFO (頻率更低)
 
     return () => { clearInterval(interval); };

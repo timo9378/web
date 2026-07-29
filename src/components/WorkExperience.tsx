@@ -100,7 +100,7 @@ const WorkExperience = () => {
               <span className="work-card-role">{exp.role}</span>
             </header>
 
-            {exp.tags && (
+            {exp.tags.length > 0 && (
               <div className="work-tags">
                 {exp.tags.map((t) => <span key={t} className="work-tag">{t}</span>)}
               </div>

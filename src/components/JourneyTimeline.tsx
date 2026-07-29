@@ -30,7 +30,8 @@ function JourneyTimeline() {
     year: s.year === 'NOW' ? ylabels.NOW : s.year === 'FUTURE' ? ylabels.FUTURE : s.year,
     isFuture: s.year === 'FUTURE',
     ...locale[i],
-    allTags: [...s.tags, ...(locale[i].extraTags || [])],
+    // extraTags 在 MilestoneLang 是必填；locale 與 MILESTONE_STATIC 平行（上一行的 spread 已假設如此）
+    allTags: [...s.tags, ...locale[i].extraTags],
   })).filter((m) => !DEDUP_WITH_EXPERIENCE.has(m.id));
 
   return (

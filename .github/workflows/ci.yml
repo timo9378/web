@@ -45,9 +45,9 @@ jobs:
         run: pnpm typecheck:scripts
       # oxlint 取代 eslint（設定見 .oxlintrc.json，182 條規則自 eslint --print-config 對映而來；
       # @eslint-react 整包經 jsPlugins 載入，命名空間保持 @eslint-react 讓既有 eslint-disable 註解續效）。
-      # --max-warnings 是 ratchet：擋住新增警告，存量分批燒掉後再往下調。
+      # --max-warnings 0：存量已全數清完（379 → 0），從此新增任何警告都直接擋下。
       - name: oxlint (src, type-aware)
-        run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 22
+        run: pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 0
       # scripts/server/packages 過去完全沒被 lint（CI 只跑 eslint src）。
       # 不帶 --type-aware：它們不在根 tsconfig 的 include 裡，型別會全解析成 any，
       # 讓 no-unsafe-* 系列誤報 46 筆。型別由各自的 typecheck:* 步驟負責。
