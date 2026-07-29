@@ -3,6 +3,7 @@
    - 票數與「我投過沒」在掛載後才載入（localStorage 防重複，與站上 reactions 同策略，不收 IP）。
    - 投過或按「看結果」才顯示長條與百分比，避免投票前先被結果帶風向。 */
 import { useCallback, useEffect, useState } from 'react';
+import type { PollResponse } from '@koimsurai/api-types';
 
 interface PollOption { key?: string; label?: string }
 interface Props {
@@ -13,7 +14,9 @@ interface Props {
   showTotal?: boolean;
 }
 
-interface Counts { options: { option_key: string; count: number }[]; total: number }
+// 改吃後端 specta 生成的型別（backend handlers::polls::PollResponse）。
+// 那支 struct 早就註冊進 export_types 了，只是前端沒去吃它、自己又寫了一份一樣的。
+type Counts = PollResponse;
 
 const votedKey = (id: string) => `poll:${id}`;
 

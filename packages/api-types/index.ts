@@ -292,6 +292,22 @@ export type CountResponse = {
 	count: number,
 };
 
+/**
+ *  `GET /api/quote/daily` 的 quote。text/from 兩個來源都是字串：
+ *  外部來源走 fetch_quote → Option<(String, String)>，失敗時走 fallback_pool
+ *  的 &'static [(&str, &str)]。前端手寫版把 from 標成可選，實際上一定有值。
+ */
+export type DailyQuote = {
+	text: string,
+	from: string,
+};
+
+/**  `GET /api/quote/daily` */
+export type DailyQuoteResponse = {
+	message: string,
+	quote: DailyQuote,
+};
+
 export type DigestComment = {
 	id: number,
 	author: string,

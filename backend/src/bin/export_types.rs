@@ -20,6 +20,7 @@ use koimsurai_web_backend::handlers::posts::{
     CommentRow, CommentsResponse, Pagination, PostDetailResponse, PostListItem, PostsListResponse,
     ReactionRow, ReactionsResponse,
 };
+use koimsurai_web_backend::handlers::quote::{DailyQuote, DailyQuoteResponse};
 use koimsurai_web_backend::handlers::series::{
     SeriesDetailResponse, SeriesListResponse, SeriesPostRow, SeriesRow,
 };
@@ -63,6 +64,9 @@ fn main() {
         .register::<TagRow>()
         .register::<TagsResponse>()
         .register::<MetricStat>()
+        // 每日名言（原本 json! 手捏 + 快取存 Value）
+        .register::<DailyQuote>()
+        .register::<DailyQuoteResponse>()
         .register::<AdminTagRow>()
         .register::<AdminCategoryRow>()
         .register::<AdminUserRow>()

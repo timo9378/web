@@ -35,7 +35,12 @@ export const siteStatsQueryOptions = queryOptions({
 });
 
 // 每日名言：後端是動態 Value（快取 {text,from}），非 specta 端點，型別手寫留一份小葉。
-export interface DailyQuote { text: string; from?: string }
+// 改吃後端 specta 生成的型別（backend handlers::quote::DailyQuote）。
+// 手寫版把 from 標成可選——實際上外部來源與 fallback 兩條路都一定給值。
+// 用 import + export 兩行而非 `export ... from`：後者只是再匯出，不會把名字
+// 帶進本檔作用域，下面的 queryFn 還是用得到它。
+import type { DailyQuote } from '@koimsurai/api-types';
+export type { DailyQuote };
 export const dailyQuoteQueryOptions = (locale: string) =>
   queryOptions({
     queryKey: ['quote', 'daily', locale],

@@ -8,8 +8,8 @@ use axum::{
     http::header,
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::state::AppState;
 
@@ -94,7 +94,9 @@ async fn fetch_quote(state: &AppState, locale: &str) -> Option<(String, String)>
     }
 }
 
-static QUOTE_CACHE: std::sync::LazyLock<parking_lot::Mutex<std::collections::HashMap<String, Value>>> =
+// 快取存型別化的 DailyQuote 而不是 serde_json::Value —— 快取的東西就是端點回應本身，
+// 用同一個型別就不可能快取到形狀不符的內容（同 watch/now、spotify top-* 的做法）。
+static QUOTE_CACHE: std::sync::LazyLock<parking_lot::Mutex<std::collections::HashMap<String, DailyQuote>>> =
     std::sync::LazyLock::new(|| parking_lot::Mutex::new(std::collections::HashMap::new()));
 
 #[derive(Deserialize)]
@@ -102,9 +104,25 @@ pub struct QuoteQuery {
     locale: Option<String>,
 }
 
+/// `GET /api/quote/daily` 的 quote。text/from 兩個來源都是字串：
+/// 外部來源走 fetch_quote → Option<(String, String)>，失敗時走 fallback_pool
+/// 的 &'static [(&str, &str)]。前端手寫版把 from 標成可選，實際上一定有值。
+#[derive(Debug, Clone, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct DailyQuote {
+    pub text: String,
+    pub from: String,
+}
+
+/// `GET /api/quote/daily`
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct DailyQuoteResponse {
+    pub message: String,
+    pub quote: DailyQuote,
+}
+
 /// `GET /api/quote/daily?locale=zh-TW`
 #[utoipa::path(get, path = "/api/quote/daily", tag = "misc",
-    responses((status = 200, description = "每日名言（動態 JSON）")))]
+    responses((status = 200, body = DailyQuoteResponse)))]
 pub async fn quote_daily(State(state): State<AppState>, Query(q): Query<QuoteQuery>) -> Response {
     let locale = q.locale.as_deref().filter(|l| SUPPORTED.contains(l)).unwrap_or("zh-TW").to_string();
     // today = toISOString().slice(0,10)＝UTC 日期（JS 語意）
@@ -116,14 +134,14 @@ pub async fn quote_daily(State(state): State<AppState>, Query(q): Query<QuoteQue
     }
 
     let quote = match fetch_quote(&state, &locale).await.filter(|(t, _)| !t.is_empty()) {
-        Some((text, from)) => json!({ "text": text, "from": from }),
+        Some((text, from)) => DailyQuote { text, from },
         None => {
             tracing::warn!("[quote] {locale} 來源失敗，用 fallback");
             // getDate() % pool.len＝本地時區「日」（TZ=Asia/Taipei）
             let day: usize = chrono::Local::now().format("%d").to_string().parse().unwrap_or(1);
             let pool = fallback_pool(&locale);
             let (t, f) = pool[day % pool.len()];
-            json!({ "text": t, "from": f })
+            DailyQuote { text: t.to_owned(), from: f.to_owned() }
         }
     };
     {
@@ -134,7 +152,10 @@ pub async fn quote_daily(State(state): State<AppState>, Query(q): Query<QuoteQue
     quote_resp(quote)
 }
 
-fn quote_resp(quote: Value) -> Response {
-    ([(header::CACHE_CONTROL, "public, max-age=3600")], Json(json!({ "message": "success", "quote": quote })))
+fn quote_resp(quote: DailyQuote) -> Response {
+    (
+        [(header::CACHE_CONTROL, "public, max-age=3600")],
+        Json(DailyQuoteResponse { message: "success".into(), quote }),
+    )
         .into_response()
 }
