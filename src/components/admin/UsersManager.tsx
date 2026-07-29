@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 
 import type { AdminUserRow } from '@koimsurai/api-types';
+import { lookup, lookupOr } from '../../lib/tableLookup';
 
 // 型別來源＝Rust struct（specta 生成）；原手寫 interface 已與 API 漂移（avatar vs avatar_url、id 型別）
 type AdminUser = AdminUserRow;
@@ -55,7 +56,7 @@ export default function UsersManager() {
         body: JSON.stringify({ role: newRole }),
       });
       if (res.ok) {
-        toast.success(`已將 ${targetUser.display_name ?? ''} 的角色更改為 ${ROLE_CONFIG[newRole]?.label ?? newRole}`);
+        toast.success(`已將 ${targetUser.display_name ?? ''} 的角色更改為 ${lookup(ROLE_CONFIG, newRole)?.label ?? newRole}`);
         void queryClient.invalidateQueries({ queryKey: adminUsersQueryOptions.queryKey });
       } else {
         const data = await res.json() as { error?: string };
@@ -168,7 +169,7 @@ export default function UsersManager() {
                 </tr>
               ) : (
                 filteredUsers.map((u) => {
-                  const roleConfig = ROLE_CONFIG[u.role ?? 'USER'] || ROLE_CONFIG.USER;
+                  const roleConfig = lookupOr(ROLE_CONFIG, u.role ?? 'USER', ROLE_CONFIG.USER);
                   const RoleIcon = roleConfig.icon;
                   const isSelf = currentUser && (String(currentUser.id) === String(u.id) || currentUser.email === u.email);
 
@@ -259,8 +260,8 @@ export default function UsersManager() {
             <AlertDialogTitle>確認更改角色</AlertDialogTitle>
             <AlertDialogDescription>
               確定要將 <strong>{roleChangeDialog.user?.display_name}</strong> 的角色從{' '}
-              <strong>{roleChangeDialog.user ? ROLE_CONFIG[roleChangeDialog.user.role ?? 'USER']?.label : ''}</strong> 更改為{' '}
-              <strong>{ROLE_CONFIG[roleChangeDialog.newRole]?.label}</strong> 嗎？
+              <strong>{roleChangeDialog.user ? lookup(ROLE_CONFIG, roleChangeDialog.user.role ?? 'USER')?.label : ''}</strong> 更改為{' '}
+              <strong>{lookup(ROLE_CONFIG, roleChangeDialog.newRole)?.label}</strong> 嗎？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

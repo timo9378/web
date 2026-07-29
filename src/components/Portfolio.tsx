@@ -4,7 +4,7 @@ import { LocaleLink } from '../locale-link';
 import { useTranslation } from 'react-i18next';
 import photoMainImage from '../assets/Photo-main.webp';
 import './Portfolio.css';
-import { pickByLang } from '../lib/pickByLang';
+import { lookupOr } from '../lib/tableLookup';
 
 interface FeatText { category: string; status: string; title: string; desc: string; linkLabel: string }
 interface DictEntry {
@@ -128,7 +128,7 @@ const ProjectLink = ({ item }: { item: { link?: string; external?: boolean; link
 const Portfolio = () => {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const dict = pickByLang(I18N, lang, I18N['zh-TW']);
+  const dict = lookupOr(I18N, lang, I18N['zh-TW']);
   const FEATURE = { ...FEATURE_STATIC, category: dict.feat.category, status: dict.feat.status, title: dict.feat.title, description: dict.feat.desc, linkLabel: dict.feat.linkLabel };
   const SECONDARY = SECONDARY_STATIC.map((it) => ({
     ...it,

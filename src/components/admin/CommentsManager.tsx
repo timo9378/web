@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AdminCommentRow } from '@koimsurai/api-types';
+import { lookupOr } from '../../lib/tableLookup';
 
 /** 型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）；blacklist/keywords 由 query 推導。 */
 type Comment = AdminCommentRow;
@@ -232,7 +233,7 @@ export default function CommentsManager() {
           ) : (
             <div className="space-y-2">
               {comments.map(c => {
-                const cfg = STATUS_CONFIG[c.status ?? 'pending'] || STATUS_CONFIG.pending;
+                const cfg = lookupOr(STATUS_CONFIG, c.status ?? 'pending', STATUS_CONFIG.pending);
                 return (
                   <div key={c.id} className="group rounded-lg border border-border/40 bg-card/50 hover:bg-accent/20 transition-colors">
                     <div className="p-4">

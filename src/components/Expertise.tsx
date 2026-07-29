@@ -25,7 +25,7 @@ import {
 } from './BrandIcons';
 import './Expertise.css';
 import type { ComponentType, CSSProperties } from 'react';
-import { pickByLang } from '../lib/pickByLang';
+import { lookupOr } from '../lib/tableLookup';
 
 type IconComp = ComponentType<{ className?: string; style?: CSSProperties }>;
 
@@ -213,8 +213,8 @@ const StaticRow = ({ items }: { items: string[] }) => (
 function Expertise() {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const names = pickByLang(NAMES_BY_LANG, lang, NAMES_BY_LANG['zh-TW']);
-  const hero = pickByLang(HERO_BY_LANG, lang, HERO_BY_LANG['zh-TW']);
+  const names = lookupOr(NAMES_BY_LANG, lang, NAMES_BY_LANG['zh-TW']);
+  const hero = lookupOr(HERO_BY_LANG, lang, HERO_BY_LANG['zh-TW']);
   return (
     <section id="expertise" className="home-section expertise-v2">
       <div className="home-section-eyebrow">

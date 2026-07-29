@@ -2,7 +2,7 @@ import { LocaleLink } from '../locale-link';
 import { useTranslation } from 'react-i18next';
 import InfoPage from './InfoPage';
 import { LinkCard } from './LinkCard';
-import { pickByLang } from '../lib/pickByLang';
+import { lookupOr } from '../lib/tableLookup';
 
 const ABOUT_SITE_BY_LANG = {
   'zh-TW': {
@@ -175,7 +175,7 @@ const ABOUT_SITE_BY_LANG = {
 function AboutSite() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const c = pickByLang(ABOUT_SITE_BY_LANG, lang, ABOUT_SITE_BY_LANG['zh-TW']);
+  const c = lookupOr(ABOUT_SITE_BY_LANG, lang, ABOUT_SITE_BY_LANG['zh-TW']);
 
   return (
     <InfoPage

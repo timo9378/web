@@ -41,7 +41,7 @@ import imgShureMv7Plus from '../assets/setup/shure-mv7-plus.png';
 import imgPsa1Plus from '../assets/setup/PSA1-plus.png';
 import imgArctisNova7Gen2 from '../assets/setup/arctis-nova-7-wireless-gen-2-white.png';
 import imgT100 from '../assets/setup/t100.png';
-import { pickByLang } from '../lib/pickByLang';
+import { lookupOr } from '../lib/tableLookup';
 
 // --- 文案 i18n ---
 interface SetupUi { subtitle: string; all: string; catSubs: Record<string, string>; retired: string; retiredText: string }
@@ -233,7 +233,7 @@ const sectionVariants: Variants = {
 function Setup() {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
-  const ui = pickByLang(SETUP_UI, lang, SETUP_UI['zh-TW']);
+  const ui = lookupOr(SETUP_UI, lang, SETUP_UI['zh-TW']);
   const [activeFilter, setActiveFilter] = useState('all');
 
   const filteredCategories = activeFilter === 'all'

@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { lookupOr } from '../../lib/tableLookup';
 
 /** `GET /api/newsletter/subscribers` 的單列，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 type Subscriber = SubscriberRow;
@@ -42,7 +43,7 @@ export default function SubscribersManager() {
   // 退訂/刪除等 mutation 後重抓兩把（prefix invalidate）
   const invalidateSubs = () => queryClient.invalidateQueries({ queryKey: ['admin', 'subscribers'] });
 
-  const visible = (allSubscribers[statusFilter] || []).filter((s) => {
+  const visible = lookupOr(allSubscribers, statusFilter, []).filter((s) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return s.email.toLowerCase().includes(q) || (s.name ?? '').toLowerCase().includes(q);
@@ -126,7 +127,7 @@ export default function SubscribersManager() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-          const count = (allSubscribers[status] || []).length;
+          const count = lookupOr(allSubscribers, status, []).length;
           const Icon = config.icon;
           return (
             <button

@@ -4,6 +4,7 @@
 // 顯式語言載入表後，只 emit 下面 LANG_LOADERS 列的語言。
 
 import type { HighlighterCore, LanguageRegistration } from 'shiki/core';
+import { lookup } from './tableLookup';
 
 interface LangModule { default: LanguageRegistration[] }
 
@@ -99,7 +100,7 @@ function resolveLang(input: string | undefined): string {
   if (!input) return FALLBACK_LANG;
   const lower = String(input).toLowerCase();
   const resolved = LANG_ALIAS[lower] || lower;
-  return LANG_LOADERS[resolved] ? resolved : FALLBACK_LANG;
+  return lookup(LANG_LOADERS, resolved) ? resolved : FALLBACK_LANG;
 }
 
 async function getHighlighter(): Promise<HighlighterCore> {

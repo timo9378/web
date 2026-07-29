@@ -317,8 +317,9 @@ export default function MonacoEditor({
             break;
           }
         }
-        // 也檢查 items (某些瀏覽器用 items 而非 files)
-        if (!imageFile && e.clipboardData.items) {
+        // 也檢查 items (某些瀏覽器用 items 而非 files)。
+        // 不檢查 items 是否存在：DataTransferItemList 一定在，空的時候下面的 for 自然不跑。
+        if (!imageFile) {
           for (const item of e.clipboardData.items) {
             if (item.type.startsWith('image/')) {
               imageFile = item.getAsFile();
@@ -453,7 +454,7 @@ export default function MonacoEditor({
 
       const dragOverHandler = (e: DragEvent) => {
         if (!e.dataTransfer) return;
-        const hasFile = Array.from(e.dataTransfer.items || []).some(it => it.kind === 'file');
+        const hasFile = Array.from(e.dataTransfer.items).some(it => it.kind === 'file');
         if (!hasFile) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
@@ -462,7 +463,8 @@ export default function MonacoEditor({
       const dragLeaveHandler = () => domNode.classList.remove('monaco-drop-active');
       const dropHandler = async (e: DragEvent) => {
         domNode.classList.remove('monaco-drop-active');
-        if (!e.dataTransfer?.files?.length) return;
+        // dataTransfer 是 DragEvent 上真的可能為 null 的；files 則一定在（FileList，可能長度 0）
+        if (!e.dataTransfer?.files.length) return;
         const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
         if (!imageFiles.length) return;
         e.preventDefault();
@@ -525,9 +527,8 @@ export default function MonacoEditor({
       setIsEditorReady(false);
       editorRef.current = null;
       textHelperRef.current = null;
-      disposablesRef.current.forEach(
-        (d) => d && typeof d.dispose === 'function' && d.dispose()
-      );
+      // 陣列型別就是 IDisposable[]，逐個 dispose 即可
+      disposablesRef.current.forEach((d) => d.dispose());
       disposablesRef.current = [];
     };
   }, []);
