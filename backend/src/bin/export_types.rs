@@ -33,8 +33,8 @@ use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::tags::{TagRow, TagsResponse};
 use koimsurai_web_backend::handlers::vitals::MetricStat;
 use koimsurai_web_backend::handlers::watch::{
-    AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, NowWatching, TvResponse, TvRow, WatchNowResponse,
-    WatchStatsResponse,
+    AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, NowWatching, TvResponse, TvRow, WatchFavoriteRow,
+    WatchFavoritesResponse, WatchNowResponse, WatchStatsResponse,
 };
 use specta_typescript::Typescript;
 
@@ -110,6 +110,9 @@ fn main() {
         // watch/now：原本是 in-memory 的 serde_json::Value，改成 struct 後才生得出型別
         .register::<NowWatching>()
         .register::<WatchNowResponse>()
+        // watch/favorites：DB 列 + TMDb 在地化，原本是 json! 手捏
+        .register::<WatchFavoriteRow>()
+        .register::<WatchFavoritesResponse>()
         // home digest（首頁動態帶）
         .register::<DigestPost>()
         .register::<DigestThought>()

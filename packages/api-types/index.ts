@@ -682,6 +682,31 @@ export type TvRow = {
 	source: string | null,
 };
 
+/**
+ *  `GET /api/watch/favorites` 的一列：DB 的 watch_favorites + TMDb 即時在地化。
+ *  year 兩個來源都是整數（TMDb 那條走 js_parse_int_opt、DB 欄位是 INTEGER），
+ *  所以不是前端手寫版本猜的 string | number。
+ */
+export type WatchFavoriteRow = {
+	id: number,
+	/**  "film" | "tv" */
+	kind: string,
+	tmdbId: number | null,
+	rating: number | null,
+	quote: string | null,
+	/**  TMDb 在地化標題；查不到時退成 `#<tmdbId>`，所以一定有值 */
+	title: string,
+	poster: string | null,
+	year: number | null,
+	externalUrl: string,
+};
+
+/**  `GET /api/watch/favorites` */
+export type WatchFavoritesResponse = {
+	message: string,
+	favorites: WatchFavoriteRow[],
+};
+
 /**  `GET /api/watch/now` */
 export type WatchNowResponse = {
 	watching: NowWatching | null,

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, type ElementType, type ReactElement } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AnimeRow, NowWatching } from '@koimsurai/api-types';
+import type { AnimeRow, NowWatching, WatchFavoriteRow } from '@koimsurai/api-types';
 import { LocaleLink } from '../locale-link';
 import { useLocaleNavigate } from '../lib/useLocale';
 import {
@@ -49,7 +49,10 @@ interface WatchEntry {
 // 手寫那份把大半欄位標成可選、episode 還標成 number | string —— 實際上後端兩個寫入點
 // （擴充 heartbeat、Trakt 輪詢）都給字串，title/source/type/startedAt 也一定在。
 export type LiveNow = NowWatching;
-export interface WatchFavorite { id: number; title: string; rating: number; poster?: string; quote?: string; year?: number; externalUrl?: string }
+// 改吃後端 specta 生成的型別（backend handlers::watch::WatchFavoriteRow）。
+// 手寫那份少了 kind / tmdbId 兩個欄位，rating 標成必填（DB 允許 NULL），
+// externalUrl 標成可選（實際上一定有，是 format! 組出來的）。
+export type WatchFavorite = WatchFavoriteRow;
 
 /* 連結通通走 TMDb */
 const tmdbUrl = (kind: string, id?: number | string | null): string | null =>
@@ -422,7 +425,8 @@ function Watch() {
                   {f.quote && <figcaption className="w-fav-quote">「{f.quote}」</figcaption>}
                 </a>
                 <p className="w-fav-title">{f.title}</p>
-                <p className="w-fav-line"><Stars n={f.rating} /> <span className="w-fav-year">{f.year}</span></p>
+                {/* rating 在 DB 允許 NULL（欄位是 `rating INTEGER DEFAULT 5`，沒有 NOT NULL） */}
+                <p className="w-fav-line"><Stars n={f.rating ?? 0} /> <span className="w-fav-year">{f.year}</span></p>
               </figure>
             ))}
           </div>

@@ -5,18 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/auth';
+import type { WatchFavoriteRow } from '@koimsurai/api-types';
 import './FavoritesEditor.css';
 
 const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
 
-interface Favorite {
-  id: number;
-  poster?: string;
-  title: string;
-  year?: number;
-  rating: number;
-  quote?: string;
-}
+// 與 Watch 共用同一份生成型別（backend handlers::watch::WatchFavoriteRow）——
+// 這裡原本另外手寫一份，欄位可選性跟 Watch 那份還互相打架（poster?: string
+// vs string | null），型別上是兩個各自為政的猜測。
+type Favorite = WatchFavoriteRow;
 
 interface SearchResult {
   tmdbId: number;
@@ -167,10 +164,12 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
                     <button className="fe-del" disabled={busy} onClick={() => { void removeFavorite(f.id); }} aria-label="delete">🗑</button>
                   </span>
                 </div>
-                <StarPicker value={f.rating} onChange={(n) => { void patchFavorite(f.id, { rating: n }); }} />
+                {/* rating / quote 在 DB 都允許 NULL（rating INTEGER DEFAULT 5、quote TEXT DEFAULT ''，
+                    兩者都沒有 NOT NULL）——舊資料可能是 NULL，這裡補上顯示用的預設。 */}
+                <StarPicker value={f.rating ?? 0} onChange={(n) => { void patchFavorite(f.id, { rating: n }); }} />
                 <textarea
                   className="fe-quote"
-                  defaultValue={f.quote}
+                  defaultValue={f.quote ?? ''}
                   placeholder={t('watch.favQuotePlaceholder')}
                   onBlur={(e) => { if (e.target.value !== f.quote) void patchFavorite(f.id, { quote: e.target.value }); }}
                 />

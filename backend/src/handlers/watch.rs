@@ -158,6 +158,37 @@ pub struct WatchNowResponse {
     pub watching: Option<NowWatching>,
 }
 
+/// `GET /api/watch/favorites` 的一列：DB 的 watch_favorites + TMDb 即時在地化。
+/// year 兩個來源都是整數（TMDb 那條走 js_parse_int_opt、DB 欄位是 INTEGER），
+/// 所以不是前端手寫版本猜的 string | number。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WatchFavoriteRow {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    /// "film" | "tv"
+    pub kind: String,
+    #[serde(rename = "tmdbId")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub tmdb_id: Option<i64>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub rating: Option<i64>,
+    pub quote: Option<String>,
+    /// TMDb 在地化標題；查不到時退成 `#<tmdbId>`，所以一定有值
+    pub title: String,
+    pub poster: Option<String>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub year: Option<i64>,
+    #[serde(rename = "externalUrl")]
+    pub external_url: String,
+}
+
+/// `GET /api/watch/favorites`
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WatchFavoritesResponse {
+    pub message: String,
+    pub favorites: Vec<WatchFavoriteRow>,
+}
+
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -411,19 +442,19 @@ pub async fn favorites(State(state): State<AppState>, Query(q): Query<FavQuery>)
             if kind == "tv" { "tv" } else { "movie" },
             js_interp(&tmdb_id)
         );
-        out.push(json!({
-            "id": f.get("id").cloned().unwrap_or(Value::Null),
-            "kind": kind,
-            "tmdbId": tmdb_id,
-            "rating": f.get("rating").cloned().unwrap_or(Value::Null),
-            "quote": f.get("quote").cloned().unwrap_or(Value::Null),
-            "title": title,
-            "poster": poster,
-            "year": year,
-            "externalUrl": ext,
-        }));
+        out.push(WatchFavoriteRow {
+            id: f.get("id").and_then(|v| v.as_i64()).unwrap_or(0),
+            kind,
+            tmdb_id: tmdb_id.as_i64(),
+            rating: f.get("rating").and_then(|v| v.as_i64()),
+            quote: f.get("quote").and_then(|v| v.as_str()).map(str::to_owned),
+            title: js_interp(&title),
+            poster: poster.as_str().map(str::to_owned),
+            year: year.as_i64(),
+            external_url: ext,
+        });
     }
-    let mut resp = Json(json!({ "message": "success", "favorites": out })).into_response();
+    let mut resp = Json(WatchFavoritesResponse { message: "success".into(), favorites: out }).into_response();
     resp.headers_mut().insert("Cache-Control", axum::http::HeaderValue::from_static("no-store"));
     resp
 }
