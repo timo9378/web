@@ -348,6 +348,14 @@ export type DigestTimeline = {
 	created_at: string,
 };
 
+/**
+ *  EXIF 的數值欄位在同一份 manifest 裡真的有兩種形狀：舊的 Node builder
+ *  （`scripts/builder`）寫 exiftool 的格式化字串（`"f/1.4"`、`"1/640"`、`"32 mm"`），
+ *  本檔的 `extract_exif` 寫數字。線上 247 張裡兩種混雜，所以型別得誠實地兩者皆可
+ *  ——不是為了寬鬆，是資料真的長這樣。
+ */
+export type ExifValue = number | string;
+
 /**  `GET /api/films/recent` 一列。 */
 export type FilmRow = {
 	id: number,
@@ -365,6 +373,29 @@ export type FilmRow = {
 export type FilmsResponse = {
 	message: string,
 	films: FilmRow[],
+};
+
+/**  manifest 裡的一張照片。 */
+export type GalleryPhoto = {
+	id: string,
+	title: string,
+	description?: string,
+	urls: PhotoUrls,
+	originalUrl: string,
+	thumbnailUrl: string,
+	width: number,
+	height: number,
+	aspectRatio: number,
+	size: number,
+	format: string,
+	/**  舊 builder 產的漸進式佔位圖；本檔不產，但讀到要留著（線上 247 張裡 246 張有） */
+	thumbHash: string | null,
+	exif: PhotoExif | null,
+	/**  epoch 毫秒。舊資料是 EXIF 拍攝時間，缺時退成來源檔 mtime */
+	shootTime: number | null,
+	tags?: string[],
+	tagsEn?: string[],
+	gps: PhotoGps | null,
 };
 
 /**  `GET /api/admin/keyword-filters`（requireAdmin）。`{ filters: rows }`（SELECT *；目前空表）。 */
@@ -455,6 +486,49 @@ export type Pagination = {
 	limit: number,
 	total: number,
 	totalPages: number,
+};
+
+/**  exifr `pick` 的那組欄位（key 大小寫照 exifr 原樣，make/model 是小寫的）。 */
+export type PhotoExif = {
+	make: string | null,
+	model: string | null,
+	LensModel: string | null,
+	FocalLength: ExifValue | null,
+	FocalLengthIn35mmFormat: ExifValue | null,
+	FNumber: ExifValue | null,
+	ExposureTime: ExifValue | null,
+	ISO: ExifValue | null,
+	DateTimeOriginal: string | null,
+	Software: string | null,
+	Flash: string | null,
+	WhiteBalance: string | null,
+	MeteringMode: string | null,
+};
+
+/**
+ *  只有舊 builder 會寫（線上 247 張裡 2 張有）。三個數字都只從 JSON 讀進來，
+ *  而 JSON 表達不了 NaN/Inf，所以是 `number` 而不是 f64 預設的 `number | null`。
+ */
+export type PhotoGps = {
+	latitude: number,
+	longitude: number,
+	altitude: number | null,
+};
+
+/**  同一張照片的四個尺寸；sync 產出時 full/regular 同檔、small/thumb 同檔。 */
+export type PhotoUrls = {
+	full: string,
+	regular: string,
+	small: string,
+	thumb: string,
+};
+
+/**  `GET /api/gallery/photos` */
+export type PhotosManifest = {
+	version: string,
+	generatedAt: string,
+	totalPhotos: number,
+	photos: GalleryPhoto[],
 };
 
 export type PollOptionRow = {

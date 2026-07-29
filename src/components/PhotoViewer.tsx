@@ -219,7 +219,7 @@ const PhotoViewer: React.FC = () => {
                           src={photo.urls.regular || photo.urls.full}
                           thumbSrc={photo.urls.thumb || photo.urls.small}
                           alt={photo.title || ''}
-                          thumbHash={photo.thumbHash}
+                          thumbHash={photo.thumbHash ?? undefined}
                           isCurrentImage={index === currentIndex}
                           onScaleChange={handleScaleChange}
                           enableZoom={true}

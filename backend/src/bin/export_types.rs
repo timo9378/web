@@ -10,6 +10,9 @@ use koimsurai_web_backend::handlers::admin::{
 use koimsurai_web_backend::handlers::auth::{AuthProvidersResponse, OAuthProviderInfo};
 use koimsurai_web_backend::handlers::books::{BookDetailResponse, BookRow, BooksListResponse};
 use koimsurai_web_backend::handlers::categories::{CategoriesResponse, CategoryRow};
+use koimsurai_web_backend::handlers::gallery::{
+    ExifValue, GalleryPhoto, PhotoExif, PhotoGps, PhotoUrls, PhotosManifest,
+};
 use koimsurai_web_backend::handlers::home::{
     DigestComment, DigestPost, DigestResponse, DigestThought, DigestTimeline,
 };
@@ -67,6 +70,13 @@ fn main() {
         // 每日名言（原本 json! 手捏 + 快取存 Value）
         .register::<DailyQuote>()
         .register::<DailyQuoteResponse>()
+        // gallery manifest：檔案是我們自己寫的，所以型別放在寫的那一端
+        .register::<ExifValue>()
+        .register::<PhotoUrls>()
+        .register::<PhotoExif>()
+        .register::<PhotoGps>()
+        .register::<GalleryPhoto>()
+        .register::<PhotosManifest>()
         .register::<AdminTagRow>()
         .register::<AdminCategoryRow>()
         .register::<AdminUserRow>()

@@ -1,0 +1,205 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-07-28T07:01:08.310Z",
+  "totalPhotos": 4,
+  "photos": [
+    {
+      "id": "fixture-1-legacy-string-exif",
+      "title": "fixture-1-legacy-string-exif.jpg",
+      "description": "",
+      "urls": {
+        "full": "/nas-images/fixture-1-legacy-string-exif.webp",
+        "regular": "/nas-images/fixture-1-legacy-string-exif.webp",
+        "small": "/nas-images/fixture-1-legacy-string-exif-thumb.webp",
+        "thumb": "/nas-images/fixture-1-legacy-string-exif-thumb.webp"
+      },
+      "originalUrl": "/nas-images/fixture-1-legacy-string-exif.webp",
+      "thumbnailUrl": "/nas-images/fixture-1-legacy-string-exif-thumb.webp",
+      "width": 5340,
+      "height": 2995,
+      "aspectRatio": 1.7829716193656093,
+      "size": 816979,
+      "format": "jpeg",
+      "thumbHash": "FggGDIIYdopqcGu4i3SQbhT3Vg==",
+      "exif": {
+        "LensModel": "EF-M32mm f/1.4 STM",
+        "FocalLength": "32 mm",
+        "FNumber": "f/1.4",
+        "ExposureTime": "1/640",
+        "ISO": 100,
+        "DateTimeOriginal": "2023:04:27 10:56:22",
+        "Flash": "Flash did not fire",
+        "WhiteBalance": "Manual white balance",
+        "MeteringMode": "Pattern"
+      },
+      "shootTime": 1682553600000,
+      "tags": [
+        "小溪",
+        "碎片",
+        "原木",
+        "泥",
+        "池塘",
+        "水坑",
+        "石頭",
+        "滑塊",
+        "太陽",
+        "烏龜",
+        "水"
+      ],
+      "tagsEn": [
+        "creek",
+        "debris",
+        "log",
+        "mud",
+        "pond",
+        "puddle",
+        "stone",
+        "slider",
+        "sun",
+        "tortoise",
+        "turtle",
+        "water"
+      ]
+    },
+    {
+      "id": "fixture-2-numeric-exif",
+      "title": "fixture-2-numeric-exif.jpg",
+      "description": "",
+      "urls": {
+        "full": "/nas-images/fixture-2-numeric-exif.webp",
+        "regular": "/nas-images/fixture-2-numeric-exif.webp",
+        "small": "/nas-images/fixture-2-numeric-exif-thumb.webp",
+        "thumb": "/nas-images/fixture-2-numeric-exif-thumb.webp"
+      },
+      "originalUrl": "/nas-images/fixture-2-numeric-exif.webp",
+      "thumbnailUrl": "/nas-images/fixture-2-numeric-exif-thumb.webp",
+      "width": 6960,
+      "height": 4640,
+      "aspectRatio": 1.5,
+      "size": 185192,
+      "format": "jpeg",
+      "shootTime": 1781494500164.3665,
+      "exif": {
+        "make": "Canon",
+        "model": "Canon EOS M6 Mark II",
+        "LensModel": "EF-M18-150mm f/3.5-6.3 IS STM",
+        "FNumber": 40,
+        "ISO": 100,
+        "ExposureTime": 0.02,
+        "FocalLength": 150,
+        "DateTimeOriginal": "2025-07-27T21:45:09.000Z"
+      },
+      "tags": [
+        "平靜的",
+        "雲",
+        "多雲",
+        "地平線",
+        "海洋",
+        "發光",
+        "天空",
+        "太陽",
+        "日落",
+        "水"
+      ],
+      "tagsEn": [
+        "calm",
+        "cloud",
+        "cloudy",
+        "horizon",
+        "sea",
+        "shine",
+        "sky",
+        "sun",
+        "sunset",
+        "water"
+      ]
+    },
+    {
+      "id": "fixture-4-has-gps",
+      "title": "fixture-4-has-gps.jpg",
+      "description": "",
+      "urls": {
+        "full": "/nas-images/fixture-4-has-gps.webp",
+        "regular": "/nas-images/fixture-4-has-gps.webp",
+        "small": "/nas-images/fixture-4-has-gps-thumb.webp",
+        "thumb": "/nas-images/fixture-4-has-gps-thumb.webp"
+      },
+      "originalUrl": "/nas-images/fixture-4-has-gps.webp",
+      "thumbnailUrl": "/nas-images/fixture-4-has-gps-thumb.webp",
+      "width": 3072,
+      "height": 4080,
+      "aspectRatio": 0.7529411764705882,
+      "size": 2603339,
+      "format": "jpeg",
+      "thumbHash": "mygGDQKeUjmXeKv3dzdITM8R9yo0",
+      "exif": {
+        "LensModel": "Pixel 8 Pro back camera 6.9mm f/1.68",
+        "FocalLength": "6.9 mm",
+        "FocalLengthIn35mmFormat": "49 mm",
+        "FNumber": "f/1.7",
+        "ExposureTime": "1/60",
+        "ISO": 148,
+        "DateTimeOriginal": "2026:02:03 21:09:48",
+        "Flash": "Flash did not fire, compulsory flash mode",
+        "WhiteBalance": "Auto white balance",
+        "MeteringMode": "CenterWeightedAverage"
+      },
+      "gps": {
+        "latitude": 25.033964,
+        "longitude": 121.564468,
+        "altitude": 10
+      },
+      "shootTime": 1770076800000,
+      "tags": [
+        "牛肉",
+        "麵包",
+        "自助餐",
+        "桌子",
+        "盤子",
+        "填滿",
+        "食物",
+        "肉類",
+        "山峰",
+        "大淺盤",
+        "豬肉",
+        "海鮮",
+        "托盤",
+        "型別"
+      ],
+      "tagsEn": [
+        "beef",
+        "bread",
+        "buffet",
+        "table",
+        "plate",
+        "fill",
+        "food",
+        "meat",
+        "peak",
+        "platter",
+        "pork",
+        "seafood",
+        "tray",
+        "type"
+      ]
+    },
+    {
+      "id": "fixture-6-no-tags-no-description",
+      "title": "fixture-6.jpg",
+      "urls": {
+        "full": "/nas-images/fixture-1-legacy-string-exif.webp",
+        "regular": "/nas-images/fixture-1-legacy-string-exif.webp",
+        "small": "/nas-images/fixture-1-legacy-string-exif-thumb.webp",
+        "thumb": "/nas-images/fixture-1-legacy-string-exif-thumb.webp"
+      },
+      "originalUrl": "/nas-images/fixture-1-legacy-string-exif.webp",
+      "thumbnailUrl": "/nas-images/fixture-1-legacy-string-exif-thumb.webp",
+      "width": 5340,
+      "height": 2995,
+      "aspectRatio": 1.7829716193656093,
+      "size": 816979,
+      "format": "jpeg",
+      "shootTime": 1682553600000
+    }
+  ]
+}

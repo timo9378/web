@@ -432,6 +432,104 @@ async fn watch_history_sync_is_idempotent() {
     assert_eq!(dune, 2, "同片名不同觀看日是兩筆，不該被去重掉");
 }
 
+/// fixture 的每個 key/value 都要在回應裡原封不動出現——型別化不能吃掉資料。
+/// 反過來允許回應多出 key：Rust 的 `Option` 序列化成 null，把缺的欄位補齊是預期行為。
+fn assert_no_data_loss(orig: &Value, got: &Value, path: &str) {
+    match orig {
+        Value::Object(o) => {
+            let g = got.as_object().unwrap_or_else(|| panic!("{path} 不是物件：{got}"));
+            for (k, v) in o {
+                let gv = g.get(k).unwrap_or_else(|| panic!("{path}.{k} 不見了"));
+                assert_no_data_loss(v, gv, &format!("{path}.{k}"));
+            }
+        }
+        Value::Array(a) => {
+            let g = got.as_array().unwrap_or_else(|| panic!("{path} 不是陣列：{got}"));
+            assert_eq!(a.len(), g.len(), "{path} 長度不同");
+            for (i, v) in a.iter().enumerate() {
+                assert_no_data_loss(v, &g[i], &format!("{path}[{i}]"));
+            }
+        }
+        _ => assert_eq!(orig, got, "{path} 的值被改掉了"),
+    }
+}
+
+fn photo_by_id<'a>(body: &'a Value, id: &str) -> &'a Value {
+    body["photos"]
+        .as_array()
+        .unwrap_or_else(|| panic!("photos 不是陣列：{body}"))
+        .iter()
+        .find(|p| p["id"] == id)
+        .unwrap_or_else(|| panic!("找不到 {id}"))
+}
+
+/// manifest 型別化的回歸網：拿線上那份 manifest 的真實形狀（去識別化後）餵進端點，
+/// 驗「一個 key 都沒掉」。舊 Node builder 寫的 exif 是 exiftool 的格式化字串、Rust
+/// sync 寫的是數字，同一份檔案裡兩種混著——這正是最容易被一個過嚴的 struct 吃掉的地方。
+#[tokio::test]
+async fn gallery_photos_preserves_legacy_manifest_shape() {
+    let fixture = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/gallery_manifest.json");
+    // nextest 一個測試一個行程，set_var 影響不到別的測試
+    unsafe { std::env::set_var("GALLERY_MANIFEST_PATH", fixture) };
+
+    let (app, _pool) = test_app().await;
+    let (status, body) = get(&app, "/api/gallery/photos").await;
+    assert_eq!(status, StatusCode::OK);
+
+    let raw: Value = serde_json::from_str(&std::fs::read_to_string(fixture).unwrap()).unwrap();
+    assert_no_data_loss(&raw, &body, "manifest");
+
+    // 混型別的 exif 兩種都要活著
+    assert!(photo_by_id(&body, "fixture-1-legacy-string-exif")["exif"]["FNumber"].is_string());
+    assert!(photo_by_id(&body, "fixture-2-numeric-exif")["exif"]["FNumber"].is_number());
+
+    // 整數不能變成 100.0：manifest 會被反覆讀寫，序列化不該順手改掉數字寫法
+    let legacy = photo_by_id(&body, "fixture-1-legacy-string-exif");
+    assert!(legacy["exif"]["ISO"].is_i64(), "ISO 應維持整數：{}", legacy["exif"]["ISO"]);
+    assert!(legacy["shootTime"].is_i64(), "shootTime 應維持整數：{}", legacy["shootTime"]);
+
+    // 缺 description/tags/tagsEn 的舊資料不該讓整張照片被丟掉
+    let bare = photo_by_id(&body, "fixture-6-no-tags-no-description");
+    assert_eq!(bare["description"], "");
+    assert_eq!(bare["tags"], json!([]));
+    assert_eq!(bare["tagsEn"], json!([]));
+    assert_eq!(bare["exif"], Value::Null);
+}
+
+/// 一張形狀壞掉的照片只丟那一張，不該讓整個相簿 500——manifest 是外部檔案，
+/// 沒有任何東西保證每一列都齊。
+#[tokio::test]
+async fn gallery_photos_skips_broken_photo_instead_of_failing() {
+    let path = std::env::temp_dir().join(format!("koimsurai-manifest-{}.json", std::process::id()));
+    let good = json!({
+        "id": "ok", "title": "ok.jpg",
+        "urls": { "full": "/a.webp", "regular": "/a.webp", "small": "/t.webp", "thumb": "/t.webp" },
+        "originalUrl": "/a.webp", "thumbnailUrl": "/t.webp",
+        "width": 1920, "height": 1080, "aspectRatio": 1.7777777777777777,
+        "size": 123456, "format": "jpeg"
+    });
+    // 缺 id/urls/width…：serde 會在這一列失敗
+    let broken = json!({ "title": "壞掉.jpg", "format": "jpeg" });
+    std::fs::write(
+        &path,
+        json!({ "version": "1.0", "generatedAt": "2026-07-28T00:00:00.000Z",
+                "totalPhotos": 2, "photos": [good, broken] })
+        .to_string(),
+    )
+    .unwrap();
+    unsafe { std::env::set_var("GALLERY_MANIFEST_PATH", &path) };
+
+    let (app, _pool) = test_app().await;
+    let (status, body) = get(&app, "/api/gallery/photos").await;
+    let _ = std::fs::remove_file(&path);
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["photos"].as_array().unwrap().len(), 1, "壞掉的那張要被跳過");
+    assert_eq!(body["photos"][0]["id"], "ok");
+    // totalPhotos 取實際回傳的張數，不是檔案裡寫的 2
+    assert_eq!(body["totalPhotos"], 1);
+}
+
 /// 極簡 percent-encode（測試用；只處理 query 值需要的字元）
 fn urlencode(s: &str) -> String {
     let mut out = String::new();

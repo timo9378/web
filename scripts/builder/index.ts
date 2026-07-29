@@ -111,28 +111,33 @@ async function processPhoto(
       size: processedImage.size,
       format: processedImage.format,
 
-      thumbHash: processedImage.thumbHash,
+      thumbHash: processedImage.thumbHash ?? null,
 
+      // 一律 ?? null：Rust 那邊的 Option 序列化成 null 而不是省略 key，
+      // 兩個寫入端要產出同一個形狀，manifest 才只有一種讀法。
       exif: {
-        make: exifData.make,
-        model: exifData.model,
-        LensModel: exifData.lensModel,
-        FocalLength: exifData.focalLength,
-        FocalLengthIn35mmFormat: exifData.focalLengthIn35mm,
-        FNumber: exifData.fNumber,
-        ExposureTime: exifData.exposureTime,
-        ISO: exifData.iso,
-        DateTimeOriginal: exifData.dateTimeOriginal,
-        Software: exifData.software,
-        Flash: exifData.flash,
-        WhiteBalance: exifData.whiteBalance,
-        MeteringMode: exifData.meteringMode,
+        make: exifData.make ?? null,
+        model: exifData.model ?? null,
+        LensModel: exifData.lensModel ?? null,
+        FocalLength: exifData.focalLength ?? null,
+        FocalLengthIn35mmFormat: exifData.focalLengthIn35mm ?? null,
+        FNumber: exifData.fNumber ?? null,
+        ExposureTime: exifData.exposureTime ?? null,
+        ISO: exifData.iso ?? null,
+        DateTimeOriginal: exifData.dateTimeOriginal ?? null,
+        Software: exifData.software ?? null,
+        Flash: exifData.flash ?? null,
+        WhiteBalance: exifData.whiteBalance ?? null,
+        MeteringMode: exifData.meteringMode ?? null,
       },
 
-      gps: exifData.gps,
-      shootTime,
+      gps: exifData.gps
+        ? { ...exifData.gps, altitude: exifData.gps.altitude ?? null }
+        : null,
+      shootTime: shootTime ?? null,
 
       tags: [],
+      tagsEn: [],
     };
 
     console.log(`  ✅ 完成: ${fileName}`);

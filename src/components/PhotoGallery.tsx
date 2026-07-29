@@ -1,7 +1,6 @@
 import { useMemo, useCallback, useState, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Masonry } from 'masonic';
-import { Blurhash } from 'react-blurhash';
 import { useInView } from 'react-intersection-observer';
 import { useSetAtom } from 'jotai';
 import { photosAtom, openViewerAtom } from '../store/photoStore';
@@ -42,19 +41,6 @@ const PhotoItem = memo(({ data, width, onPhotoClick }: {
         className="photo-card relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 cursor-pointer"
         style={{ height: calculatedHeight }}
       >
-        {/* Blurhash 佔位符 */}
-        {data.blurhash && !imageLoaded && !imageError && (
-          <Blurhash
-            hash={data.blurhash}
-            width="100%"
-            height="100%"
-            resolutionX={32}
-            resolutionY={32}
-            punch={1}
-            className="absolute inset-0"
-          />
-        )}
-
         {/* 實際圖片 */}
         {inView && !imageError && (
           <img

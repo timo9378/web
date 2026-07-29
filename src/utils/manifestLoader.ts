@@ -4,14 +4,11 @@
  * 載入照片 manifest 資料
  */
 
+import type { PhotosManifest } from '@koimsurai/api-types';
 import type { PhotoManifest } from '../types/photo';
 
-export interface PhotosManifestData {
-  version: string;
-  generatedAt: string;
-  totalPhotos: number;
-  photos: PhotoManifest[];
-}
+// 舊名保留給既有 import；形狀改吃後端生成的（backend handlers::gallery::PhotosManifest）
+export type PhotosManifestData = PhotosManifest;
 
 /**
  * 從 public/photos-manifest.json 載入照片資料
@@ -82,14 +79,39 @@ function loadLocalPhotos(): PhotoManifest[] {
       aspectRatio: 16 / 9,
       size: 0,
       format: path.split('.').pop()?.toLowerCase() ?? 'jpg',
-      shootTime,
-      exif: dateMatch ? {
-        DateTimeOriginal: `${dateMatch[1]}:${dateMatch[2]}:${dateMatch[3]} 00:00:00`,
-      } : undefined,
+      thumbHash: null,
+      shootTime: shootTime ?? null,
+      // 只有 DateTimeOriginal 有值，其餘欄位維持「這張照片沒這項資訊」
+      exif: dateMatch
+        ? {
+            ...EMPTY_EXIF,
+            DateTimeOriginal: `${dateMatch[1]}:${dateMatch[2]}:${dateMatch[3]} 00:00:00`,
+          }
+        : null,
       tags: [],
+      tagsEn: [],
+      gps: null,
     };
   });
 }
+
+// 後端的 PhotoExif 每個欄位都會出現（Rust 的 Option 序列化成 null 而非省略），
+// 本地回退模式要湊出同一個形狀。
+const EMPTY_EXIF = {
+  make: null,
+  model: null,
+  LensModel: null,
+  FocalLength: null,
+  FocalLengthIn35mmFormat: null,
+  FNumber: null,
+  ExposureTime: null,
+  ISO: null,
+  DateTimeOriginal: null,
+  Software: null,
+  Flash: null,
+  WhiteBalance: null,
+  MeteringMode: null,
+} as const;
 
 /**
  * 取得圖片格式
@@ -99,9 +121,3 @@ export function getImageFormat(url: string): string {
   return ext.toUpperCase();
 }
 
-/**
- * 檢查是否為 Live Photo
- */
-export function isLivePhoto(photo: PhotoManifest): boolean {
-  return photo.isLivePhoto === true && !!photo.livePhotoVideoUrl;
-}

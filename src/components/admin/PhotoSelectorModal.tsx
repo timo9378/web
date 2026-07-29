@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaSearch, FaImage } from 'react-icons/fa';
 import { loadPhotosManifest } from '../../utils/manifestLoader';
 import type { PhotoManifest } from '../../types/photo';
-import { Blurhash } from 'react-blurhash';
 import { toast } from 'sonner';
 
 interface PhotoSelectorModalProps {
@@ -168,16 +167,6 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                             onClick={() => onSelect(photo)}
                                             className="w-full text-left group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer border border-border/30 hover:border-border/60 transition-all duration-300 bg-accent/20"
                                         >
-                                            {/* Blurhash Placeholder */}
-                                            {!photo.thumbnailUrl && photo.blurhash && (
-                                                <Blurhash
-                                                    hash={photo.blurhash}
-                                                    width="100%"
-                                                    height="100%"
-                                                    className="absolute inset-0 opacity-50"
-                                                />
-                                            )}
-
                                             {/* Image */}
                                             <img
                                                 src={photo.thumbnailUrl}

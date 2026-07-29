@@ -5,6 +5,7 @@
 
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+import type { ExifValue } from '@koimsurai/api-types';
 import type { PhotoManifest } from '../types/photo';
 import './EXIFPanel.css';
 
@@ -35,16 +36,27 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
     }
   };
 
-  const formatExposureTime = (time?: string): string => {
-    if (!time) return 'N/A';
-    const num = parseFloat(time);
-    if (num >= 1) return `${num}s`;
-    return `1/${Math.round(1 / num)}s`;
+  // EXIF 數值在 manifest 裡有兩種形狀：舊 Node builder 寫 exiftool 的格式化字串
+  // （"1/640"、"f/1.4"、"32 mm"），Rust 的 sync 寫數字。之前型別只標 string，三個
+  // formatter 都是照字串寫的，碰到字串反而算錯：
+  //   parseFloat("1/640") === 1 → 顯示「1s」（實際是 1/640 秒）
+  //   formatAperture("f/1.4")   → 顯示「f/f/1.4」
+  //   {FocalLength}mm           → "32 mm" 顯示成「32 mmmm」
+  const formatExposureTime = (time?: ExifValue | null): string => {
+    if (time === null || time === undefined) return 'N/A';
+    if (typeof time === 'string') return time.endsWith('s') ? time : `${time}s`;
+    if (time >= 1) return `${time}s`;
+    return `1/${Math.round(1 / time)}s`;
   };
 
-  const formatAperture = (aperture?: string): string => {
-    if (!aperture) return 'N/A';
-    return `f/${aperture}`;
+  const formatAperture = (aperture?: ExifValue | null): string => {
+    if (aperture === null || aperture === undefined) return 'N/A';
+    return typeof aperture === 'string' ? aperture : `f/${aperture}`;
+  };
+
+  const formatFocalLength = (len?: ExifValue | null): string => {
+    if (len === null || len === undefined) return '';
+    return typeof len === 'string' ? len : `${len}mm`;
   };
 
   return (
@@ -131,9 +143,9 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
               <div className="exif-row">
                 <span className="exif-label">焦距</span>
                 <span className="exif-value">
-                  {photo.exif.FocalLength}mm
+                  {formatFocalLength(photo.exif.FocalLength)}
                   {photo.exif.FocalLengthIn35mmFormat &&
-                    ` (${photo.exif.FocalLengthIn35mmFormat}mm)`}
+                    ` (${formatFocalLength(photo.exif.FocalLengthIn35mmFormat)})`}
                 </span>
               </div>
             )}
@@ -194,12 +206,6 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
                 <span className="exif-value">{photo.gps.altitude.toFixed(0)}m</span>
               </div>
             )}
-            {photo.location && (
-              <div className="exif-row">
-                <span className="exif-label">地點</span>
-                <span className="exif-value">{photo.location}</span>
-              </div>
-            )}
           </div>
         )}
 
@@ -217,15 +223,6 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
           </div>
         )}
 
-        {/* Live Photo */}
-        {photo.isLivePhoto && (
-          <div className="exif-section">
-            <div className="exif-row">
-              <span className="exif-label">類型</span>
-              <span className="exif-value exif-live-photo">📹 Live Photo</span>
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   );

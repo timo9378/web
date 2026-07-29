@@ -8,7 +8,7 @@ use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::{Value, json};
 
 use crate::state::AppState;
@@ -22,13 +22,212 @@ fn manifest_path() -> std::path::PathBuf {
     std::path::PathBuf::from("/usr/src/app/storage/gallery/manifest.json")
 }
 
-/// `GET /api/gallery/photos` —— 讀 manifest.json 原樣回傳（parse 後 res.json，非直接送檔）。
+fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
+// ── manifest 型別：這份 manifest 我們自己寫、自己讀，所以型別放在寫的那一端 ──
+
+/// JS number 語意：整值輸出整數（`1682553600000` 而非 `1682553600000.0`）。manifest
+/// 是會被反覆讀寫的檔案，型別化不該順手改掉既有的數字寫法。
+///
+/// 非有限值直接讓寫檔失敗：JSON 沒有 NaN/Inf，serde_json 會靜靜轉成 null——那正是
+/// specta 把裸 f64 標成 `number | null` 的原因。在這裡擋掉，型別才敢寫 `number`。
+fn ser_js_number<S: Serializer>(v: &f64, s: S) -> Result<S::Ok, S::Error> {
+    if !v.is_finite() {
+        return Err(serde::ser::Error::custom(format!("manifest 數值不是有限值：{v}")));
+    }
+    crate::util::js_num_value(*v).serialize(s)
+}
+
+fn ser_js_number_opt<S: Serializer>(v: &Option<f64>, s: S) -> Result<S::Ok, S::Error> {
+    match v {
+        Some(n) => ser_js_number(n, s),
+        None => s.serialize_none(),
+    }
+}
+
+/// 同一張照片的四個尺寸；sync 產出時 full/regular 同檔、small/thumb 同檔。
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct PhotoUrls {
+    pub full: String,
+    pub regular: String,
+    pub small: String,
+    pub thumb: String,
+}
+
+/// EXIF 的數值欄位在同一份 manifest 裡真的有兩種形狀：舊的 Node builder
+/// （`scripts/builder`）寫 exiftool 的格式化字串（`"f/1.4"`、`"1/640"`、`"32 mm"`），
+/// 本檔的 `extract_exif` 寫數字。線上 247 張裡兩種混雜，所以型別得誠實地兩者皆可
+/// ——不是為了寬鬆，是資料真的長這樣。
+#[derive(Debug, Clone, Deserialize, specta::Type, utoipa::ToSchema)]
+#[serde(untagged)]
+pub enum ExifValue {
+    Num(#[specta(type = specta_typescript::Number)] f64),
+    Text(String),
+}
+
+impl Serialize for ExifValue {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Num(n) => ser_js_number(n, s),
+            Self::Text(t) => s.serialize_str(t),
+        }
+    }
+}
+
+/// exifr `pick` 的那組欄位（key 大小寫照 exifr 原樣，make/model 是小寫的）。
+#[derive(Debug, Clone, Default, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct PhotoExif {
+    pub make: Option<String>,
+    pub model: Option<String>,
+    #[serde(rename = "LensModel")]
+    pub lens_model: Option<String>,
+    #[serde(rename = "FocalLength")]
+    pub focal_length: Option<ExifValue>,
+    #[serde(rename = "FocalLengthIn35mmFormat")]
+    pub focal_length_in_35mm_format: Option<ExifValue>,
+    #[serde(rename = "FNumber")]
+    pub f_number: Option<ExifValue>,
+    #[serde(rename = "ExposureTime")]
+    pub exposure_time: Option<ExifValue>,
+    #[serde(rename = "ISO")]
+    pub iso: Option<ExifValue>,
+    #[serde(rename = "DateTimeOriginal")]
+    pub date_time_original: Option<String>,
+    // 以下四欄只有舊 builder 會寫；本檔的 extract_exif 不產，但讀到要留著
+    #[serde(rename = "Software")]
+    pub software: Option<String>,
+    #[serde(rename = "Flash")]
+    pub flash: Option<String>,
+    #[serde(rename = "WhiteBalance")]
+    pub white_balance: Option<String>,
+    #[serde(rename = "MeteringMode")]
+    pub metering_mode: Option<String>,
+}
+
+impl PhotoExif {
+    fn is_empty(&self) -> bool {
+        self.make.is_none()
+            && self.model.is_none()
+            && self.lens_model.is_none()
+            && self.focal_length.is_none()
+            && self.focal_length_in_35mm_format.is_none()
+            && self.f_number.is_none()
+            && self.exposure_time.is_none()
+            && self.iso.is_none()
+            && self.date_time_original.is_none()
+    }
+}
+
+/// 只有舊 builder 會寫（線上 247 張裡 2 張有）。三個數字都只從 JSON 讀進來，
+/// 而 JSON 表達不了 NaN/Inf，所以是 `number` 而不是 f64 預設的 `number | null`。
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct PhotoGps {
+    #[serde(serialize_with = "ser_js_number")]
+    #[specta(type = specta_typescript::Number)]
+    pub latitude: f64,
+    #[serde(serialize_with = "ser_js_number")]
+    #[specta(type = specta_typescript::Number)]
+    pub longitude: f64,
+    #[serde(serialize_with = "ser_js_number_opt")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub altitude: Option<f64>,
+}
+
+/// manifest 裡的一張照片。
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
+pub struct GalleryPhoto {
+    pub id: String,
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    pub urls: PhotoUrls,
+    #[serde(rename = "originalUrl")]
+    pub original_url: String,
+    #[serde(rename = "thumbnailUrl")]
+    pub thumbnail_url: String,
+    pub width: u32,
+    pub height: u32,
+    #[serde(rename = "aspectRatio", serialize_with = "ser_js_number")]
+    #[specta(type = specta_typescript::Number)]
+    pub aspect_ratio: f64,
+    #[specta(type = specta_typescript::Number)]
+    pub size: u64,
+    pub format: String,
+    /// 舊 builder 產的漸進式佔位圖；本檔不產，但讀到要留著（線上 247 張裡 246 張有）
+    #[serde(rename = "thumbHash")]
+    pub thumb_hash: Option<String>,
+    pub exif: Option<PhotoExif>,
+    /// epoch 毫秒。舊資料是 EXIF 拍攝時間，缺時退成來源檔 mtime
+    #[serde(rename = "shootTime", serialize_with = "ser_js_number_opt")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub shoot_time: Option<f64>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(rename = "tagsEn", default)]
+    pub tags_en: Vec<String>,
+    pub gps: Option<PhotoGps>,
+}
+
+/// `GET /api/gallery/photos`
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct PhotosManifest {
+    pub version: String,
+    #[serde(rename = "generatedAt")]
+    pub generated_at: String,
+    #[serde(rename = "totalPhotos")]
+    pub total_photos: u32,
+    pub photos: Vec<GalleryPhoto>,
+}
+
+/// 單張形狀不符只丟那一張（warn），不讓整個相簿 500 ——
+/// 舊資料是 Node builder 寫的，沒有任何東西保證每一張都齊。
+fn photos_from_values(arr: &[Value]) -> Vec<GalleryPhoto> {
+    arr.iter()
+        .filter_map(|p| match serde_json::from_value::<GalleryPhoto>(p.clone()) {
+            Ok(photo) => Some(photo),
+            Err(e) => {
+                let id = p.get("id").and_then(|v| v.as_str()).unwrap_or("<無 id>");
+                tracing::warn!("[gallery] 跳過形狀不符的照片 {id}：{e}");
+                None
+            }
+        })
+        .collect()
+}
+
+fn empty_manifest() -> PhotosManifest {
+    PhotosManifest { version: "1.0".into(), generated_at: String::new(), total_photos: 0, photos: vec![] }
+}
+
+fn manifest_from_value(v: &Value) -> PhotosManifest {
+    let photos =
+        v.get("photos").and_then(|p| p.as_array()).map(|a| photos_from_values(a)).unwrap_or_default();
+    PhotosManifest {
+        version: v
+            .get("version")
+            .and_then(|x| x.as_str())
+            .filter(|s| !s.is_empty())
+            .unwrap_or("1.0")
+            .to_string(),
+        generated_at: v.get("generatedAt").and_then(|x| x.as_str()).unwrap_or_default().to_string(),
+        // 取實際回傳的張數而不是檔案裡寫的：兩者本來就該一致，
+        // 真不一致時（有照片被跳過）也不該回一個和 photos 對不上的數字。
+        total_photos: photos.len() as u32,
+        photos,
+    }
+}
+
+/// `GET /api/gallery/photos` —— 讀 manifest.json（parse 後 res.json，非直接送檔）。
 #[utoipa::path(get, path = "/api/gallery/photos", tag = "gallery",
-    responses((status = 200, description = "相簿 manifest（動態 JSON）")))]
+    responses((status = 200, body = PhotosManifest)))]
 pub async fn gallery_photos() -> Response {
     match tokio::fs::read_to_string(manifest_path()).await {
         Ok(data) => match serde_json::from_str::<Value>(&data) {
-            Ok(manifest) => Json(manifest).into_response(),
+            Ok(manifest) => Json(manifest_from_value(&manifest)).into_response(),
             // JSON.parse 失敗在 Express 落到非 ENOENT 分支 → 500
             Err(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -38,18 +237,12 @@ pub async fn gallery_photos() -> Response {
         },
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             // 無 manifest → 空結構（generatedAt=當下時間，非決定性欄位）
-            let now = crate::util::iso_from_millis(
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis() as i64)
-                    .unwrap_or(0),
-            );
-            Json(json!({
-                "version": "1.0.0",
-                "generatedAt": now,
-                "totalPhotos": 0,
-                "photos": [],
-            }))
+            Json(PhotosManifest {
+                version: "1.0.0".into(),
+                generated_at: crate::util::iso_from_millis(now_ms()),
+                total_photos: 0,
+                photos: vec![],
+            })
             .into_response()
         }
         Err(_) => {
@@ -201,8 +394,8 @@ fn apply_orientation(img: image::DynamicImage, orientation: u32) -> image::Dynam
     }
 }
 
-/// exifr `pick` 等價：抽 9 欄映射成前端形狀（make/model 小寫 key）。空 → None。
-fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
+/// exifr `pick` 等價：抽 9 欄映射成 `PhotoExif`。全空 → None。
+fn extract_exif(bytes: &[u8]) -> (Option<PhotoExif>, u32) {
     let mut orientation = 1u32;
     let exif = match exif::Reader::new().read_from_container(&mut std::io::Cursor::new(bytes)) {
         Ok(e) => e,
@@ -213,7 +406,7 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
     {
         orientation = v;
     }
-    let mut m = Map::new();
+    let mut m = PhotoExif::default();
     let ascii = |tag: exif::Tag| -> Option<String> {
         exif.get_field(tag, exif::In::PRIMARY).and_then(|f| match &f.value {
             exif::Value::Ascii(v) => {
@@ -222,8 +415,8 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
             _ => None,
         })
     };
-    // 數字：exifr 給 JS number → 整值輸出整數（js_normalize 語意）
-    let num = |tag: exif::Tag| -> Option<Value> {
+    // 數字：exifr 給 JS number（整值輸出整數由 ExifValue 的 Serialize 處理）
+    let num = |tag: exif::Tag| -> Option<ExifValue> {
         exif.get_field(tag, exif::In::PRIMARY)
             .and_then(|f| match &f.value {
                 exif::Value::Rational(v) => v.first().map(|r| r.to_f64()),
@@ -232,32 +425,16 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
                 exif::Value::Long(v) => v.first().map(|&x| x as f64),
                 _ => None,
             })
-            .map(|f| if f.fract() == 0.0 && f.abs() < 9e15 { Value::from(f as i64) } else { Value::from(f) })
+            .map(ExifValue::Num)
     };
-    if let Some(v) = ascii(exif::Tag::Make) {
-        m.insert("make".into(), Value::from(v));
-    }
-    if let Some(v) = ascii(exif::Tag::Model) {
-        m.insert("model".into(), Value::from(v));
-    }
-    if let Some(v) = ascii(exif::Tag::LensModel) {
-        m.insert("LensModel".into(), Value::from(v));
-    }
-    if let Some(v) = num(exif::Tag::FNumber) {
-        m.insert("FNumber".into(), v);
-    }
-    if let Some(v) = num(exif::Tag::PhotographicSensitivity) {
-        m.insert("ISO".into(), v);
-    }
-    if let Some(v) = num(exif::Tag::ExposureTime) {
-        m.insert("ExposureTime".into(), v);
-    }
-    if let Some(v) = num(exif::Tag::FocalLength) {
-        m.insert("FocalLength".into(), v);
-    }
-    if let Some(v) = num(exif::Tag::FocalLengthIn35mmFilm) {
-        m.insert("FocalLengthIn35mmFormat".into(), v);
-    }
+    m.make = ascii(exif::Tag::Make);
+    m.model = ascii(exif::Tag::Model);
+    m.lens_model = ascii(exif::Tag::LensModel);
+    m.f_number = num(exif::Tag::FNumber);
+    m.iso = num(exif::Tag::PhotographicSensitivity);
+    m.exposure_time = num(exif::Tag::ExposureTime);
+    m.focal_length = num(exif::Tag::FocalLength);
+    m.focal_length_in_35mm_format = num(exif::Tag::FocalLengthIn35mmFilm);
     // DateTimeOriginal："2023:04:27 10:56:22"——exifr 以**容器本地時區**（TZ=Asia/Taipei）
     // 解析再 toISOString（UTC）→ chrono 同語意：naive → Local → UTC ISO。
     if let Some(v) = ascii(exif::Tag::DateTimeOriginal)
@@ -266,10 +443,7 @@ fn extract_exif(bytes: &[u8]) -> (Option<Map<String, Value>>, u32) {
         use chrono::TimeZone;
         if let chrono::LocalResult::Single(local) = chrono::Local.from_local_datetime(&naive) {
             let utc = local.with_timezone(&chrono::Utc);
-            m.insert(
-                "DateTimeOriginal".into(),
-                Value::from(utc.format("%Y-%m-%dT%H:%M:%S.000Z").to_string()),
-            );
+            m.date_time_original = Some(utc.format("%Y-%m-%dT%H:%M:%S.000Z").to_string());
         }
     }
     let e = if m.is_empty() { None } else { Some(m) };
@@ -290,7 +464,7 @@ struct Processed {
     height: u32,
     size: u64,
     format: String,
-    exif: Option<Map<String, Value>>,
+    exif: Option<PhotoExif>,
 }
 
 /// `processSingleGalleryImage`：rotate → 雙輸出 webp（1920 q85 / 400 q80）→ 原檔尺寸 + EXIF。
@@ -332,7 +506,7 @@ fn process_single_image(
 }
 
 /// `tagPhoto`：POST {path} → {zh_tw,en}。失敗 None（不擋 sync）。
-async fn tag_photo(state: &AppState, tagger_path: &str) -> Option<(Vec<Value>, Vec<Value>)> {
+async fn tag_photo(state: &AppState, tagger_path: &str) -> Option<(Vec<String>, Vec<String>)> {
     let timeout_ms: u64 =
         std::env::var("PHOTO_TAGGER_TIMEOUT_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(25000);
     let resp = state
@@ -348,7 +522,14 @@ async fn tag_photo(state: &AppState, tagger_path: &str) -> Option<(Vec<Value>, V
         return None;
     }
     let data: Value = serde_json::from_str(&resp.text().await.ok()?).ok()?;
-    let arr = |k: &str| data.get(k).and_then(|v| v.as_array()).cloned().unwrap_or_default();
+    // 標籤一律當字串收：tagger 回非字串（理論上不會）就丟掉那一個，而不是讓
+    // manifest 裡混進一個前端 renderer 處理不了的值。
+    let arr = |k: &str| {
+        data.get(k)
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect::<Vec<String>>())
+            .unwrap_or_default()
+    };
     Some((arr("zh_tw"), arr("en")))
 }
 
@@ -393,24 +574,16 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     let manifest_file = output_dir.join("manifest.json");
 
     // readGalleryManifestSafe
-    let (version, existing_photos): (Value, Vec<Value>) =
-        match tokio::fs::read_to_string(&manifest_file).await {
-            Ok(raw) => match serde_json::from_str::<Value>(&raw) {
-                Ok(p) => (
-                    p.get("version")
-                        .filter(|v| crate::util::js_truthy(Some(v)))
-                        .cloned()
-                        .unwrap_or_else(|| Value::from("1.0")),
-                    p.get("photos").and_then(|v| v.as_array()).cloned().unwrap_or_default(),
-                ),
-                Err(_) => (Value::from("1.0"), vec![]),
-            },
-            Err(_) => (Value::from("1.0"), vec![]),
-        };
-    let existing_by_id: std::collections::HashMap<String, &Value> = existing_photos
-        .iter()
-        .filter_map(|p| p.get("id").and_then(|v| v.as_str()).map(|id| (id.to_string(), p)))
-        .collect();
+    let existing = match tokio::fs::read_to_string(&manifest_file).await {
+        Ok(raw) => match serde_json::from_str::<Value>(&raw) {
+            Ok(p) => manifest_from_value(&p),
+            Err(_) => empty_manifest(),
+        },
+        Err(_) => empty_manifest(),
+    };
+    let version = existing.version.clone();
+    let existing_by_id: std::collections::HashMap<&str, &GalleryPhoto> =
+        existing.photos.iter().map(|p| (p.id.as_str(), p)).collect();
 
     let source_files: Vec<std::path::PathBuf> = {
         let root = source_root.clone();
@@ -424,12 +597,12 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     let mut processed = 0i64;
     let mut skipped = 0i64;
     let mut failed = 0i64;
-    let mut next_photos: Vec<Value> = Vec::new();
+    let mut next_photos: Vec<GalleryPhoto> = Vec::new();
 
     for source_path in &source_files {
         let file_name = source_path.file_name().unwrap_or_default().to_string_lossy().to_string();
         let id = source_path.file_stem().unwrap_or_default().to_string_lossy().to_string();
-        let existing = existing_by_id.get(&id).copied();
+        let existing = existing_by_id.get(id.as_str()).copied();
         let full_out = output_dir.join(format!("{id}.webp"));
         let thumb_out = output_dir.join(format!("{id}-thumb.webp"));
 
@@ -463,55 +636,44 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
 
         // nextPhoto = {...existing, id, title, description, urls, originalUrl, thumbnailUrl,
         //              width, height, aspectRatio, size, format, shootTime, exif, tags, tagsEn}
-        // spread 語意：existing key 保位、顯式 key 覆值、新 key 追加（preserve_order Map）。
-        let mut photo: Map<String, Value> = existing.and_then(|e| e.as_object()).cloned().unwrap_or_default();
+        // 原本是 Map<String, Value> 的 spread；改成 struct 後 existing 只剩「明確要留」
+        // 的欄位（thumbHash / gps / tags…），其餘一律由這次處理的結果覆值。
         let full_url = format!("/nas-images/{id}.webp");
         let thumb_url = format!("/nas-images/{id}-thumb.webp");
-        photo.insert("id".into(), Value::from(id.clone()));
-        photo.insert("title".into(), Value::from(file_name.clone()));
-        let desc = existing
-            .and_then(|e| e.get("description"))
-            .filter(|v| crate::util::js_truthy(Some(v)))
-            .cloned()
-            .unwrap_or_else(|| Value::from(""));
-        photo.insert("description".into(), desc);
-        photo.insert(
-            "urls".into(),
-            serde_json::json!({ "full": full_url, "regular": full_url, "small": thumb_url, "thumb": thumb_url }),
-        );
-        photo.insert("originalUrl".into(), Value::from(full_url.clone()));
-        photo.insert("thumbnailUrl".into(), Value::from(thumb_url.clone()));
-        photo.insert("width".into(), Value::from(p.width));
-        photo.insert("height".into(), Value::from(p.height));
         let ar = if p.height != 0 { p.width as f64 / p.height as f64 } else { 1.0 };
-        photo.insert("aspectRatio".into(), crate::util::js_num_value(ar));
-        photo.insert("size".into(), Value::from(p.size));
-        photo.insert("format".into(), Value::from(p.format.clone()));
-        let shoot = existing
-            .and_then(|e| e.get("shootTime"))
-            .filter(|v| crate::util::js_truthy(Some(v)))
-            .cloned()
-            .unwrap_or_else(|| crate::util::js_num_value(mtime_ms));
-        photo.insert("shootTime".into(), shoot);
-        // exif: exif || existing?.exif（undefined 則 key 被 JSON.stringify 丟掉）
-        match (&p.exif, existing.and_then(|e| e.get("exif"))) {
-            (Some(e), _) => {
-                photo.insert("exif".into(), Value::Object(e.clone()));
-            }
-            (None, Some(old)) => {
-                photo.insert("exif".into(), old.clone());
-            }
-            (None, None) => {
-                photo.remove("exif");
-            }
-        }
-        let tags =
-            existing.and_then(|e| e.get("tags")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
-        let tags_en =
-            existing.and_then(|e| e.get("tagsEn")).and_then(|v| v.as_array()).cloned().unwrap_or_default();
-        photo.insert("tags".into(), Value::Array(tags));
-        photo.insert("tagsEn".into(), Value::Array(tags_en));
-        next_photos.push(Value::Object(photo));
+        next_photos.push(GalleryPhoto {
+            id: id.clone(),
+            title: file_name.clone(),
+            // description 舊值非空才留（js_truthy 對字串＝非空字串）
+            description: existing
+                .map(|e| e.description.clone())
+                .filter(|d| !d.is_empty())
+                .unwrap_or_default(),
+            urls: PhotoUrls {
+                full: full_url.clone(),
+                regular: full_url.clone(),
+                small: thumb_url.clone(),
+                thumb: thumb_url.clone(),
+            },
+            original_url: full_url,
+            thumbnail_url: thumb_url,
+            width: p.width,
+            height: p.height,
+            aspect_ratio: ar,
+            size: p.size,
+            format: p.format.clone(),
+            thumb_hash: existing.and_then(|e| e.thumb_hash.clone()),
+            // exif: 這次抽到就用這次的，抽不到才沿用舊的（`exif || existing?.exif`）
+            exif: p.exif.clone().or_else(|| existing.and_then(|e| e.exif.clone())),
+            // shootTime 舊值非 0 才留（js_truthy 對數字＝非 0 且非 NaN）
+            shoot_time: existing
+                .and_then(|e| e.shoot_time)
+                .filter(|s| *s != 0.0 && !s.is_nan())
+                .or(Some(mtime_ms)),
+            tags: existing.map(|e| e.tags.clone()).unwrap_or_default(),
+            tags_en: existing.map(|e| e.tags_en.clone()).unwrap_or_default(),
+            gps: existing.and_then(|e| e.gps.clone()),
+        });
         processed += 1;
     }
 
@@ -519,36 +681,28 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     let tagger_prefix = std::env::var("PHOTO_TAGGER_GALLERY_PREFIX").unwrap_or_else(|_| "/gallery".into());
     let mut tagged = 0i64;
     for p in next_photos.iter_mut() {
-        let has = p.get("tagsEn").and_then(|v| v.as_array()).map(|a| !a.is_empty()).unwrap_or(false);
-        if has {
+        if !p.tags_en.is_empty() {
             continue;
         }
-        let id = p.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-        if let Some((zh, en)) = tag_photo(state, &format!("{tagger_prefix}/{id}.webp")).await
+        if let Some((zh, en)) = tag_photo(state, &format!("{tagger_prefix}/{}.webp", p.id)).await
             && (!zh.is_empty() || !en.is_empty())
         {
-            if let Some(obj) = p.as_object_mut() {
-                obj.insert("tags".into(), Value::Array(zh));
-                obj.insert("tagsEn".into(), Value::Array(en));
-            }
+            p.tags = zh;
+            p.tags_en = en;
             tagged += 1;
         }
     }
 
     // manifest 寫檔（JSON.stringify(manifest, null, 2)）
-    let generated_at = crate::util::iso_from_millis(
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis() as i64)
-            .unwrap_or(0),
-    );
+    let generated_at = crate::util::iso_from_millis(now_ms());
     let total_photos = next_photos.len();
-    let mut manifest = Map::new();
-    manifest.insert("version".into(), version);
-    manifest.insert("generatedAt".into(), Value::from(generated_at.clone()));
-    manifest.insert("totalPhotos".into(), Value::from(total_photos));
-    manifest.insert("photos".into(), Value::Array(next_photos));
-    tokio::fs::write(&manifest_file, serde_json::to_string_pretty(&Value::Object(manifest))?).await?;
+    let manifest = PhotosManifest {
+        version,
+        generated_at: generated_at.clone(),
+        total_photos: total_photos as u32,
+        photos: next_photos,
+    };
+    tokio::fs::write(&manifest_file, serde_json::to_string_pretty(&manifest)?).await?;
 
     Ok(vec![
         ("total".into(), Value::from(source_files.len())),
