@@ -13,6 +13,7 @@ use koimsurai_web_backend::handlers::categories::{CategoriesResponse, CategoryRo
 use koimsurai_web_backend::handlers::home::{
     DigestComment, DigestPost, DigestResponse, DigestThought, DigestTimeline,
 };
+use koimsurai_web_backend::handlers::link_preview::LinkPreviewResponse;
 use koimsurai_web_backend::handlers::newsletter::{SubscriberByToken, SubscriberRow, SubscribersResponse};
 use koimsurai_web_backend::handlers::polls::{PollOptionRow, PollResponse};
 use koimsurai_web_backend::handlers::posts::{
@@ -54,7 +55,8 @@ fn main() {
         .register::<AudioFeaturesResponse>()
         .register::<OAuthProviderInfo>()
         .register::<AuthProvidersResponse>()
-        // 公開的分類 / 標籤 / vitals：struct 本來就有，只是沒 register
+        // 公開的分類 / 標籤 / vitals / 連結預覽：struct 本來就有，只是沒 register
+        .register::<LinkPreviewResponse>()
         .register::<CategoryRow>()
         .register::<CategoriesResponse>()
         .register::<TagRow>()

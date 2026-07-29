@@ -363,6 +363,19 @@ export type KeywordFiltersResponse = {
 	filters: KeywordFilterRow[],
 };
 
+export type LinkPreviewResponse = {
+	/**  目標頁標題（og:title → twitter:title → <title>） */
+	title: string | null,
+	/**  摘要（og:description → twitter:description → meta description） */
+	description: string | null,
+	/**  預覽圖（og:image → twitter:image）；沒有就是 None → 前端走降級卡 */
+	image: string | null,
+	/**  站名（og:site_name），沒有則退回 host */
+	site_name: string | null,
+	/**  favicon（固定用 /favicon.ico 的絕對路徑，降級卡用） */
+	favicon: string | null,
+};
+
 export type MetricStat = {
 	metric: string,
 	count: number,

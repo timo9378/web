@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery, queryOptions } from '@tanstack/react-query';
 import { apiUrl } from '../api';
+import type { LinkPreviewResponse } from '@koimsurai/api-types';
 import './link-hover-preview.css';
 
 /**
@@ -17,13 +18,10 @@ import './link-hover-preview.css';
  * 兩者高度一致，避免載入完成時卡片尺寸跳動。
  */
 
-export interface LinkPreviewData {
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  site_name: string | null;
-  favicon: string | null;
-}
+// 改吃後端 specta 生成的型別（backend handlers::link_preview::LinkPreviewResponse）。
+// 那支 struct 本來就 derive 了 specta::Type，只是沒 register —— 手寫的這份剛好一致，
+// 但「剛好一致」不是保證：欄位增減時只有 drift gate 擋得住，人的記性擋不住。
+export type LinkPreviewData = LinkPreviewResponse;
 
 // enabled 由呼叫端控制 → 只有真的 hover 才發請求；同一連結全站共用快取。
 // 只有本檔的 useQuery 用得到，不 export：混在元件檔裡的非元件 export 會讓
