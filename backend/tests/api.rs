@@ -380,6 +380,58 @@ async fn link_preview_rejects_bad_urls_with_empty_card() {
     }
 }
 
+/// Trakt 同步每 6 小時把整份觀看歷史重插一次，靠 `INSERT OR IGNORE` 去重。
+/// 這個測試釘住「OR IGNORE 真的有東西可 ignore」——0001 的 inline UNIQUE 有兩個洞
+/// （見 migrations/0009 的說明），其中 NULL 日期那個在純 SQL 層就能重現。
+#[tokio::test]
+async fn watch_history_sync_is_idempotent() {
+    let (_app, pool) = test_app().await;
+
+    // 同一批資料插三次，模擬三輪同步
+    for _ in 0..3 {
+        for (title, date) in
+            [("沙丘", Some("2026-07-01")), ("異星入境", None::<&str>), ("沙丘", Some("2026-07-02"))]
+        {
+            sqlx::query(
+                "INSERT OR IGNORE INTO film_history (title, watched_date, source) VALUES (?, ?, 'trakt')",
+            )
+            .bind(title)
+            .bind(date)
+            .execute(&pool)
+            .await
+            .unwrap();
+        }
+        for (show, ep, date) in [
+            ("影集A", Some("S01E01"), Some("2026-07-01")),
+            ("影集A", Some("S01E02"), None::<&str>),
+            ("影集B", None::<&str>, None::<&str>),
+        ] {
+            sqlx::query(
+                "INSERT OR IGNORE INTO tv_history (series_name, episode_label, watched_date, source) \
+                 VALUES (?, ?, ?, 'trakt')",
+            )
+            .bind(show)
+            .bind(ep)
+            .bind(date)
+            .execute(&pool)
+            .await
+            .unwrap();
+        }
+    }
+
+    let films: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM film_history").fetch_one(&pool).await.unwrap();
+    let tv: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tv_history").fetch_one(&pool).await.unwrap();
+    assert_eq!(films, 3, "三輪同步後 film_history 應該只有 3 筆（含一筆 NULL 日期）");
+    assert_eq!(tv, 3, "三輪同步後 tv_history 應該只有 3 筆（含 NULL 集數／日期）");
+
+    // 同片名不同日期要視為兩筆（重看），不能被誤併
+    let dune: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM film_history WHERE title = '沙丘'")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(dune, 2, "同片名不同觀看日是兩筆，不該被去重掉");
+}
+
 /// 極簡 percent-encode（測試用；只處理 query 值需要的字元）
 fn urlencode(s: &str) -> String {
     let mut out = String::new();
