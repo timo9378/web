@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/auth';
-import type { WatchFavoriteRow } from '@koimsurai/api-types';
+import type { TmdbSearchResponse, TmdbSearchResult, WatchFavoriteRow } from '@koimsurai/api-types';
 import './FavoritesEditor.css';
 
 const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
@@ -15,12 +15,9 @@ const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/ap
 // vs string | null），型別上是兩個各自為政的猜測。
 type Favorite = WatchFavoriteRow;
 
-interface SearchResult {
-  tmdbId: number;
-  poster?: string;
-  title: string;
-  year?: number;
-}
+// 同樣改吃生成型別（backend handlers::watch::TmdbSearchResult）。手寫版把 tmdbId/title
+// 標成必有——後端那兩個欄位都是從 TMDb 回應撈出來的，撈不到就是 null。
+type SearchResult = TmdbSearchResult;
 
 interface StarPickerProps {
   value: number;
@@ -83,8 +80,8 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
       const r = await fetch(
         `${API}/watch/tmdb-search?q=${encodeURIComponent(debouncedQuery)}&kind=${kind === 'film' ? 'movie' : 'tv'}`,
         { headers: authHeaders() },
-      ).then((x) => x.json()) as { results?: SearchResult[] };
-      return r.results ?? [];
+      ).then((x) => x.json()) as TmdbSearchResponse;
+      return r.results;
     },
     enabled: !!debouncedQuery,
     staleTime: 60 * 1000,
@@ -198,8 +195,9 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
               {results.map((r) => (
                 <li key={r.tmdbId}>
                   <button className="fe-result" disabled={busy} onClick={() => { void addFavorite(r); }}>
+                    {/* alt 用 `?? ''`：沒標題時海報右邊那行標題也是空的，硬掛假替代文字更糟 */}
                     {r.poster
-                      ? <img src={r.poster} alt={r.title} loading="lazy" />
+                      ? <img src={r.poster} alt={r.title ?? ''} loading="lazy" />
                       : <span className="fe-result-blank">—</span>}
                     <span className="fe-result-meta">
                       <span className="fe-result-title">{r.title}</span>

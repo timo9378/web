@@ -741,6 +741,103 @@ export type TagsResponse = {
 	tags: TagRow[],
 };
 
+export type ThoughtDetailResponse = {
+	message: string,
+	thought: ThoughtOut,
+};
+
+/**  對外輸出的 thought：欄位順序 = Express `{ ...r, edited, ref }` 後的實際 key 順序。 */
+export type ThoughtOut = {
+	id: number,
+	content: string,
+	ref_type: string | null,
+	ref_url: string | null,
+	ref_json: string | null,
+	likes: number,
+	created_at: string,
+	updated_at: string | null,
+	edited: boolean,
+	dislikes: number,
+	comment_count: number,
+	/**  Express 的 `ref: safeParse(r.ref_json)`：解析成功→物件、失敗或 null→JSON null。 */
+	ref: ThoughtRef | null,
+};
+
+/**  `POST /api/thoughts/:id/react` 的回應。 */
+export type ThoughtReactResponse = {
+	message: string,
+	likes: number,
+	dislikes: number,
+};
+
+/**
+ *  `ref_json` 解析後的物件。這欄不是自由格式——本 repo 裡只有兩個產生者：
+ *    - `unfurl_url`（`ref_type="link"`）→ title / desc / image / site
+ *    - `enrich_media_ref`（`ref_type="media"`）→ source / url / title / overview /
+ *      rating / genres / year / poster，外加呼叫端 `ref.json` 帶進來的
+ *      kind / mediaType / tmdbId（那三個 enrich 只是 spread 過去，自己不產）
+ * 
+ *  線上 5 則碎念裡 2 則有 ref，兩則都是 link。media 這條路目前沒有任何 client
+ *  走得到（MCP 只送 content/refUrl/clearRef），欄位是照 enrich_media_ref 的
+ *  實作列的，不是猜的。
+ * 
+ *  未列到的 key 會在 `ref` 裡被丟掉，但同一個回應的 `ref_json` 是原封不動的
+ *  字串，所以資料不會不見。
+ */
+export type ThoughtRef = {
+	title: string | null,
+	desc: string | null,
+	image: string | null,
+	site: string | null,
+	kind: string | null,
+	url: string | null,
+	source: string | null,
+	overview: string | null,
+	genres: string | null,
+	poster: string | null,
+	mediaType: string | null,
+	rating: ThoughtRefScalar | null,
+	year: ThoughtRefScalar | null,
+	tmdbId: ThoughtRefScalar | null,
+};
+
+/**
+ *  `ref` 裡少數幾個「字串或數字都可能」的欄位。enrich 自己寫的是字串
+ *  （`rating` 走 `format!("{:.1}")`、`year` 取日期前 4 碼），但同一個 key 也可能
+ *  來自呼叫端 `ref.json` 的原值，那邊沒有任何東西保證它是字串。
+ * 
+ *  與 gallery 的 `ExifValue` 刻意各自一份：兩邊的 union 是不同原因造成的
+ *  （那邊是兩個寫入端格式不同，這邊是 enrich 覆值與呼叫端原值並存），
+ *  綁在一起只會讓其中一邊的註解變成謊話。
+ */
+export type ThoughtRefScalar = number | string;
+
+export type ThoughtsListResponse = {
+	message: string,
+	thoughts: ThoughtOut[],
+};
+
+/**  `GET /api/watch/tmdb-search` */
+export type TmdbSearchResponse = {
+	message: string,
+	results: TmdbSearchResult[],
+};
+
+/**
+ *  `GET /api/watch/tmdb-search` 的一列。TMDb 的搜尋回應在這裡重新塑形成前端真正要的
+ *  五個欄位（同 spotify 的做法），不是原樣轉發——所以型別就是我們自己的，不是 TMDb 的。
+ */
+export type TmdbSearchResult = {
+	tmdbId: number | null,
+	/**  回填請求的 kind（"movie" | "tv"）；TMDb 的 search 端點自己不回這欄 */
+	kind: string,
+	/**  movie 走 `title`、tv 走 `name`，兩個都沒有才 null */
+	title: string | null,
+	/**  release_date / first_air_date 的前 4 碼 */
+	year: number | null,
+	poster: string | null,
+};
+
 export type TopGenre = {
 	genre: string,
 	count: number,

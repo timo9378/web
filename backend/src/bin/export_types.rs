@@ -35,10 +35,15 @@ use koimsurai_web_backend::handlers::spotify::{
 };
 use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::tags::{TagRow, TagsResponse};
+use koimsurai_web_backend::handlers::thoughts::{
+    ThoughtDetailResponse, ThoughtOut, ThoughtReactResponse, ThoughtRef, ThoughtRefScalar,
+    ThoughtsListResponse,
+};
 use koimsurai_web_backend::handlers::vitals::MetricStat;
 use koimsurai_web_backend::handlers::watch::{
-    AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, NowWatching, TvResponse, TvRow, WatchFavoriteRow,
-    WatchFavoritesResponse, WatchNowResponse, WatchStatsResponse,
+    AnimeHistoryResponse, AnimeRow, FilmRow, FilmsResponse, NowWatching, TmdbSearchResponse,
+    TmdbSearchResult, TvResponse, TvRow, WatchFavoriteRow, WatchFavoritesResponse, WatchNowResponse,
+    WatchStatsResponse,
 };
 use specta_typescript::Typescript;
 
@@ -127,6 +132,16 @@ fn main() {
         // watch/favorites：DB 列 + TMDb 在地化，原本是 json! 手捏
         .register::<WatchFavoriteRow>()
         .register::<WatchFavoritesResponse>()
+        // watch/tmdb-search：TMDb 回應重新塑形（不是原樣轉發）
+        .register::<TmdbSearchResult>()
+        .register::<TmdbSearchResponse>()
+        // thoughts（碎念；ref 原本是自由格式的 serde_json::Value）
+        .register::<ThoughtRefScalar>()
+        .register::<ThoughtRef>()
+        .register::<ThoughtOut>()
+        .register::<ThoughtsListResponse>()
+        .register::<ThoughtDetailResponse>()
+        .register::<ThoughtReactResponse>()
         // home digest（首頁動態帶）
         .register::<DigestPost>()
         .register::<DigestThought>()

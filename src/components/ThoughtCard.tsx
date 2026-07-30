@@ -12,34 +12,12 @@ import Comments from './Comments';
 const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
 const AUTHOR = 'Koimsurai';
 
-interface ThoughtRef {
-  title?: string;
-  desc?: string;
-  site?: string;
-  image?: string;
-  url?: string;
-  kind?: string;
-  year?: string | number;
-  overview?: string;
-  rating?: string | number;
-  genres?: string;
-  source?: string;
-  poster?: string;
-}
+// 改吃後端生成的型別（backend handlers::thoughts::ThoughtOut）。手寫版把 likes /
+// dislikes / comment_count / edited 都標成可選，實際上後端每次都給；ref 則反過來
+// ——手寫版只列了前端有 render 的 key，少了 mediaType / tmdbId。
+import type { ThoughtOut } from '@koimsurai/api-types';
 
-export interface Thought {
-  id: number;
-  content: string;
-  created_at: string;
-  updated_at?: string;
-  edited?: boolean | number;
-  likes?: number;
-  dislikes?: number;
-  comment_count?: number;
-  ref_type?: string;
-  ref?: ThoughtRef;
-  ref_url?: string;
-}
+export type Thought = ThoughtOut;
 
 interface ThoughtCardProps {
   th: Thought;
@@ -68,8 +46,9 @@ const fullCh = (at: string): string => {
 };
 
 export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = false }: ThoughtCardProps) {
-  const [likes, setLikes] = useState(th.likes ?? 0);
-  const [dislikes, setDislikes] = useState(th.dislikes ?? 0);
+  // `?? 0` 拿掉了：後端這三個欄位是 i64 不是 Option，每次都有值
+  const [likes, setLikes] = useState(th.likes);
+  const [dislikes, setDislikes] = useState(th.dislikes);
   const key = 'tk_react_' + th.id;
   const [reacted, setReacted] = useState(() => {
     try { return localStorage.getItem(key) ?? ''; } catch { return ''; }
@@ -130,8 +109,10 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         <p className="tk-text">{th.content}</p>
       )}
 
+      {/* href 的 `?? undefined`：後端的 Option 是 null，React 對 null 與 undefined 都是
+          「不要這個屬性」，只是 href 的型別只收 undefined。行為與型別化之前一致。 */}
       {th.ref_type === 'link' && th.ref && (
-        <a className="tk-embed tk-embed--link tk-linkcard" href={th.ref_url} target="_blank" rel="noopener noreferrer">
+        <a className="tk-embed tk-embed--link tk-linkcard" href={th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
           <div className="tk-embed-info">
             <h3 className="tk-embed-title">{th.ref.title ?? th.ref_url}</h3>
             {th.ref.desc && <p className="tk-embed-desc">{th.ref.desc}</p>}
@@ -142,14 +123,15 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
       )}
 
       {th.ref_type === 'media' && th.ref && (
-        <a className="tk-embed tk-embed--media tk-media" href={th.ref.url ?? th.ref_url} target="_blank" rel="noopener noreferrer">
+        <a className="tk-embed tk-embed--media tk-media" href={th.ref.url ?? th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
           <div className="tk-embed-info">
             <span className="tk-embed-kind">{th.ref.kind} · {th.ref.year}</span>
             <h3 className="tk-embed-title">{th.ref.title}</h3>
             {th.ref.overview && <p className="tk-embed-desc">{th.ref.overview}</p>}
             <span className="tk-embed-meta">★ {th.ref.rating} · {th.ref.genres} · {th.ref.source}</span>
           </div>
-          {th.ref.poster && <img className="tk-media-poster" src={th.ref.poster} alt={th.ref.title} loading="lazy" />}
+          {/* 沒標題就給空 alt：海報只是旁邊那行標題的裝飾，硬掛一個假的替代文字更糟 */}
+          {th.ref.poster && <img className="tk-media-poster" src={th.ref.poster} alt={th.ref.title ?? ''} loading="lazy" />}
         </a>
       )}
 
@@ -164,10 +146,10 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
             <ThumbsDown size={16} /> <span>{dislikes}</span>
           </button>
           {detail ? (
-            <span className="tk-ic tk-ic--static"><MessageCircle size={16} /> <span>{th.comment_count ?? 0}</span></span>
+            <span className="tk-ic tk-ic--static"><MessageCircle size={16} /> <span>{th.comment_count}</span></span>
           ) : (
             <button className="tk-ic" onClick={() => setShowComments(true)} aria-label="留言">
-              <MessageCircle size={16} /> <span>{th.comment_count ?? 0}</span>
+              <MessageCircle size={16} /> <span>{th.comment_count}</span>
             </button>
           )}
         </div>

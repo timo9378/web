@@ -29,30 +29,98 @@ struct ThoughtRow {
     comment_count: i64,
 }
 
+/// `ref` 裡少數幾個「字串或數字都可能」的欄位。enrich 自己寫的是字串
+/// （`rating` 走 `format!("{:.1}")`、`year` 取日期前 4 碼），但同一個 key 也可能
+/// 來自呼叫端 `ref.json` 的原值，那邊沒有任何東西保證它是字串。
+///
+/// 與 gallery 的 `ExifValue` 刻意各自一份：兩邊的 union 是不同原因造成的
+/// （那邊是兩個寫入端格式不同，這邊是 enrich 覆值與呼叫端原值並存），
+/// 綁在一起只會讓其中一邊的註解變成謊話。
+#[derive(Debug, Clone, Deserialize, specta::Type, utoipa::ToSchema)]
+#[serde(untagged)]
+pub enum ThoughtRefScalar {
+    Num(#[specta(type = specta_typescript::Number)] f64),
+    Text(String),
+}
+
+impl Serialize for ThoughtRefScalar {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        match self {
+            // 走 ser_js_number 而非直接寫 f64：ref_json 裡的 tmdbId 是 123，
+            // 原樣讀進來就該原樣寫回去，不該變成 123.0
+            Self::Num(n) => crate::util::ser_js_number(n, s),
+            Self::Text(t) => s.serialize_str(t),
+        }
+    }
+}
+
+/// `ref_json` 解析後的物件。這欄不是自由格式——本 repo 裡只有兩個產生者：
+///   - `unfurl_url`（`ref_type="link"`）→ title / desc / image / site
+///   - `enrich_media_ref`（`ref_type="media"`）→ source / url / title / overview /
+///     rating / genres / year / poster，外加呼叫端 `ref.json` 帶進來的
+///     kind / mediaType / tmdbId（那三個 enrich 只是 spread 過去，自己不產）
+///
+/// 線上 5 則碎念裡 2 則有 ref，兩則都是 link。media 這條路目前沒有任何 client
+/// 走得到（MCP 只送 content/refUrl/clearRef），欄位是照 enrich_media_ref 的
+/// 實作列的，不是猜的。
+///
+/// 未列到的 key 會在 `ref` 裡被丟掉，但同一個回應的 `ref_json` 是原封不動的
+/// 字串，所以資料不會不見。
+#[derive(Debug, Clone, Deserialize, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct ThoughtRef {
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub image: Option<String>,
+    pub site: Option<String>,
+    // 以下是 media（TMDb 卡片）用的
+    pub kind: Option<String>,
+    pub url: Option<String>,
+    pub source: Option<String>,
+    pub overview: Option<String>,
+    pub genres: Option<String>,
+    pub poster: Option<String>,
+    #[serde(rename = "mediaType")]
+    pub media_type: Option<String>,
+    pub rating: Option<ThoughtRefScalar>,
+    pub year: Option<ThoughtRefScalar>,
+    #[serde(rename = "tmdbId")]
+    pub tmdb_id: Option<ThoughtRefScalar>,
+}
+
 /// 對外輸出的 thought：欄位順序 = Express `{ ...r, edited, ref }` 後的實際 key 順序。
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
 pub struct ThoughtOut {
+    #[specta(type = specta_typescript::Number)]
     id: i64,
     content: String,
     ref_type: Option<String>,
     ref_url: Option<String>,
     ref_json: Option<String>,
+    #[specta(type = specta_typescript::Number)]
     likes: i64,
     created_at: String,
     updated_at: Option<String>,
     edited: bool,
+    #[specta(type = specta_typescript::Number)]
     dislikes: i64,
+    #[specta(type = specta_typescript::Number)]
     comment_count: i64,
     /// Express 的 `ref: safeParse(r.ref_json)`：解析成功→物件、失敗或 null→JSON null。
     #[serde(rename = "ref")]
-    ref_val: Value,
+    ref_val: Option<ThoughtRef>,
 }
 
 impl From<ThoughtRow> for ThoughtOut {
     fn from(r: ThoughtRow) -> Self {
-        // safeParse 等價：解析 ref_json；None 或解析失敗 → Null（preserve_order 保留物件 key 順序）
-        let ref_val =
-            r.ref_json.as_deref().and_then(|s| serde_json::from_str::<Value>(s).ok()).unwrap_or(Value::Null);
+        // safeParse 等價：解析 ref_json；None 或形狀不符 → null。形狀不符會 warn ——
+        // 原字串仍在 ref_json 欄位裡，不會靜靜掉資料。
+        let ref_val = r.ref_json.as_deref().and_then(|s| match serde_json::from_str::<ThoughtRef>(s) {
+            Ok(v) => Some(v),
+            Err(e) => {
+                tracing::warn!("[thoughts] id={} 的 ref_json 形狀不符（ref 回 null）：{e}", r.id);
+                None
+            }
+        });
         ThoughtOut {
             id: r.id,
             content: r.content,
@@ -106,7 +174,7 @@ fn js_parse_int(s: &str, default: i64) -> i64 {
     if out.is_empty() || out == "+" || out == "-" { default } else { out.parse().unwrap_or(default) }
 }
 
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
 pub struct ThoughtsListResponse {
     message: &'static str,
     thoughts: Vec<ThoughtOut>,
@@ -139,7 +207,7 @@ pub async fn list_thoughts(
     }))
 }
 
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
 pub struct ThoughtDetailResponse {
     message: &'static str,
     thought: ThoughtOut,
@@ -196,11 +264,21 @@ fn react_ok(v: &Option<String>) -> bool {
     matches!(v.as_deref(), Some("like") | Some("dislike") | Some("") | None)
 }
 
+/// `POST /api/thoughts/:id/react` 的回應。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct ThoughtReactResponse {
+    pub message: &'static str,
+    #[specta(type = specta_typescript::Number)]
+    pub likes: i64,
+    #[specta(type = specta_typescript::Number)]
+    pub dislikes: i64,
+}
+
 /// `POST /api/thoughts/:id/react` —— 讚/倒讚切換（依 prev→next 差值調整，clamp 0）。
 /// 信任 client 的 prev（個人站可接受）。找不到 id 也回 success+0/0（對齊 Express，不 404）。
 #[utoipa::path(post, path = "/api/thoughts/{id}/react", tag = "thoughts",
     params(("id" = String, Path)),
-    responses((status = 200, description = "讚/噓（動態 JSON）")))]
+    responses((status = 200, body = ThoughtReactResponse)))]
 pub async fn thought_react(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -233,7 +311,7 @@ pub async fn thought_react(
         .ok()
         .flatten();
     let (likes, dislikes) = row.unwrap_or((0, 0));
-    Json(json!({ "message": "success", "likes": likes, "dislikes": dislikes })).into_response()
+    Json(ThoughtReactResponse { message: "success", likes, dislikes }).into_response()
 }
 
 // ════════════════ admin thoughts CRUD（requireAdmin）════════════════

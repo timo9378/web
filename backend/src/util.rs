@@ -35,6 +35,27 @@ pub fn js_num_value(f: f64) -> Value {
     if f.fract() == 0.0 && f.abs() < 9.0e15 { Value::from(f as i64) } else { Value::from(f) }
 }
 
+/// `#[serde(serialize_with = ...)]` 用的 JS number 語意序列化：整值輸出整數
+/// （`123` 而非 `123.0`）。給那些「值是從既有 JSON 讀進來、又要原樣寫回去」的欄位用
+/// ——manifest 檔案與 thoughts 的 ref_json 都是這種，型別化不該順手改掉數字寫法。
+///
+/// 非有限值直接讓序列化失敗：JSON 沒有 NaN/Inf，serde_json 會靜靜轉成 null，
+/// 那正是 specta 把裸 f64 標成 `number | null` 的原因。在這裡擋掉，型別才敢寫 `number`。
+pub fn ser_js_number<S: serde::Serializer>(v: &f64, s: S) -> Result<S::Ok, S::Error> {
+    use serde::Serialize;
+    if !v.is_finite() {
+        return Err(serde::ser::Error::custom(format!("數值不是有限值：{v}")));
+    }
+    js_num_value(*v).serialize(s)
+}
+
+pub fn ser_js_number_opt<S: serde::Serializer>(v: &Option<f64>, s: S) -> Result<S::Ok, S::Error> {
+    match v {
+        Some(n) => ser_js_number(n, s),
+        None => s.serialize_none(),
+    }
+}
+
 /// JS `parseInt(s,10)` 的 Option 版：無合法前導整數 → None（NaN → SQL 綁 NULL）。
 pub fn js_parse_int_opt(s: &str) -> Option<i64> {
     let t = s.trim_start();

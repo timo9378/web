@@ -432,6 +432,72 @@ async fn watch_history_sync_is_idempotent() {
     assert_eq!(dune, 2, "同片名不同觀看日是兩筆，不該被去重掉");
 }
 
+/// `ref` 從自由格式的 Value 改成 `ThoughtRef` 之後的回歸網：link 形狀取自線上那兩則
+/// 碎念，media 形狀照 `enrich_media_ref` 實際會寫出的 key。壞掉的 ref_json 要落回
+/// `ref: null` 但 `ref_json` 原字串仍在——不能靜靜掉資料。
+#[tokio::test]
+async fn thoughts_ref_keeps_link_and_media_shapes() {
+    let (app, pool) = test_app().await;
+    for (content, ref_type, ref_url, ref_json) in [
+        (
+            "帶連結的碎念",
+            "link",
+            "https://example.com/a",
+            r#"{"title":"100 METERS","desc":"某段簡介","image":"https://img/x.jpg","site":"The Movie Database"}"#,
+        ),
+        (
+            "帶 TMDb 卡片的碎念",
+            "media",
+            "https://www.themoviedb.org/movie/123",
+            r#"{"tmdbId":123,"mediaType":"movie","kind":"電影","source":"www.themoviedb.org",
+                "url":"https://www.themoviedb.org/movie/123","title":"沙丘","overview":"簡介",
+                "rating":"8.1","genres":"科幻, 冒險","year":"2021","poster":"https://img/p.jpg"}"#,
+        ),
+        ("ref_json 壞掉的碎念", "link", "https://example.com/b", r#"{"title":12345}"#),
+    ] {
+        sqlx::query("INSERT INTO thoughts (content, ref_type, ref_url, ref_json) VALUES (?, ?, ?, ?)")
+            .bind(content)
+            .bind(ref_type)
+            .bind(ref_url)
+            .bind(ref_json)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+
+    let (status, body) = get(&app, "/api/thoughts").await;
+    assert_eq!(status, StatusCode::OK);
+    let by_content = |c: &str| -> Value {
+        body["thoughts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["content"] == c)
+            .unwrap_or_else(|| panic!("找不到「{c}」"))
+            .clone()
+    };
+
+    let link = by_content("帶連結的碎念");
+    assert_eq!(link["ref"]["title"], "100 METERS");
+    assert_eq!(link["ref"]["site"], "The Movie Database");
+    assert_eq!(link["ref"]["image"], "https://img/x.jpg");
+    // link 沒有 media 那組欄位 → 補成 null，而不是整筆解析失敗
+    assert_eq!(link["ref"]["poster"], Value::Null);
+
+    let media = by_content("帶 TMDb 卡片的碎念");
+    assert_eq!(media["ref"]["kind"], "電影");
+    assert_eq!(media["ref"]["genres"], "科幻, 冒險");
+    assert_eq!(media["ref"]["poster"], "https://img/p.jpg");
+    // rating / year 是 enrich 寫的字串；tmdbId 是呼叫端帶進來的數字——同一個 union 兩邊都要活著
+    assert_eq!(media["ref"]["rating"], "8.1");
+    assert_eq!(media["ref"]["year"], "2021");
+    assert_eq!(media["ref"]["tmdbId"], 123);
+
+    let broken = by_content("ref_json 壞掉的碎念");
+    assert_eq!(broken["ref"], Value::Null, "形狀不符要落回 null");
+    assert_eq!(broken["ref_json"], r#"{"title":12345}"#, "原字串仍要原封不動回去");
+}
+
 /// fixture 的每個 key/value 都要在回應裡原封不動出現——型別化不能吃掉資料。
 /// 反過來允許回應多出 key：Rust 的 `Option` 序列化成 null，把缺的欄位補齊是預期行為。
 fn assert_no_data_loss(orig: &Value, got: &Value, path: &str) {

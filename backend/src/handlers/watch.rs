@@ -465,9 +465,33 @@ pub struct TmdbSearchQuery {
     kind: Option<String>,
 }
 
+/// `GET /api/watch/tmdb-search` 的一列。TMDb 的搜尋回應在這裡重新塑形成前端真正要的
+/// 五個欄位（同 spotify 的做法），不是原樣轉發——所以型別就是我們自己的，不是 TMDb 的。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct TmdbSearchResult {
+    #[serde(rename = "tmdbId")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub tmdb_id: Option<i64>,
+    /// 回填請求的 kind（"movie" | "tv"）；TMDb 的 search 端點自己不回這欄
+    pub kind: &'static str,
+    /// movie 走 `title`、tv 走 `name`，兩個都沒有才 null
+    pub title: Option<String>,
+    /// release_date / first_air_date 的前 4 碼
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub year: Option<i64>,
+    pub poster: Option<String>,
+}
+
+/// `GET /api/watch/tmdb-search`
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct TmdbSearchResponse {
+    pub message: &'static str,
+    pub results: Vec<TmdbSearchResult>,
+}
+
 /// `GET /api/watch/tmdb-search`（requireAdmin）。
 #[utoipa::path(get, path = "/api/watch/tmdb-search", tag = "watch", security(("bearer" = [])),
-    responses((status = 200, description = "TMDb 搜尋結果（動態 JSON）"), (status = 401, description = "未授權")))]
+    responses((status = 200, body = TmdbSearchResponse), (status = 401, description = "未授權")))]
 pub async fn tmdb_search(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -479,7 +503,7 @@ pub async fn tmdb_search(
     let q = qq.q.unwrap_or_default().trim().to_string();
     let kind = if qq.kind.as_deref() == Some("tv") { "tv" } else { "movie" };
     if q.is_empty() {
-        return Json(json!({ "message": "success", "results": [] })).into_response();
+        return Json(TmdbSearchResponse { message: "success", results: vec![] }).into_response();
     }
     let Some(token) = std::env::var("TMDB_API_TOKEN").ok().filter(|s| !s.is_empty()) else {
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "TMDB_API_TOKEN 未設定" })))
@@ -507,7 +531,7 @@ pub async fn tmdb_search(
     match r {
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": e }))).into_response(),
         Ok(j) => {
-            let results: Vec<Value> = j
+            let results: Vec<TmdbSearchResult> = j
                 .get("results")
                 .and_then(|r| r.as_array())
                 .map(|a| {
@@ -518,30 +542,38 @@ pub async fn tmdb_search(
                                 .get("title")
                                 .filter(|v| js_truthy(Some(v)))
                                 .or_else(|| it.get("name"))
-                                .cloned()
-                                .unwrap_or(Value::Null);
+                                .and_then(|v| v.as_str())
+                                .map(String::from);
                             let date = it
                                 .get("release_date")
                                 .and_then(|v| v.as_str())
                                 .filter(|s| !s.is_empty())
-                                .or_else(|| it.get("first_air_date").and_then(|v| v.as_str()).filter(|s| !s.is_empty()))
+                                .or_else(|| {
+                                    it.get("first_air_date")
+                                        .and_then(|v| v.as_str())
+                                        .filter(|s| !s.is_empty())
+                                })
                                 .unwrap_or("");
-                            let year = crate::util::js_parse_int_opt(&date.chars().take(4).collect::<String>())
-                                .filter(|&y| y != 0)
-                                .map(Value::from)
-                                .unwrap_or(Value::Null);
+                            let year =
+                                crate::util::js_parse_int_opt(&date.chars().take(4).collect::<String>())
+                                    .filter(|&y| y != 0);
                             let poster = it
                                 .get("poster_path")
                                 .and_then(|v| v.as_str())
                                 .filter(|s| !s.is_empty())
-                                .map(|p| Value::from(format!("https://image.tmdb.org/t/p/w185{p}")))
-                                .unwrap_or(Value::Null);
-                            json!({ "tmdbId": it.get("id").cloned().unwrap_or(Value::Null), "kind": kind, "title": title, "year": year, "poster": poster })
+                                .map(|p| format!("https://image.tmdb.org/t/p/w185{p}"));
+                            TmdbSearchResult {
+                                tmdb_id: it.get("id").and_then(|v| v.as_i64()),
+                                kind,
+                                title,
+                                year,
+                                poster,
+                            }
                         })
                         .collect()
                 })
                 .unwrap_or_default();
-            Json(json!({ "message": "success", "results": results })).into_response()
+            Json(TmdbSearchResponse { message: "success", results }).into_response()
         }
     }
 }

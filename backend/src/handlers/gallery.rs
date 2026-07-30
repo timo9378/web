@@ -31,24 +31,8 @@ fn now_ms() -> i64 {
 
 // ── manifest 型別：這份 manifest 我們自己寫、自己讀，所以型別放在寫的那一端 ──
 
-/// JS number 語意：整值輸出整數（`1682553600000` 而非 `1682553600000.0`）。manifest
-/// 是會被反覆讀寫的檔案，型別化不該順手改掉既有的數字寫法。
-///
-/// 非有限值直接讓寫檔失敗：JSON 沒有 NaN/Inf，serde_json 會靜靜轉成 null——那正是
-/// specta 把裸 f64 標成 `number | null` 的原因。在這裡擋掉，型別才敢寫 `number`。
-fn ser_js_number<S: Serializer>(v: &f64, s: S) -> Result<S::Ok, S::Error> {
-    if !v.is_finite() {
-        return Err(serde::ser::Error::custom(format!("manifest 數值不是有限值：{v}")));
-    }
-    crate::util::js_num_value(*v).serialize(s)
-}
-
-fn ser_js_number_opt<S: Serializer>(v: &Option<f64>, s: S) -> Result<S::Ok, S::Error> {
-    match v {
-        Some(n) => ser_js_number(n, s),
-        None => s.serialize_none(),
-    }
-}
+// manifest 是會被反覆讀寫的檔案，數字欄位一律走 util 的 ser_js_number（整值輸出整數）。
+use crate::util::{ser_js_number, ser_js_number_opt};
 
 /// 同一張照片的四個尺寸；sync 產出時 full/regular 同檔、small/thumb 同檔。
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
