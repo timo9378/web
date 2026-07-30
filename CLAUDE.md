@@ -52,9 +52,21 @@ pnpm build         # vite + nitro
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo llvm-cov nextest --locked --fail-under-regions 12
-cargo audit
 # specta：改過會進 API 的 struct 就要重跑 export_types 並提交，否則 drift gate 會擋
 ```
+
+⚠️ **`cargo audit` 要在 repo 根目錄跑，不是 `backend/`。** `Cargo.lock` 在 workspace root
+（根目錄的 `Cargo.toml` 是 `[workspace] members = ["backend"]`），在 `backend/` 下跑會得到
+`error: not found: Couldn't load Cargo.lock`。
+
+```bash
+cd .. && cargo audit    # 目前有 3 個既有的 allowed warnings（unmaintained 類），exit 0
+```
+
+**覆蓋率不等於測試有效。** `cargo mutants --file <單檔>` 約 4 分鐘，判準是「錯了會不會安靜
+地錯」——實例：`handlers/vitals.rs` 覆蓋率 98.67%，變異分數卻只有 43%，抓出「驗證鏈的 `&&`
+全部可換成 `||` 而測試照樣綠」與「p75 的 offset 算式可任意改動」兩個洞。設定與使用時機寫在
+`.cargo/mutants.toml`。**不要全 repo 跑**（三個半小時，且結果會被沒打算測的整合層稀釋）。
 
 ⚠️ **這個專案用 oxlint，不是 eslint。** 跑 `pnpm exec eslint` 會失敗（沒有 eslint config），
 而且曾經有人（AI）一整個 session 都在跑錯的 linter 卻以為自己在驗證。

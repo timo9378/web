@@ -163,6 +163,15 @@ pub async fn vitals_stats(
             )
             .bind(m)
             .bind(&since)
+            // p75 = 升冪第 (count * 75 / 100) 筆（0-based）。tests/api.rs 的
+            // vitals_stats_p75_picks_the_right_sample 用 20 筆已知分佈釘住這個算式——
+            // 算錯不會 crash，只會永遠回錯的百分位數。
+            //
+            // ⚠️ `.min(count - 1)` 是純防禦：對所有 count >= 1 都有 count*75/100 <= count-1，
+            // 所以這個夾制實際上永遠不會生效。留著是怕日後改算式時忘了邊界，但也因此
+            // cargo-mutants 對這一段的 `-` 換成 `+`/`/` 都是**等價變異、殺不掉**（同理上面
+            // `count > 0` 換成 `>=`：count=0 時 OFFSET 變 -1，SQLite 當 0，而該 metric 沒有
+            // 任何列 → 兩邊都回 None）。看到那三個 MISSED 不必再追。
             .bind((count * 75 / 100).min(count - 1))
             .fetch_optional(&state.pool)
             .await?

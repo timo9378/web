@@ -3,7 +3,7 @@
 //! 與 image-proxy 的 SSRF 防護。每個測試自建獨立 DB（互不干擾、可平行）。
 
 use std::str::FromStr;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use axum::Router;
 use axum::body::Body;
@@ -16,6 +16,13 @@ use tower::ServiceExt;
 use koimsurai_web_backend::{handlers, router::build_router, state, state::AppState};
 
 const TEST_SECRET: &str = "test-secret";
+
+/// GALLERY_MANIFEST_PATH 是 process 全域的，而兩個 gallery 測試各自要指到不同檔案。
+/// nextest（CI 的跑法）一個測試一個行程，本來就不會撞；但 `cargo test` 是同一個行程內
+/// 平行跑 → 互相蓋掉對方的值 → 隨機失敗。cargo-mutants 預設用 `cargo test`，baseline
+/// 一失敗就整個停在「cargo test failed in an unmutated tree」什麼都測不了。
+/// 用一把鎖把這兩個測試串起來，兩種跑法都成立。
+static GALLERY_ENV_LOCK: LazyLock<tokio::sync::Mutex<()>> = LazyLock::new(|| tokio::sync::Mutex::new(()));
 
 /// 建一個接上獨立 in-memory DB 的完整 app（與正式環境同一條 build_router 路徑）。
 async fn test_app() -> (Router, sqlx::SqlitePool) {
@@ -534,8 +541,9 @@ fn photo_by_id<'a>(body: &'a Value, id: &str) -> &'a Value {
 /// sync 寫的是數字，同一份檔案裡兩種混著——這正是最容易被一個過嚴的 struct 吃掉的地方。
 #[tokio::test]
 async fn gallery_photos_preserves_legacy_manifest_shape() {
+    // env var 是 process 全域的 → 跟另一個 gallery 測試互斥（見 GALLERY_ENV_LOCK）
+    let _env = GALLERY_ENV_LOCK.lock().await;
     let fixture = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/gallery_manifest.json");
-    // nextest 一個測試一個行程，set_var 影響不到別的測試
     unsafe { std::env::set_var("GALLERY_MANIFEST_PATH", fixture) };
 
     let (app, _pool) = test_app().await;
@@ -566,6 +574,8 @@ async fn gallery_photos_preserves_legacy_manifest_shape() {
 /// 沒有任何東西保證每一列都齊。
 #[tokio::test]
 async fn gallery_photos_skips_broken_photo_instead_of_failing() {
+    // 同上：env var 全域 → 與另一個 gallery 測試互斥
+    let _env = GALLERY_ENV_LOCK.lock().await;
     let path = std::env::temp_dir().join(format!("koimsurai-manifest-{}.json", std::process::id()));
     let good = json!({
         "id": "ok", "title": "ok.jpg",
@@ -685,6 +695,89 @@ async fn vitals_beacon_stores_cls_attribution() {
     assert_eq!(rows[2].1, None, "沒帶歸因就是 NULL");
     assert_eq!(rows[2].2, None);
     assert_eq!(rows[2].3, None);
+}
+
+/// 非法 beacon 一律不進資料表。
+///
+/// 補這個測試是 cargo-mutants 指出來的：原本 vitals.rs 覆蓋率 98.67%，但把 `report_vital`
+/// 驗證鏈裡的 `&&` 全部換成 `||`，測試照樣全綠——因為我只送過**合法**的 beacon，從來沒驗過
+/// 非法的被擋掉。那條白名單等於沒被測。端點對驗證失敗一律回 204（不給探測者回饋面），
+/// 所以只能查資料表。
+#[tokio::test]
+async fn vitals_beacon_rejects_invalid_payloads() {
+    let (app, pool) = test_app().await;
+
+    let too_long_path = format!("/{}", "a".repeat(250));
+    let cases: Vec<(&str, Value)> = vec![
+        ("未知 metric", json!({ "metric": "FOO", "value": 1.0, "rating": "good", "path": "/" })),
+        ("未知 rating", json!({ "metric": "CLS", "value": 1.0, "rating": "great", "path": "/" })),
+        ("負值", json!({ "metric": "CLS", "value": -0.1, "rating": "good", "path": "/" })),
+        ("超過上限", json!({ "metric": "LCP", "value": 120_001.0, "rating": "poor", "path": "/" })),
+        ("path 沒有開頭斜線", json!({ "metric": "CLS", "value": 1.0, "rating": "good", "path": "blog/1" })),
+        ("path 過長", json!({ "metric": "CLS", "value": 1.0, "rating": "good", "path": too_long_path })),
+    ];
+
+    for (label, body) in cases {
+        let (status, _) = post_json(&app, "/api/vitals", body).await;
+        assert_eq!(status, StatusCode::NO_CONTENT, "{label}：驗證失敗也回 204");
+        let n: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM web_vitals").fetch_one(&pool).await.unwrap();
+        assert_eq!(n, 0, "{label}：不該寫進資料表");
+    }
+
+    // 對照組：完全合法的那筆要進得去，證明上面不是因為端點整個壞掉才沒寫
+    let (status, _) = post_json(
+        &app,
+        "/api/vitals",
+        json!({ "metric": "CLS", "value": 0.05, "rating": "good", "path": "/blog/1" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let n: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM web_vitals").fetch_one(&pool).await.unwrap();
+    assert_eq!(n, 1, "合法 beacon 要寫得進去");
+}
+
+/// p75 要挑到正確的那一筆樣本。
+///
+/// 同樣是 cargo-mutants 指出來的：`(count * 75 / 100).min(count - 1)` 這個 offset 算式
+/// 可以把 `*` 換成 `+`、`/` 換成 `%` 或 `*`，測試都不會失敗——因為原本只塞了一筆資料，
+/// 任何算式得出的 offset 都是 0，結果一樣。而算錯不會 crash，只會永遠回錯的百分位數。
+///
+/// 這裡塞 20 筆 0.01…0.20：offset = 20*75/100 = 15 → 升冪第 16 筆 = 0.16。
+/// 上面那些變異會分別得到 0.01 / 0.01 / 0.20，都跟 0.16 不同。
+///
+/// 註：`.min(count - 1)` 的 `-` 換成 `+` 是**等價變異**、殺不掉——因為對所有 count >= 1
+/// 都有 count*75/100 <= count-1，這個夾制永遠不會生效（它是純防禦性的）。
+#[tokio::test]
+async fn vitals_stats_p75_picks_the_right_sample() {
+    let (app, _pool) = test_app().await;
+
+    // 故意打亂送出順序：p75 必須靠 SQL 的 ORDER BY，不能依賴插入順序
+    let mut values: Vec<i32> = (1..=20).collect();
+    values.rotate_left(7);
+    for i in values {
+        let v = f64::from(i) / 100.0;
+        let (status, _) = post_json(
+            &app,
+            "/api/vitals",
+            json!({ "metric": "CLS", "value": v, "rating": "good", "path": "/blog/1" }),
+        )
+        .await;
+        assert_eq!(status, StatusCode::NO_CONTENT);
+    }
+
+    let (status, body) = get(&app, "/api/vitals/stats").await;
+    assert_eq!(status, StatusCode::OK);
+    let cls =
+        body["metrics"].as_array().unwrap().iter().find(|m| m["metric"] == "CLS").expect("stats 要有 CLS");
+
+    assert_eq!(cls["count"], 20);
+    let p75 = cls["p75"].as_f64().expect("p75 應為數字");
+    assert!((p75 - 0.16).abs() < 1e-9, "p75 應為 0.16（升冪第 16 筆），實際 {p75}");
+
+    // 沒有樣本的 metric：count=0、p75=null，且不能 500
+    let inp = body["metrics"].as_array().unwrap().iter().find(|m| m["metric"] == "INP").unwrap();
+    assert_eq!(inp["count"], 0);
+    assert!(inp["p75"].is_null(), "沒有樣本時 p75 要是 null");
 }
 
 /// 極簡 percent-encode（測試用；只處理 query 值需要的字元）
