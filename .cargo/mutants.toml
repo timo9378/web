@@ -1,0 +1,24 @@
+# cargo-mutants 設定。
+#
+# ⚠️ 一定要用 nextest：預設的 `cargo test` 會把整個 test binary 的測試放在同一個 process
+# 平行跑，而 tests/api.rs 的兩個 gallery 測試都改同一個 process 全域的 GALLERY_MANIFEST_PATH
+# → 互相搶 → baseline 就失敗，cargo-mutants 直接停在
+# 「cargo test failed in an unmutated tree, so no mutants were tested」。
+# CI 的覆蓋率門檻本來就跑 nextest（每個測試獨立 process），所以這裡對齊它。
+test_tool = "nextest"
+
+# 怎麼用（不建議全跑）
+# ------------------
+# 全 repo 跑一次要三個半小時，而且在目前的覆蓋率下，結果幾乎等於「哪些檔案沒被測到」——
+# 那件事看 llvm-cov 就好，不必花三小時。單檔跑約 4 分鐘，才是划算的用法：
+#
+#   cargo mutants --file backend/src/net_guard.rs
+#
+# 判準是「錯了會不會安靜地錯」。會的話值得跑：
+#   net_guard.rs   image-proxy 的 SSRF 防護——守衛被削弱不會有任何症狀
+#   handlers/vitals.rs  p75 的 offset 算式——不會 crash，只會永遠回錯的百分位數
+#   handlers/posts.rs   語系過濾與計數——數字錯了只會變成「側欄寫 4 篇、點進去 0 篇」
+# 反過來，炸了就會知道的東西（大部分第三方整合的 passthrough）不必花這個時間。
+#
+# 也刻意不進 CI：跑太久，而且分數會被 watch/spotify/mailer/bahamut 這些
+# 本來就沒打算測的整合層（合計 550+ missed）稀釋到失去意義。

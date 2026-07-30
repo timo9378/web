@@ -72,3 +72,10 @@ packages/mcp-server/dist/
 
 # playwright 產物
 .playwright-mcp/
+
+# cargo-mutants 報告（17MB＋，光 debug.log 就 9MB；設定在 .cargo/mutants.toml，那個要入庫）
+mutants.out/
+mutants.out.old/
+
+# C/C++ 編譯產物（誤留）
+a.out
