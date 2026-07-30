@@ -12,16 +12,28 @@ import {
 } from '../activityData';
 import './Activity.css';
 
+// 走後端的資料源（steam / wakatime / github user+events）改吃生成型別
+// （backend handlers::thirdparty::*）。原本那批端點是「上游 JSON 原樣轉發」，
+// 型別只存在這個檔案裡的手寫 interface；現在後端會塑形，型別跟著它走。
+import type {
+  SteamGame,
+  SteamPlayer,
+  SteamProfileResponse,
+  WakatimeActualCodingTime,
+  WakatimeGrandTotal,
+  WakatimeStat,
+  GithubUserResponse,
+  GithubEvent,
+} from '@koimsurai/api-types';
+
+export type { SteamGame, SteamPlayer, WakatimeStat, GithubEvent };
+export type SteamProfile = SteamProfileResponse;
+export type GithubUser = GithubUserResponse;
+
 export interface ServerStatus { status: string; responseTime: number; lastCheck: Date }
 
-export interface SteamGame { appid: number; name: string; playtime_2weeks?: number; playtime_forever?: number }
-export interface SteamPlayer {
-  gameid?: string | number;
-  personastate?: number;
-  personaname?: string;
-  avatarfull?: string;
-  profileurl?: string;
-}
+// 以下三個是 **client 端把多支端點併起來的聚合形狀**，不是任何一支 API 的回應，
+// 所以留在前端定義；元素型別才是後端來的。
 export interface SteamData {
   recentGames?: SteamGame[];
   ownedGames?: SteamGame[];
@@ -30,42 +42,21 @@ export interface SteamData {
   configured?: boolean;
   error?: string;
 }
-interface SteamFeaturedBadge { xp?: string | number; icon?: string; name?: string }
-interface SteamCustomization {
-  animatedAvatar?: string;
-  avatarFrame?: string;
-  nameplateWebm?: string;
-  nameplateMp4?: string;
-  featuredBadge?: SteamFeaturedBadge;
-}
-export interface SteamProfile {
-  customization?: SteamCustomization;
-  profileUrl?: string;
-  level?: number;
-  xp?: number;
-  xpToNext?: number;
-  badgeCount?: number;
-  error?: string;
-}
 
-export interface WakatimeToday { grand_total?: { text?: string } }
-interface WakatimeStat { name: string; text: string; percent: number }
-export interface WakatimeWeek { languages?: WakatimeStat[]; projects?: WakatimeStat[] }
 export interface WakatimeData {
-  today?: WakatimeToday | null;
-  week?: WakatimeWeek | null;
-  actualCodingTime?: unknown;
+  today?: WakatimeGrandTotal | null;
+  week?: { languages: WakatimeStat[]; projects: WakatimeStat[] } | null;
+  actualCodingTime?: WakatimeActualCodingTime | null;
   configured?: boolean;
   error?: string;
 }
 
-export interface GithubUser { public_repos?: number; html_url?: string; avatar_url?: string; name?: string; login?: string }
+// ⚠️ 這兩個是**瀏覽器直接打第三方**拿到的，不經過我們的後端（repos 打 api.github.com、
+// contributions 打 jogruber），所以 Rust 當不了它們的型別來源——要收就得先加代理端點。
 export interface GithubRepo { id: number; html_url: string; name: string; description?: string; language?: string; stargazers_count: number }
-interface GithubCommit { sha: string; message: string }
-interface GithubEventPayload { commits?: GithubCommit[]; before?: string; head?: string; size?: number }
-export interface GithubEvent { id: string; type: string; repo: { name: string }; created_at: string; payload: GithubEventPayload }
 interface GithubContributionDay { date: string; count: number }
 export interface GithubContributions { total?: Record<string, number>; contributions?: GithubContributionDay[] }
+
 export interface GithubData {
   user?: GithubUser;
   recentCommits?: GithubEvent[];
@@ -138,7 +129,9 @@ const Activity = () => {
     events.forEach(e => {
       if (e.type === 'PushEvent') {
         const d = new Date(e.created_at).toDateString();
-        commitsByDate[d] = (commitsByDate[d] ?? 0) + (e.payload.commits?.length ?? 1);
+        // 原本是 `commits?.length ?? 1`；`??` 只擋 null/undefined，空陣列本來就算 0，
+        // 而 commits 現在恆為陣列（後端塑形時缺就給 []），那個 1 是取不到的分支。
+        commitsByDate[d] = (commitsByDate[d] ?? 0) + e.payload.commits.length;
       }
     });
     for (let week = 51; week >= 0; week--) {
@@ -180,8 +173,10 @@ const Activity = () => {
   const uptime = getUptime();
 
   // ── 從 JSX 中抽出來的衍生值（避免 JSX 內 IIFE）──
-  const steamCust: SteamCustomization = steamProfile?.customization ?? {};
-  const steamHasAnimAvatar = Boolean(steamCust.animatedAvatar && steamCust.animatedAvatar !== steamCust.avatarFrame);
+  // 原本是 `?? {}`：手寫型別每個欄位都可選才成立。改吃生成型別後欄位是 `string | null`，
+  // 用 optional chaining 而不是捏一個假的空物件出來。
+  const steamCust = steamProfile?.customization;
+  const steamHasAnimAvatar = Boolean(steamCust?.animatedAvatar && steamCust.animatedAvatar !== steamCust.avatarFrame);
   const steamIsInGame = Boolean(steamData?.playerInfo?.gameid);
   const steamStateText = steamIsInGame
     ? t('activity.steam.ingame')
@@ -258,7 +253,7 @@ const Activity = () => {
           </div>
           <span className="hero-divider" />
           <div className="hero-number-item">
-            <span className="hero-num">{wakatimeData?.today?.grand_total?.text ?? '0 hrs'}</span>
+            <span className="hero-num">{wakatimeData?.today?.text ?? '0 hrs'}</span>
             <span className="hero-label">{t('activity.labels.codedToday')}</span>
           </div>
         </motion.div>
@@ -266,7 +261,7 @@ const Activity = () => {
         {/* ─── Section 3a: Steam Profile — Steam hover-card 風格 ─── */}
         {steamData?.playerInfo && (
             <motion.a
-              href={steamProfile?.profileUrl ?? steamData.playerInfo.profileurl}
+              href={steamProfile?.profileUrl ?? steamData.playerInfo.profileurl ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
               className={`steam-profile-card ${steamIsInGame ? 'is-in-game' : ''} ${steamData.playerInfo.personastate === 1 ? 'is-online' : 'is-offline'}`}
@@ -275,11 +270,11 @@ const Activity = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              {steamCust.nameplateWebm && (
+              {steamCust?.nameplateWebm && (
                 <video
                   className="steam-profile-bg"
                   autoPlay muted loop playsInline
-                  poster={steamCust.nameplateMp4}
+                  poster={steamCust.nameplateMp4 ?? undefined}
                 >
                   <source src={steamCust.nameplateWebm} type="video/webm" />
                   {steamCust.nameplateMp4 && <source src={steamCust.nameplateMp4} type="video/mp4" />}
@@ -289,11 +284,11 @@ const Activity = () => {
               <div className="steam-profile-content">
                 <div className="steam-profile-avatar-wrap">
                   <img
-                    src={steamHasAnimAvatar ? steamCust.animatedAvatar : steamData.playerInfo.avatarfull}
+                    src={(steamHasAnimAvatar ? steamCust?.animatedAvatar : steamData.playerInfo.avatarfull) ?? undefined}
                     alt="Steam avatar"
                     className="steam-profile-avatar"
                   />
-                  {steamCust.avatarFrame && (
+                  {steamCust?.avatarFrame && (
                     <img className="steam-profile-avatar-frame" src={steamCust.avatarFrame} alt="" aria-hidden />
                   )}
                 </div>
@@ -318,8 +313,10 @@ const Activity = () => {
                       </>
                     ) : null}
                   </div>
-                  {steamProfile?.customization?.featuredBadge && (
-                    <div className="steam-profile-featured" title={String(steamProfile.customization.featuredBadge.xp ?? '')}>
+                  {/* customization 一定在（Rust 那邊不是 Option），只有 featuredBadge 會沒有；
+                      xp 也是必有的字串（miniprofile 上就是 "1,234 XP" 這種格式化過的值） */}
+                  {steamProfile?.customization.featuredBadge && (
+                    <div className="steam-profile-featured" title={steamProfile.customization.featuredBadge.xp}>
                       <img src={steamProfile.customization.featuredBadge.icon} alt="" />
                       <span>{steamProfile.customization.featuredBadge.name}</span>
                     </div>
@@ -365,7 +362,7 @@ const Activity = () => {
                     <div className="steam-recent-cover">
                       <img
                         src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`}
-                        alt={g.name}
+                        alt={g.name ?? ''}
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
@@ -410,14 +407,14 @@ const Activity = () => {
             <div className="code-pulse-left">
               <span className="section-label">CODE PULSE</span>
               <div className="code-pulse-today">
-                {wakatimeData.today?.grand_total?.text ?? '0 hrs 0 mins'}
+                {wakatimeData.today?.text ?? '0 hrs 0 mins'}
               </div>
               <span className="code-pulse-sub">{t('activity.wakatime.todayCoding')}</span>
             </div>
             <div className="code-pulse-right">
-              {(wakatimeData.week?.languages?.length ?? 0) > 0 ? (
+              {(wakatimeData.week?.languages.length ?? 0) > 0 ? (
                 <div className="lang-bars">
-                  {wakatimeData.week?.languages?.slice(0, 5).map((lang, i) => (
+                  {wakatimeData.week?.languages.slice(0, 5).map((lang, i) => (
                     <div key={lang.name} className="lang-bar-row">
                       <div className="lang-bar-meta">
                         <span className="lang-bar-name">{lang.name}</span>
@@ -454,8 +451,8 @@ const Activity = () => {
           >
             <div className="heatmap-section-header">
               {githubData?.user && (
-                <a href={githubData.user.html_url} target="_blank" rel="noopener noreferrer" className="heatmap-profile">
-                  <img src={githubData.user.avatar_url} alt="GitHub" className="heatmap-avatar" />
+                <a href={githubData.user.html_url ?? undefined} target="_blank" rel="noopener noreferrer" className="heatmap-profile">
+                  <img src={githubData.user.avatar_url ?? undefined} alt="GitHub" className="heatmap-avatar" />
                   <span>{githubData.user.name ?? githubData.user.login}</span>
                 </a>
               )}
@@ -583,9 +580,9 @@ const Activity = () => {
                     <span className="commit-when">{formatDate(event.created_at)}</span>
                   </div>
                   <div className="commit-messages">
-                    {(event.payload.commits ?? []).length > 0 ? (
+                    {event.payload.commits.length > 0 ? (
                       <>
-                        {event.payload.commits?.slice(0, 3).map((commit) => (
+                        {event.payload.commits.slice(0, 3).map((commit) => (
                           <a
                             key={commit.sha}
                             className="commit-msg-row"
@@ -597,8 +594,8 @@ const Activity = () => {
                             <span className="commit-msg">{commit.message.split('\n')[0]}</span>
                           </a>
                         ))}
-                        {(event.payload.commits?.length ?? 0) > 3 && (
-                          <span className="commit-more">+{(event.payload.commits?.length ?? 0) - 3} more</span>
+                        {event.payload.commits.length > 3 && (
+                          <span className="commit-more">+{event.payload.commits.length - 3} more</span>
                         )}
                       </>
                     ) : (
@@ -620,7 +617,7 @@ const Activity = () => {
         )}
 
         {/* ─── Section 7: Projects time distribution ─── */}
-        {(wakatimeData?.week?.projects?.length ?? 0) > 0 && (
+        {(wakatimeData?.week?.projects.length ?? 0) > 0 && (
           <motion.div
             className="projects-section"
             initial={{ opacity: 0, y: 30 }}
@@ -630,7 +627,7 @@ const Activity = () => {
           >
             <span className="section-label">WEEKLY PROJECTS</span>
             <div className="projects-bars">
-              {wakatimeData?.week?.projects?.slice(0, 6).map((project, i) => (
+              {wakatimeData?.week?.projects.slice(0, 6).map((project, i) => (
                 <div key={project.name} className="project-row">
                   <div className="project-row-meta">
                     <span className="project-row-name">{project.name}</span>
@@ -676,7 +673,7 @@ const Activity = () => {
                     >
                       <img
                         src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
-                        alt={game.name}
+                        alt={game.name ?? ''}
                         loading="lazy"
                         onError={(e) => {
                           // header.jpg 沒上 → 試 capsule；capsule 也失敗 → 藏 img（露出 placeholder），

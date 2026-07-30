@@ -398,6 +398,67 @@ export type GalleryPhoto = {
 	gps: PhotoGps | null,
 };
 
+/**
+ *  PushEvent 的一個 commit。sha 缺的 commit 直接不收——沒有 sha 就連不出 commit 連結，
+ *  收進來只是把「可能是 null」傳染給前端。
+ */
+export type GithubCommit = {
+	sha: string,
+	message: string,
+	author: GithubCommitAuthor | null,
+};
+
+export type GithubCommitAuthor = {
+	name: string | null,
+	email: string | null,
+};
+
+export type GithubEvent = {
+	id: string,
+	type: string,
+	repo: GithubEventRepo,
+	created_at: string,
+	payload: GithubEventPayload,
+};
+
+/**
+ *  只保留 PushEvent 用得到的欄位。其他事件型別的 payload 會是空 commits + null
+ *  ——前端只 render PushEvent，這裡不為沒人看的事件型別各建一份形狀。
+ */
+export type GithubEventPayload = {
+	commits: GithubCommit[],
+	before: string | null,
+	head: string | null,
+	size: number | null,
+};
+
+export type GithubEventRepo = {
+	/**  `owner/repo` */
+	name: string,
+};
+
+/**
+ *  `GET /api/github/events/:username`
+ * 
+ *  原本直接回一個 JSON 陣列（GitHub 錯誤時回 GitHub 的錯誤物件），而前端的型別寫成
+ *  `GithubEvent[] & { error?: string }` —— 陣列身上不會有 `.error`，那個交集型別是假的。
+ *  改成包一層讓 error 成為真的欄位。
+ */
+export type GithubEventsResponse = {
+	events: GithubEvent[],
+	error: string | null,
+};
+
+/**  `GET /api/github/user/:username` */
+export type GithubUserResponse = {
+	login: string | null,
+	name: string | null,
+	avatar_url: string | null,
+	html_url: string | null,
+	public_repos: number | null,
+	error: string | null,
+};
+
 /**  `GET /api/admin/keyword-filters`（requireAdmin）。`{ filters: rows }`（SELECT *；目前空表）。 */
 export type KeywordFilterRow = {
 	id: number,
@@ -690,6 +751,84 @@ export type StatsResponse = {
 	days: number,
 };
 
+/**  miniprofile 客製（動態頭像 / 頭像框 / 名牌動畫）。抓不到的就是 None。 */
+export type SteamCustomization = {
+	animatedAvatar: string | null,
+	avatarFrame: string | null,
+	nameplateWebm: string | null,
+	nameplateMp4: string | null,
+	featuredBadge: SteamFeaturedBadge | null,
+};
+
+/**  miniprofile 頁面刮下來的展示徽章（三個都是 regex 捕獲組，必為字串）。 */
+export type SteamFeaturedBadge = {
+	icon: string,
+	name: string,
+	/**  Steam 頁面上是 "1,234 XP" 這種已格式化的字串，不是數字 */
+	xp: string,
+};
+
+export type SteamGame = {
+	appid: number | null,
+	name: string | null,
+	playtime_2weeks: number | null,
+	playtime_forever: number | null,
+};
+
+/**
+ *  `GET /api/steam/recent-games` 與 `GET /api/steam/owned-games`
+ *  （`gameCount` 只有 owned-games 會有；那是我們自己的欄位名，故 camelCase）。
+ */
+export type SteamGamesResponse = {
+	games: SteamGame[],
+	gameCount: number | null,
+	error: string | null,
+};
+
+/**  GetPlayerSummaries 的 `players[0]` 裡我們用得到的欄位（欄位名沿用 Steam 的）。 */
+export type SteamPlayer = {
+	personaname: string | null,
+	avatarfull: string | null,
+	profileurl: string | null,
+	/**  Steam 的狀態 enum（1 = 上線） */
+	personastate: number | null,
+	/**  正在玩的 appid。Steam 這欄回**字串**不是數字（有值就代表在遊戲中） */
+	gameid: string | null,
+};
+
+/**
+ *  `GET /api/steam/player`
+ * 
+ *  原本原樣回 Steam 的 `{response:{players:[…]}}`，前端自己挖 `response.players[0]`。
+ *  這裡把那層挖掉——一個 steamid 就只會有一個 player。
+ */
+export type SteamPlayerResponse = {
+	player: SteamPlayer | null,
+	error: string | null,
+};
+
+/**  `/api/steam/profile` 的資料本體（＝快取內容）。 */
+export type SteamProfile = {
+	player: SteamPlayer,
+	level: number,
+	xp: number,
+	xpToNext: number,
+	badgeCount: number,
+	customization: SteamCustomization,
+	profileUrl: string,
+};
+
+/**
+ *  `GET /api/steam/profile`
+ * 
+ *  `_cachedAt` 是伺服器記帳（SWR 的抓取時間），不是 profile 的一部分——所以它在
+ *  回應型別上，而快取只存 profile 本體（同 watch/now 把 expiresAt 移出 wire type）。
+ */
+export type SteamProfileResponse = {
+	/**  epoch ms */
+	_cachedAt: number,
+} & SteamProfile;
+
 /**  `GET /api/newsletter/by-token/:token` 的回應（顯式 3 欄）。 */
 export type SubscriberByToken = {
 	email: string,
@@ -867,6 +1006,57 @@ export type TvRow = {
 	poster_url: string | null,
 	genres: string | null,
 	source: string | null,
+};
+
+/**  durations 端點算出來的「實際編碼區間」——第一筆的開始到最後一筆的結束。 */
+export type WakatimeActualCodingTime = {
+	start: string | null,
+	end: string | null,
+	hasData: boolean,
+};
+
+/**  WakaTime 的 `grand_total`（前端只用 text，total_seconds 一起帶著方便日後算）。 */
+export type WakatimeGrandTotal = {
+	text: string | null,
+	total_seconds: number | null,
+};
+
+/**  stats 端點的一列（語言 / 專案共用同一個形狀）。 */
+export type WakatimeStat = {
+	name: string,
+	text: string,
+	percent: number,
+};
+
+/**
+ *  `GET /api/wakatime/week`、`GET /api/wakatime/projects`
+ * 
+ *  原本回 WakaTime 的 `{data:{languages, projects, editors, …}}` 原樣，前端讀 `.data`。
+ *  這裡把 data 攤掉、只留前端會 render 的兩組。
+ */
+export type WakatimeStatsResponse = {
+	languages: WakatimeStat[],
+	projects: WakatimeStat[],
+	error: string | null,
+	details: string | null,
+};
+
+/**
+ *  `GET /api/wakatime/today`
+ * 
+ *  原本回 WakaTime 的 `{data:[summary], start, end}` 加上 actualCodingTime，
+ *  summary 是一整包（categories / editors / machines / …）而前端只讀
+ *  `data[0].grand_total.text`。這裡把那個只有一個元素的陣列攤掉。
+ */
+export type WakatimeTodayResponse = {
+	grand_total: WakatimeGrandTotal | null,
+	/**  WakaTime 回的查詢區間（非「實際編碼」區間） */
+	start: string | null,
+	end: string | null,
+	actualCodingTime: WakatimeActualCodingTime,
+	error: string | null,
+	/**  上游的錯誤內容（原本叫 details，是 parse 過的 body；這裡轉字串好進型別） */
+	details: string | null,
 };
 
 /**

@@ -50,7 +50,10 @@ pub struct SpotifyState {
 /// steam/profile 的 SWR 快取。
 #[derive(Clone)]
 pub struct SteamProfileCache {
-    pub data: serde_json::Value,
+    /// 快取的就是端點回應本體，用同一個型別就不可能快取到形狀不符的內容
+    /// （同 watch/now、spotify top-* 的做法）。`_cachedAt` 不在裡面——那是
+    /// 下面 fetched_at 的職責，不是 profile 的一部分。
+    pub data: crate::handlers::thirdparty::SteamProfile,
     pub fetched_at: i64,
     pub last_tried_at: i64,
 }

@@ -1,15 +1,19 @@
 import { queryOptions } from '@tanstack/react-query';
+import type {
+  GithubEventsResponse,
+  GithubUserResponse,
+  SteamGamesResponse,
+  SteamPlayerResponse,
+  SteamProfileResponse,
+  WakatimeStatsResponse,
+  WakatimeTodayResponse,
+} from '@koimsurai/api-types';
 import { apiUrl } from './api';
 import type {
   SteamData,
   SteamProfile,
-  SteamGame,
-  SteamPlayer,
   WakatimeData,
-  WakatimeToday,
-  WakatimeWeek,
   GithubData,
-  GithubUser,
   GithubEvent,
   GithubRepo,
   GithubContributions,
@@ -29,23 +33,24 @@ export const steamQueryOptions = queryOptions({
   queryFn: async (): Promise<{ steamData: SteamData; steamProfile: SteamProfile | null }> => {
     try {
       const [recentRes, playerRes, ownedRes, profileRes] = await Promise.all([
-        fetch(apiUrl('/api/steam/recent-games')).then((r) => r.json() as Promise<{ error?: string; response?: { games?: SteamGame[] } }>),
-        fetch(apiUrl('/api/steam/player')).then((r) => r.json() as Promise<{ error?: string; response?: { players?: SteamPlayer[] } }>),
-        fetch(apiUrl('/api/steam/owned-games')).then((r) => r.json() as Promise<{ response?: { games?: SteamGame[]; game_count?: number } }>),
-        fetch(apiUrl('/api/steam/profile')).then((r) => (r.ok ? (r.json() as Promise<SteamProfile>) : null)).catch(() => null),
+        fetch(apiUrl('/api/steam/recent-games')).then((r) => r.json() as Promise<SteamGamesResponse>),
+        fetch(apiUrl('/api/steam/player')).then((r) => r.json() as Promise<SteamPlayerResponse>),
+        fetch(apiUrl('/api/steam/owned-games')).then((r) => r.json() as Promise<SteamGamesResponse>),
+        fetch(apiUrl('/api/steam/profile')).then((r) => (r.ok ? (r.json() as Promise<SteamProfileResponse>) : null)).catch(() => null),
       ]);
-      if (recentRes.error || playerRes.error) {
-        return { steamData: { error: recentRes.error ?? playerRes.error, configured: false }, steamProfile: null };
+      if (recentRes.error ?? playerRes.error) {
+        return { steamData: { error: recentRes.error ?? playerRes.error ?? undefined, configured: false }, steamProfile: null };
       }
       return {
         steamData: {
-          recentGames: recentRes.response?.games ?? [],
-          ownedGames: ownedRes.response?.games ?? [],
-          gameCount: ownedRes.response?.game_count ?? 0,
-          playerInfo: playerRes.response?.players?.[0] ?? null,
+          recentGames: recentRes.games,
+          ownedGames: ownedRes.games,
+          gameCount: ownedRes.gameCount ?? 0,
+          playerInfo: playerRes.player,
           configured: true,
         },
-        steamProfile: profileRes && !profileRes.error ? profileRes : null,
+        // profile 端點抓不到時回 503（上面已轉成 null），成功就一定是完整的 profile
+        steamProfile: profileRes,
       };
     } catch {
       return { steamData: { error: 'backend', configured: false }, steamProfile: null };
@@ -60,14 +65,16 @@ export const wakatimeQueryOptions = queryOptions({
   queryFn: async (): Promise<WakatimeData> => {
     try {
       const [todayRes, weekRes] = await Promise.all([
-        fetch(apiUrl('/api/wakatime/today')).then((r) => r.json() as Promise<{ error?: string; data?: WakatimeToday[]; actualCodingTime?: unknown }>),
-        fetch(apiUrl('/api/wakatime/week')).then((r) => r.json() as Promise<{ error?: string; data?: WakatimeWeek }>),
+        fetch(apiUrl('/api/wakatime/today')).then((r) => r.json() as Promise<WakatimeTodayResponse>),
+        fetch(apiUrl('/api/wakatime/week')).then((r) => r.json() as Promise<WakatimeStatsResponse>),
       ]);
-      if (todayRes.error || weekRes.error) return { error: todayRes.error ?? weekRes.error, configured: false };
+      if (todayRes.error ?? weekRes.error) {
+        return { error: todayRes.error ?? weekRes.error ?? undefined, configured: false };
+      }
       return {
-        today: todayRes.data?.[0] ?? null,
-        week: weekRes.data ?? null,
-        actualCodingTime: todayRes.actualCodingTime ?? null,
+        today: todayRes.grand_total,
+        week: { languages: weekRes.languages, projects: weekRes.projects },
+        actualCodingTime: todayRes.actualCodingTime,
         configured: true,
       };
     } catch {
@@ -83,11 +90,11 @@ export const githubQueryOptions = queryOptions({
   queryFn: async (): Promise<GithubData> => {
     try {
       const [userData, eventsData] = await Promise.all([
-        fetch(apiUrl(`/api/github/user/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubUser & { error?: string }>),
-        fetch(apiUrl(`/api/github/events/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubEvent[] & { error?: string }>),
+        fetch(apiUrl(`/api/github/user/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubUserResponse>),
+        fetch(apiUrl(`/api/github/events/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubEventsResponse>),
       ]);
-      if (userData.error || eventsData.error) return { error: userData.error ?? eventsData.error };
-      const pushEvents = eventsData.filter((e: GithubEvent) => e.type === 'PushEvent').slice(0, 10);
+      if (userData.error ?? eventsData.error) return { error: userData.error ?? eventsData.error ?? undefined };
+      const pushEvents = eventsData.events.filter((e: GithubEvent) => e.type === 'PushEvent').slice(0, 10);
       const reposData = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=5`)
         .then((r) => r.json() as Promise<GithubRepo[]>)
         .catch(() => [] as GithubRepo[]);

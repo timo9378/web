@@ -8,11 +8,20 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
-use serde_json::{Map, Value, json};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 use crate::state::AppState;
-use crate::util::{encode_uri_component, js_truthy};
+use crate::util::{encode_uri_component, js_truthy, ser_js_number};
+
+// ── 命名原則 ──────────────────────────────────────────────────────────────
+// 這批端點把上游回應重新塑形成前端真正用得到的欄位（同 spotify 的做法）。
+// 沿用上游欄位名（`playtime_forever`、`avatarfull`、`grand_total`…）——它們是
+// Steam / WakaTime 的識別字，改名只會讓人對不上文件；我們自己發明的欄位
+// （`gameCount`、`actualCodingTime`）用 camelCase，同站上其他端點。
+//
+// error 欄位是回應的一部分而非另一個型別：這批端點刻意**不看上游狀態碼**
+// （照抄 Express），錯誤是放進同一個 JSON 讓前端讀 `.error` 的。
 
 // ── 小工具 ────────────────────────────────────────────────────────────────
 
@@ -24,27 +33,30 @@ async fn passthrough_json(
     parse_err: &str,
     fetch_err: &str,
 ) -> Response {
+    match fetch_json_lenient(http, url, ua, parse_err, fetch_err).await {
+        Ok(v) => Json(v).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": e }))).into_response(),
+    }
+}
+
+/// 抓 URL、parse JSON，**不看上游狀態碼**（照抄 Express）。網路錯誤／parse 失敗
+/// 回固定訊息字串，讓呼叫端塞進自己回應的 `error` 欄位。
+async fn fetch_json_lenient(
+    http: &reqwest::Client,
+    url: &str,
+    ua: Option<&str>,
+    parse_err: &str,
+    fetch_err: &str,
+) -> Result<Value, String> {
     let mut req = http.get(url);
     if let Some(u) = ua {
         req = req.header("User-Agent", u);
     }
-    match req.send().await {
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": fetch_err }))).into_response(),
-        Ok(resp) => match resp.text().await {
-            Err(_) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": fetch_err }))).into_response()
-            }
-            Ok(body) => match serde_json::from_str::<Value>(&body) {
-                Ok(mut v) => {
-                    crate::util::js_normalize_numbers(&mut v);
-                    Json(v).into_response()
-                }
-                Err(_) => {
-                    (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": parse_err }))).into_response()
-                }
-            },
-        },
-    }
+    let resp = req.send().await.map_err(|_| fetch_err.to_string())?;
+    let body = resp.text().await.map_err(|_| fetch_err.to_string())?;
+    let mut v: Value = serde_json::from_str(&body).map_err(|_| parse_err.to_string())?;
+    crate::util::js_normalize_numbers(&mut v);
+    Ok(v)
 }
 
 /// JS `new Date(ms).toISOString()`（YYYY-MM-DDTHH:MM:SS.mmmZ）。
@@ -99,19 +111,105 @@ async fn gh_fetch(http: &reqwest::Client, path: &str, token: Option<&str>) -> Op
     Some(v)
 }
 
-/// `GET /api/github/user/:username` —— 無 token 純代理（原樣回 200，含 GitHub 錯誤物件）。
+const GH_PARSE_ERR: &str = "Failed to parse GitHub API response";
+const GH_FETCH_ERR: &str = "Failed to fetch GitHub data";
+
+/// `GET /api/github/user/:username`
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubUserResponse {
+    pub login: Option<String>,
+    pub name: Option<String>,
+    pub avatar_url: Option<String>,
+    pub html_url: Option<String>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub public_repos: Option<i64>,
+    pub error: Option<String>,
+}
+
+/// `GET /api/github/user/:username` —— 原本是原樣代理 GitHub 回應，改成只回上面五欄。
+///
+/// 順手修掉一個 bug：GitHub 的錯誤物件是 `{message, documentation_url}`，沒有 `error`，
+/// 而前端一直在檢查 `.error`——所以 404 / rate limit 以前是「一個所有欄位都 undefined
+/// 的使用者物件」悄悄穿過去。現在把 GitHub 的 message 收進 error 欄位。
 #[utoipa::path(get, path = "/api/github/user/{username}", tag = "integrations",
     params(("username" = String, Path)),
-    responses((status = 200, description = "GitHub 使用者資料（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = GithubUserResponse)))]
 pub async fn github_user(State(state): State<AppState>, Path(username): Path<String>) -> Response {
-    passthrough_json(
-        &state.http,
-        &format!("https://api.github.com/users/{username}"),
-        Some(GH_UA),
-        "Failed to parse GitHub API response",
-        "Failed to fetch GitHub data",
-    )
-    .await
+    let url = format!("https://api.github.com/users/{username}");
+    let v = match fetch_json_lenient(&state.http, &url, Some(GH_UA), GH_PARSE_ERR, GH_FETCH_ERR).await {
+        Ok(v) => v,
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(GithubUserResponse { error: Some(e), ..Default::default() }),
+            )
+                .into_response();
+        }
+    };
+    let s = |k: &str| v.get(k).and_then(|x| x.as_str()).map(String::from);
+    // 上游狀態碼一律不看（維持既有契約），錯誤走 error 欄位
+    Json(GithubUserResponse {
+        login: s("login"),
+        name: s("name"),
+        avatar_url: s("avatar_url"),
+        html_url: s("html_url"),
+        public_repos: v.get("public_repos").and_then(|x| x.as_i64()),
+        error: s("message"),
+    })
+    .into_response()
+}
+
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubCommitAuthor {
+    pub name: Option<String>,
+    pub email: Option<String>,
+}
+
+/// PushEvent 的一個 commit。sha 缺的 commit 直接不收——沒有 sha 就連不出 commit 連結，
+/// 收進來只是把「可能是 null」傳染給前端。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubCommit {
+    pub sha: String,
+    pub message: String,
+    pub author: Option<GithubCommitAuthor>,
+}
+
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubEventRepo {
+    /// `owner/repo`
+    pub name: String,
+}
+
+/// 只保留 PushEvent 用得到的欄位。其他事件型別的 payload 會是空 commits + null
+/// ——前端只 render PushEvent，這裡不為沒人看的事件型別各建一份形狀。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubEventPayload {
+    pub commits: Vec<GithubCommit>,
+    pub before: Option<String>,
+    pub head: Option<String>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub size: Option<i64>,
+}
+
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubEvent {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub repo: GithubEventRepo,
+    pub created_at: String,
+    pub payload: GithubEventPayload,
+}
+
+/// `GET /api/github/events/:username`
+///
+/// 原本直接回一個 JSON 陣列（GitHub 錯誤時回 GitHub 的錯誤物件），而前端的型別寫成
+/// `GithubEvent[] & { error?: string }` —— 陣列身上不會有 `.error`，那個交集型別是假的。
+/// 改成包一層讓 error 成為真的欄位。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubEventsResponse {
+    pub events: Vec<GithubEvent>,
+    pub error: Option<String>,
 }
 
 /// `GET /api/github/events/:username` —— **一律用 /events/public**（只回公開事件）。
@@ -119,15 +217,21 @@ pub async fn github_user(State(state): State<AppState>, Path(username): Path<Str
 /// 但端點固定 public：否則帶自己的 token 打 /events 會連**私有 repo 的 push 也回傳**（隱私外洩）。
 #[utoipa::path(get, path = "/api/github/events/{username}", tag = "integrations",
     params(("username" = String, Path)),
-    responses((status = 200, description = "GitHub 公開活動事件（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = GithubEventsResponse)))]
 pub async fn github_events(State(state): State<AppState>, Path(username): Path<String>) -> Response {
     let token = std::env::var("GITHUB_TOKEN").ok().filter(|s| !s.is_empty());
     let path = format!("/users/{username}/events/public?per_page=30");
     let events = gh_fetch(&state.http, &path, token.as_deref()).await;
 
     let Some(Value::Array(mut events)) = events else {
-        // 非陣列（GitHub 錯誤物件）→ 原樣；null → []
-        return Json(events.unwrap_or_else(|| json!([]))).into_response();
+        // GitHub 錯誤物件（{message,…}）→ error 欄位；抓不到 / null → 空清單
+        let error = events
+            .as_ref()
+            .and_then(|v| v.get("message"))
+            .and_then(|m| m.as_str())
+            .map(String::from)
+            .or_else(|| events.is_none().then(|| GH_FETCH_ERR.to_string()));
+        return Json(GithubEventsResponse { events: vec![], error }).into_response();
     };
 
     if let Some(t) = &token {
@@ -173,7 +277,51 @@ pub async fn github_events(State(state): State<AppState>, Path(username): Path<S
             }
         }
     }
-    Json(Value::Array(events)).into_response()
+    Json(GithubEventsResponse { events: events.iter().filter_map(github_event_from).collect(), error: None })
+        .into_response()
+}
+
+/// GitHub 事件 → 我們的形狀。id / type / repo.name / created_at 任一缺就整筆不收：
+/// 那四個欄位是前端 render 一列必需的，缺了也沒東西可顯示。
+fn github_event_from(ev: &Value) -> Option<GithubEvent> {
+    let s = |k: &str| ev.get(k).and_then(|v| v.as_str()).map(String::from);
+    let repo = ev.pointer("/repo/name").and_then(|v| v.as_str()).map(String::from);
+    let (Some(id), Some(kind), Some(repo), Some(created_at)) = (s("id"), s("type"), repo, s("created_at"))
+    else {
+        tracing::warn!("[github] 跳過缺 id/type/repo.name/created_at 的事件");
+        return None;
+    };
+    let p = ev.get("payload");
+    let ps = |k: &str| p.and_then(|p| p.get(k)).and_then(|v| v.as_str()).map(String::from);
+    let commits = p
+        .and_then(|p| p.get("commits"))
+        .and_then(|c| c.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|c| {
+                    let sha = c.get("sha").and_then(|v| v.as_str())?.to_string();
+                    let author = c.get("author").and_then(|a| a.as_object()).map(|a| GithubCommitAuthor {
+                        name: a.get("name").and_then(|v| v.as_str()).map(String::from),
+                        email: a.get("email").and_then(|v| v.as_str()).map(String::from),
+                    });
+                    let message = c.get("message").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                    Some(GithubCommit { sha, message, author })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    Some(GithubEvent {
+        id,
+        kind,
+        repo: GithubEventRepo { name: repo },
+        created_at,
+        payload: GithubEventPayload {
+            commits,
+            before: ps("before"),
+            head: ps("head"),
+            size: p.and_then(|p| p.get("size")).and_then(|v| v.as_i64()),
+        },
+    })
 }
 
 // ── WakaTime ──────────────────────────────────────────────────────────────
@@ -188,14 +336,80 @@ fn waka_auth(key: &str) -> String {
     format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(key))
 }
 
-fn waka_unconfigured() -> Response {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(
-            json!({ "error": "WakaTime API 未配置", "message": "請在 server/.env 中設置 WAKATIME_API_KEY" }),
-        ),
-    )
-        .into_response()
+const WAKA_UNCONFIGURED: &str = "WakaTime API 未配置（請在 server/.env 設置 WAKATIME_API_KEY）";
+
+/// WakaTime 的 `grand_total`（前端只用 text，total_seconds 一起帶著方便日後算）。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WakatimeGrandTotal {
+    pub text: Option<String>,
+    #[serde(serialize_with = "crate::util::ser_js_number_opt")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub total_seconds: Option<f64>,
+}
+
+/// durations 端點算出來的「實際編碼區間」——第一筆的開始到最後一筆的結束。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WakatimeActualCodingTime {
+    pub start: Option<String>,
+    pub end: Option<String>,
+    #[serde(rename = "hasData")]
+    pub has_data: bool,
+}
+
+/// `GET /api/wakatime/today`
+///
+/// 原本回 WakaTime 的 `{data:[summary], start, end}` 加上 actualCodingTime，
+/// summary 是一整包（categories / editors / machines / …）而前端只讀
+/// `data[0].grand_total.text`。這裡把那個只有一個元素的陣列攤掉。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WakatimeTodayResponse {
+    pub grand_total: Option<WakatimeGrandTotal>,
+    /// WakaTime 回的查詢區間（非「實際編碼」區間）
+    pub start: Option<String>,
+    pub end: Option<String>,
+    #[serde(rename = "actualCodingTime")]
+    pub actual_coding_time: WakatimeActualCodingTime,
+    pub error: Option<String>,
+    /// 上游的錯誤內容（原本叫 details，是 parse 過的 body；這裡轉字串好進型別）
+    pub details: Option<String>,
+}
+
+/// stats 端點的一列（語言 / 專案共用同一個形狀）。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WakatimeStat {
+    pub name: String,
+    pub text: String,
+    #[serde(serialize_with = "ser_js_number")]
+    #[specta(type = specta_typescript::Number)]
+    pub percent: f64,
+}
+
+/// `GET /api/wakatime/week`、`GET /api/wakatime/projects`
+///
+/// 原本回 WakaTime 的 `{data:{languages, projects, editors, …}}` 原樣，前端讀 `.data`。
+/// 這裡把 data 攤掉、只留前端會 render 的兩組。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct WakatimeStatsResponse {
+    pub languages: Vec<WakatimeStat>,
+    pub projects: Vec<WakatimeStat>,
+    pub error: Option<String>,
+    pub details: Option<String>,
+}
+
+fn waka_stats_from(data: &Value) -> Vec<WakatimeStat> {
+    data.as_array()
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| {
+                    Some(WakatimeStat {
+                        name: x.get("name").and_then(|v| v.as_str())?.to_string(),
+                        text: x.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+                        percent: x.get("percent").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// axios 式請求：非 2xx → Err((status, parsed body))、網路錯 → Err((500, message 字串))。
@@ -215,27 +429,43 @@ async fn waka_get(http: &reqwest::Client, url: &str, key: &str) -> Result<Value,
     if status.is_success() { Ok(v) } else { Err((status, v)) }
 }
 
-fn waka_err(kind: &str, e: (StatusCode, Value)) -> Response {
-    (e.0, Json(json!({ "error": kind, "details": e.1 }))).into_response()
+/// 上游錯誤 → (狀態碼, error, details)。details 原本是 parse 過的 body，轉字串好進型別。
+fn waka_err_parts(kind: &str, e: (StatusCode, Value)) -> (StatusCode, Option<String>, Option<String>) {
+    let details = match e.1 {
+        Value::String(s) => Some(s),
+        Value::Null => None,
+        v => Some(v.to_string()),
+    };
+    (e.0, Some(kind.to_string()), details)
 }
 
 /// `GET /api/wakatime/today` —— summaries + durations 並行，合併 actualCodingTime。
 #[utoipa::path(get, path = "/api/wakatime/today", tag = "integrations",
-    responses((status = 200, description = "WakaTime 今日編碼統計（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = WakatimeTodayResponse)))]
 pub async fn wakatime_today(State(state): State<AppState>) -> Response {
-    let Some(key) = wakatime_key() else { return waka_unconfigured() };
+    let Some(key) = wakatime_key() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(WakatimeTodayResponse { error: Some(WAKA_UNCONFIGURED.to_string()), ..Default::default() }),
+        )
+            .into_response();
+    };
     let date = today_utc();
     let url_summary = format!("https://wakatime.com/api/v1/users/current/summaries?start={date}&end={date}");
     let url_durations = format!("https://wakatime.com/api/v1/users/current/durations?date={date}");
     let (summary, durations) =
         tokio::join!(waka_get(&state.http, &url_summary, &key), waka_get(&state.http, &url_durations, &key));
+    let today_err = |e| {
+        let (status, error, details) = waka_err_parts("Failed to fetch WakaTime today data", e);
+        (status, Json(WakatimeTodayResponse { error, details, ..Default::default() })).into_response()
+    };
     let summary = match summary {
         Ok(v) => v,
-        Err(e) => return waka_err("Failed to fetch WakaTime today data", e),
+        Err(e) => return today_err(e),
     };
     let durations = match durations {
         Ok(v) => v,
-        Err(e) => return waka_err("Failed to fetch WakaTime today data", e),
+        Err(e) => return today_err(e),
     };
 
     let dur_list: Vec<&Value> =
@@ -249,39 +479,61 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
             actual_end = Some(actual_end.map_or(end, |e| e.max(end)));
         }
     }
-    let summary_data = summary.pointer("/data/0").cloned().unwrap_or_else(|| json!({}));
+    let gt = summary.pointer("/data/0/grand_total");
 
-    Json(json!({
-        "data": [summary_data],
-        "start": summary.get("start").cloned().unwrap_or(Value::Null),
-        "end": summary.get("end").cloned().unwrap_or(Value::Null),
-        "actualCodingTime": {
+    Json(WakatimeTodayResponse {
+        grand_total: gt.map(|g| WakatimeGrandTotal {
+            text: g.get("text").and_then(|v| v.as_str()).map(String::from),
+            total_seconds: g.get("total_seconds").and_then(|v| v.as_f64()),
+        }),
+        start: summary.get("start").and_then(|v| v.as_str()).map(String::from),
+        end: summary.get("end").and_then(|v| v.as_str()).map(String::from),
+        actual_coding_time: WakatimeActualCodingTime {
             // JS new Date(x*1000)：ms 取整（ToInteger 截斷）
-            "start": actual_start.map(|t| iso_from_millis((t * 1000.0) as i64)),
-            "end": actual_end.map(|t| iso_from_millis((t * 1000.0) as i64)),
-            "hasData": !dur_list.is_empty(),
-        }
-    }))
+            start: actual_start.map(|t| iso_from_millis((t * 1000.0) as i64)),
+            end: actual_end.map(|t| iso_from_millis((t * 1000.0) as i64)),
+            has_data: !dur_list.is_empty(),
+        },
+        error: None,
+        details: None,
+    })
     .into_response()
 }
 
 /// week / projects 共用（同一支 stats API，只差錯誤字串）。
 async fn wakatime_stats(state: &AppState, err_kind: &str) -> Response {
-    let Some(key) = wakatime_key() else { return waka_unconfigured() };
+    let Some(key) = wakatime_key() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(WakatimeStatsResponse { error: Some(WAKA_UNCONFIGURED.to_string()), ..Default::default() }),
+        )
+            .into_response();
+    };
     match waka_get(&state.http, "https://wakatime.com/api/v1/users/current/stats/last_7_days", &key).await {
-        Ok(v) => Json(v).into_response(),
-        Err(e) => waka_err(err_kind, e),
+        Ok(v) => Json(WakatimeStatsResponse {
+            languages: waka_stats_from(v.pointer("/data/languages").unwrap_or(&Value::Null)),
+            projects: waka_stats_from(v.pointer("/data/projects").unwrap_or(&Value::Null)),
+            error: None,
+            details: None,
+        })
+        .into_response(),
+        Err(e) => {
+            let (status, error, details) = waka_err_parts(err_kind, e);
+            (status, Json(WakatimeStatsResponse { error, details, ..Default::default() })).into_response()
+        }
     }
 }
 
 #[utoipa::path(get, path = "/api/wakatime/week", tag = "integrations",
-    responses((status = 200, description = "WakaTime 近 7 日統計（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = WakatimeStatsResponse)))]
 pub async fn wakatime_week(State(state): State<AppState>) -> Response {
     wakatime_stats(&state, "Failed to fetch WakaTime week data").await
 }
 
+/// ⚠️ 與 `/week` 打同一支上游 API、回同一份資料，差別只有錯誤字串（Express 就這樣，照抄）。
+/// 前端只用 `/week`。
 #[utoipa::path(get, path = "/api/wakatime/projects", tag = "integrations",
-    responses((status = 200, description = "WakaTime 專案統計（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = WakatimeStatsResponse)))]
 pub async fn wakatime_projects(State(state): State<AppState>) -> Response {
     wakatime_stats(&state, "Failed to fetch WakaTime projects data").await
 }
@@ -294,59 +546,165 @@ fn steam_env() -> Option<(String, String)> {
     Some((key, id))
 }
 
-fn steam_unconfigured() -> Response {
+const STEAM_UNCONFIGURED: &str = "Steam API 未配置（請在 server/.env 設置 STEAM_API_KEY 和 STEAM_ID）";
+const STEAM_PARSE_ERR: &str = "Failed to parse Steam API response";
+const STEAM_FETCH_ERR: &str = "Failed to fetch Steam data";
+
+/// GetPlayerSummaries 的 `players[0]` 裡我們用得到的欄位（欄位名沿用 Steam 的）。
+#[derive(Debug, Clone, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamPlayer {
+    pub personaname: Option<String>,
+    pub avatarfull: Option<String>,
+    pub profileurl: Option<String>,
+    /// Steam 的狀態 enum（1 = 上線）
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub personastate: Option<i64>,
+    /// 正在玩的 appid。Steam 這欄回**字串**不是數字（有值就代表在遊戲中）
+    pub gameid: Option<String>,
+}
+
+/// `GET /api/steam/player`
+///
+/// 原本原樣回 Steam 的 `{response:{players:[…]}}`，前端自己挖 `response.players[0]`。
+/// 這裡把那層挖掉——一個 steamid 就只會有一個 player。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamPlayerResponse {
+    pub player: Option<SteamPlayer>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamGame {
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub appid: Option<i64>,
+    pub name: Option<String>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub playtime_2weeks: Option<i64>,
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub playtime_forever: Option<i64>,
+}
+
+/// `GET /api/steam/recent-games` 與 `GET /api/steam/owned-games`
+/// （`gameCount` 只有 owned-games 會有；那是我們自己的欄位名，故 camelCase）。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamGamesResponse {
+    pub games: Vec<SteamGame>,
+    #[serde(rename = "gameCount")]
+    #[specta(type = Option<specta_typescript::Number>)]
+    pub game_count: Option<i64>,
+    pub error: Option<String>,
+}
+
+fn steam_games_from(v: &Value) -> Vec<SteamGame> {
+    v.pointer("/response/games")
+        .and_then(|g| g.as_array())
+        .map(|a| {
+            a.iter()
+                .map(|g| SteamGame {
+                    appid: g.get("appid").and_then(|x| x.as_i64()),
+                    name: g.get("name").and_then(|x| x.as_str()).map(String::from),
+                    playtime_2weeks: g.get("playtime_2weeks").and_then(|x| x.as_i64()),
+                    playtime_forever: g.get("playtime_forever").and_then(|x| x.as_i64()),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[utoipa::path(get, path = "/api/steam/player", tag = "integrations",
+    responses((status = 200, body = SteamPlayerResponse)))]
+pub async fn steam_player(State(state): State<AppState>) -> Response {
+    let unconf = || {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(SteamPlayerResponse { error: Some(STEAM_UNCONFIGURED.to_string()), ..Default::default() }),
+        )
+            .into_response()
+    };
+    let Some((key, id)) = steam_env() else { return unconf() };
+    let url =
+        format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}");
+    match fetch_json_lenient(&state.http, &url, None, STEAM_PARSE_ERR, STEAM_FETCH_ERR).await {
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(SteamPlayerResponse { error: Some(e), ..Default::default() }),
+        )
+            .into_response(),
+        Ok(v) => Json(SteamPlayerResponse {
+            player: v.pointer("/response/players/0").map(steam_player_from),
+            error: None,
+        })
+        .into_response(),
+    }
+}
+
+fn steam_player_from(p: &Value) -> SteamPlayer {
+    let s = |k: &str| p.get(k).and_then(|v| v.as_str()).map(String::from);
+    SteamPlayer {
+        personaname: s("personaname"),
+        avatarfull: s("avatarfull"),
+        profileurl: s("profileurl"),
+        personastate: p.get("personastate").and_then(|v| v.as_i64()),
+        gameid: s("gameid"),
+    }
+}
+
+/// recent-games / owned-games 共用（只差 URL 與要不要帶 gameCount）。
+async fn steam_games(state: &AppState, url: &str, with_count: bool) -> Response {
+    match fetch_json_lenient(&state.http, url, None, STEAM_PARSE_ERR, STEAM_FETCH_ERR).await {
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(SteamGamesResponse { error: Some(e), ..Default::default() }),
+        )
+            .into_response(),
+        Ok(v) => Json(SteamGamesResponse {
+            games: steam_games_from(&v),
+            game_count: with_count
+                .then(|| v.pointer("/response/game_count").and_then(|x| x.as_i64()))
+                .flatten(),
+            error: None,
+        })
+        .into_response(),
+    }
+}
+
+fn steam_games_unconfigured() -> Response {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(json!({ "error": "Steam API 未配置", "message": "請在 server/.env 中設置 STEAM_API_KEY 和 STEAM_ID" })),
+        Json(SteamGamesResponse { error: Some(STEAM_UNCONFIGURED.to_string()), ..Default::default() }),
     )
         .into_response()
 }
 
-#[utoipa::path(get, path = "/api/steam/player", tag = "integrations",
-    responses((status = 200, description = "Steam 玩家摘要（動態 JSON，第三方 proxy）")))]
-pub async fn steam_player(State(state): State<AppState>) -> Response {
-    let Some((key, id)) = steam_env() else { return steam_unconfigured() };
-    passthrough_json(
-        &state.http,
-        &format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}"),
-        None,
-        "Failed to parse Steam API response",
-        "Failed to fetch Steam data",
-    )
-    .await
-}
-
 #[utoipa::path(get, path = "/api/steam/recent-games", tag = "integrations",
-    responses((status = 200, description = "Steam 近期遊玩遊戲（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = SteamGamesResponse)))]
 pub async fn steam_recent_games(State(state): State<AppState>) -> Response {
-    let Some((key, id)) = steam_env() else { return steam_unconfigured() };
-    passthrough_json(
-        &state.http,
-        &format!("https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={key}&steamid={id}&format=json"),
-        None,
-        "Failed to parse Steam API response",
-        "Failed to fetch Steam data",
-    )
-    .await
+    let Some((key, id)) = steam_env() else { return steam_games_unconfigured() };
+    let url = format!(
+        "https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={key}&steamid={id}&format=json"
+    );
+    steam_games(&state, &url, false).await
 }
 
 #[utoipa::path(get, path = "/api/steam/owned-games", tag = "integrations",
-    responses((status = 200, description = "Steam 擁有遊戲清單（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = SteamGamesResponse)))]
 pub async fn steam_owned_games(State(state): State<AppState>) -> Response {
-    let Some((key, id)) = steam_env() else { return steam_unconfigured() };
-    passthrough_json(
-        &state.http,
-        &format!("https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={key}&steamid={id}&include_appinfo=true&include_played_free_games=true&format=json"),
-        None,
-        "Failed to parse Steam API response",
-        "Failed to fetch Steam data",
-    )
-    .await
+    let Some((key, id)) = steam_env() else { return steam_games_unconfigured() };
+    let url = format!(
+        "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={key}&steamid={id}&include_appinfo=true&include_played_free_games=true&format=json"
+    );
+    steam_games(&state, &url, true).await
 }
 
+fn steam_unconfigured() -> Response {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": STEAM_UNCONFIGURED }))).into_response()
+}
+
+/// ⚠️ 這支**刻意留原樣代理**：站上沒有任何地方消費它，要 typed 就得替一份沒人看的
+/// Steam 成就形狀憑空造型別。等真的有人用再收。
 #[utoipa::path(get, path = "/api/steam/achievements/{appid}", tag = "integrations",
     params(("appid" = String, Path)),
-    responses((status = 200, description = "Steam 遊戲成就（動態 JSON，第三方 proxy）")))]
+    responses((status = 200, description = "Steam 遊戲成就（動態 JSON，唯一保留的原樣代理）")))]
 pub async fn steam_achievements(State(state): State<AppState>, Path(appid): Path<String>) -> Response {
     let Some((key, id)) = steam_env() else { return steam_unconfigured() };
     passthrough_json(
@@ -608,54 +966,96 @@ async fn steam_fetch_text(http: &reqwest::Client, url: &str) -> Result<String, S
 }
 
 /// _parseMiniProfile 等價（4 條 regex；lookahead `(?!_frame)` 因後接 `\s+` 恆真，等價移除）。
-fn parse_mini_profile(html: &str) -> Value {
-    let mut out = Map::new();
+fn parse_mini_profile(html: &str) -> SteamCustomization {
+    let mut out = SteamCustomization::default();
     if html.is_empty() {
-        return Value::Object(out);
+        return out;
     }
     let re = |p: &str| regex::RegexBuilder::new(p).case_insensitive(true).build().ok();
     if let Some(block) = re(r#"<video class=["']miniprofile_nameplate[^>]*>((?s:.*?))</video>"#)
         .and_then(|r| r.captures(html).map(|c| c.get(1).map(|m| m.as_str().to_string())))
         .flatten()
     {
-        if let Some(w) = re(r#"src=["']([^"']+\.webm)["']"#)
-            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
-        {
-            out.insert("nameplateWebm".into(), Value::from(w));
-        }
-        if let Some(m4) = re(r#"src=["']([^"']+\.mp4)["']"#)
-            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
-        {
-            out.insert("nameplateMp4".into(), Value::from(m4));
-        }
+        out.nameplate_webm = re(r#"src=["']([^"']+\.webm)["']"#)
+            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())));
+        out.nameplate_mp4 = re(r#"src=["']([^"']+\.mp4)["']"#)
+            .and_then(|r| r.captures(&block).and_then(|c| c.get(1).map(|m| m.as_str().to_string())));
     }
-    if let Some(f) = re(r#"playersection_avatar_frame[^>]*>\s*<img\s+src=["']([^"']+)["']"#)
-        .and_then(|r| r.captures(html).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
-    {
-        out.insert("avatarFrame".into(), Value::from(f));
-    }
-    if let Some(a) = re(r#"playersection_avatar\s+[^"']*["'][^>]*>\s*<img\s+src=["']([^"']+)["']"#)
-        .and_then(|r| r.captures(html).and_then(|c| c.get(1).map(|m| m.as_str().to_string())))
-    {
-        out.insert("animatedAvatar".into(), Value::from(a));
-    }
+    out.avatar_frame = re(r#"playersection_avatar_frame[^>]*>\s*<img\s+src=["']([^"']+)["']"#)
+        .and_then(|r| r.captures(html).and_then(|c| c.get(1).map(|m| m.as_str().to_string())));
+    out.animated_avatar = re(r#"playersection_avatar\s+[^"']*["'][^>]*>\s*<img\s+src=["']([^"']+)["']"#)
+        .and_then(|r| r.captures(html).and_then(|c| c.get(1).map(|m| m.as_str().to_string())));
     if let Some(c) = re(r#"<div class=["']miniprofile_featuredcontainer["']>\s*<img src=["']([^"']+)["'][^>]*class=["']badge_icon["']>\s*<div class=["']description["']>\s*<div class=["']name["']>([^<]+)</div>\s*<div class=["']xp["']>([^<]+)</div>"#)
         .and_then(|r| r.captures(html))
     {
-        out.insert(
-            "featuredBadge".into(),
-            json!({
-                "icon": c.get(1).map(|m| m.as_str()).unwrap_or(""),
-                "name": c.get(2).map(|m| m.as_str().trim()).unwrap_or(""),
-                "xp": c.get(3).map(|m| m.as_str().trim()).unwrap_or(""),
-            }),
-        );
+        out.featured_badge = Some(SteamFeaturedBadge {
+            icon: c.get(1).map(|m| m.as_str()).unwrap_or("").to_string(),
+            name: c.get(2).map(|m| m.as_str().trim()).unwrap_or("").to_string(),
+            xp: c.get(3).map(|m| m.as_str().trim()).unwrap_or("").to_string(),
+        });
     }
-    Value::Object(out)
+    out
+}
+
+/// miniprofile 頁面刮下來的展示徽章（三個都是 regex 捕獲組，必為字串）。
+#[derive(Debug, Clone, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamFeaturedBadge {
+    pub icon: String,
+    pub name: String,
+    /// Steam 頁面上是 "1,234 XP" 這種已格式化的字串，不是數字
+    pub xp: String,
+}
+
+/// miniprofile 客製（動態頭像 / 頭像框 / 名牌動畫）。抓不到的就是 None。
+#[derive(Debug, Clone, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamCustomization {
+    #[serde(rename = "animatedAvatar")]
+    pub animated_avatar: Option<String>,
+    #[serde(rename = "avatarFrame")]
+    pub avatar_frame: Option<String>,
+    #[serde(rename = "nameplateWebm")]
+    pub nameplate_webm: Option<String>,
+    #[serde(rename = "nameplateMp4")]
+    pub nameplate_mp4: Option<String>,
+    #[serde(rename = "featuredBadge")]
+    pub featured_badge: Option<SteamFeaturedBadge>,
+}
+
+/// `/api/steam/profile` 的資料本體（＝快取內容）。
+#[derive(Debug, Clone, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamProfile {
+    pub player: SteamPlayer,
+    #[specta(type = specta_typescript::Number)]
+    pub level: i64,
+    #[specta(type = specta_typescript::Number)]
+    pub xp: i64,
+    #[serde(rename = "xpToNext")]
+    #[specta(type = specta_typescript::Number)]
+    pub xp_to_next: i64,
+    #[serde(rename = "badgeCount")]
+    #[specta(type = specta_typescript::Number)]
+    pub badge_count: i64,
+    pub customization: SteamCustomization,
+    #[serde(rename = "profileUrl")]
+    pub profile_url: String,
+}
+
+/// `GET /api/steam/profile`
+///
+/// `_cachedAt` 是伺服器記帳（SWR 的抓取時間），不是 profile 的一部分——所以它在
+/// 回應型別上，而快取只存 profile 本體（同 watch/now 把 expiresAt 移出 wire type）。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct SteamProfileResponse {
+    #[serde(flatten)]
+    pub profile: SteamProfile,
+    /// epoch ms
+    #[serde(rename = "_cachedAt")]
+    #[specta(type = specta_typescript::Number)]
+    pub cached_at: i64,
 }
 
 /// _refreshSteamProfile 等價（呼叫端負責 inflight dedup）。成功寫快取、失敗只更新 lastTriedAt。
-async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<Value, String> {
+async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<SteamProfile, String> {
     let account_id = match id.parse::<i64>() {
         Ok(n) => (n - 76_561_197_960_265_728i64).to_string(),
         Err(_) => {
@@ -677,27 +1077,29 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
         steam_fetch_json(&state.http, &u3),
         steam_fetch_text(&state.http, &u4)
     );
-    let result: Result<Value, String> = (|| {
+    let result: Result<SteamProfile, String> = (|| {
         let player = player?;
         let level = level?;
         let badges = badges.unwrap_or(Value::Null);
-        let player_obj = player.pointer("/response/players/0").cloned();
-        let lvl = level.pointer("/response/player_level").cloned().filter(|v| !v.is_null());
-        let (Some(player_obj), Some(lvl)) = (player_obj, lvl) else {
+        let player_obj = player.pointer("/response/players/0");
+        let lvl = level.pointer("/response/player_level").and_then(|v| v.as_i64());
+        let (Some(player_obj), Some(level)) = (player_obj, lvl) else {
             return Err("incomplete response from Steam".to_string());
         };
-        let customization = parse_mini_profile(&mini_html.unwrap_or_default());
         let badge_count =
             badges.pointer("/response/badges").and_then(|b| b.as_array()).map(|a| a.len()).unwrap_or(0);
-        Ok(json!({
-            "player": player_obj,
-            "level": lvl,
-            "xp": badges.pointer("/response/player_xp").cloned().filter(|v| !v.is_null()).unwrap_or(json!(0)),
-            "xpToNext": badges.pointer("/response/player_xp_needed_to_level_up").cloned().filter(|v| !v.is_null()).unwrap_or(json!(0)),
-            "badgeCount": badge_count,
-            "customization": customization,
-            "profileUrl": format!("https://steamcommunity.com/profiles/{id}"),
-        }))
+        Ok(SteamProfile {
+            player: steam_player_from(player_obj),
+            level,
+            xp: badges.pointer("/response/player_xp").and_then(|v| v.as_i64()).unwrap_or(0),
+            xp_to_next: badges
+                .pointer("/response/player_xp_needed_to_level_up")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0),
+            badge_count: badge_count as i64,
+            customization: parse_mini_profile(&mini_html.unwrap_or_default()),
+            profile_url: format!("https://steamcommunity.com/profiles/{id}"),
+        })
     })();
     match result {
         Ok(data) => {
@@ -721,10 +1123,11 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
 /// `GET /api/steam/profile` —— stale-while-revalidate：有快取直接回、過期背景重抓；
 /// 首抓需等待（tokio Mutex dedup 併發重抓）。
 #[utoipa::path(get, path = "/api/steam/profile", tag = "integrations",
-    responses((status = 200, description = "Steam 個人檔案（含等級/徽章/客製，動態 JSON，第三方 proxy）")))]
+    responses((status = 200, body = SteamProfileResponse),
+              (status = 503, description = "首抓失敗且無快取")))]
 pub async fn steam_profile(State(state): State<AppState>) -> Response {
     let Some((key, id)) = steam_env() else {
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Steam API 未配置" })))
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": STEAM_UNCONFIGURED })))
             .into_response();
     };
     let now = now_ms();
@@ -741,28 +1144,117 @@ pub async fn steam_profile(State(state): State<AppState>) -> Response {
                 }
             });
         }
-        let mut out = c.data.as_object().cloned().unwrap_or_default();
-        out.insert("_cachedAt".into(), json!(c.fetched_at));
-        return Json(Value::Object(out)).into_response();
+        return Json(SteamProfileResponse { profile: c.data, cached_at: c.fetched_at }).into_response();
     }
     // 首抓：持鎖去重；等鎖期間別人可能已抓好 → 再查一次快取
     let _g = state.steam.refresh_lock.lock().await;
     if let Some(c) = state.steam.cache.lock().clone() {
-        let mut out = c.data.as_object().cloned().unwrap_or_default();
-        out.insert("_cachedAt".into(), json!(c.fetched_at));
-        return Json(Value::Object(out)).into_response();
+        return Json(SteamProfileResponse { profile: c.data, cached_at: c.fetched_at }).into_response();
     }
     match refresh_steam_profile(&state, &key, &id).await {
-        Ok(data) => {
-            let fetched_at = state.steam.cache.lock().as_ref().map(|c| c.fetched_at).unwrap_or(now_ms());
-            let mut out = data.as_object().cloned().unwrap_or_default();
-            out.insert("_cachedAt".into(), json!(fetched_at));
-            Json(Value::Object(out)).into_response()
+        Ok(profile) => {
+            let cached_at = state.steam.cache.lock().as_ref().map(|c| c.fetched_at).unwrap_or(now_ms());
+            Json(SteamProfileResponse { profile, cached_at }).into_response()
         }
         Err(e) => (
             StatusCode::SERVICE_UNAVAILABLE,
             Json(json!({ "error": "steam fetch failed, no cache yet", "message": e })),
         )
             .into_response(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 塑形這一步是這批改動唯一會出錯的地方（抓取本身走網路，測不到）。
+    /// 樣本照 GitHub `/users/:u/events/public` 的實際形狀寫。
+    #[test]
+    fn github_event_keeps_push_fields_and_drops_shaless_commits() {
+        let ev = json!({
+            "id": "12345", "type": "PushEvent", "created_at": "2026-07-28T10:00:00Z",
+            "repo": { "id": 1, "name": "timo9378/sora-to-ki" },
+            "actor": { "login": "timo9378" },
+            "payload": {
+                "before": "aaa", "head": "bbb", "size": 2,
+                "commits": [
+                    { "sha": "c1", "message": "feat: 一", "author": { "name": "T", "email": "t@e" } },
+                    { "message": "沒有 sha，不該收" },
+                    { "sha": "c2", "message": "feat: 二" }
+                ]
+            }
+        });
+        let e = github_event_from(&ev).expect("應該收得下");
+        assert_eq!(e.id, "12345");
+        assert_eq!(e.kind, "PushEvent");
+        assert_eq!(e.repo.name, "timo9378/sora-to-ki");
+        assert_eq!(e.payload.size, Some(2));
+        assert_eq!(e.payload.commits.len(), 2, "缺 sha 的那筆要被丟掉");
+        assert_eq!(e.payload.commits[0].sha, "c1");
+        assert_eq!(e.payload.commits[0].author.as_ref().unwrap().name.as_deref(), Some("T"));
+        assert!(e.payload.commits[1].author.is_none());
+    }
+
+    #[test]
+    fn github_event_without_repo_is_dropped() {
+        let ev = json!({ "id": "1", "type": "WatchEvent", "created_at": "2026-07-28T10:00:00Z" });
+        assert!(github_event_from(&ev).is_none());
+    }
+
+    /// 非 PushEvent 仍收得下（前端自己 filter），payload 就是空 commits。
+    #[test]
+    fn github_non_push_event_has_empty_payload() {
+        let ev = json!({
+            "id": "2", "type": "WatchEvent", "created_at": "2026-07-28T10:00:00Z",
+            "repo": { "name": "a/b" }, "payload": { "action": "started" }
+        });
+        let e = github_event_from(&ev).unwrap();
+        assert!(e.payload.commits.is_empty());
+        assert_eq!(e.payload.before, None);
+    }
+
+    #[test]
+    fn steam_games_unwraps_response_envelope() {
+        let v = json!({ "response": { "total_count": 2, "games": [
+            { "appid": 730, "name": "CS2", "playtime_2weeks": 120, "playtime_forever": 9999 },
+            { "appid": 440, "name": "TF2" }
+        ] } });
+        let games = steam_games_from(&v);
+        assert_eq!(games.len(), 2);
+        assert_eq!(games[0].appid, Some(730));
+        assert_eq!(games[0].playtime_2weeks, Some(120));
+        assert_eq!(games[1].playtime_2weeks, None, "沒玩過就是 None，不是 0");
+    }
+
+    #[test]
+    fn steam_games_on_missing_envelope_is_empty_not_panic() {
+        assert!(steam_games_from(&json!({ "response": {} })).is_empty());
+        assert!(steam_games_from(&json!({})).is_empty());
+    }
+
+    #[test]
+    fn steam_player_gameid_stays_string() {
+        let p = json!({
+            "personaname": "koi", "avatarfull": "https://a/f.jpg",
+            "profileurl": "https://s/p/1", "personastate": 1, "gameid": "730"
+        });
+        let sp = steam_player_from(&p);
+        assert_eq!(sp.gameid.as_deref(), Some("730"), "Steam 這欄是字串不是數字");
+        assert_eq!(sp.personastate, Some(1));
+    }
+
+    #[test]
+    fn wakatime_stats_skips_entries_without_name() {
+        let v = json!([
+            { "name": "Rust", "text": "3 hrs", "percent": 62.5 },
+            { "text": "沒名字，不該收", "percent": 10.0 },
+            { "name": "TypeScript" }
+        ]);
+        let stats = waka_stats_from(&v);
+        assert_eq!(stats.len(), 2);
+        assert_eq!(stats[0].name, "Rust");
+        assert!((stats[0].percent - 62.5).abs() < f64::EPSILON);
+        assert_eq!(stats[1].text, "", "缺 text 退成空字串而不是整筆丟掉");
     }
 }
