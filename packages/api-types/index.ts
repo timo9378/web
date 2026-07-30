@@ -413,6 +413,27 @@ export type GithubCommitAuthor = {
 	email: string | null,
 };
 
+/**  貢獻熱圖的一天。 */
+export type GithubContributionDay = {
+	/**  `YYYY-MM-DD` */
+	date: string,
+	count: number,
+};
+
+/**
+ *  `GET /api/github/contributions/:username`
+ * 
+ *  以前是前端直接打第三方的 `github-contributions-api.jogruber.de`——那是一個**爬
+ *  GitHub 個人頁 HTML** 的服務。GitHub 的 REST API 沒有貢獻資料，但 GraphQL 有官方的
+ *  `contributionsCollection.contributionCalendar`，而我們本來就有 token，所以不是把
+ *  jogruber 代理起來，是直接不需要它了。
+ */
+export type GithubContributionsResponse = {
+	contributions: GithubContributionDay[],
+	total: number,
+	error: string | null,
+};
+
 export type GithubEvent = {
 	id: string,
 	type: string,
@@ -446,6 +467,28 @@ export type GithubEventRepo = {
  */
 export type GithubEventsResponse = {
 	events: GithubEvent[],
+	error: string | null,
+};
+
+/**  `GET /api/github/repos/:username` 的一列。 */
+export type GithubRepo = {
+	id: number,
+	name: string,
+	html_url: string,
+	description: string | null,
+	language: string | null,
+	stargazers_count: number,
+};
+
+/**
+ *  `GET /api/github/repos/:username`
+ * 
+ *  這支以前不存在——前端直接從瀏覽器打 `api.github.com/users/:u/repos`。那條路是
+ *  **未認證**的，額度 60 req/hr 且是算在**讀者的 IP** 上；共用出口（公司 NAT、CGNAT、
+ *  VPN）額滿時這一區會靜默空白。收進後端就吃得到 GITHUB_TOKEN 的 5000/hr。
+ */
+export type GithubReposResponse = {
+	repos: GithubRepo[],
 	error: string | null,
 };
 
@@ -559,6 +602,14 @@ export type PhotoExif = {
 	FNumber: ExifValue | null,
 	ExposureTime: ExifValue | null,
 	ISO: ExifValue | null,
+	/**
+	 *  拍攝時間。本檔寫的是帶相機自身時區的 ISO 8601（`"2023-04-27T10:56:22+08:00"`）；
+	 *  相機沒寫 OffsetTime* 時退成不帶時區的裸本地時間。
+	 * 
+	 *  ⚠️ 舊 manifest 裡還有兩種歷史格式：Node builder 寫的 exiftool 原樣
+	 *  `"2023:04:27 10:56:22"`，以及本檔舊版拿容器 TZ 硬轉的 `"…Z"`。
+	 *  前端的 `src/lib/exifDate.ts` 三種都吃；`scripts/backfill-exif-dates.ts` 負責收斂。
+	 */
 	DateTimeOriginal: string | null,
 	Software: string | null,
 	Flash: string | null,

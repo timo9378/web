@@ -159,6 +159,184 @@ pub async fn github_user(State(state): State<AppState>, Path(username): Path<Str
     .into_response()
 }
 
+/// `GET /api/github/repos/:username` 的一列。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubRepo {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    pub name: String,
+    pub html_url: String,
+    pub description: Option<String>,
+    pub language: Option<String>,
+    #[specta(type = specta_typescript::Number)]
+    pub stargazers_count: i64,
+}
+
+/// `GET /api/github/repos/:username`
+///
+/// 這支以前不存在——前端直接從瀏覽器打 `api.github.com/users/:u/repos`。那條路是
+/// **未認證**的，額度 60 req/hr 且是算在**讀者的 IP** 上；共用出口（公司 NAT、CGNAT、
+/// VPN）額滿時這一區會靜默空白。收進後端就吃得到 GITHUB_TOKEN 的 5000/hr。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubReposResponse {
+    pub repos: Vec<GithubRepo>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReposQuery {
+    limit: Option<u32>,
+}
+
+/// `GET /api/github/repos/:username` —— 依最後更新排序取前 N（預設 5）。
+#[utoipa::path(get, path = "/api/github/repos/{username}", tag = "integrations",
+    params(("username" = String, Path), ("limit" = Option<u32>, Query)),
+    responses((status = 200, body = GithubReposResponse)))]
+pub async fn github_repos(
+    State(state): State<AppState>,
+    Path(username): Path<String>,
+    Query(q): Query<ReposQuery>,
+) -> Response {
+    let limit = q.limit.unwrap_or(5).clamp(1, 100);
+    let token = std::env::var("GITHUB_TOKEN").ok().filter(|s| !s.is_empty());
+    let path = format!("/users/{username}/repos?sort=updated&per_page={limit}");
+    let Some(v) = gh_fetch(&state.http, &path, token.as_deref()).await else {
+        return Json(GithubReposResponse { repos: vec![], error: Some(GH_FETCH_ERR.to_string()) })
+            .into_response();
+    };
+    let Some(arr) = v.as_array() else {
+        // GitHub 錯誤物件（{message,…}）→ error 欄位，維持「不看上游狀態碼」的既有契約
+        let error = v.get("message").and_then(|m| m.as_str()).map(String::from);
+        return Json(GithubReposResponse { repos: vec![], error }).into_response();
+    };
+    let repos = arr
+        .iter()
+        .filter_map(|r| {
+            // id / name / html_url 缺任一就整筆不收：那三個是 render 一張卡片的必需品
+            Some(GithubRepo {
+                id: r.get("id").and_then(|x| x.as_i64())?,
+                name: r.get("name").and_then(|x| x.as_str())?.to_string(),
+                html_url: r.get("html_url").and_then(|x| x.as_str())?.to_string(),
+                description: r.get("description").and_then(|x| x.as_str()).map(String::from),
+                language: r.get("language").and_then(|x| x.as_str()).map(String::from),
+                stargazers_count: r.get("stargazers_count").and_then(|x| x.as_i64()).unwrap_or(0),
+            })
+        })
+        .collect();
+    Json(GithubReposResponse { repos, error: None }).into_response()
+}
+
+/// 貢獻熱圖的一天。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubContributionDay {
+    /// `YYYY-MM-DD`
+    pub date: String,
+    #[specta(type = specta_typescript::Number)]
+    pub count: i64,
+}
+
+/// `GET /api/github/contributions/:username`
+///
+/// 以前是前端直接打第三方的 `github-contributions-api.jogruber.de`——那是一個**爬
+/// GitHub 個人頁 HTML** 的服務。GitHub 的 REST API 沒有貢獻資料，但 GraphQL 有官方的
+/// `contributionsCollection.contributionCalendar`，而我們本來就有 token，所以不是把
+/// jogruber 代理起來，是直接不需要它了。
+#[derive(Debug, Default, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct GithubContributionsResponse {
+    pub contributions: Vec<GithubContributionDay>,
+    #[specta(type = specta_typescript::Number)]
+    pub total: i64,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ContributionsQuery {
+    /// 西元年；省略或 "last" 都代表「最近一年」
+    year: Option<String>,
+}
+
+/// `GET /api/github/contributions/:username?year=2025`
+#[utoipa::path(get, path = "/api/github/contributions/{username}", tag = "integrations",
+    params(("username" = String, Path), ("year" = Option<String>, Query)),
+    responses((status = 200, body = GithubContributionsResponse)))]
+pub async fn github_contributions(
+    State(state): State<AppState>,
+    Path(username): Path<String>,
+    Query(q): Query<ContributionsQuery>,
+) -> Response {
+    let err = |m: String| {
+        Json(GithubContributionsResponse { error: Some(m), ..Default::default() }).into_response()
+    };
+    let Some(token) = std::env::var("GITHUB_TOKEN").ok().filter(|s| !s.is_empty()) else {
+        return err("GITHUB_TOKEN 未設定（GraphQL 一定要認證）".into());
+    };
+    // year 只接受四位數字：它會被拼進 GraphQL 的 ISO 時間字串
+    let range = match q.year.as_deref().filter(|y| *y != "last") {
+        Some(y) if y.len() == 4 && y.bytes().all(|b| b.is_ascii_digit()) => {
+            Some((format!("{y}-01-01T00:00:00Z"), format!("{y}-12-31T23:59:59Z")))
+        }
+        Some(_) => return err("year 格式不正確".into()),
+        // 不帶 from/to：GraphQL 預設就是最近一年
+        None => None,
+    };
+    // 不帶 from/to 時 GraphQL 預設就是「最近一年」，所以整組引數直接省略
+    let args = match &range {
+        Some((f, t)) => format!(r#"(from: "{f}", to: "{t}")"#),
+        None => String::new(),
+    };
+    // login 走 GraphQL variable（不拼字串）；from/to 上面已經驗過只有四位數字組成
+    let query = format!(
+        r#"query($login: String!) {{
+             user(login: $login) {{
+               contributionsCollection{args} {{
+                 contributionCalendar {{
+                   totalContributions
+                   weeks {{ contributionDays {{ date contributionCount }} }}
+                 }}
+               }}
+             }}
+           }}"#
+    );
+    let body = json!({ "query": query, "variables": { "login": username } }).to_string();
+    let resp = state
+        .http
+        .post("https://api.github.com/graphql")
+        .header("User-Agent", GH_UA)
+        .bearer_auth(&token)
+        .header("Content-Type", "application/json")
+        .timeout(std::time::Duration::from_secs(10))
+        .body(body)
+        .send()
+        .await;
+    let Ok(resp) = resp else { return err(GH_FETCH_ERR.into()) };
+    let Ok(text) = resp.text().await else { return err(GH_FETCH_ERR.into()) };
+    let Ok(v) = serde_json::from_str::<Value>(&text) else { return err(GH_PARSE_ERR.into()) };
+    // GraphQL 的錯誤是 200 + {errors:[…]}，不是狀態碼
+    if let Some(msg) = v.pointer("/errors/0/message").and_then(|m| m.as_str()) {
+        return err(msg.to_string());
+    }
+    let cal = v.pointer("/data/user/contributionsCollection/contributionCalendar");
+    let contributions: Vec<GithubContributionDay> = cal
+        .and_then(|c| c.get("weeks"))
+        .and_then(|w| w.as_array())
+        .map(|weeks| {
+            weeks
+                .iter()
+                .filter_map(|w| w.get("contributionDays").and_then(|d| d.as_array()))
+                .flatten()
+                .filter_map(|d| {
+                    Some(GithubContributionDay {
+                        date: d.get("date").and_then(|x| x.as_str())?.to_string(),
+                        count: d.get("contributionCount").and_then(|x| x.as_i64()).unwrap_or(0),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let total = cal.and_then(|c| c.get("totalContributions")).and_then(|t| t.as_i64()).unwrap_or(0);
+    Json(GithubContributionsResponse { contributions, total, error: None }).into_response()
+}
+
 #[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
 pub struct GithubCommitAuthor {
     pub name: Option<String>,

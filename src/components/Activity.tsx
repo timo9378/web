@@ -24,11 +24,14 @@ import type {
   WakatimeStat,
   GithubUserResponse,
   GithubEvent,
+  GithubRepo,
+  GithubContributionsResponse,
 } from '@koimsurai/api-types';
 
-export type { SteamGame, SteamPlayer, WakatimeStat, GithubEvent };
+export type { SteamGame, SteamPlayer, WakatimeStat, GithubEvent, GithubRepo };
 export type SteamProfile = SteamProfileResponse;
 export type GithubUser = GithubUserResponse;
+export type GithubContributions = GithubContributionsResponse;
 
 export interface ServerStatus { status: string; responseTime: number; lastCheck: Date }
 
@@ -50,12 +53,6 @@ export interface WakatimeData {
   configured?: boolean;
   error?: string;
 }
-
-// ⚠️ 這兩個是**瀏覽器直接打第三方**拿到的，不經過我們的後端（repos 打 api.github.com、
-// contributions 打 jogruber），所以 Rust 當不了它們的型別來源——要收就得先加代理端點。
-export interface GithubRepo { id: number; html_url: string; name: string; description?: string; language?: string; stargazers_count: number }
-interface GithubContributionDay { date: string; count: number }
-export interface GithubContributions { total?: Record<string, number>; contributions?: GithubContributionDay[] }
 
 export interface GithubData {
   user?: GithubUser;
@@ -99,9 +96,9 @@ const Activity = () => {
     };
   };
 
-  // contribution 熱力圖格子（純函式，回傳格子；優先 jogruber contributions，沒有就用 push events 推）。
+  // contribution 熱力圖格子（純函式；優先用 /api/github/contributions 的日曆，
+  // 抓不到才退回從 push events 硬推——後者只看得到公開 push，數字會偏低）。
   const gridFromContributions = (apiData: GithubContributions): ContributionCell[][] => {
-    if (!apiData.contributions) return [];
     const contributions = apiData.contributions;
     const data: ContributionCell[][] = [];
     const totalWeeks = Math.ceil(contributions.length / 7);
@@ -149,7 +146,7 @@ const Activity = () => {
   };
 
   const contributionData = useMemo<ContributionCell[][]>(
-    () => (contributions?.contributions ? gridFromContributions(contributions) : gridFromEvents(githubData?.recentCommits ?? [])),
+    () => (contributions?.contributions.length ? gridFromContributions(contributions) : gridFromEvents(githubData?.recentCommits ?? [])),
     [contributions, githubData],
   );
 
@@ -184,8 +181,9 @@ const Activity = () => {
   const sortedOwnedGames = steamData?.ownedGames
     ? [...steamData.ownedGames].sort((a, b) => (b.playtime_forever ?? 0) - (a.playtime_forever ?? 0)).slice(0, 30)
     : [];
-  const contributionTotal = contributions?.total;
-  const contributionCount = contributionTotal ? (contributionTotal[Object.keys(contributionTotal)[0]] ?? 0) : 0;
+  // jogruber 的 total 是 `{ "2025": 842 }`，所以原本要 `total[Object.keys(total)[0]]`
+  // 去挖第一個 key。改吃後端的 GraphQL 版之後它就是一個數字了。
+  const contributionCount = contributions?.total ?? 0;
   // render 必須是純函式：new Date() 放進 state initializer（只在首次 render 求值）
   const [heatmapCurrentYear] = useState(() => new Date().getFullYear());
   const heatmapYears = ['last', String(heatmapCurrentYear), String(heatmapCurrentYear - 1), String(heatmapCurrentYear - 2)];
@@ -456,7 +454,7 @@ const Activity = () => {
                   <span>{githubData.user.name ?? githubData.user.login}</span>
                 </a>
               )}
-              {contributionTotal && (
+              {contributions && (
                   <div className="heatmap-total">
                     {contributionYear === 'last' ? (
                       <Trans

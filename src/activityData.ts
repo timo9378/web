@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import type {
   GithubEventsResponse,
+  GithubReposResponse,
   GithubUserResponse,
   SteamGamesResponse,
   SteamPlayerResponse,
@@ -15,7 +16,6 @@ import type {
   WakatimeData,
   GithubData,
   GithubEvent,
-  GithubRepo,
   GithubContributions,
   ServerStatus,
 } from './components/Activity';
@@ -89,16 +89,17 @@ export const githubQueryOptions = queryOptions({
   queryKey: ['activity', 'github'],
   queryFn: async (): Promise<GithubData> => {
     try {
-      const [userData, eventsData] = await Promise.all([
+      // repos 以前是瀏覽器直接打 api.github.com（未認證、60 req/hr 算在讀者 IP 上），
+      // 現在跟 user/events 一樣走後端，吃 GITHUB_TOKEN 的額度。
+      const [userData, eventsData, reposData] = await Promise.all([
         fetch(apiUrl(`/api/github/user/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubUserResponse>),
         fetch(apiUrl(`/api/github/events/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubEventsResponse>),
+        fetch(apiUrl(`/api/github/repos/${GITHUB_USERNAME}?limit=5`)).then((r) => r.json() as Promise<GithubReposResponse>),
       ]);
       if (userData.error ?? eventsData.error) return { error: userData.error ?? eventsData.error ?? undefined };
       const pushEvents = eventsData.events.filter((e: GithubEvent) => e.type === 'PushEvent').slice(0, 10);
-      const reposData = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=5`)
-        .then((r) => r.json() as Promise<GithubRepo[]>)
-        .catch(() => [] as GithubRepo[]);
-      return { user: userData, recentCommits: pushEvents, recentRepos: reposData };
+      // repos 抓不到不算整區失敗（本來就是次要資訊，原本也是 .catch(() => [])）
+      return { user: userData, recentCommits: pushEvents, recentRepos: reposData.repos };
     } catch {
       return { error: 'backend' };
     }
@@ -107,14 +108,18 @@ export const githubQueryOptions = queryOptions({
   refetchInterval: DATA_REFRESH,
 });
 
-// contributions（外部 jogruber API），依年份參數化 → 年份選擇器 = 換 queryKey 自動 refetch。
+// contributions：原本打第三方的 jogruber（一個爬 GitHub 個人頁 HTML 的服務），
+// 改走後端的 GraphQL contributionsCollection —— GitHub 官方就有這份資料，
+// 我們也本來就有 token，所以不是把 jogruber 代理起來，是不需要它了。
+// 依年份參數化 → 年份選擇器 = 換 queryKey 自動 refetch。
 export const contributionsQueryOptions = (year: string) =>
   queryOptions({
     queryKey: ['activity', 'contributions', year],
     queryFn: async (): Promise<GithubContributions | null> => {
       try {
-        const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${GITHUB_USERNAME}?y=${year}`);
-        return (await res.json()) as GithubContributions;
+        const res = await fetch(apiUrl(`/api/github/contributions/${GITHUB_USERNAME}?year=${year}`));
+        const data = (await res.json()) as GithubContributions;
+        return data.error ? null : data;
       } catch {
         return null;
       }

@@ -174,6 +174,10 @@ pub fn build_router(state: AppState) -> Router {
         // 第三方代理（/steam/profile SWR 快取、spotify、github、wakatime）
         .route("/api/github/user/{username}", get(handlers::thirdparty::github_user))
         .route("/api/github/events/{username}", get(handlers::thirdparty::github_events))
+        // repos / contributions 以前是瀏覽器直接打第三方（api.github.com 未認證、
+        // jogruber 的爬蟲服務）；收進後端才吃得到 token 額度，型別也才有來源
+        .route("/api/github/repos/{username}", get(handlers::thirdparty::github_repos))
+        .route("/api/github/contributions/{username}", get(handlers::thirdparty::github_contributions))
         .route("/api/wakatime/today", get(handlers::thirdparty::wakatime_today))
         .route("/api/wakatime/week", get(handlers::thirdparty::wakatime_week))
         .route("/api/wakatime/projects", get(handlers::thirdparty::wakatime_projects))

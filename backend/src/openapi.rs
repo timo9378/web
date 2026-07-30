@@ -122,6 +122,8 @@ impl Modify for SecurityAddon {
         handlers::tags::list_tags,
         handlers::thirdparty::books_search_external,
         handlers::thirdparty::github_events,
+        handlers::thirdparty::github_repos,
+        handlers::thirdparty::github_contributions,
         handlers::thirdparty::github_user,
         handlers::thirdparty::steam_achievements,
         handlers::thirdparty::steam_owned_games,

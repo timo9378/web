@@ -36,7 +36,8 @@ use koimsurai_web_backend::handlers::spotify::{
 use koimsurai_web_backend::handlers::stats::StatsResponse;
 use koimsurai_web_backend::handlers::tags::{TagRow, TagsResponse};
 use koimsurai_web_backend::handlers::thirdparty::{
-    GithubCommit, GithubCommitAuthor, GithubEvent, GithubEventPayload, GithubEventRepo, GithubEventsResponse,
+    GithubCommit, GithubCommitAuthor, GithubContributionDay, GithubContributionsResponse, GithubEvent,
+    GithubEventPayload, GithubEventRepo, GithubEventsResponse, GithubRepo, GithubReposResponse,
     GithubUserResponse, SteamCustomization, SteamFeaturedBadge, SteamGame, SteamGamesResponse, SteamPlayer,
     SteamPlayerResponse, SteamProfile, SteamProfileResponse, WakatimeActualCodingTime, WakatimeGrandTotal,
     WakatimeStat, WakatimeStatsResponse, WakatimeTodayResponse,
@@ -157,6 +158,11 @@ fn main() {
         .register::<GithubEventPayload>()
         .register::<GithubEvent>()
         .register::<GithubEventsResponse>()
+        // repos / contributions：原本瀏覽器直接打第三方，沒有型別來源可言
+        .register::<GithubRepo>()
+        .register::<GithubReposResponse>()
+        .register::<GithubContributionDay>()
+        .register::<GithubContributionsResponse>()
         .register::<SteamPlayer>()
         .register::<SteamPlayerResponse>()
         .register::<SteamGame>()
