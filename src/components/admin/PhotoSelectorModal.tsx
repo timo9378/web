@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaSearch, FaImage } from 'react-icons/fa';
 import { loadPhotosManifest } from '../../utils/manifestLoader';
+import { exifYmd } from '../../lib/exifDate';
 import type { PhotoManifest } from '../../types/photo';
 import { toast } from 'sonner';
 
@@ -156,9 +157,7 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-3">
                                 {filteredPhotos.map((photo) => {
-                                    const dateStr = photo.exif?.DateTimeOriginal?.split(' ')[0]
-                                        ? photo.exif.DateTimeOriginal.split(' ')[0].replace(/:/g, '/')
-                                        : '';
+                                    const dateStr = exifYmd(photo.exif?.DateTimeOriginal);
 
                                     return (
                                         <button

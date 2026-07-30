@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Keyboard, Thumbs } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
+import { exifYmd } from '../lib/exifDate';
 import {
   selectedPhotoAtom,
   viewerOpenAtom,
@@ -123,7 +124,8 @@ const PhotoViewer: React.FC = () => {
               這裡的 stopPropagation 沒有任何冒泡可擋，是死碼 */}
           <div className="photo-viewer-info">
             <div className="photo-title">
-              照片 {currentPhoto.exif?.DateTimeOriginal ?? currentPhoto.title}
+              {/* 原本直接印 DateTimeOriginal 原字串，兩種格式（exiftool / ISO）就長不一樣 */}
+              照片 {exifYmd(currentPhoto.exif?.DateTimeOriginal) || currentPhoto.title}
             </div>
           </div>
 

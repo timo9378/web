@@ -6,6 +6,7 @@ import { useSetAtom } from 'jotai';
 import { photosAtom, openViewerAtom } from '../store/photoStore';
 import PhotoViewer from './PhotoViewer.tsx';
 import { loadPhotosManifest } from '../utils/manifestLoader';
+import { exifMonthDay, exifYear } from '../lib/exifDate';
 import './PhotoGallery.css';
 import type { PhotoManifest, MasonryItemType } from '../types/photo';
 
@@ -23,8 +24,10 @@ const PhotoItem = memo(({ data, width, onPhotoClick }: {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const displayDate = data.exif?.DateTimeOriginal?.split(' ')[0].split(':').slice(1).join('/') ?? '';
-  const displayYear = data.exif?.DateTimeOriginal?.split(':')[0] ?? '';
+  // 原本是 split(':') 硬切 exiftool 格式；manifest 裡還有 ISO 格式的照片，
+  // 那種會切出 "15/00.164Z" 這種東西（見 lib/exifDate 的說明）。
+  const displayDate = exifMonthDay(data.exif?.DateTimeOriginal);
+  const displayYear = exifYear(data.exif?.DateTimeOriginal);
   const calculatedHeight = width / data.aspectRatio;
 
   return (
