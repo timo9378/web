@@ -438,6 +438,25 @@
   animation: rift-base 5s steps(1) infinite;
 }
 
+/* 打字期間的版面預留（見 Hero.tsx 的說明）：
+   sizer 放完整字串、只是看不見，負責把 chip 的最終寬高撐出來；
+   實際打出來的字絕對定位疊在上面，所以字數增加不會改變任何盒子尺寸。
+   visibility: hidden 而不是 opacity: 0——後者還會吃到 rift 動畫的閃爍。 */
+.hero-chip-text {
+  display: inline-block;
+  position: relative;
+}
+.hero-chip-sizer {
+  visibility: hidden;
+  white-space: nowrap;
+}
+.hero-chip-typed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+}
+
 /* 兩層重影：data-text 複製文字，裁水平條帶 + 大幅錯位 */
 .hero-chip--rift .hero-chip-text::before,
 .hero-chip--rift .hero-chip-text::after {
@@ -524,9 +543,9 @@
   .hero-chip--rift .hero-chip-text::after { opacity: 0; }
 }
 
-.hero-chip-text:empty::before {
-  content: '\200b'; /* 撐住高度，打字前 chip 不塌 */
-}
+/* 原本這裡有 `.hero-chip-text:empty::before { content: '\200b' }`——用零寬空格撐住高度，
+   避免打字前 chip 塌掉。現在 sizer 永遠在裡面（chip-text 不可能 :empty），而且它連「寬度」
+   也一起撐住了，那條規則已經沒有作用，移除。 */
 
 .hero-caret {
   width: 2px;

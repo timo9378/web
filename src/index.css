@@ -130,6 +130,34 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── 文章閱讀字體（右下角 FontSwitcher）──
+ *
+ * 為什麼字體棧放在 CSS 而不是 TSX：偏好存在 localStorage，server 讀不到，原本是在 BlogPost
+ * 掛載後的 useEffect 裡才 setCurrentFont → 首屏用預設 serif 畫完、之後整篇換字體重排。
+ * 那是「回訪讀者每次進文章都重排一次」，而且只在 CLS 上看得到（本機測不到，因為那幾種
+ * CJK 字體多半沒安裝、換了等於沒換）。
+ *
+ * 改成 __root.tsx 的 pre-paint inline script 直接把 id 寫到 html[data-blog-font]，首屏就是
+ * 正確字體。字體棧因此必須是 CSS 認得的東西 → 放這裡，同時也讓 TSX 那邊不必再存一份。
+ *
+ * ⚠️ 新增字體時要三處一起：這裡的 --blog-font-<id>、下面的 html[data-blog-font="<id>"]、
+ * 以及 BlogPost 的 FONT_OPTIONS（只放 id + 顯示名）。__root.tsx 的 script 不必動——它只
+ * 驗證 id 格式後原樣寫進 attribute，不認識任何字體。 */
+:root {
+  --blog-font-misans: MiSans, system-ui, -apple-system, sans-serif;
+  --blog-font-lxgw: 'LXGW WenKai TC', 'LXGW WenKai', cursive;
+  --blog-font-noto-serif: 'Noto Serif SC', 'Noto Serif TC', Georgia, serif;
+  --blog-font-source-han: 'Noto Sans SC', 'Noto Sans TC', 'Source Han Sans SC', sans-serif;
+
+  /* 沒有偏好時的預設（對齊 FONT_OPTIONS 的原始預設 'noto-serif'） */
+  --blog-font: var(--blog-font-noto-serif);
+}
+
+html[data-blog-font='misans'] { --blog-font: var(--blog-font-misans); }
+html[data-blog-font='lxgw'] { --blog-font: var(--blog-font-lxgw); }
+html[data-blog-font='noto-serif'] { --blog-font: var(--blog-font-noto-serif); }
+html[data-blog-font='source-han'] { --blog-font: var(--blog-font-source-han); }
+
 html {
   overflow-y: scroll;
   /* 這裡「不」設 scroll-behavior: smooth —— 全域 smooth 會把「每一次程式化捲動」都變成動畫，

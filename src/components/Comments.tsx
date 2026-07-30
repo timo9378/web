@@ -405,12 +405,19 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
 
       {/* ── Comments List ── */}
       <div className="comments-list">
+        {/* 載入中的 spinner：絕對定位覆蓋、不佔文檔流高度。
+            原本它是一個 padding:24px 的 block（約 85px 高），資料到達後整塊消失 → #comments
+            塌 85px。平常這塊塌在視口外沒事，但「重新整理」時 scroll restoration 已經把讀者捲到
+            留言區附近，塌陷正好落在視口內 → 大幅 CLS（實測捲到留言區 reload 可達 0.44，是實地
+            那些 0.157/0.264 固定值的來源）。改成覆蓋層後，loading↔loaded 高度不變。 */}
         {loadingList && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0' }}>
+          <div className="comments-loading" aria-hidden>
             <KoimLoader inline size="sm" />
           </div>
         )}
-        <div className="comments-header" style={loadingList ? { display: 'none' } : undefined}>
+        {/* loading 時用 visibility:hidden 而非 display:none：保留 header 的一行高度佔位，
+            否則 loaded 時 header 出現又會撐高。文字不可見所以不會先閃「暫無留言」再跳成數字。 */}
+        <div className="comments-header" style={loadingList ? { visibility: 'hidden' } : undefined}>
           <h3>{comments.length > 0 ? t('comments.titleN', { count: comments.length }) : t('comments.titleEmpty')}</h3>
         </div>
 

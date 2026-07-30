@@ -13,10 +13,13 @@ export const Route = createFileRoute('/$locale/blog/$id')({
     const locale = localeFromPrefix(params.locale);
     if (!locale || locale === 'zh-TW') throw notFound();
     try {
-      // 側欄 / 站內連結卡的「首幀完整」：平行預取清單 + 分類（同 /blog/$id）。
+      // 側欄 / 上下篇導覽 / 站內連結卡的「首幀完整」：平行預取清單 + 分類（同 /blog/$id）。
+      // 參數對齊元件端 useQuery（limit=200、該語系 locale），否則 queryKey 不符 → 白預取、
+      // 上下篇導覽 hydration 後才補上造成 CLS（詳見 /blog/$id 的 loader 說明）。
       const [post] = await Promise.all([
         context.queryClient.ensureQueryData(postDetailQueryOptions(params.id, locale)),
-        context.queryClient.prefetchQuery(recentPostsQueryOptions(100)),
+        context.queryClient.prefetchQuery(recentPostsQueryOptions(100, locale)),
+        context.queryClient.prefetchQuery(recentPostsQueryOptions(200, locale)),
         context.queryClient.prefetchQuery(blogCategoriesDetailQueryOptions(locale)),
       ]);
       // 同 /blog/$id：非 canonical 的識別碼（數字 id / 舊 slug）一律 301 到 slug 網址。

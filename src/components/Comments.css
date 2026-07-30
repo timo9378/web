@@ -447,6 +447,20 @@
 .comments-list {
   display: flex;
   flex-direction: column;
+  position: relative; /* 給 .comments-loading 覆蓋層定位用 */
+}
+/* 載入中的 spinner 覆蓋層——不佔文檔流高度（見 Comments.tsx 的說明：佔位會造成 reload 時
+   scroll restoration 的 CLS）。疊在 header 位置，loading 時 header 本身 visibility:hidden。 */
+.comments-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .comments-header h3 {

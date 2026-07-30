@@ -705,11 +705,15 @@ const nodeText = (node: React.ReactNode): string => {
 };
 
 /* ── Font Options ── */
+/* 閱讀字體選項。字體棧本身在 index.css（--blog-font-<id>），這裡只留 id 與顯示名——
+   偏好必須在 paint 之前套用（見 __root.tsx 的 pre-paint script），而那段只能碰 CSS。
+   新增字體：這裡加一列 + index.css 加兩行（--blog-font-<id> 與 html[data-blog-font=...]）。 */
+const DEFAULT_BLOG_FONT = 'noto-serif';
 const FONT_OPTIONS = [
-  { id: 'misans', name: 'MiSans', family: '"MiSans", system-ui, -apple-system, sans-serif' },
-  { id: 'lxgw', name: '霞鶩文楷', family: '"LXGW WenKai TC", "LXGW WenKai", cursive' },
-  { id: 'noto-serif', name: 'Noto Serif', family: '"Noto Serif SC", "Noto Serif TC", Georgia, serif' },
-  { id: 'source-han', name: '思源黑體', family: '"Noto Sans SC", "Noto Sans TC", "Source Han Sans SC", sans-serif' },
+  { id: 'misans', name: 'MiSans' },
+  { id: 'lxgw', name: '霞鶩文楷' },
+  { id: 'noto-serif', name: 'Noto Serif' },
+  { id: 'source-han', name: '思源黑體' },
 ];
 
 
@@ -1548,7 +1552,8 @@ const FontSwitcher = ({ currentFont, onFontChange }: { currentFont: string; onFo
                 key={f.id}
                 className={'font-option' + (currentFont === f.id ? ' active' : '')}
                 onClick={() => { onFontChange(f.id); setIsOpen(false); }}
-                style={{ fontFamily: f.family }}
+                // 每個選項用自己的字體預覽 → 直接指向 index.css 的那份定義，不另存一份字體棧
+                style={{ fontFamily: `var(--blog-font-${f.id})` }}
               >
                 {f.name}
               </button>
@@ -1726,7 +1731,8 @@ function BlogPost() {
   const [toastMsg, setToastMsg] = useState('');
   const [showMetaCatTooltip, setShowMetaCatTooltip] = useState(false);
   // SSR-safe：初始用預設（server 無 localStorage），掛載後才讀本地偏好 → 首次 client render 與 SSR 一致、不 mismatch。
-  const [currentFont, setCurrentFont] = useState('noto-serif');
+  // 只驅動 FontSwitcher 的「目前選中」標記；實際字體由 html[data-blog-font] + CSS 變數決定。
+  const [currentFont, setCurrentFont] = useState(DEFAULT_BLOG_FONT);
   const contentRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLElement>(null);
   const { id = '' } = useParams({ strict: false });
@@ -1760,18 +1766,16 @@ function BlogPost() {
     [metaCats, postData?.category],
   );
 
-  /* Font family memo */
-  const fontFamily = useMemo(() => {
-    const font = FONT_OPTIONS.find((f) => f.id === currentFont);
-    return font ? font.family : FONT_OPTIONS[0].family;
-  }, [currentFont]);
-
   const handleFontChange = useCallback((fontId: string) => {
     setCurrentFont(fontId);
     localStorage.setItem('blogFont', fontId);
+    // 立刻套用：pre-paint script 只在整頁載入時跑，SPA 內切換字體要自己改 attribute
+    document.documentElement.setAttribute('data-blog-font', fontId);
   }, []);
 
-  // 掛載後補讀本地字體偏好（見上方 currentFont 的 SSR-safe 初始）。
+  // 掛載後補讀偏好——只為了讓 FontSwitcher 標對「目前選中」那一項。
+  // 字體本身已經由 __root.tsx 的 pre-paint script 寫進 html[data-blog-font] 在首屏套好了，
+  // 所以這裡 setState 不再造成任何版面變動（原本它會讓整篇文章重排 → CLS）。
   useEffect(() => {
     const stored = localStorage.getItem('blogFont');
     // 使用者偏好存在 localStorage，server 讀不到（同 Comments 的說明）
@@ -2072,8 +2076,10 @@ function BlogPost() {
   const translationNotice = lookup(AI_TRANSLATION_NOTICE, currentLocale);
   const titleParts = splitTitle(post.title);
 
+  // 字體吃 CSS 變數而非 state：值由 __root.tsx 的 pre-paint script 從 localStorage 決定，
+  // 首屏就是正確字體，不會再有「先用預設 serif 排一次、掛載後整篇重排」的位移。
   return (
-    <div className="blog-post-container" style={{ fontFamily }}>
+    <div className="blog-post-container" style={{ fontFamily: 'var(--blog-font)' }}>
       {/* Dim overlay over global starfield */}
       <div className="blog-post-dim-overlay" />
 

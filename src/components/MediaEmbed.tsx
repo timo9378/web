@@ -5,9 +5,19 @@
 import { useState } from 'react';
 import VideoPlayer from './VideoPlayer';
 
-export function Video({ src, poster, caption }: { src?: string; poster?: string; caption?: string }) {
+// width/height 從 MDX 屬性進來是字串；轉成正數才給 VideoPlayer 當 <video> 的尺寸屬性
+// （用於預留佔位比例、防 CLS）。缺或非法就不帶，VideoPlayer 退回無預留的舊行為。
+function toDim(v: string | number | undefined): number | undefined {
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+export function Video(
+  { src, poster, caption, width, height }:
+  { src?: string; poster?: string; caption?: string; width?: string | number; height?: string | number },
+) {
   if (!src) return null;
-  return <VideoPlayer src={src} poster={poster} caption={caption} />;
+  return <VideoPlayer src={src} poster={poster} caption={caption} width={toDim(width)} height={toDim(height)} />;
 }
 
 export function YouTube({ id, title = 'YouTube 影片' }: { id?: string; title?: string }) {

@@ -62,10 +62,14 @@ const useTypingEffect = (text: string, speed = 100, startDelay = 0) => {
 };
 
 
+// chip 打字的完整字串。抽成常量是因為下面要用同一份文字當「隱藏佔位」把最終寬度先撐住——
+// 兩邊必須一致，否則預留的寬度就是錯的。
+const CHIP_TEXT = 'products that feel right';
+
 function Hero() {
   // Innei 式三行：名字高亮 → accent + 發光 chip（打字機）→ 小描述行。
   // hero 文案統一英文（不跟語系走），只有 chip 文字打字。
-  const { displayedText: typedChip, isTypingComplete: chipComplete } = useTypingEffect('products that feel right', 80, 900);
+  const { displayedText: typedChip, isTypingComplete: chipComplete } = useTypingEffect(CHIP_TEXT, 80, 900);
   // 捲動提示只在頁面頂端有意義：一旦捲下去就淡出，免得那條細線一直杵在畫面上像雜訊。
   // 初值由 state initializer 取（避免在 effect 同步段呼叫 setState）；之後交給 scroll 事件。
   const [scrolled, setScrolled] = useState(() => typeof window !== 'undefined' && window.scrollY > 40);
@@ -102,7 +106,14 @@ function Hero() {
             {' into '}
             <span className="hero-chip hero-chip--rift">
               <span className="hero-chip-spark" aria-hidden="true">✦</span>
-              <span className="hero-chip-text" data-text={typedChip}>{typedChip}</span>
+              {/* 打字時 chip 會橫向長大 → hero-line2 的換行點改變 → 整塊 hero 高度 +43px
+                  （實測 CLS 0.0268；「上一頁」回首頁時最明顯，那時 intro 遮罩不會蓋住這段）。
+                  先用一份隱藏的完整文字把最終寬度佔住，打出來的字疊在上面。
+                  data-text 仍給打出來的字：它是 ::before/::after 那組 hover 故障重影的內容。 */}
+              <span className="hero-chip-text" data-text={typedChip}>
+                <span className="hero-chip-sizer" aria-hidden="true">{CHIP_TEXT}</span>
+                <span className="hero-chip-typed">{typedChip}</span>
+              </span>
               <span className="hero-caret" aria-hidden="true" />
             </span>
           </p>

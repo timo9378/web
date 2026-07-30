@@ -125,16 +125,30 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         {SUPPORTED_LOCALES.filter((l) => l !== locale).map((l) => (
           <meta key={l} property="og:locale:alternate" content={LOCALE_TO_OG[l]} />
         ))}
-        {/* pre-paint:首訪+桌面+首頁時先藏內容(避免 client-only intro 掛上前先閃首頁);
-            SpaceBackdropShell pre-reveal 移除,4s safety timeout 兜底(JS 失敗也不會卡住)。 */}
+        {/* pre-paint,兩件事：
+            1. 首訪+桌面+首頁時先藏內容(避免 client-only intro 掛上前先閃首頁);
+               SpaceBackdropShell pre-reveal 移除,4s safety timeout 兜底(JS 失敗也不會卡住)。
+            2. 套用文章閱讀字體偏好 → html[data-blog-font]。偏好在 localStorage、server 讀不到，
+               原本是 BlogPost 掛載後才 setState，等於「首屏用預設 serif 畫完、再整篇換字體重排」——
+               回訪讀者每次進文章都吃一次。字體棧定義在 index.css 的 --blog-font-<id>。
+               只收 /^[a-z-]{1,20}$/：localStorage 是使用者可改的，不驗就等於把任意字串寫進 attribute。
+
+            ⚠️ 試過但無效、別再加：`history.scrollRestoration='manual'`。
+            動機是「長文章重新整理時瀏覽器搶先還原捲動位置」——實測還原發生在 160ms、當時 SSR HTML
+            還沒解析完（docH 只有 2792，最終 7109），同一個 scrollTop 對應的內容完全不同 → CLS 0.4252。
+            但把宣告放這裡沒有用：瀏覽器的還原是 navigation commit 的一部分，比 <head> 的同步 script
+            更早，scrollY 依然被設成 1972/docH 2792。改成 manual 之後位移反而從「5 次中 3 次」變成
+            必現（改由 router 還原，時序更固定）。真正要解得從「SSR HTML 解析完成前不要有可捲動高度」
+            或 router 還原時機下手，不是這一行。 */}
         <script
           // 這裡是唯一選項：這段必須在 paint 之前「同步」跑完（<script src> 或 useEffect
-          // 都太晚，首頁會先閃一下）。內容是原始碼寫死的字串常量，沒有變數插值、
-          // 沒有使用者輸入，不存在注入面。
+          // 都太晚，首頁會先閃一下、文章會先用錯字體排一次）。內容是原始碼寫死的字串常量，
+          // 沒有變數插值、沒有使用者輸入直接落地（localStorage 那個值有白名單格式驗證），
+          // 不存在注入面。
           // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var d=sessionStorage.getItem('introCompleted')==='true';var m=matchMedia('(max-width:768px)').matches;var p=location.pathname;var h=p==='/'||/^\\/(en|ja|ko|zh-cn)\\/?$/.test(p);if(!d&&!m&&h){document.documentElement.classList.add('intro-pending');setTimeout(function(){document.documentElement.classList.remove('intro-pending')},4000);}}catch(e){}})()",
+              "(function(){try{var d=sessionStorage.getItem('introCompleted')==='true';var m=matchMedia('(max-width:768px)').matches;var p=location.pathname;var h=p==='/'||/^\\/(en|ja|ko|zh-cn)\\/?$/.test(p);if(!d&&!m&&h){document.documentElement.classList.add('intro-pending');setTimeout(function(){document.documentElement.classList.remove('intro-pending')},4000);}}catch(e){}try{var f=localStorage.getItem('blogFont');if(f&&/^[a-z-]{1,20}$/.test(f)){document.documentElement.setAttribute('data-blog-font',f);}}catch(e){}})()",
           }}
         />
       </head>

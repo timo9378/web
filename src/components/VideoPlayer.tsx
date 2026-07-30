@@ -18,7 +18,10 @@ const fmt = (s: number) => {
   return `${m}:${String(sec).padStart(2, '0')}`;
 };
 
-export default function VideoPlayer({ src, poster, caption }: { src: string; poster?: string; caption?: string }) {
+export default function VideoPlayer(
+  { src, poster, caption, width, height }:
+  { src: string; poster?: string; caption?: string; width?: number; height?: number },
+) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -115,11 +118,18 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
   const pct = duration > 0 ? (time / duration) * 100 : 0;
   const showBar = !playing || hovering || scrubbing;
 
+  // 有尺寸時：把 aspect-ratio 放在容器 .vp 上（不是 <video>），容器就有確定的佔位比例，
+  // metadata 載入前後高度一致 → 消除 reload + scroll-restoration 的 CLS。<video> 用
+  // object-fit:contain 填滿容器。豎屏受 max-height 限、橫屏受 max-width 限，兩者都保持比例。
+  // 全螢幕時不套（改由 .vp--fullscreen 佔滿視窗）。
+  const sized = !fullscreen && !!width && !!height;
+
   return (
     <figure className="mdx-video">
       <div
         ref={wrapRef}
-        className={fullscreen ? 'vp vp--fullscreen' : 'vp'}
+        className={fullscreen ? 'vp vp--fullscreen' : sized ? 'vp vp--sized' : 'vp'}
+        style={sized ? { aspectRatio: `${width} / ${height}` } : undefined}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
@@ -133,6 +143,12 @@ export default function VideoPlayer({ src, poster, caption }: { src: string; pos
           preload="auto"
           poster={poster}
           src={src}
+          // width/height 屬性讓瀏覽器在 metadata 載入前就從比例預留空間（同 <img> 防 CLS 的機制）。
+          // 沒有它時 <video> 首屏是預設 150px，metadata 一到就撐成真實高度 → reload + scroll
+          // restoration 時這段高度差會把下方內容整段推移，是文章頁 CLS 的主因（實測影片撐高 424px）。
+          // CSS 的 max-height/max-width 仍照常約束顯示尺寸，只是佔位比例正確。
+          width={width}
+          height={height}
           onClick={toggle}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
