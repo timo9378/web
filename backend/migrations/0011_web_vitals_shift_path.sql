@@ -1,0 +1,11 @@
+-- 最大位移發生在哪一頁。
+--
+-- 為什麼 path 不夠：CLS 在 SPA 裡累加整個 page lifecycle，到 pagehide 才定稿，而上報時讀的
+-- pathname 是「讀者最後停在哪」。實測過：/blog 列表上有一筆 0.0326 的位移（側欄某段高度
+-- 229→0px），讀者接著點進文章再離開，那筆 CLS 就被記在文章頁上。
+--
+-- 也就是說 web_vitals.path 對 CLS 而言是「離開時的位置」，不是「位移發生的位置」——照著它
+-- 去修頁面會修錯對象（差點就照著它去改影片與圖片的尺寸預留，而那兩者實測都不是主因）。
+--
+-- 這一欄不改 CLS 的算法（要跟 CrUX 可比就得照樣累加整個 lifecycle），只補上真正的位置。
+ALTER TABLE web_vitals ADD COLUMN shift_path TEXT;

@@ -596,6 +596,97 @@ async fn gallery_photos_skips_broken_photo_instead_of_failing() {
     assert_eq!(body["totalPhotos"], 1);
 }
 
+/// 後台頁面不進 vitals 統計。
+///
+/// 排除發生在**讀取端**而不是寫入端：beacon 照收（歷史資料留著、將來想單獨看後台也還在），
+/// 但 /api/vitals/stats 要濾掉——編輯器天生會位移，實測混進來會把全站 CLS p75 從 0.031
+/// 拉到 0.129，讓文章頁的真實數字整個被蓋掉。
+///
+/// count 與 poor 分開斷言：p75 是用 count 算 OFFSET 的，兩句 SQL 只要有一句漏了條件，
+/// 母體就會不一致——那種錯不會編譯失敗，只會靜靜地算出錯的百分位。
+#[tokio::test]
+async fn vitals_stats_excludes_admin_pages() {
+    let (app, pool) = test_app().await;
+
+    for (path, value, rating) in [
+        ("/blog/1", 0.01, "good"),
+        ("/admin", 0.4, "poor"),
+        ("/admin/posts", 0.5, "poor"),
+        ("/admin/posts/edit/1", 0.6, "poor"),
+    ] {
+        let beacon =
+            json!({ "metric": "CLS", "value": value, "rating": rating, "path": path, "isMobile": false });
+        let (status, _) = post_json(&app, "/api/vitals", beacon).await;
+        assert_eq!(status, StatusCode::NO_CONTENT, "{path} 應該照收");
+    }
+
+    let stored: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM web_vitals").fetch_one(&pool).await.unwrap();
+    assert_eq!(stored, 4, "四筆都要真的寫進資料表");
+
+    let (status, body) = get(&app, "/api/vitals/stats").await;
+    assert_eq!(status, StatusCode::OK);
+    let cls =
+        body["metrics"].as_array().unwrap().iter().find(|m| m["metric"] == "CLS").expect("stats 要有 CLS");
+    assert_eq!(cls["count"], 1, "只算 /blog/1 那筆");
+    assert_eq!(cls["poor"], 0, "三筆後台的 poor 不該算進來");
+    assert_eq!(cls["good"], 1);
+    assert_eq!(cls["p75"], 0.01, "p75 要落在同一個（已排除後台的）母體上");
+}
+
+/// CLS 歸因欄位（target / loadState）存得進、太長會截斷、沒帶就是 NULL。
+///
+/// 這兩欄是診斷 CLS 的唯一手段：Lighthouse 在無節流的本機跑文章頁是 CLS 0，實地卻是 0.129，
+/// 所以「哪個元素在動」只能靠真實讀者的瀏覽器回報 largestShiftTarget。
+#[tokio::test]
+async fn vitals_beacon_stores_cls_attribution() {
+    let (app, pool) = test_app().await;
+
+    let long_target = format!("html>body>{}", "div.wrap>".repeat(60));
+    assert!(long_target.chars().count() > 200, "這個測試要靠它超過上限才有意義");
+
+    for (path, target, load_state, shift_path) in [
+        // 讀者停在文章頁，但最大位移其實發生在列表頁——這正是實測到的錯誤歸因情境
+        ("/blog/1", Some("aside.blog-sidebar>div.sidebar-section"), Some("loading"), Some("/blog?page=2")),
+        ("/blog/2", Some(long_target.as_str()), Some("complete"), None),
+        ("/blog/3", None, None, None),
+    ] {
+        let mut b = json!({ "metric": "CLS", "value": 0.2, "rating": "needs-improvement", "path": path });
+        if let Some(t) = target {
+            b["target"] = json!(t);
+        }
+        if let Some(l) = load_state {
+            b["loadState"] = json!(l);
+        }
+        if let Some(s) = shift_path {
+            b["shiftPath"] = json!(s);
+        }
+        let (status, _) = post_json(&app, "/api/vitals", b).await;
+        assert_eq!(status, StatusCode::NO_CONTENT);
+    }
+
+    /// (path, target, load_state, shift_path)
+    type VitalRow = (String, Option<String>, Option<String>, Option<String>);
+    let rows: Vec<VitalRow> =
+        sqlx::query_as("SELECT path, target, load_state, shift_path FROM web_vitals ORDER BY path")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+    assert_eq!(rows.len(), 3);
+
+    assert_eq!(rows[0].1.as_deref(), Some("aside.blog-sidebar>div.sidebar-section"));
+    assert_eq!(rows[0].2.as_deref(), Some("loading"));
+    assert_eq!(rows[0].3.as_deref(), Some("/blog"), "shift_path 要去掉 query");
+    assert_ne!(rows[0].0, "/blog", "path 仍是讀者離開時的位置，兩欄本來就會不同");
+
+    let stored = rows[1].1.as_deref().expect("過長的 target 要截斷保留，不是丟掉");
+    assert_eq!(stored.chars().count(), 200, "截到 200 字元");
+    assert!(long_target.starts_with(stored), "截斷要留前綴——前綴才認得出是哪個元件");
+
+    assert_eq!(rows[2].1, None, "沒帶歸因就是 NULL");
+    assert_eq!(rows[2].2, None);
+    assert_eq!(rows[2].3, None);
+}
+
 /// 極簡 percent-encode（測試用；只處理 query 值需要的字元）
 fn urlencode(s: &str) -> String {
     let mut out = String::new();
