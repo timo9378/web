@@ -6,7 +6,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { ExifValue } from '@koimsurai/api-types';
-import { parseExifDate } from '../lib/exifDate';
+import { exifDateTimeText } from '../lib/exifDate';
 import type { PhotoManifest } from '../types/photo';
 import './EXIFPanel.css';
 
@@ -21,20 +21,11 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  // 原本是 `new Date(dateString)` 直接丟進 toLocaleString：manifest 裡 246/247 筆是
-  // exiftool 的 "2023:04:27 10:56:22"，new Date 給 Invalid Date，而 toLocaleString 對
-  // Invalid Date **不會 throw**（回字串 "Invalid Date"），所以那個 try/catch 從來沒接到。
-  const formatDate = (dateString?: string | null): string => {
-    const d = parseExifDate(dateString);
-    if (!d) return dateString ?? 'N/A';
-    return d.toLocaleString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  // 原本是 `new Date(dateString)` 直接丟進 toLocaleString：manifest 裡多數是 exiftool
+  // 的 "2023:04:27 10:56:22"，new Date 給 Invalid Date，而 toLocaleString 對 Invalid Date
+  // **不會 throw**（回字串 "Invalid Date"），所以那個 try/catch 從來沒接到過東西。
+  const formatDate = (dateString?: string | null): string =>
+    exifDateTimeText(dateString) ?? dateString ?? 'N/A';
 
   // EXIF 數值在 manifest 裡有兩種形狀：舊 Node builder 寫 exiftool 的格式化字串
   // （"1/640"、"f/1.4"、"32 mm"），Rust 的 sync 寫數字。之前型別只標 string，三個

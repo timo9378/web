@@ -80,6 +80,12 @@ pub struct PhotoExif {
     pub exposure_time: Option<ExifValue>,
     #[serde(rename = "ISO")]
     pub iso: Option<ExifValue>,
+    /// 拍攝時間。本檔寫的是帶相機自身時區的 ISO 8601（`"2023-04-27T10:56:22+08:00"`）；
+    /// 相機沒寫 OffsetTime* 時退成不帶時區的裸本地時間。
+    ///
+    /// ⚠️ 舊 manifest 裡還有兩種歷史格式：Node builder 寫的 exiftool 原樣
+    /// `"2023:04:27 10:56:22"`，以及本檔舊版拿容器 TZ 硬轉的 `"…Z"`。
+    /// 前端的 `src/lib/exifDate.ts` 三種都吃；`scripts/backfill-exif-dates.ts` 負責收斂。
     #[serde(rename = "DateTimeOriginal")]
     pub date_time_original: Option<String>,
     // 以下四欄只有舊 builder 會寫；本檔的 extract_exif 不產，但讀到要留著
@@ -419,19 +425,37 @@ fn extract_exif(bytes: &[u8]) -> (Option<PhotoExif>, u32) {
     m.exposure_time = num(exif::Tag::ExposureTime);
     m.focal_length = num(exif::Tag::FocalLength);
     m.focal_length_in_35mm_format = num(exif::Tag::FocalLengthIn35mmFilm);
-    // DateTimeOriginal："2023:04:27 10:56:22"——exifr 以**容器本地時區**（TZ=Asia/Taipei）
-    // 解析再 toISOString（UTC）→ chrono 同語意：naive → Local → UTC ISO。
+    // DateTimeOriginal 是相機的**牆上時間**，本身不帶時區；時區在另一個 tag——
+    // EXIF 2.31 的 OffsetTimeOriginal（實測來源檔 248/248 都有寫，Canon EOS M6 II
+    // 與 Pixel 7 Pro 皆然）。
+    //
+    // 舊寫法是把它丟給 `chrono::Local` 再轉 UTC，也就是拿**容器的** TZ 去補資料裡
+    // 沒有的東西：在國外拍的照片（相機會寫 +09:00）會被硬蓋成台北。改成直接接相機
+    // 自己寫的 offset；真的沒有 offset 就輸出裸的本地時間，不假裝知道時區。
     if let Some(v) = ascii(exif::Tag::DateTimeOriginal)
         && let Ok(naive) = chrono::NaiveDateTime::parse_from_str(&v, "%Y:%m:%d %H:%M:%S")
     {
-        use chrono::TimeZone;
-        if let chrono::LocalResult::Single(local) = chrono::Local.from_local_datetime(&naive) {
-            let utc = local.with_timezone(&chrono::Utc);
-            m.date_time_original = Some(utc.format("%Y-%m-%dT%H:%M:%S.000Z").to_string());
-        }
+        let offset = ascii(exif::Tag::OffsetTimeOriginal)
+            .or_else(|| ascii(exif::Tag::OffsetTime))
+            .filter(|s| is_utc_offset(s));
+        m.date_time_original =
+            Some(format!("{}{}", naive.format("%Y-%m-%dT%H:%M:%S"), offset.unwrap_or_default()));
     }
     let e = if m.is_empty() { None } else { Some(m) };
     (e, orientation)
+}
+
+/// EXIF 的 `OffsetTime*` 是 `"+08:00"` / `"-05:00"`。格式不對就當沒有——
+/// 接一個壞掉的 offset 上去會讓整串時間變成解不開的字串，比沒有還糟。
+fn is_utc_offset(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() == 6
+        && (b[0] == b'+' || b[0] == b'-')
+        && b[1].is_ascii_digit()
+        && b[2].is_ascii_digit()
+        && b[3] == b':'
+        && b[4].is_ascii_digit()
+        && b[5].is_ascii_digit()
 }
 
 /// `resize({width, withoutEnlargement:true})` 尺寸（只縮不放，round）。

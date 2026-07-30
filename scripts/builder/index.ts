@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { BuilderConfig } from './config';
 import { loadConfig } from './config';
-import { extractExif } from './exif-extractor';
+import { extractExif, toIsoWithOffset } from './exif-extractor';
 import { processImage, isSupportedImageFormat } from './image-processor';
 import type { PhotoManifest } from '../../src/types/photo';
 
@@ -57,7 +57,10 @@ async function processPhoto(
   inputPath: string,
   outputDir: string,
   config: BuilderConfig,
-  index: number
+  index: number,
+  /** 同 id 的舊資料。策展欄位（tags / tagsEn / description）只存在 manifest 裡，
+      重新處理時得從這裡帶回來——照片本身沒有這些資訊。 */
+  existing?: PhotoManifest
 ): Promise<PhotoManifest | null> {
   try {
     const fileName = path.basename(inputPath);
@@ -93,7 +96,8 @@ async function processPhoto(
     const manifest: PhotoManifest = {
       id: photoId,
       title,
-      description: `${exifData.make || ''} ${exifData.model || ''}`.trim(),
+      // 舊的 description 非空就留著（可能是人手改過的）；沒有才退回機身型號
+      description: existing?.description || `${exifData.make || ''} ${exifData.model || ''}`.trim(),
 
       urls: {
         full: processedImage.highResUrl,
@@ -124,7 +128,8 @@ async function processPhoto(
         FNumber: exifData.fNumber ?? null,
         ExposureTime: exifData.exposureTime ?? null,
         ISO: exifData.iso ?? null,
-        DateTimeOriginal: exifData.dateTimeOriginal ?? null,
+        // 接上相機自己寫的時區（見 exif-extractor 的 toIsoWithOffset）
+        DateTimeOriginal: toIsoWithOffset(exifData.dateTimeOriginal, exifData.offsetTimeOriginal) ?? null,
         Software: exifData.software ?? null,
         Flash: exifData.flash ?? null,
         WhiteBalance: exifData.whiteBalance ?? null,
@@ -136,8 +141,10 @@ async function processPhoto(
         : null,
       shootTime: shootTime ?? null,
 
-      tags: [],
-      tagsEn: [],
+      // ⚠️ 標籤是 RAM++ 標的、只存在 manifest 裡，照片本身沒有。原本這裡寫死 `[]`，
+      // 所以只要輸出檔掉了一張、那張重新處理，它的標籤就靜靜消失了。
+      tags: existing?.tags ?? [],
+      tagsEn: existing?.tagsEn ?? [],
     };
 
     console.log(`  ✅ 完成: ${fileName}`);
@@ -227,7 +234,8 @@ export async function build() {
         inputPath,
         config.output.directory,
         config,
-        i + 1
+        i + 1,
+        existing
       );
 
       if (manifest) {

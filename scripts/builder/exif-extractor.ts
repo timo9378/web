@@ -25,6 +25,8 @@ export interface ExtractedExif {
 
   // 時間
   dateTimeOriginal?: string;
+  /** EXIF 2.31 的 OffsetTimeOriginal，形如 "+08:00"。相機沒寫就是 undefined。 */
+  offsetTimeOriginal?: string;
   createDate?: string;
 
   // GPS
@@ -102,6 +104,13 @@ export async function extractExif(filePath: string): Promise<ExtractedExif> {
     if (tagData.exif?.DateTimeOriginal?.description) {
       exif.dateTimeOriginal = tagData.exif.DateTimeOriginal.description;
     }
+    // EXIF 2.31 的時區 tag。DateTimeOriginal 只有牆上時間、不帶時區，時區在這裡
+    // （實測來源檔 248/248 都有寫）。兩個寫入端要產同一種格式，這邊也得取。
+    if (tagData.exif?.OffsetTimeOriginal?.description) {
+      exif.offsetTimeOriginal = tagData.exif.OffsetTimeOriginal.description;
+    } else if (tagData.exif?.OffsetTime?.description) {
+      exif.offsetTimeOriginal = tagData.exif.OffsetTime.description;
+    }
     if (tagData.exif?.CreateDate?.description) {
       exif.createDate = tagData.exif.CreateDate.description;
     }
@@ -159,4 +168,20 @@ export function formatShutterSpeed(exposureTime?: string): string {
 export function formatFocalLength(focalLength?: string): string {
   if (!focalLength) return '';
   return `${focalLength}mm`;
+}
+
+/** OffsetTime* 的合法形式是 "+08:00" / "-05:00"；格式不對就當沒有。 */
+const UTC_OFFSET_RE = /^[+-]\d{2}:\d{2}$/;
+
+/**
+ * exiftool 的 "2023:04:27 10:56:22" + "+08:00" → "2023-04-27T10:56:22+08:00"。
+ *
+ * 沒有 offset 就輸出不帶時區的裸本地時間——相機沒說時區的時候不要假裝知道。
+ * 這個格式與後端 handlers::gallery::extract_exif 一致（同一份 manifest 兩個寫入端）。
+ */
+export function toIsoWithOffset(dateTimeOriginal?: string, offset?: string): string | undefined {
+  if (!dateTimeOriginal) return undefined;
+  const m = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}:\d{2}:\d{2})/.exec(dateTimeOriginal);
+  const naive = m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}` : dateTimeOriginal;
+  return offset && UTC_OFFSET_RE.test(offset) ? `${naive}${offset}` : naive;
 }
