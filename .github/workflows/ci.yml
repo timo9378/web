@@ -205,6 +205,14 @@ jobs:
           # 只有 main 存（理由同 backend job 那段：PR 讀得到 base 的快取，自己存是浪費額度）
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
+      # 瀏覽器本體進快取。key 綁 playwright 版本——升版就是新的 key，不會拿到舊 binary。
+      # 命中時下面那行仍然會跑，但 playwright 偵測到 binary 已存在就只做 `--with-deps`
+      # 的 apt 那段（系統函式庫沒辦法用 actions/cache 還原，那是裝進 / 的）。
+      - name: playwright 瀏覽器快取
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異
       - name: install chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -274,11 +282,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      # 這個 job **不裝 pnpm、也不 pnpm install**（省了 36s：action-setup 15s + install 21s）。
+      # 它只需要兩件 node 的事，兩件都不用第三方套件：
+      #   · tests/e2e/seed.mjs 灌種子 —— 只 import `node:sqlite`（內建，需 node 22+）
+      #   · 簽一個 owner JWT     —— HS256 就是 HMAC-SHA256，`node:crypto` 八行搞定
+      # setup-node 留著是因為 runner 預設的 node 版本不保證有 `node:sqlite`。
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 26
-          cache: pnpm
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
@@ -290,7 +301,6 @@ jobs:
           # 只有 main 存（理由同上）
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
-      - run: pnpm install --frozen-lockfile
       - name: build backend
         run: cargo build --locked --bin koimsurai-web-backend
       # stack.mjs 會等前端的 .output 存在；這裡只要後端，所以直接起 binary
@@ -326,10 +336,16 @@ jobs:
       # 而串接需要認證。JWT_SECRET 與上面起後端時給的 'fuzz' 一致。
       - name: schemathesis（admin CRUD，帶 owner token）
         run: |
-          TOKEN=$(node -e "
-            const jwt = require('jsonwebtoken');
+          TOKEN=$(node --input-type=module -e "
+            // HS256 = HMAC-SHA256(base64url(header).base64url(payload))。用內建的
+            // node:crypto 而不是 jsonwebtoken，這個 job 才不必 pnpm install（省 36s）。
+            import { createHmac } from 'node:crypto';
+            const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
             const now = Math.floor(Date.now() / 1000);
-            console.log(jwt.sign({ id: 1, username: 'admin', role: 'OWNER', iat: now, exp: now + 7200 }, 'fuzz'));
+            const head = b64({ alg: 'HS256', typ: 'JWT' });
+            const body = b64({ id: 1, username: 'admin', role: 'OWNER', iat: now, exp: now + 7200 });
+            const sig = createHmac('sha256', 'fuzz').update(head + '.' + body).digest('base64url');
+            console.log(head + '.' + body + '.' + sig);
           ")
           uvx schemathesis run http://127.0.0.1:13999/api/openapi.json \
             --include-path-regex '^/api/admin/(tags|categories|blacklist|keyword-filters)' \
