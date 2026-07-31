@@ -104,6 +104,12 @@ jobs:
         with:
           workspaces: .
           prefix-key: v1-rust
+          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
+          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
+          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
+          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
+          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
+          shared-key: workspace
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
           tool: cargo-nextest,cargo-audit,cargo-llvm-cov,cargo-shear,typos-cli
@@ -167,6 +173,12 @@ jobs:
         with:
           workspaces: .
           prefix-key: v1-rust
+          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
+          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
+          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
+          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
+          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
+          shared-key: workspace
       - run: pnpm install --frozen-lockfile
       # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異
       - name: install chromium
@@ -234,6 +246,12 @@ jobs:
         with:
           workspaces: .
           prefix-key: v1-rust
+          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
+          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
+          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
+          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
+          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
+          shared-key: workspace
       - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
       - run: pnpm install --frozen-lockfile
       - name: build backend
@@ -275,11 +293,47 @@ jobs:
     name: Docker · frontend + backend image build
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 2 是給下面那個 diff 用的（要有 HEAD^ 才比得出改了什麼）
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 2
+      # 只建「輸入真的變過」的那個 image。
+      #
+      # 後端 image 冷建要 360s：backend/Dockerfile 用 `--mount=type=cache` 存 target/，
+      # 而 **BuildKit 的 cache mount 不會被 type=gha 匯出**——它只活在 BuildKit daemon
+      # 的本機狀態。所以 CI 上只有兩種結果：整層命中（4s），或從零重編 453 個依賴（360s）。
+      # 既然沒有中間值，最有效的就是「沒必要就別觸發」。
+      #
+      # 判不出來時（schedule / dispatch / 淺 clone）一律兩個都建——寧可多花時間，
+      # 不要讓部署路徑的守門靜靜地不跑。
+      - name: 判斷要建哪個 image
+        id: scope
+        run: |
+          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "判不出 diff，兩個都建"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true"  >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only HEAD^ HEAD)
+          echo "$changed"
+          # 後端 image 只吃 Cargo.* 與 backend/
+          if echo "$changed" | grep -qE '^(Cargo\.(toml|lock)|backend/)'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+          # 前端 image 的 context 是整個 repo，但 .dockerignore 擋掉的不算；
+          # backend/ 以外的任何改動都可能進 COPY . . → 保守地建
+          if echo "$changed" | grep -qvE '^backend/'; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
       - name: build frontend image
+        if: steps.scope.outputs.frontend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
@@ -288,6 +342,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
       - name: build backend image
+        if: steps.scope.outputs.backend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
         with:
           context: .
