@@ -552,5 +552,9 @@
   "photos": {
     "title": "写真作品集",
     "description": "Koimsurai の写真作品集。旅先の光と影の記録。"
+  },
+  "gallery": {
+    "allTags": "すべて",
+    "moreTags": "その他"
   }
 }

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Masonry } from 'masonic';
 import { useInView } from 'react-intersection-observer';
 import { useSetAtom } from 'jotai';
+import { useTranslation } from 'react-i18next';
 import { photosAtom, openViewerAtom } from '../store/photoStore';
 import PhotoViewer from './PhotoViewer.tsx';
 import { loadPhotosManifest } from '../utils/manifestLoader';
@@ -10,12 +11,34 @@ import { exifMonthDay, exifYear } from '../lib/exifDate';
 import './PhotoGallery.css';
 import type { PhotoManifest, MasonryItemType } from '../types/photo';
 
+/**
+ * 這張照片在目前語系下該顯示哪一組標籤。
+ *
+ * manifest 兩組都有（`tags` 中文、`tagsEn` 英文，RAM++ 產的），但這個元件原本
+ * **完全沒有 i18n**——不管哪個語系都直接讀 `tags`，所以 /en/photos 與 /ja/photos
+ * 的篩選鈕一直是「全部／坐／男人／地板／貓」，而周圍的介面文字（More／もっと）
+ * 明明是翻好的。資料早就在，只是從來沒被接上。
+ *
+ * ja/ko 沒有對應語系的標籤資料，退到英文而不是留中文：英文至少是明確的，
+ * 而中文標籤對日韓讀者是「看得懂字但不是自己的語言」的半吊子狀態。
+ * 真要有 ja/ko 標籤得重跑一次自動標註，那是另一件事。
+ */
+function tagsFor(photo: Pick<PhotoManifest, 'tags' | 'tagsEn'>, locale: string): string[] {
+  const useChinese = locale === 'zh-TW' || locale === 'zh-CN';
+  if (useChinese) return photo.tags ?? [];
+  const en = photo.tagsEn ?? [];
+  return en.length > 0 ? en : (photo.tags ?? []); // 沒有英文標籤的照片就維持原樣
+}
+
 // 照片項目組件
-const PhotoItem = memo(({ data, width, onPhotoClick }: {
+const PhotoItem = memo(({ data, width, locale, onPhotoClick }: {
   data: PhotoManifest;
   width: number;
+  /** 懸停時顯示的標籤也要跟著語系走，不然卡片上仍是中文 */
+  locale: string;
   onPhotoClick: (photo: PhotoManifest) => void;
 }) => {
+  const shownTags = tagsFor(data, locale);
   const { ref, inView } = useInView({
     threshold: 0.1,
     triggerOnce: true,
@@ -75,9 +98,9 @@ const PhotoItem = memo(({ data, width, onPhotoClick }: {
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <p className="photo-date text-2xl font-bold">{displayDate}</p>
             <p className="photo-year text-lg opacity-80">{displayYear}</p>
-            {data.tags && data.tags.length > 0 && (
+            {shownTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {data.tags.slice(0, 5).map((tag) => (
+                {shownTags.slice(0, 5).map((tag) => (
                   <span key={tag} className="px-2 py-1 text-xs bg-white/20 rounded-full backdrop-blur-sm">
                     #{tag}
                   </span>
@@ -95,13 +118,18 @@ PhotoItem.displayName = 'PhotoItem';
 
 // The tags will be calculated dynamically from the loaded photos
 
+/** 「全部」在內部當作沒有篩選的哨兵值；顯示文字走 i18n，不要拿顯示字串當狀態。 */
+const ALL_TAGS = '__all__';
+
 function PhotoGallery() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const setPhotosAtom = useSetAtom(photosAtom);
   const openViewer = useSetAtom(openViewerAtom);
   const [photos, setPhotos] = useState<PhotoManifest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部');
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_TAGS);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // 靜態與動態計算標籤 (Top 4 + 其他)
@@ -109,7 +137,7 @@ function PhotoGallery() {
     if (photos.length === 0) return { topTags: [], otherTags: [] };
     const counts: Record<string, number> = {};
     photos.forEach(p => {
-      p.tags?.forEach(t => {
+      tagsFor(p, locale).forEach(t => {
         counts[t] = (counts[t] || 0) + 1;
       });
     });
@@ -124,7 +152,17 @@ function PhotoGallery() {
       topTags: sorted.slice(0, 4),
       otherTags: sorted.slice(4, FILTER_MAX)
     };
-  }, [photos]);
+  }, [photos, locale]);
+
+  // 換語系時標籤整組換掉（中文 → 英文），先前選的那個在新語系裡不存在。
+  // 用**推導**而不是在 effect 裡 setState：後者會多一次 render，而且中間那一幀
+  // 是「選了一個不存在的標籤」＝畫面空白。這裡直接把失效的選擇視同「全部」。
+  const activeCategory =
+    selectedCategory !== ALL_TAGS &&
+    !topTags.includes(selectedCategory) &&
+    !otherTags.includes(selectedCategory)
+      ? ALL_TAGS
+      : selectedCategory;
 
   // 載入照片資料
   useEffect(() => {
@@ -154,16 +192,18 @@ function PhotoGallery() {
   // 準備 Masonry 數據 (不包含舊版的 HeaderItem)
   const masonryItems: MasonryItemType[] = useMemo(() => {
     let filteredPhotos = photos;
-    if (selectedCategory !== '全部') {
-      filteredPhotos = photos.filter(photo => photo.tags?.includes(selectedCategory));
+    if (activeCategory !== ALL_TAGS) {
+      // 用 tagsFor 而不是 photo.tags：選單顯示的是該語系的標籤，
+      // 這裡若拿中文去比對，非中文語系會篩出空結果。
+      filteredPhotos = photos.filter(photo => tagsFor(photo, locale).includes(activeCategory));
     }
     return filteredPhotos;
-  }, [photos, selectedCategory]);
+  }, [photos, activeCategory, locale]);
 
   // Masonry 渲染器
   const renderMasonryItem = useCallback(({ data, width }: { data: MasonryItemType; width: number }) => {
-    return <PhotoItem data={data as PhotoManifest} width={width} onPhotoClick={handlePhotoClick} />;
-  }, [handlePhotoClick]);
+    return <PhotoItem data={data as PhotoManifest} width={width} locale={locale} onPhotoClick={handlePhotoClick} />;
+  }, [handlePhotoClick, locale]);
 
   // 載入中狀態
   if (loading) {
@@ -230,15 +270,15 @@ function PhotoGallery() {
       >
         <div className="category-tabs">
           <button
-            className={`category-tab ${selectedCategory === '全部' ? 'active' : ''}`}
-            onClick={() => setSelectedCategory('全部')}
+            className={`category-tab ${activeCategory === ALL_TAGS ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(ALL_TAGS)}
           >
-            全部
+            {t('gallery.allTags')}
           </button>
           {topTags.map((tab) => (
             <button
               key={tab}
-              className={`category-tab ${selectedCategory === tab ? 'active' : ''}`}
+              className={`category-tab ${activeCategory === tab ? 'active' : ''}`}
               onClick={() => setSelectedCategory(tab)}
             >
               {tab}
@@ -251,10 +291,10 @@ function PhotoGallery() {
               onMouseLeave={() => setDropdownOpen(false)}
             >
               <button
-                className={`category-tab ${otherTags.includes(selectedCategory) ? 'active' : ''}`}
+                className={`category-tab ${otherTags.includes(activeCategory) ? 'active' : ''}`}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                {otherTags.includes(selectedCategory) ? selectedCategory : '更多 ▼'}
+                {otherTags.includes(activeCategory) ? activeCategory : `${t('gallery.moreTags')} ▼`}
               </button>
               {dropdownOpen && (
                 <div style={{ position: 'absolute', top: '100%', right: 0, paddingTop: '0.5rem', zIndex: 50 }}>
@@ -268,9 +308,9 @@ function PhotoGallery() {
                         key={tab}
                         style={{
                           padding: '0.5rem 1rem', background: 'transparent',
-                          color: selectedCategory === tab ? '#fff' : 'rgba(255,255,255,0.7)',
+                          color: activeCategory === tab ? '#fff' : 'rgba(255,255,255,0.7)',
                           textAlign: 'left', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                          backgroundColor: selectedCategory === tab ? 'rgba(127, 90, 240, 0.3)' : 'transparent',
+                          backgroundColor: activeCategory === tab ? 'rgba(127, 90, 240, 0.3)' : 'transparent',
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -280,22 +320,22 @@ function PhotoGallery() {
                         // onFocus/onBlur 與 hover 鏡像：原本只有滑鼠會有反白，
                         // 鍵盤 Tab 過來完全看不出停在哪一項。
                         onMouseOver={(e) => {
-                          if (selectedCategory !== tab) {
+                          if (activeCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
                           }
                         }}
                         onFocus={(e) => {
-                          if (selectedCategory !== tab) {
+                          if (activeCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
                           }
                         }}
                         onMouseOut={(e) => {
-                          if (selectedCategory !== tab) {
+                          if (activeCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }
                         }}
                         onBlur={(e) => {
-                          if (selectedCategory !== tab) {
+                          if (activeCategory !== tab) {
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }
                         }}
@@ -314,7 +354,7 @@ function PhotoGallery() {
       {/* Masonry 瀑布流佈局 */}
       <div className="masonry-container max-w-7xl mx-auto">
         <Masonry
-          key={selectedCategory}
+          key={activeCategory}
           items={masonryItems}
           render={renderMasonryItem}
           columnWidth={300}

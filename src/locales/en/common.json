@@ -552,5 +552,9 @@
   "photos": {
     "title": "Photography",
     "description": "Koimsurai's photography — light and shadow from the road."
+  },
+  "gallery": {
+    "allTags": "All",
+    "moreTags": "More"
   }
 }

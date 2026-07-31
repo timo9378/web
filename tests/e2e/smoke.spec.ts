@@ -124,6 +124,37 @@ test('草稿不會出現在公開清單', async ({ page }) => {
 });
 
 /**
+ * 相簿的標籤要跟著語系走。
+ *
+ * 這條存在的原因是一個**資料早就齊備、卻從來沒被接上**的洞：manifest 同時有
+ * `tags`（中文）與 `tagsEn`（英文），但 PhotoGallery 完全沒有 i18n，三個語系
+ * 一律顯示中文標籤——而它周圍的介面文字（More／もっと）明明翻好了。
+ * 那種「一半翻了一半沒翻」不會有人回報，只會讓非中文讀者覺得這站很粗糙。
+ *
+ * 驗兩件事：介面標籤（全部/All/すべて）有翻，而且**標籤本身**在非中文語系是英文。
+ */
+for (const [path, allLabel, expectEnglishTags] of [
+  ['/photos', '全部', false],
+  ['/en/photos', 'All', true],
+  ['/ja/photos', 'すべて', true],
+] as const) {
+  test(`相簿標籤跟著語系：${path}`, async ({ page }) => {
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    const tabs = page.locator('.category-tab');
+    await expect(tabs.first()).toHaveText(allLabel);
+
+    const texts = (await tabs.allInnerTexts()).map((s) => s.trim()).slice(1); // 跳過「全部」
+    expect(texts.length, '種子 fixture 應該產出至少一個標籤篩選鈕').toBeGreaterThan(0);
+    const hasChinese = texts.some((s) => /[一-鿿]/.test(s));
+    if (expectEnglishTags) {
+      expect(hasChinese, `${path} 的標籤仍是中文：${texts.join(', ')}`).toBe(false);
+    } else {
+      expect(hasChinese, `中文版的標籤應該是中文：${texts.join(', ')}`).toBe(true);
+    }
+  });
+}
+
+/**
  * 未登入者不該進得了後台的**任何**一條路徑。
  *
  * 原本這裡只驗「status < 500 且畫面上沒有草稿標題」——那太弱：一個什麼都不 render

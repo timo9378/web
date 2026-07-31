@@ -552,5 +552,9 @@
   "photos": {
     "title": "사진 작품집",
     "description": "Koimsurai 의 사진 작품집. 여행길의 빛과 그림자 기록."
+  },
+  "gallery": {
+    "allTags": "전체",
+    "moreTags": "더보기"
   }
 }

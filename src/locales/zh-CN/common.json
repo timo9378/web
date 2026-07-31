@@ -552,5 +552,9 @@
   "photos": {
     "title": "摄影作品集",
     "description": "Koimsurai 的摄影作品集，记录旅途中的光影故事。"
+  },
+  "gallery": {
+    "allTags": "全部",
+    "moreTags": "更多"
   }
 }
