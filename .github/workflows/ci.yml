@@ -104,12 +104,24 @@ jobs:
         with:
           workspaces: .
           prefix-key: v1-rust
-          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
-          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
-          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
-          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
-          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
-          shared-key: workspace
+          # ⚠ 這個 job **不能**跟 e2e / api-fuzz 共用 key。原本三個都寫 `workspace`，
+          # 理由是省空間（各存一份是 1265 + 565 + 565 MB），但那個共用是失效的：
+          #
+          # rust-cache 只在「key 還不存在」時存得進去。e2e 與 api-fuzz 跑得快、先結束、
+          # 先把自己的快取存進 workspace——而它們只跑 `cargo build --bin`，裡面沒有
+          # clippy 的 .rmeta，也沒有 llvm-cov 的插樁產物。這個 job 最後才結束，key
+          # 已存在 → 它的產物**永遠存不進去**。
+          #
+          # 後果是每一次 CI 都在重編：實測同一個 run 裡
+          #   api-fuzz  Checking 2   Compiling 1     ← 全命中
+          #   e2e       Checking 2   Compiling 1     ← 全命中
+          #   本 job    Checking 297 Compiling 454   ← clippy 353 + llvm-cov 397
+          # 也就是 453 個相依編兩次（clippy 一組 flag、llvm-cov 的 -C instrument-coverage
+          # 又一組，artifact 本來就不能互用）。1m39 + 2m36 幾乎全是這個。
+          #
+          # 共用 key 只有在「產物真的一樣」時才成立。e2e 與 api-fuzz 之間成立，
+          # 所以它們兩個維持共用；這個 job 拆出來自己一份。
+          shared-key: workspace-lint-cov
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
           tool: cargo-nextest,cargo-audit,cargo-llvm-cov,cargo-shear,typos-cli
@@ -174,16 +186,15 @@ jobs:
           node-version: 26
           cache: pnpm
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
-      # 與 backend job 共用同一份快取（workspace root 在根目錄，見上面那段說明）
+      # workspace root 在根目錄（見 backend job 那段說明）
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: .
           prefix-key: v1-rust
-          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
-          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
-          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
-          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
-          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
+          # 與 api-fuzz 共用：兩個 job 都只跑 `cargo build --bin`，產物一樣，
+          # 誰先存都能讓對方全命中（實測兩邊都是 Checking 2 / Compiling 1）。
+          # backend job **不在**這把 key 裡——它的 clippy / llvm-cov 產物不同，
+          # 硬共用的結果是它永遠存不進去、每次重編兩遍。理由寫在那個 job 底下。
           shared-key: workspace
       - run: pnpm install --frozen-lockfile
       # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異
@@ -265,11 +276,8 @@ jobs:
         with:
           workspaces: .
           prefix-key: v1-rust
-          # shared-key 讓 backend / e2e / api-fuzz 三個 job 共用同一份快取。
-          # 不設的話 rust-cache 會把 job 名稱放進 key，三個 job 各存一份幾乎一樣的
-          # 東西（實測 1265 + 565 + 565 MB），把 repo 的 10 GB 快取額度推爆 →
-          # GitHub 開始 LRU 驅逐 → docker 的層被清掉 → 後端 image 從零重編 453 個
-          # 依賴（360s）。省的不只是空間，是別人的快取命中率。
+          # 與 e2e 共用（產物相同，兩邊都只跑 `cargo build --bin`）。
+          # backend job 不在這把 key 裡，理由見那個 job 底下的說明。
           shared-key: workspace
       - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
       - run: pnpm install --frozen-lockfile
