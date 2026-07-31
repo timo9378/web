@@ -85,3 +85,13 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+
+# schemathesis / hypothesis 的範例資料庫（設定已改成 :memory:，舊的殘留也一併擋）
+.schemathesis/
+.hypothesis/
+
+# 工作用的計畫／筆記，不進版控
+# ⚠️ 這行只擋**新檔**。docs/ 下已被追蹤的 5 個檔案不受影響（gitignore 管不到已追蹤的），
+#    它們也不會再被推上去，除非有人改動它們。真要讓它們從 repo 消失得跑
+#    `git rm --cached -r docs/`，那會讓它們從 GitHub 上不見——所以沒有自動做。
+docs/
