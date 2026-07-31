@@ -126,6 +126,10 @@ async function main() {
     DATABASE_URL: `sqlite://${DB_PATH}?mode=rwc`,
     BIND_ADDR: `127.0.0.1:${PORTS.backend}`,
     JWT_SECRET: 'e2e-secret',
+    // legacy 的 basic auth：沒設會走 fail-closed 的 503（正確但沒測到東西），
+    // 給一組假的才會走真正的「憑證錯誤 → 401」路徑。測試不會拿到這組值。
+    ADMIN_USERNAME: 'e2e-not-a-real-admin',
+    ADMIN_PASSWORD: 'e2e-not-a-real-password',
     // 相簿讀既有的測試 fixture（形狀取自線上 manifest），不必準備真的圖片
     GALLERY_MANIFEST_PATH: path.join(ROOT, 'backend/tests/fixtures/gallery_manifest.json'),
     // 第三方同步器一律關掉：E2E 不該打外部 API

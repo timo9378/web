@@ -162,6 +162,64 @@ jobs:
             test-results/
           retention-days: 7
 
+  # 從 OpenAPI spec 自動生成 API 測試。跟 e2e 分開跑，因為它會對同一個 DB 打上千個
+  # 請求，要自己的拋棄式 DB；而且它不需要前端，只起後端就好。
+  #
+  # 為什麼值得：spec 有 123 個 operation，輸入是 schemathesis 生的而不是我們想到的。
+  # 第一次跑就撞出 `GET /api/films/recent?limit=abc` → 500（三支 watch 端點都中，
+  # 公開免認證）。設定與已知例外見根目錄的 schemathesis.toml。
+  api-fuzz:
+    name: API · Schemathesis（從 OpenAPI 自動生成）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: .
+          prefix-key: v1-rust
+      - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
+      - run: pnpm install --frozen-lockfile
+      - name: build backend
+        run: cargo build --locked --bin koimsurai-web-backend
+      # stack.mjs 會等前端的 .output 存在；這裡只要後端，所以直接起 binary
+      - name: 起後端（temp SQLite + migrations + seed）
+        run: |
+          node -e "
+            const { spawn } = require('node:child_process');
+            const { seed } = require('./tests/e2e/seed.mjs');
+            const db = '/tmp/koimsurai-fuzz.db';
+            const p = spawn('./target/debug/koimsurai-web-backend', [], {
+              env: { ...process.env, DATABASE_URL: 'sqlite://' + db + '?mode=rwc',
+                     BIND_ADDR: '127.0.0.1:13999', JWT_SECRET: 'fuzz',
+                     ADMIN_USERNAME: 'nope', ADMIN_PASSWORD: 'nope', RUST_LOG: 'warn' },
+              detached: true, stdio: 'ignore' });
+            p.unref();
+            (async () => {
+              for (let i = 0; i < 120; i++) {
+                try { if ((await fetch('http://127.0.0.1:13999/api/health')).ok) break; } catch {}
+                await new Promise(r => setTimeout(r, 500));
+              }
+              seed(db);
+              console.log('後端就緒');
+            })();
+          "
+      - name: schemathesis
+        run: uvx schemathesis run http://127.0.0.1:13999/api/openapi.json -w 4 --report-junit-path st.xml
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
+        if: failure()
+        with:
+          name: schemathesis-report
+          path: st.xml
+          retention-days: 7
+
   # 部署路徑守門：CI 過但 docker build 炸過（js-yaml + 未釘 pnpm 那次），
   # 因為前端 job 只跑 vite build、從不碰 Dockerfile。這個 job 補上那個缺口。
   docker:
