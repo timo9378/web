@@ -1,0 +1,28 @@
+# typos（crate-ci/typos）的設定。掃程式、5 個語系的 JSON、以及中文註解
+# （它跳過非 ASCII，所以中文不會被誤判）。
+#
+# 白名單只放**實際被誤報過**的字，不預先塞一堆可能用到的專有名詞——
+# 那會把它變成一個什麼都不擋的裝飾品。加字進來時附上它是什麼。
+
+[default.extend-words]
+# 第三方 API 自己的拼字錯誤，不能「修正」——修了就抓不到欄位
+# （meigen.doodlenote 的回應欄位就叫 auther，見 handlers/quote.rs 的註解）
+auther = "auther"
+
+# three.js 的材質屬性名（THREE.MeshStandardMaterial.metalness）
+metalness = "metalness"
+
+# 品牌名
+Shure = "Shure"   # 麥克風廠牌（Shure MV7+）
+shure = "shure"   # 同上，出現在檔名 shure-mv7-plus.png
+Canva = "Canva"   # 設計工具
+
+[files]
+# 這幾個是機器產生或第三方內容，錯字不是我們能修的
+extend-exclude = [
+  "pnpm-lock.yaml",
+  "Cargo.lock",
+  "packages/api-types/index.ts", # specta 生成
+  "src/routeTree.gen.ts",        # TanStack 生成
+  "*.min.js",
+]

@@ -625,8 +625,8 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         }
 
         let sp = source_path.clone();
-        let (fo, to) = (full_out.clone(), thumb_out.clone());
-        let result = tokio::task::spawn_blocking(move || process_single_image(&sp, &fo, &to)).await;
+        let (full, thumb) = (full_out.clone(), thumb_out.clone());
+        let result = tokio::task::spawn_blocking(move || process_single_image(&sp, &full, &thumb)).await;
         let p = match result {
             Ok(Ok(p)) => p,
             _ => {

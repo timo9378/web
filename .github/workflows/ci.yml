@@ -98,7 +98,18 @@ jobs:
           prefix-key: v1-rust
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
-          tool: cargo-nextest,cargo-audit,cargo-llvm-cov
+          tool: cargo-nextest,cargo-audit,cargo-llvm-cov,cargo-shear,typos-cli
+      # 未使用／放錯區段的相依，以及沒被連進模組樹的 .rs 檔。
+      # 文字掃描（找 use 路徑），所以只透過巨集展開用到的 crate 可能誤報——
+      # 真遇到就進 [package.metadata.cargo-shear] ignored，不要為此關掉整個檢查。
+      - name: cargo-shear（未使用的 Rust 相依）
+        working-directory: .
+        run: cargo shear
+      # 錯字：掃程式、5 個語系的 JSON、中文註解（非 ASCII 會被跳過，中文不誤判）。
+      # 白名單在 .typos.toml，只放實際被誤報過的字。
+      - name: typos
+        working-directory: .
+        run: typos
       # 格式守門（設定見 backend/rustfmt.toml：max_width 110 + 緊湊啟發式，貼近既有風格）
       - name: cargo fmt --check
         run: cargo fmt --check
