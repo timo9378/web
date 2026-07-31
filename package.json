@@ -110,6 +110,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
+    "@cfworker/json-schema": "^4.1.1",
     "@eslint-react/eslint-plugin": "^5.9.1",
     "@playwright/test": "^1.62.0",
     "@rolldown/plugin-babel": "^0.2.3",
@@ -121,8 +122,6 @@
     "@types/react-dom": "^19.0.4",
     "@types/three": "0.185.1",
     "@vitejs/plugin-react": "^6.0.2",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "^1.0.0",
     "heic-convert": "^2.1.0",

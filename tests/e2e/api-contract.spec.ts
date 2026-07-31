@@ -1,5 +1,4 @@
-import Ajv, { type ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { Validator } from '@cfworker/json-schema';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 
 /**
@@ -15,6 +14,12 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
  *
  * 只驗**無參數的公開 GET**：帶參數的要準備 fixture、寫入型的有副作用，
  * 那些交給下面幾支明確的測試與 backend 的整合測試。
+ *
+ * ⚠️ 驗證器用 @cfworker/json-schema 而不是 ajv，有兩個理由：
+ *   1. utoipa 產的是 OpenAPI **3.1**（＝JSON Schema draft 2020-12），ajv 6 不支援
+ *   2. pnpm-workspace.yaml 有一條 CVE 用的 top-level override 把 ajv 壓在 ^6.14.0，
+ *      直接相依 ajv@8 會讓 --frozen-lockfile 對不起來（CI 實測擋下來過）。
+ *      那條 pin 是刻意的，不該為了測試去動它。
  */
 
 interface OpenApiOperation {
@@ -28,20 +33,20 @@ type OpenApiSpec = {
 };
 
 let spec: OpenApiSpec;
-let ajv: Ajv;
 
 test.beforeAll(async ({ playwright, baseURL }) => {
   const ctx = await playwright.request.newContext({ baseURL });
   spec = (await (await ctx.get('/api/openapi.json')).json()) as OpenApiSpec;
   await ctx.dispose();
-
-  ajv = new Ajv({ strict: false, allErrors: true, discriminator: true });
-  addFormats(ajv);
-  // utoipa 產的 $ref 是 #/components/schemas/X；把它們整包餵給 ajv 才解得開
-  for (const [name, schema] of Object.entries(spec.components?.schemas ?? {})) {
-    ajv.addSchema(schema as object, `#/components/schemas/${name}`);
-  }
 });
+
+/**
+ * 把 operation 的 schema 包成一份自足的文件：spec 裡的 $ref 都是
+ * `#/components/schemas/X`（相對於文件根），所以要把 components 一起帶進來才解得開。
+ * 2020-12 起 `$ref` 不再蓋掉同層的其他關鍵字，所以就算 opSchema 本身是個 $ref 也成立。
+ */
+const validatorFor = (opSchema: unknown) =>
+  new Validator({ ...(opSchema as object), components: spec.components } as never, '2020-12');
 
 /** 挑「不用準備任何東西就能打」的公開 GET。 */
 function plainPublicGets(): { path: string; schema: unknown }[] {
@@ -58,11 +63,6 @@ function plainPublicGets(): { path: string; schema: unknown }[] {
   return out;
 }
 
-/** 給定 schema 編一個 validator（ajv 對同一個 schema 物件會快取）。 */
-function compile(schema: unknown): ValidateFunction {
-  return ajv.compile(schema as object);
-}
-
 test('公開 GET 端點的回應都符合自己宣告的 OpenAPI schema', async ({ request }) => {
   const targets = plainPublicGets();
   expect(targets.length, 'spec 裡應該找得到一批無參數的公開 GET').toBeGreaterThan(8);
@@ -73,11 +73,11 @@ test('公開 GET 端點的回應都符合自己宣告的 OpenAPI schema', async 
     // 第三方端點沒金鑰會走降級路徑（另有測試驗），這裡只驗成功回應的形狀
     if (r.status() !== 200) continue;
     const body: unknown = await r.json();
-    const validate = compile(schema);
-    if (!validate(body)) {
-      const errs = (validate.errors ?? [])
+    const result = validatorFor(schema).validate(body);
+    if (!result.valid) {
+      const errs = result.errors
         .slice(0, 3)
-        .map((e) => `${e.instancePath || '(root)'} ${e.message}`)
+        .map((e) => `${e.instanceLocation} ${e.error}`)
         .join('; ');
       bad.push(`${path} — ${errs}`);
     }
