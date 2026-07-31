@@ -229,6 +229,25 @@ export type CategoriesResponse = {
 	categories: CategoryRow[],
 };
 
+/**  `POST /api/admin/categories` 的 200 回應。 */
+export type CategoryCreated = {
+	id: number,
+	name: string,
+	slug: string,
+	description: string,
+	short_description: string,
+	post_count: number,
+};
+
+/**
+ *  `DELETE /api/admin/categories/{id}` 的 200 回應。
+ *  分類被刪時底下的文章會被移到未分類，所以要回報影響了幾篇。
+ */
+export type CategoryDeleted = {
+	message: string,
+	affectedPosts: number,
+};
+
 /**  `GET /api/categories` 單列。欄位順序對齊 Express SELECT。 */
 export type CategoryRow = {
 	id: number,
@@ -252,6 +271,15 @@ export type CategoryRow = {
 	short_description_ja: string | null,
 	short_description_ko: string | null,
 	short_description_zh_cn: string | null,
+};
+
+/**  `PUT /api/admin/categories/{id}` 的 200 回應（`id` 同樣來自 Path，理由見 [`TagUpdated`]）。 */
+export type CategoryUpdated = {
+	id: number,
+	name: string,
+	slug: string,
+	description: string,
+	updated: number,
 };
 
 /**
@@ -290,6 +318,12 @@ export type CommentsResponse = {
 
 export type CountResponse = {
 	count: number,
+};
+
+/**  建立成功、只需要回新資源 id 的端點。 */
+export type CreatedResponse = {
+	message: string,
+	id: number,
 };
 
 /**
@@ -346,6 +380,11 @@ export type DigestTimeline = {
 	slug: string | null,
 	title: string,
 	created_at: string,
+};
+
+/**  4xx 的統一形狀。 */
+export type ErrorResponse = {
+	error: string,
 };
 
 /**
@@ -525,6 +564,11 @@ export type LinkPreviewResponse = {
 	site_name: string | null,
 	/**  favicon（固定用 /favicon.ico 的絕對路徑，降級卡用） */
 	favicon: string | null,
+};
+
+/**  只回一句訊息的成功回應（刪除、確認類）。 */
+export type MessageResponse = {
+	message: string,
 };
 
 export type MetricStat = {
@@ -904,6 +948,13 @@ export type SubscribersResponse = {
 	pagination: Pagination,
 };
 
+/**  `POST /api/admin/tags` 的 201 回應。 */
+export type TagCreated = {
+	id: number,
+	name: string,
+	post_count: number,
+};
+
 /**
  *  公開標籤列表的單列。欄位順序 = SELECT 欄位順序 = Express JSON key 順序，
  *  以確保 byte-level 對拍等價（serde 依宣告順序序列化）。
@@ -924,6 +975,19 @@ export type TagRow = {
 	name_ja: string | null,
 	name_ko: string | null,
 	name_zh_cn: string | null,
+};
+
+/**
+ *  `PUT /api/admin/tags/{id}` 的 200 回應。
+ * 
+ *  `id` 原本是**字串**（來源是 `Path<String>`）而建立時是數字（`last_insert_rowid()`）。
+ *  路徑參數換成 `PathParam<i64>` 之後這個不一致自己就沒了。
+ *  前端不讀這個欄位（只看 `response.ok` 然後重抓清單），所以改型別沒有影響。
+ */
+export type TagUpdated = {
+	id: number,
+	name: string,
+	updated: number,
 };
 
 export type TagsResponse = {

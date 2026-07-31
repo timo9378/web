@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
@@ -15,6 +15,98 @@ use crate::{
     state::AppState,
     util::{gen_slug, is_unique_violation, js_substring_prefix, parse_int, split_tags},
 };
+
+// ── 寫入端點的回應型別 ────────────────────────────────────────────────────
+//
+// 這批端點原本一律回 `Json(json!({...}))`，於是 #[utoipa::path] 也只能寫
+// `(status = 200, description = "…（動態 JSON）")` ——spec 裡沒有回應 schema。
+//
+// 那不只是文件不完整，而是**擋住了自動化測試**：Schemathesis 的 stateful 階段靠
+// 「POST 回應裡的 id」去串接後續的 GET/PUT/DELETE，回應沒有 schema 它就抓不到 id，
+// 於是 DELETE /api/admin/tags/{id} 只能用亂數 id、永遠 404。實測過確實如此。
+//
+// 改成回具名型別而不是「在標註裡補一個 body=」：後者要靠人記得讓 json! 與標註同步，
+// 前者是同一個來源產生回應與 spec，對不上就編譯不過。前端型別也一起有了
+// （specta 會匯出），符合「Rust 是 API 唯一型別來源」這條。
+
+/// 只回一句訊息的成功回應（刪除、確認類）。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct MessageResponse {
+    pub message: String,
+}
+
+/// 4xx 的統一形狀。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+/// 建立成功、只需要回新資源 id 的端點。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct CreatedResponse {
+    pub message: String,
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+}
+
+/// `POST /api/admin/tags` 的 201 回應。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct TagCreated {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    pub name: String,
+    #[specta(type = specta_typescript::Number)]
+    pub post_count: i64,
+}
+
+/// `PUT /api/admin/tags/{id}` 的 200 回應。
+///
+/// `id` 原本是**字串**（來源是 `Path<String>`）而建立時是數字（`last_insert_rowid()`）。
+/// 路徑參數換成 `PathParam<i64>` 之後這個不一致自己就沒了。
+/// 前端不讀這個欄位（只看 `response.ok` 然後重抓清單），所以改型別沒有影響。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct TagUpdated {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    pub name: String,
+    #[specta(type = specta_typescript::Number)]
+    pub updated: i64,
+}
+
+/// `POST /api/admin/categories` 的 200 回應。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct CategoryCreated {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    pub name: String,
+    pub slug: String,
+    pub description: String,
+    pub short_description: String,
+    #[specta(type = specta_typescript::Number)]
+    pub post_count: i64,
+}
+
+/// `PUT /api/admin/categories/{id}` 的 200 回應（`id` 同樣來自 Path，理由見 [`TagUpdated`]）。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct CategoryUpdated {
+    #[specta(type = specta_typescript::Number)]
+    pub id: i64,
+    pub name: String,
+    pub slug: String,
+    pub description: String,
+    #[specta(type = specta_typescript::Number)]
+    pub updated: i64,
+}
+
+/// `DELETE /api/admin/categories/{id}` 的 200 回應。
+/// 分類被刪時底下的文章會被移到未分類，所以要回報影響了幾篇。
+#[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
+pub struct CategoryDeleted {
+    pub message: String,
+    #[serde(rename = "affectedPosts")]
+    #[specta(type = specta_typescript::Number)]
+    pub affected_posts: i64,
+}
 
 /// `GET /api/admin/tags` 單列（admin 版：含 0 篇的 tag、依名排序）。
 #[derive(Debug, Serialize, FromRow, specta::Type, utoipa::ToSchema)]
@@ -571,6 +663,11 @@ macro_rules! auth_or_return {
 // ── tags ──
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct TagBody {
+    /// 必填。型別留 `Option` 是為了讓「沒給」與「給了空字串」都走同一條 400
+    /// （訊息一致、對齊 Express 舊行為）；`#[schema(...)]` 負責讓 spec 說出真正的約束。
+    /// 少了這三個標註，utoipa 會把它推成「選填、可為 null、可為空字串」，
+    /// Schemathesis 於是一直生 `{}` 被 400 掉，fuzzing 階段直接被 health check 擋下。
+    #[schema(required, nullable = false, min_length = 1)]
     name: Option<String>,
     // 顯示用譯名（name 仍是資料鍵，不參與 join/比對）
     name_en: Option<String>,
@@ -579,20 +676,28 @@ pub struct TagBody {
     name_zh_cn: Option<String>,
 }
 
+// 狀態碼逐一宣告（不只 200/401）：Schemathesis 的 status_code_conformance 目前是關的，
+// 因為多數標註漏了實際會回的 4xx。這幾支補齊之後那條檢查才有機會打開。
 #[utoipa::path(post, path = "/api/admin/tags", tag = "admin", security(("bearer" = [])),
+    request_body = TagBody,
     responses(
-        (status = 200, description = "建立標籤（動態 JSON）"),
+        (status = 201, body = TagCreated, description = "建立成功；id 供後續操作串接"),
+        (status = 400, body = ErrorResponse, description = "缺少標籤名稱、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 409, body = ErrorResponse, description = "標籤名稱已存在"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn create_tag(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<TagBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<TagBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.unwrap_or_default();
     if name.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "標籤名稱為必填" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "標籤名稱為必填".into() }))
+            .into_response();
     }
     match sqlx::query(
         "INSERT INTO tags (name, name_en, name_ja, name_ko, name_zh_cn, created_at) \
@@ -606,33 +711,38 @@ pub async fn create_tag(
     .execute(&state.pool)
     .await
     {
-        Ok(r) => {
-            (StatusCode::CREATED, Json(json!({ "id": r.last_insert_rowid(), "name": name, "post_count": 0 })))
-                .into_response()
-        }
+        Ok(r) => (StatusCode::CREATED, Json(TagCreated { id: r.last_insert_rowid(), name, post_count: 0 }))
+            .into_response(),
         Err(e) if is_unique_violation(&e) => {
-            (StatusCode::CONFLICT, Json(json!({ "error": "標籤已存在" }))).into_response()
+            (StatusCode::CONFLICT, Json(ErrorResponse { error: "標籤已存在".into() })).into_response()
         }
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
 
 #[utoipa::path(put, path = "/api/admin/tags/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
+    request_body = TagBody,
     responses(
-        (status = 200, description = "更新標籤（動態 JSON）"),
+        (status = 200, body = TagUpdated),
+        (status = 400, body = ErrorResponse, description = "缺少標籤名稱、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 404, body = ErrorResponse, description = "標籤不存在"),
+        (status = 409, body = ErrorResponse, description = "標籤名稱已存在"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn update_tag(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
-    Json(body): Json<TagBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<TagBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.unwrap_or_default();
     if name.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "標籤名稱為必填" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "標籤名稱為必填".into() }))
+            .into_response();
     }
     match sqlx::query(
         "UPDATE tags SET name = ?, name_en = ?, name_ja = ?, name_ko = ?, name_zh_cn = ? WHERE id = ?",
@@ -642,42 +752,44 @@ pub async fn update_tag(
     .bind(body.name_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.name_zh_cn.as_deref().filter(|v| !v.is_empty()))
-    .bind(&id)
+    .bind(id)
     .execute(&state.pool)
     .await
     {
         Ok(r) if r.rows_affected() == 0 => {
-            (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response()
+            (StatusCode::NOT_FOUND, Json(ErrorResponse { error: "標籤不存在".into() })).into_response()
         }
-        Ok(r) => Json(json!({ "id": id, "name": name, "updated": r.rows_affected() })).into_response(),
+        Ok(r) => Json(TagUpdated { id, name, updated: r.rows_affected() as i64 }).into_response(),
         Err(e) if is_unique_violation(&e) => {
-            (StatusCode::CONFLICT, Json(json!({ "error": "標籤名稱已存在" }))).into_response()
+            (StatusCode::CONFLICT, Json(ErrorResponse { error: "標籤名稱已存在".into() })).into_response()
         }
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
 
 #[utoipa::path(delete, path = "/api/admin/tags/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
-        (status = 200, description = "刪除標籤（動態 JSON）"),
+        (status = 200, body = MessageResponse),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
+        (status = 404, body = ErrorResponse, description = "標籤不存在"),
     ))]
 pub async fn delete_tag(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     auth_or_return!(&headers, &state);
-    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE tag_id = ?").bind(&id).execute(&state.pool).await
+    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE tag_id = ?").bind(id).execute(&state.pool).await
     {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
-    match sqlx::query("DELETE FROM tags WHERE id = ?").bind(&id).execute(&state.pool).await {
+    match sqlx::query("DELETE FROM tags WHERE id = ?").bind(id).execute(&state.pool).await {
         Ok(r) if r.rows_affected() == 0 => {
-            (StatusCode::NOT_FOUND, Json(json!({ "error": "標籤不存在" }))).into_response()
+            (StatusCode::NOT_FOUND, Json(ErrorResponse { error: "標籤不存在".into() })).into_response()
         }
-        Ok(_) => Json(json!({ "message": "標籤已刪除" })).into_response(),
+        Ok(_) => Json(MessageResponse { message: "標籤已刪除".into() }).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -685,6 +797,8 @@ pub async fn delete_tag(
 // ── categories ──
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CategoryBody {
+    /// 必填、非空——理由同 `TagBody::name`。
+    #[schema(required, nullable = false, min_length = 1)]
     name: Option<String>,
     description: Option<String>,
     slug: Option<String>,
@@ -751,19 +865,25 @@ fn resolve_slug(slug: &Option<String>, name: &str) -> String {
 }
 
 #[utoipa::path(post, path = "/api/admin/categories", tag = "admin", security(("bearer" = [])),
+    request_body = CategoryBody,
     responses(
-        (status = 200, description = "建立分類（動態 JSON）"),
+        (status = 201, body = CategoryCreated, description = "建立成功；id 供後續操作串接"),
+        (status = 400, body = ErrorResponse, description = "缺少分類名稱、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 409, body = ErrorResponse, description = "名稱或 slug 已存在"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn create_category(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<CategoryBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<CategoryBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.clone().unwrap_or_default();
     if name.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "分類名稱為必填" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "分類名稱為必填".into() }))
+            .into_response();
     }
     let slug = resolve_slug(&body.slug, &name);
     let description = body.description.clone().unwrap_or_default();
@@ -794,44 +914,59 @@ pub async fn create_category(
     {
         Ok(r) => (
             StatusCode::CREATED,
-            Json(json!({
-                "id": r.last_insert_rowid(), "name": name, "slug": slug,
-                "description": description, "short_description": short_description, "post_count": 0
-            })),
+            Json(CategoryCreated {
+                id: r.last_insert_rowid(),
+                name,
+                slug,
+                description,
+                short_description,
+                post_count: 0,
+            }),
         )
             .into_response(),
         Err(e) if is_unique_violation(&e) => {
-            (StatusCode::CONFLICT, Json(json!({ "error": "分類名稱或 slug 已存在" }))).into_response()
+            (StatusCode::CONFLICT, Json(ErrorResponse { error: "分類名稱或 slug 已存在".into() }))
+                .into_response()
         }
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
 
 #[utoipa::path(put, path = "/api/admin/categories/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
+    request_body = CategoryBody,
     responses(
-        (status = 200, description = "更新分類（動態 JSON）"),
+        (status = 200, body = CategoryUpdated, description = "更新成功"),
+        (status = 400, body = ErrorResponse, description = "缺少分類名稱、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 404, body = ErrorResponse, description = "分類不存在"),
+        (status = 409, body = ErrorResponse, description = "名稱或 slug 已存在"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn update_category(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
-    Json(body): Json<CategoryBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<CategoryBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let name = body.name.clone().unwrap_or_default();
     if name.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "分類名稱為必填" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "分類名稱為必填".into() }))
+            .into_response();
     }
     // 先取舊名（判斷是否需同步 posts.category）
     let old_name = match sqlx::query_scalar::<_, String>("SELECT name FROM categories WHERE id = ?")
-        .bind(&id)
+        .bind(id)
         .fetch_optional(&state.pool)
         .await
     {
         Ok(Some(n)) => n,
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(json!({ "error": "分類不存在" }))).into_response(),
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, Json(ErrorResponse { error: "分類不存在".into() }))
+                .into_response();
+        }
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
     let slug = resolve_slug(&body.slug, &name);
@@ -857,13 +992,13 @@ pub async fn update_category(
     .bind(body.short_description_ja.as_deref().filter(|v| !v.is_empty()))
     .bind(body.short_description_ko.as_deref().filter(|v| !v.is_empty()))
     .bind(body.short_description_zh_cn.as_deref().filter(|v| !v.is_empty()))
-    .bind(&id)
+    .bind(id)
     .execute(&state.pool)
     .await
     {
         Ok(r) => r.rows_affected(),
         Err(e) if is_unique_violation(&e) => {
-            return (StatusCode::CONFLICT, Json(json!({ "error": "分類名稱或 slug 已存在" })))
+            return (StatusCode::CONFLICT, Json(ErrorResponse { error: "分類名稱或 slug 已存在".into() }))
                 .into_response();
         }
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
@@ -877,29 +1012,33 @@ pub async fn update_category(
             .await;
     }
     // 注意：回應無 short_description（對齊 Express）
-    Json(json!({ "id": id, "name": name, "slug": slug, "description": description, "updated": updated }))
-        .into_response()
+    Json(CategoryUpdated { id, name, slug, description, updated: updated as i64 }).into_response()
 }
 
 #[utoipa::path(delete, path = "/api/admin/categories/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
-        (status = 200, description = "刪除分類（動態 JSON）"),
+        (status = 200, body = CategoryDeleted, description = "刪除成功；affectedPosts = 被解除分類的文章數"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
+        (status = 404, body = ErrorResponse, description = "分類不存在"),
     ))]
 pub async fn delete_category(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let cat_name = match sqlx::query_scalar::<_, String>("SELECT name FROM categories WHERE id = ?")
-        .bind(&id)
+        .bind(id)
         .fetch_optional(&state.pool)
         .await
     {
         Ok(Some(n)) => n,
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(json!({ "error": "分類不存在" }))).into_response(),
+        Ok(None) => {
+            return (StatusCode::NOT_FOUND, Json(ErrorResponse { error: "分類不存在".into() }))
+                .into_response();
+        }
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
     let affected = match sqlx::query("UPDATE posts SET category = NULL WHERE category = ?")
@@ -910,8 +1049,9 @@ pub async fn delete_category(
         Ok(r) => r.rows_affected(),
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
-    match sqlx::query("DELETE FROM categories WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(_) => Json(json!({ "message": "分類已刪除", "affectedPosts": affected })).into_response(),
+    match sqlx::query("DELETE FROM categories WHERE id = ?").bind(id).execute(&state.pool).await {
+        Ok(_) => Json(CategoryDeleted { message: "分類已刪除".into(), affected_posts: affected as i64 })
+            .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -919,24 +1059,31 @@ pub async fn delete_category(
 // ── ip_blacklist ──
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct BlacklistBody {
+    /// 必填、非空——理由同 `TagBody::name`。
+    #[schema(required, nullable = false, min_length = 1)]
     ip: Option<String>,
     reason: Option<String>,
 }
 
 #[utoipa::path(post, path = "/api/admin/blacklist", tag = "admin", security(("bearer" = [])),
+    request_body = BlacklistBody,
     responses(
-        (status = 200, description = "新增黑名單 IP（動態 JSON）"),
+        (status = 201, body = CreatedResponse, description = "新增成功；id 供後續刪除串接"),
+        (status = 400, body = ErrorResponse, description = "缺少 IP、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn create_blacklist(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<BlacklistBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<BlacklistBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let ip = body.ip.unwrap_or_default();
     if ip.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "IP is required" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "IP is required".into() }))
+            .into_response();
     }
     match sqlx::query("INSERT OR IGNORE INTO ip_blacklist (ip, reason) VALUES (?, ?)")
         .bind(&ip)
@@ -944,26 +1091,30 @@ pub async fn create_blacklist(
         .execute(&state.pool)
         .await
     {
-        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() })))
+        Ok(r) => (
+            StatusCode::CREATED,
+            Json(CreatedResponse { message: "success".into(), id: r.last_insert_rowid() }),
+        )
             .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
 
 #[utoipa::path(delete, path = "/api/admin/blacklist/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
-        (status = 200, description = "刪除黑名單 IP（動態 JSON）"),
+        (status = 200, body = MessageResponse, description = "刪除成功（DELETE 冪等，不存在也回 200）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn delete_blacklist(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     auth_or_return!(&headers, &state);
-    match sqlx::query("DELETE FROM ip_blacklist WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(_) => Json(json!({ "message": "success" })).into_response(),
+    match sqlx::query("DELETE FROM ip_blacklist WHERE id = ?").bind(id).execute(&state.pool).await {
+        Ok(_) => Json(MessageResponse { message: "success".into() }).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -971,24 +1122,34 @@ pub async fn delete_blacklist(
 // ── keyword_filters ──
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct KeywordBody {
+    /// 必填、非空——理由同 `TagBody::name`。
+    #[schema(required, nullable = false, min_length = 1)]
     keyword: Option<String>,
+    /// `spam` | `reject`，其餘值（含 `null`、未給）一律落回 `spam`。
+    /// 刻意**不**標 `nullable = false`——`null` 是真的收，標了 spec 就在說謊
+    /// （Schemathesis 的 negative_data_rejection 當場抓到：送 null 回了 201）。
     action: Option<String>,
 }
 
 #[utoipa::path(post, path = "/api/admin/keyword-filters", tag = "admin", security(("bearer" = [])),
+    request_body = KeywordBody,
     responses(
-        (status = 200, description = "新增關鍵字過濾（動態 JSON）"),
+        (status = 201, body = CreatedResponse, description = "新增成功；id 供後續刪除串接"),
+        (status = 400, body = ErrorResponse, description = "缺少關鍵字、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn create_keyword_filter(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<KeywordBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<KeywordBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let keyword = body.keyword.unwrap_or_default();
     if keyword.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Keyword is required" }))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "Keyword is required".into() }))
+            .into_response();
     }
     let action = match body.action.as_deref() {
         Some(a @ ("spam" | "reject")) => a.to_string(),
@@ -1000,26 +1161,30 @@ pub async fn create_keyword_filter(
         .execute(&state.pool)
         .await
     {
-        Ok(r) => (StatusCode::CREATED, Json(json!({ "message": "success", "id": r.last_insert_rowid() })))
+        Ok(r) => (
+            StatusCode::CREATED,
+            Json(CreatedResponse { message: "success".into(), id: r.last_insert_rowid() }),
+        )
             .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
 
 #[utoipa::path(delete, path = "/api/admin/keyword-filters/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
-        (status = 200, description = "刪除關鍵字過濾（動態 JSON）"),
+        (status = 200, body = MessageResponse, description = "刪除成功（DELETE 冪等，不存在也回 200）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn delete_keyword_filter(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     auth_or_return!(&headers, &state);
-    match sqlx::query("DELETE FROM keyword_filters WHERE id = ?").bind(&id).execute(&state.pool).await {
-        Ok(_) => Json(json!({ "message": "success" })).into_response(),
+    match sqlx::query("DELETE FROM keyword_filters WHERE id = ?").bind(id).execute(&state.pool).await {
+        Ok(_) => Json(MessageResponse { message: "success".into() }).into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -1034,16 +1199,19 @@ pub struct StatusBody {
 
 /// `PATCH /api/admin/comments/:id/status`
 #[utoipa::path(patch, path = "/api/admin/comments/{id}/status", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "更新留言狀態（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn patch_comment_status(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
-    Json(body): Json<StatusBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<StatusBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let status = body.status.unwrap_or_default();
@@ -1052,7 +1220,7 @@ pub async fn patch_comment_status(
     }
     match sqlx::query("UPDATE comments SET status = ? WHERE id = ?")
         .bind(&status)
-        .bind(&id)
+        .bind(id)
         .execute(&state.pool)
         .await
     {
@@ -1075,16 +1243,19 @@ pub struct ContentBody {
 
 /// `PUT /api/admin/comments/:id`（改內容）
 #[utoipa::path(put, path = "/api/admin/comments/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "更新留言內容（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn update_comment(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
-    Json(body): Json<ContentBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<ContentBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let content = body.content.unwrap_or_default();
@@ -1093,7 +1264,7 @@ pub async fn update_comment(
     }
     match sqlx::query("UPDATE comments SET content = ? WHERE id = ?")
         .bind(&content)
-        .bind(&id)
+        .bind(id)
         .execute(&state.pool)
         .await
     {
@@ -1107,18 +1278,19 @@ pub async fn update_comment(
 
 /// `DELETE /api/admin/comments/:id`（永久刪除）
 #[utoipa::path(delete, path = "/api/admin/comments/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "刪除留言（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn delete_comment(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     auth_or_return!(&headers, &state);
-    match sqlx::query("DELETE FROM comments WHERE id = ?").bind(&id).execute(&state.pool).await {
+    match sqlx::query("DELETE FROM comments WHERE id = ?").bind(id).execute(&state.pool).await {
         Ok(r) if r.rows_affected() == 0 => {
             (StatusCode::NOT_FOUND, Json(json!({ "error": "Comment not found" }))).into_response()
         }
@@ -1129,16 +1301,19 @@ pub async fn delete_comment(
 
 /// `POST /api/admin/comments/:id/reply` —— 站長回覆（is_admin=1, status=approved, author='站長'）。
 #[utoipa::path(post, path = "/api/admin/comments/{id}/reply", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "站長回覆留言（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64、或 body 不是合法 JSON"),
         (status = 401, description = "未授權"),
+        (status = 415, body = ErrorResponse, description = "content-type 不是 application/json"),
+        (status = 422, body = ErrorResponse, description = "body 欄位型別不符"),
     ))]
 pub async fn reply_comment(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
-    Json(body): Json<ContentBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<ContentBody>,
 ) -> Response {
     auth_or_return!(&headers, &state);
     let content = body.content.unwrap_or_default();
@@ -1147,7 +1322,7 @@ pub async fn reply_comment(
     }
     // 取原留言的 post_id（可能為 NULL）；查無此留言 → 404
     let parent = sqlx::query_scalar::<_, Option<i64>>("SELECT post_id FROM comments WHERE id = ?")
-        .bind(&id)
+        .bind(id)
         .fetch_optional(&state.pool)
         .await;
     let post_id = match parent {
@@ -1164,7 +1339,7 @@ pub async fn reply_comment(
     )
     .bind(post_id)
     .bind(&content)
-    .bind(&id)
+    .bind(id)
     .execute(&state.pool)
     .await
     {
@@ -1419,14 +1594,15 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
 /// 前端恆送全欄位故從未觸發）：category 改 CASE-flag、tags 缺 key 跳過 manage_tags——
 /// 部分更新不再誤刪資料。
 #[utoipa::path(put, path = "/api/admin/posts/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "更新文章（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn admin_update_post(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     req: Request,
 ) -> Response {
     let (parts, body) = req.into_parts();
@@ -1492,9 +1668,9 @@ pub async fn admin_update_post(
     if let Some(raw) = b.get("slug").and_then(|v| v.as_str()) {
         let wanted = raw.trim();
         if !wanted.is_empty() {
-            let pid = id.parse::<i64>().ok();
+            let pid = Some(id);
             let current = sqlx::query_scalar::<_, Option<String>>("SELECT slug FROM posts WHERE id = ?")
-                .bind(&id)
+                .bind(id)
                 .fetch_optional(&state.pool)
                 .await
                 .ok()
@@ -1507,13 +1683,13 @@ pub async fn admin_update_post(
                         "INSERT OR IGNORE INTO post_slug_history (old_slug, post_id) VALUES (?, ?)",
                     )
                     .bind(&old)
-                    .bind(&id)
+                    .bind(id)
                     .execute(&state.pool)
                     .await;
                 }
                 let _ = sqlx::query("UPDATE posts SET slug = ? WHERE id = ?")
                     .bind(&next)
-                    .bind(&id)
+                    .bind(id)
                     .execute(&state.pool)
                     .await;
             }
@@ -1574,7 +1750,7 @@ pub async fn admin_update_post(
     q = q.bind(series_order.0);
     q = bind_num(q, series_order.1);
     q = q.bind(allow_comments.0).bind(allow_comments.1);
-    q = q.bind(&id);
+    q = q.bind(id);
 
     match q.execute(&state.pool).await {
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
@@ -1586,7 +1762,7 @@ pub async fn admin_update_post(
     // tags 有帶 key（含空陣列）才重建關聯；缺 key 不動（回應仍回 body 的 tags 或 []）
     let tags = tags_from(&b);
     if b.contains_key("tags")
-        && let Err(e) = manage_tags(&state, &id, &tags).await
+        && let Err(e) = manage_tags(&state, &id.to_string(), &tags).await
     {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
@@ -1602,33 +1778,33 @@ pub async fn admin_update_post(
     if let Some(v) = b.get("status") {
         data.insert("status".into(), v.clone());
     }
-    if want_newsletter && let Ok(pid) = id.parse::<i64>() {
-        data.insert("newsletter".into(), dispatch_newsletter_result(&state, pid).await);
+    if want_newsletter {
+        data.insert("newsletter".into(), dispatch_newsletter_result(&state, id).await);
     }
     Json(json!({ "message": "success", "data": Value::Object(data) })).into_response()
 }
 
 /// `DELETE /api/admin/posts/:id` —— 先清 post_tags 再刪文；404 對齊。
 #[utoipa::path(delete, path = "/api/admin/posts/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, description = "刪除文章（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn admin_delete_post(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
         return e.into_response();
     }
-    if let Err(e) =
-        sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(&id).execute(&state.pool).await
+    if let Err(e) = sqlx::query("DELETE FROM post_tags WHERE post_id = ?").bind(id).execute(&state.pool).await
     {
         return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e);
     }
-    match sqlx::query("DELETE FROM posts WHERE id = ?").bind(&id).execute(&state.pool).await {
+    match sqlx::query("DELETE FROM posts WHERE id = ?").bind(id).execute(&state.pool).await {
         Ok(r) if r.rows_affected() == 0 => {
             (StatusCode::NOT_FOUND, Json(json!({ "error": "文章不存在" }))).into_response()
         }
@@ -1649,14 +1825,15 @@ pub struct AdminPostDetailResponse {
 
 /// `GET /api/admin/posts/:id` —— 編輯器用，回全 locale 欄位。
 #[utoipa::path(get, path = "/api/admin/posts/{id}", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     responses(
         (status = 200, body = AdminPostDetailResponse),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn admin_get_post(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
 ) -> Response {
     if let Err(e) = require_admin(&headers, &state).await {
@@ -1667,7 +1844,7 @@ pub async fn admin_get_post(
          LEFT JOIN post_tags pt ON p.id = pt.post_id \
          LEFT JOIN tags t ON pt.tag_id = t.id WHERE p.id = ? GROUP BY p.id",
     )
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.pool)
     .await;
     let row = match row {
@@ -1742,15 +1919,16 @@ pub async fn admin_stats(State(state): State<AppState>, headers: HeaderMap) -> R
 
 /// `PUT /api/admin/users/:id/role` —— requireOwner。改用戶角色（不能改自己）。
 #[utoipa::path(put, path = "/api/admin/users/{id}/role", tag = "admin", security(("bearer" = [])),
-    params(("id" = String, Path)),
+    params(("id" = i64, Path)),
     request_body = serde_json::Value,
     responses(
         (status = 200, description = "更新使用者角色（動態 JSON）"),
+        (status = 400, body = ErrorResponse, description = "id 不是合法的 i64、或角色值不合法"),
         (status = 401, description = "未授權"),
     ))]
 pub async fn admin_update_user_role(
     State(state): State<AppState>,
-    Path(id): Path<String>,
+    crate::error::PathParam(id): crate::error::PathParam<i64>,
     headers: HeaderMap,
     Json(body): Json<Map<String, Value>>,
 ) -> Response {
@@ -1764,14 +1942,15 @@ pub async fn admin_update_user_role(
             .into_response();
     }
     // req.user.dbUser.id === parseInt(userId)（legacy token 無 dbUser → 跳過）
-    if let (Some(db_id), Some(target)) = (owner.db_user_id, crate::util::js_parse_int_opt(&id))
-        && db_id == target
+    // （原本走 js_parse_int_opt——路徑參數已是 i64，那層轉換不再需要）
+    if let Some(db_id) = owner.db_user_id
+        && db_id == id
     {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "不能修改自己的角色" }))).into_response();
     }
     match sqlx::query("UPDATE oauth_users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(role)
-        .bind(&id)
+        .bind(id)
         .execute(&state.pool)
         .await
     {

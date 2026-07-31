@@ -297,13 +297,33 @@ jobs:
               console.log('後端就緒');
             })();
           "
-      - name: schemathesis
-        run: uvx schemathesis run http://127.0.0.1:13999/api/openapi.json -w 4 --report-junit-path st.xml
+      # 兩段跑，順序有意義：先在完整種子上掃公開面，最後才帶 token 掃 admin CRUD。
+      # admin 的 DELETE 會把種子清掉，所以它必須是最後一步——沒有下一步會讀到殘局。
+      - name: schemathesis（公開面，不帶認證）
+        run: |
+          uvx schemathesis run http://127.0.0.1:13999/api/openapi.json \
+            --exclude-path-regex '^/api/admin/' \
+            -w 4 --report-junit-path st.xml
+      # admin 寫入端點 typed 之後 stateful 階段才推得出 create → update → delete，
+      # 而串接需要認證。JWT_SECRET 與上面起後端時給的 'fuzz' 一致。
+      - name: schemathesis（admin CRUD，帶 owner token）
+        run: |
+          TOKEN=$(node -e "
+            const jwt = require('jsonwebtoken');
+            const now = Math.floor(Date.now() / 1000);
+            console.log(jwt.sign({ id: 1, username: 'admin', role: 'OWNER', iat: now, exp: now + 7200 }, 'fuzz'));
+          ")
+          uvx schemathesis run http://127.0.0.1:13999/api/openapi.json \
+            --include-path-regex '^/api/admin/(tags|categories|blacklist|keyword-filters)' \
+            -H "Authorization: Bearer $TOKEN" \
+            -w 4 --report-junit-path st-admin.xml
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
         if: failure()
         with:
           name: schemathesis-report
-          path: st.xml
+          path: |
+            st.xml
+            st-admin.xml
           retention-days: 7
 
   # 部署路徑守門：CI 過但 docker build 炸過（js-yaml + 未釘 pnpm 那次），

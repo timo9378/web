@@ -5,7 +5,8 @@
 use koimsurai_web_backend::handlers::admin::{
     AdminCategoryRow, AdminCommentRow, AdminCommentsResponse, AdminPostDetailResponse, AdminPostFull,
     AdminPostsResponse, AdminTagRow, AdminUserRow, AdminUsersResponse, BlacklistResponse, BlacklistRow,
-    CommentCounts, KeywordFilterRow, KeywordFiltersResponse,
+    CategoryCreated, CategoryDeleted, CategoryUpdated, CommentCounts, CreatedResponse, ErrorResponse,
+    KeywordFilterRow, KeywordFiltersResponse, MessageResponse, TagCreated, TagUpdated,
 };
 use koimsurai_web_backend::handlers::auth::{AuthProvidersResponse, OAuthProviderInfo};
 use koimsurai_web_backend::handlers::books::{BookDetailResponse, BookRow, BooksListResponse};
@@ -117,6 +118,16 @@ fn main() {
         .register::<BlacklistResponse>()
         .register::<KeywordFilterRow>()
         .register::<KeywordFiltersResponse>()
+        // admin CRUD 的寫入回應（typed 之後 OpenAPI 才有 response schema，
+        // Schemathesis 的 stateful 階段才推得出 create→update→delete 的串接）
+        .register::<MessageResponse>()
+        .register::<ErrorResponse>()
+        .register::<CreatedResponse>()
+        .register::<TagCreated>()
+        .register::<TagUpdated>()
+        .register::<CategoryCreated>()
+        .register::<CategoryUpdated>()
+        .register::<CategoryDeleted>()
         // books
         .register::<BookRow>()
         .register::<BooksListResponse>()

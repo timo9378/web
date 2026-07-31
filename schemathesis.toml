@@ -27,12 +27,18 @@ database = ":memory:"
 include-path-regex = "^/api/(steam|github|wakatime|spotify|bahamut|link-preview|image-proxy|books/search|quote)"
 enabled = false
 
-# ── 排除：帶 token 跑時會改壞資料的寫入端點 ─────────────────────────────
-# 未帶 token 時它們一律 401（e2e 的守衛測試已逐支確認），資訊量低；
-# 但哪天要帶 token 測 admin 流程，DELETE 會把種子清掉。要測就該給它自己的 DB。
-[[operations]]
-include-path-regex = "^/api/admin/"
-enabled = false
+# ── admin：不在這裡排除，改由 CI 分兩段跑 ────────────────────────────────
+# 原本整段 `^/api/admin/` 是關的，理由寫的是「帶 token 跑 DELETE 會把種子清掉」。
+# 那個顧慮是對的，但解法不是關掉——是**排序**：ci.yml 的 api-fuzz 先跑無認證的全站
+# （種子還完整），最後才帶 token 跑 admin CRUD，弄髒了也沒有下一步會讀到。
+# 那個 job 本來就用 /tmp/koimsurai-fuzz.db，是拋棄式的。
+#
+# 為什麼值得打開：admin 的寫入端點 typed 之後（回應有 schema 了），stateful 階段
+# 能自動推出 create → update → delete 的串接。實測從「1 covered / 4 links」
+# 變成「7 covered / 8 links、84 個情境」，而且第一次跑就抓到兩類真問題：
+#   · 送壞掉的 JSON 回的是 text/plain（宣告 application/json）→ 加了 JsonBody extractor
+#   · action 欄位我標了 nullable = false，但 handler 其實收 null → spec 在說謊
+# 兩個都是手寫測試不會想到要測的。
 
 # 計數器與投票會累加，跑完數字會漂——不是錯誤，但會污染其他測試的斷言
 [[operations]]
