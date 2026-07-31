@@ -10,6 +10,23 @@
       "env": {
         "CHROME_PATH": "/usr/bin/microsoft-edge"
       }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--executablePath",
+        "/usr/bin/microsoft-edge",
+        "--headless",
+        "--isolated",
+        "--viewport",
+        "1440x820",
+        "--usageStatistics",
+        "false",
+        "--performanceCrux",
+        "false"
+      ]
     }
   }
 }

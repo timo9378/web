@@ -14,6 +14,32 @@
 | **改檔案** | **`Edit`**（精確匹配，匹配不到會報錯） | **Bash + 內嵌 python `s.replace()`** |
 | 產生新檔 | `Write` | Bash heredoc |
 | 執行指令（docker / git / cargo / curl / nginx） | `Bash` | — |
+| 量 CWV / 效能 / 網路 / 記憶體 | `chrome-devtools` MCP | 手刻 CDP 腳本 |
+| 需要隔離環境或自訂儀器的瀏覽器測試 | `playwright` MCP | — |
+
+### 瀏覽器工具：兩個都留，分工不同
+
+機器上只有 **Edge**（Chromium 核心），沒有 Chrome。兩個 MCP 都用 `/usr/bin/microsoft-edge`。
+
+**`chrome-devtools` 用在標準問題**——`emulate`（CPU/網路節流、viewport、UA 一次搞定）、
+`performance_start_trace`（直接吐 LCP/INP/CLS）、`performance_analyze_insight`、
+`lighthouse_audit`、`list_network_requests`、12 個 heap snapshot 工具。
+這些以前要手刻 CDP：光「節流 + 注入 PerformanceObserver + 算 session window + 歸因」
+就是 80 行,現在是 3~4 個工具呼叫。
+
+**`playwright` 用在它做不到的兩件事**，而這兩件都是實際踩過的坑：
+
+1. **獨立 context**（`browser.newContext()`）。chrome-devtools 只有 `new_page`，共用 profile。
+   曾經因此誤判：量到「CLS 3/4 歸零」以為修好了，用全新 context 重測才發現那是 **history
+   與快取造成的假象**，真實情況是該情境完全沒改善。要量「首次造訪」就必須有乾淨環境。
+   （chrome-devtools 的 `--isolated` 只在 server 生命週期層級隔離，不是每次測試。）
+2. **導覽前注入腳本**（`addInitScript`）。抓「第一幀就發生」的位移、或自訂追蹤（每 40ms 記
+   某元素的 offsetTop）都要它。`performance_start_trace` 對標準 CWV 夠用，自訂儀器不行。
+
+⚠️ **Lighthouse 測不出實地才有的問題。** 同一頁在無節流本機跑是 CLS 0，開了節流還是 0
+（LCP 卻爆到 4.2s，證明節流有生效）——因為它永遠是冷啟動、無 history、單頁直接載入。
+文章頁真正的 CLS 只在「重新整理且捲在深處」時出現，任何「載入一次量一次」的工具都抓不到。
+實地歸因靠 `web_vitals` 表的 `target` / `shift_path` 兩欄（見 migration 0010/0011）。
 
 ### 為什麼「改檔案一定要用 Edit」
 
