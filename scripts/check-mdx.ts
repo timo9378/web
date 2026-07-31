@@ -19,6 +19,8 @@
 
 import { compileMdxSource } from '../src/lib/mdx-compile-core';
 import { readRegisteredBlocks } from './mdx-block-names';
+// 掃「未註冊的 block」之前要先去掉程式碼，否則泛型會被當成標籤。理由與另一個使用者見該檔。
+import { stripCode } from './strip-code';
 
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
 // '' = 原文（不帶 lang 參數，對齊 blogList.ts 的 no-lang 行為）
@@ -28,18 +30,6 @@ interface PostListItem { id: number; title: string }
 interface PostDetail { id: number; title: string; content: string | null; format: string | null }
 
 const label = (lang: string) => lang || 'zh-TW（原文）';
-
-/**
- * 掃「未註冊的 block」之前要先把程式碼拿掉，否則泛型會被當成標籤。
- * 實例：文章 #33 裡的 `ChatTransport<UIMessage>` 被報成「用到沒註冊的 block UIMessage」
- * ——那種誤報會讓整個檢查很快被當成噪音而忽略。
- */
-function stripCode(md: string): string {
-  return md
-    .replace(/```[\s\S]*?```/g, '') // 圍欄程式碼
-    .replace(/~~~[\s\S]*?~~~/g, '')
-    .replace(/`[^`\n]*`/g, ''); // 行內程式碼
-}
 
 async function main() {
   const registered = new Set(readRegisteredBlocks());
