@@ -1,0 +1,22 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 116
+expression: body
+---
+{
+  "message": "success",
+  "films": [
+    {
+      "id": 1,
+      "title": "測試電影",
+      "watched_date": "2026-01-10",
+      "rating": 8,
+      "source": "trakt",
+      "tmdb_id": null,
+      "poster_url": null,
+      "backdrop_url": null,
+      "release_year": 2024,
+      "genres": "劇情, 科幻"
+    }
+  ]
+}

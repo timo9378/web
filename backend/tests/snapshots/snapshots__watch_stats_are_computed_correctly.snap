@@ -1,0 +1,13 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 133
+expression: body
+---
+{
+  "message": "success",
+  "animeCount": 1,
+  "animeEpisodes": 1,
+  "filmCount": 1,
+  "tvSeriesCount": 1,
+  "tvEpisodes": 1
+}

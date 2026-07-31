@@ -1,0 +1,19 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 108
+expression: body
+---
+{
+  "message": "success",
+  "history": [
+    {
+      "anime_sn": 1001,
+      "video_sn": 2001,
+      "title": "測試動畫",
+      "cover_url": null,
+      "episode": "[01]",
+      "tmdb_id": null,
+      "last_watched_at": "2026-01-08 03:00:00"
+    }
+  ]
+}

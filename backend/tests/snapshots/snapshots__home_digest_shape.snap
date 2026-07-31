@@ -1,0 +1,60 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 145
+expression: body
+---
+{
+  "message": "success",
+  "posts": [
+    {
+      "id": 1,
+      "slug": null,
+      "title": "公開文章",
+      "category": "技術",
+      "created_at": "[created_at]"
+    },
+    {
+      "id": 11,
+      "slug": null,
+      "title": "系列第二篇",
+      "category": "技術",
+      "created_at": "[created_at]"
+    },
+    {
+      "id": 10,
+      "slug": null,
+      "title": "系列第一篇",
+      "category": "技術",
+      "created_at": "[created_at]"
+    }
+  ],
+  "thoughts": [
+    {
+      "id": 1,
+      "content": "第一則碎念",
+      "ref_type": null,
+      "created_at": "[created_at]"
+    }
+  ],
+  "comments": [],
+  "timeline": [
+    {
+      "id": 10,
+      "slug": null,
+      "title": "系列第一篇",
+      "created_at": "[created_at]"
+    },
+    {
+      "id": 11,
+      "slug": null,
+      "title": "系列第二篇",
+      "created_at": "[created_at]"
+    },
+    {
+      "id": 1,
+      "slug": null,
+      "title": "公開文章",
+      "created_at": "[created_at]"
+    }
+  ]
+}

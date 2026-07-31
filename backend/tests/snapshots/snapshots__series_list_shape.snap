@@ -1,0 +1,15 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 46
+expression: body
+---
+{
+  "series": [
+    {
+      "name": "測試系列",
+      "count": 2,
+      "first_at": "2026-01-05 03:00:00",
+      "last_at": "2026-01-06 03:00:00"
+    }
+  ]
+}

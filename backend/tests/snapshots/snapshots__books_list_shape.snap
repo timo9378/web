@@ -1,0 +1,50 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 68
+expression: body
+---
+{
+  "message": "success",
+  "books": [
+    {
+      "id": 2,
+      "isbn": "9780987654321",
+      "title": "在讀的書",
+      "authors": "另一位作者",
+      "publisher": null,
+      "published_date": null,
+      "description": null,
+      "cover_url": null,
+      "page_count": null,
+      "language": null,
+      "categories": null,
+      "reading_status": "reading",
+      "rating": null,
+      "personal_notes": null,
+      "date_added": "2026-01-02 03:00:00",
+      "date_updated": "2026-01-02 03:00:00",
+      "date_started": null,
+      "date_finished": null
+    },
+    {
+      "id": 1,
+      "isbn": "9781234567890",
+      "title": "測試書名",
+      "authors": "某作者",
+      "publisher": "某出版社",
+      "published_date": null,
+      "description": "書籍簡介",
+      "cover_url": null,
+      "page_count": 320,
+      "language": null,
+      "categories": null,
+      "reading_status": "read",
+      "rating": 5,
+      "personal_notes": null,
+      "date_added": "2026-01-01 03:00:00",
+      "date_updated": "2026-01-01 03:00:00",
+      "date_started": null,
+      "date_finished": null
+    }
+  ]
+}

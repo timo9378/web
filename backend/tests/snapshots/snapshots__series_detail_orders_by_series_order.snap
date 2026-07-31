@@ -1,0 +1,26 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 56
+expression: body
+---
+{
+  "name": "測試系列",
+  "posts": [
+    {
+      "id": 10,
+      "title": "系列第一篇",
+      "excerpt": "摘要十",
+      "series_name": "測試系列",
+      "series_order": 1,
+      "created_at": "2026-01-05 03:00:00"
+    },
+    {
+      "id": 11,
+      "title": "系列第二篇",
+      "excerpt": "摘要十一",
+      "series_name": "測試系列",
+      "series_order": 2,
+      "created_at": "2026-01-06 03:00:00"
+    }
+  ]
+}

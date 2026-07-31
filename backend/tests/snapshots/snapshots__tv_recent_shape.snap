@@ -1,0 +1,19 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 124
+expression: body
+---
+{
+  "message": "success",
+  "series": [
+    {
+      "series_name": "測試影集",
+      "last_watched": "2026-01-12",
+      "ep_count": 1,
+      "tmdb_id": null,
+      "poster_url": null,
+      "genres": null,
+      "source": "trakt"
+    }
+  ]
+}

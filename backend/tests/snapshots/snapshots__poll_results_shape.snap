@@ -1,0 +1,18 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 88
+expression: body
+---
+{
+  "options": [
+    {
+      "option_key": "a",
+      "count": 3
+    },
+    {
+      "option_key": "b",
+      "count": 1
+    }
+  ],
+  "total": 4
+}

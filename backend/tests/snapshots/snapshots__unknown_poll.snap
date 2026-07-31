@@ -1,0 +1,9 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 97
+expression: body
+---
+{
+  "options": [],
+  "total": 0
+}

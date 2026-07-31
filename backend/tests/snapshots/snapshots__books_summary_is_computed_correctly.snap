@@ -1,0 +1,16 @@
+---
+source: backend/tests/snapshots.rs
+assertion_line: 77
+expression: body
+---
+{
+  "message": "success",
+  "stats": {
+    "total_books": 2,
+    "books_read": 1,
+    "books_reading": 1,
+    "books_to_read": 0,
+    "average_rating": 5,
+    "total_pages": 320
+  }
+}

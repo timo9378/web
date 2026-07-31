@@ -2,20 +2,16 @@
 //! Express 對拍 oracle 退役後的接棒安全網——覆蓋核心公開端點、admin 守衛、JWT exp
 //! 與 image-proxy 的 SSRF 防護。每個測試自建獨立 DB（互不干擾、可平行）。
 
-use std::str::FromStr;
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock;
 
-use axum::Router;
-use axum::body::Body;
-use axum::http::{Request, StatusCode, header};
-use http_body_util::BodyExt;
+use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use tower::ServiceExt;
 
-use koimsurai_web_backend::{handlers, router::build_router, state, state::AppState};
-
-const TEST_SECRET: &str = "test-secret";
+// 架設（test_app / seed / request / owner_token）抽到 tests/common/mod.rs，
+// 因為 tests/snapshots.rs 也要用同一份。Rust 的整合測試一個檔案一個 crate，
+// 兩邊看不到彼此，不抽出來就得抄兩份——抄兩份的下場是其中一份會慢慢走樣。
+mod common;
+use common::{get, owner_token, post_json, request, test_app};
 
 /// GALLERY_MANIFEST_PATH 是 process 全域的，而兩個 gallery 測試各自要指到不同檔案。
 /// nextest（CI 的跑法）一個測試一個行程，本來就不會撞；但 `cargo test` 是同一個行程內
@@ -23,88 +19,6 @@ const TEST_SECRET: &str = "test-secret";
 /// 一失敗就整個停在「cargo test failed in an unmutated tree」什麼都測不了。
 /// 用一把鎖把這兩個測試串起來，兩種跑法都成立。
 static GALLERY_ENV_LOCK: LazyLock<tokio::sync::Mutex<()>> = LazyLock::new(|| tokio::sync::Mutex::new(()));
-
-/// 建一個接上獨立 in-memory DB 的完整 app（與正式環境同一條 build_router 路徑）。
-async fn test_app() -> (Router, sqlx::SqlitePool) {
-    let opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap().foreign_keys(true);
-    // in-memory DB 一條連線就是一份 DB → 鎖在單連線，全部操作共用同一份
-    let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.unwrap();
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
-    seed(&pool).await;
-    let state = AppState {
-        pool: pool.clone(),
-        http: reqwest::Client::new(),
-        jwt_secret: Arc::from(TEST_SECRET),
-        spotify: Arc::new(state::SpotifyState::default()),
-        steam: Arc::new(state::SteamState::default()),
-        watch: Arc::new(state::WatchState::default()),
-        bahamut: handlers::bahamut::build_state("sqlite::memory:"),
-    };
-    (build_router(state), pool)
-}
-
-async fn seed(pool: &sqlx::SqlitePool) {
-    for sql in [
-        "INSERT INTO categories (name, slug, description) VALUES ('技術', 'tech', '技術文')",
-        "INSERT INTO tags (name) VALUES ('rust')",
-        "INSERT INTO posts (id, title, content, excerpt, category, status) \
-         VALUES (1, '公開文章', '這是內文', '摘要', '技術', 'published')",
-        "INSERT INTO posts (id, title, content, status) VALUES (2, '未發布草稿', '草稿內文', 'draft')",
-        "INSERT INTO post_tags (post_id, tag_id) VALUES (1, 1)",
-        "INSERT INTO thoughts (content) VALUES ('第一則碎念')",
-    ] {
-        sqlx::query(sql).execute(pool).await.unwrap();
-    }
-}
-
-/// 發請求；body 非 JSON 時以字串包回（image-proxy 的 text/html 錯誤用）。
-async fn request(
-    app: &Router,
-    method: &str,
-    path: &str,
-    body: Option<Value>,
-    bearer: Option<&str>,
-) -> (StatusCode, Value) {
-    let mut b = Request::builder().method(method).uri(path);
-    if let Some(t) = bearer {
-        b = b.header(header::AUTHORIZATION, format!("Bearer {t}"));
-    }
-    let req = match body {
-        Some(v) => {
-            b.header(header::CONTENT_TYPE, "application/json").body(Body::from(v.to_string())).unwrap()
-        }
-        None => b.body(Body::empty()).unwrap(),
-    };
-    let resp = app.clone().oneshot(req).await.unwrap();
-    let status = resp.status();
-    let bytes = resp.into_body().collect().await.unwrap().to_bytes();
-    let v = serde_json::from_slice(&bytes)
-        .unwrap_or_else(|_| Value::String(String::from_utf8_lossy(&bytes).into_owned()));
-    (status, v)
-}
-
-async fn get(app: &Router, path: &str) -> (StatusCode, Value) {
-    request(app, "GET", path, None, None).await
-}
-
-async fn post_json(app: &Router, path: &str, body: Value) -> (StatusCode, Value) {
-    request(app, "POST", path, Some(body), None).await
-}
-
-/// 簽 legacy OWNER token（authorize 的 username 路徑）。with_exp=false 用來驗 exp 必要性。
-fn owner_token(with_exp: bool) -> String {
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
-    let mut claims = json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now });
-    if with_exp {
-        claims["exp"] = json!(now + 3600);
-    }
-    jsonwebtoken::encode(
-        &jsonwebtoken::Header::default(),
-        &claims,
-        &jsonwebtoken::EncodingKey::from_secret(TEST_SECRET.as_bytes()),
-    )
-    .unwrap()
-}
 
 // ── 基本可用性 ─────────────────────────────────────────────────
 
