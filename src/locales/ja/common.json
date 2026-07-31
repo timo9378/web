@@ -357,6 +357,8 @@
       "popular": "人気"
     },
     "comment": "コメント",
+    "like": "いいね",
+    "unlike": "いいねを取り消す",
     "share": "シェア",
     "shareCopied": "コピー済み!",
     "postCount": "記事",

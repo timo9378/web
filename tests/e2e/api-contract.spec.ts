@@ -1,0 +1,183 @@
+import Ajv, { type ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
+import { expect, test, type APIRequestContext } from '@playwright/test';
+
+/**
+ * 前後端契約：**拿後端自己發布的 OpenAPI schema 去驗它自己的回應**，不手寫欄位斷言。
+ *
+ * 為什麼這樣做：
+ *   - schema 是 utoipa 從同一批 struct 生的（跟 specta 給前端的 TS 型別同源），
+ *     所以「回應符合 schema」等於「回應符合前端拿到的型別」。
+ *   - 手寫 `expect(typeof x.foo).toBe('number')` 只涵蓋當下想到的欄位，
+ *     而且新端點不會自動被測到。schema 驗證是整包比對，新端點加進 spec 就自動納入。
+ *   - CI 已經有 specta drift gate 擋「struct 改了但 index.ts 沒重生」，
+ *     但沒有東西擋「宣告的形狀跟實際回的不一樣」。這支補的是那個縫。
+ *
+ * 只驗**無參數的公開 GET**：帶參數的要準備 fixture、寫入型的有副作用，
+ * 那些交給下面幾支明確的測試與 backend 的整合測試。
+ */
+
+interface OpenApiOperation {
+  security?: Record<string, unknown>[];
+  parameters?: { required?: boolean; in: string }[];
+  responses?: Record<string, { content?: Record<string, { schema?: unknown }> }>;
+}
+type OpenApiSpec = {
+  paths: Record<string, Record<string, OpenApiOperation>>;
+  components?: { schemas?: Record<string, unknown> };
+};
+
+let spec: OpenApiSpec;
+let ajv: Ajv;
+
+test.beforeAll(async ({ playwright, baseURL }) => {
+  const ctx = await playwright.request.newContext({ baseURL });
+  spec = (await (await ctx.get('/api/openapi.json')).json()) as OpenApiSpec;
+  await ctx.dispose();
+
+  ajv = new Ajv({ strict: false, allErrors: true, discriminator: true });
+  addFormats(ajv);
+  // utoipa 產的 $ref 是 #/components/schemas/X；把它們整包餵給 ajv 才解得開
+  for (const [name, schema] of Object.entries(spec.components?.schemas ?? {})) {
+    ajv.addSchema(schema as object, `#/components/schemas/${name}`);
+  }
+});
+
+/** 挑「不用準備任何東西就能打」的公開 GET。 */
+function plainPublicGets(): { path: string; schema: unknown }[] {
+  const out: { path: string; schema: unknown }[] = [];
+  for (const [p, ops] of Object.entries(spec.paths)) {
+    const op = ops.get;
+    if (!op) continue;
+    if (op.security?.some((s) => 'bearer' in s)) continue; // 要 token
+    if (p.includes('{')) continue; // 帶路徑參數
+    if (op.parameters?.some((x) => x.required && x.in === 'query')) continue; // 必填 query
+    const schema = op.responses?.['200']?.content?.['application/json']?.schema;
+    if (schema) out.push({ path: p, schema });
+  }
+  return out;
+}
+
+/** 給定 schema 編一個 validator（ajv 對同一個 schema 物件會快取）。 */
+function compile(schema: unknown): ValidateFunction {
+  return ajv.compile(schema as object);
+}
+
+test('公開 GET 端點的回應都符合自己宣告的 OpenAPI schema', async ({ request }) => {
+  const targets = plainPublicGets();
+  expect(targets.length, 'spec 裡應該找得到一批無參數的公開 GET').toBeGreaterThan(8);
+
+  const bad: string[] = [];
+  for (const { path, schema } of targets) {
+    const r = await request.get(path, { failOnStatusCode: false });
+    // 第三方端點沒金鑰會走降級路徑（另有測試驗），這裡只驗成功回應的形狀
+    if (r.status() !== 200) continue;
+    const body: unknown = await r.json();
+    const validate = compile(schema);
+    if (!validate(body)) {
+      const errs = (validate.errors ?? [])
+        .slice(0, 3)
+        .map((e) => `${e.instancePath || '(root)'} ${e.message}`)
+        .join('; ');
+      bad.push(`${path} — ${errs}`);
+    }
+  }
+  expect(bad, '這些端點回的東西跟自己宣告的 schema 對不上').toEqual([]);
+});
+
+/**
+ * 守衛清單也從 spec 自動列舉：凡是宣告要 bearer 的，沒帶 token 就必須 401。
+ * 手寫清單只涵蓋寫的時候想到的，新端點忘了掛守衛不會有人發現。
+ * （反過來的漏洞——該掛卻連 spec 都沒宣告——這裡擋不到，那要靠 review。）
+ */
+test('凡是 OpenAPI 宣告要 bearer 的端點，沒帶 token 都不能給資料', async ({ request }) => {
+  const guarded: { method: string; path: string }[] = [];
+  for (const [rawPath, ops] of Object.entries(spec.paths)) {
+    for (const [method, op] of Object.entries(ops)) {
+      if (!op.security?.some((s) => 'bearer' in s)) continue;
+      // {id} 換成一定不存在的值：守衛必須在查資料之前，所以就算 id 不存在也該 401 而非 404
+      guarded.push({ method: method.toUpperCase(), path: rawPath.replace(/\{[^}]+\}/g, '999999') });
+    }
+  }
+  expect(guarded.length, 'spec 裡應該要有一批 bearer 端點').toBeGreaterThan(10);
+
+  const leaked: string[] = [];
+  for (const { method, path } of guarded) {
+    // 一定要帶合法 JSON body：axum 的 Json extractor 在 handler 之前就跑，
+    // 沒 Content-Type 會直接 415，那條路**碰不到 require_admin**，等於沒測到守衛。
+    const r = await request.fetch(path, {
+      method,
+      headers: { 'content-type': 'application/json' },
+      data: {},
+      failOnStatusCode: false,
+    });
+    if (r.status() !== 401) leaked.push(`${method} ${path} → ${r.status()}`);
+  }
+  expect(leaked, '這些宣告要驗證的端點，沒帶 token 時沒有回 401').toEqual([]);
+});
+
+/**
+ * 降級路徑：CI 沒有第三方金鑰，這些端點會走「未配置」那條。
+ * 平常沒人走的路最容易壞掉又沒人發現，所以特別釘住它的形狀。
+ */
+const DEGRADED = [
+  { path: '/api/steam/player', arrays: [] as string[] },
+  { path: '/api/steam/recent-games', arrays: ['games'] },
+  { path: '/api/steam/owned-games', arrays: ['games'] },
+  { path: '/api/wakatime/today', arrays: [] },
+  { path: '/api/wakatime/week', arrays: ['languages', 'projects'] },
+  { path: '/api/github/repos/octocat', arrays: ['repos'] },
+  { path: '/api/github/contributions/octocat', arrays: ['contributions'] },
+  { path: '/api/github/events/octocat', arrays: ['events'] },
+];
+
+for (const ep of DEGRADED) {
+  test(`${ep.path} 沒金鑰時形狀仍完整`, async ({ request }) => {
+    const r = await request.get(ep.path, { failOnStatusCode: false });
+    const b = (await r.json()) as Record<string, unknown>;
+    // 陣列欄位一定要存在（前端直接 .map，不能是 undefined）——降級路徑最常壞在這
+    for (const k of ep.arrays) expect(Array.isArray(b[k]), `${ep.path} 的 ${k} 應為陣列`).toBe(true);
+    expect(b.error === null || typeof b.error === 'string', `${ep.path} 的 error 應為 string | null`).toBe(true);
+    // 5xx 只在「刻意降級」時可接受，而且要說明白是什麼事；沒有 error 的 5xx 就是真的爆了
+    if (r.status() >= 500) expect(typeof b.error, `${ep.path} 回 ${r.status()} 卻沒說原因`).toBe('string');
+  });
+}
+
+// ── 以下是 schema 驗不到的「意圖」，只能手寫 ────────────────────────────
+// schema 說得出「posts 是陣列」，說不出「草稿不該在裡面」。
+
+const json = async (request: APIRequestContext, path: string) => (await request.get(path)).json();
+
+test('公開清單只回已發布的文章', async ({ request }) => {
+  const b = await json(request, '/api/posts');
+  expect(b.posts.map((p: { title: string }) => p.title)).not.toContain('未發布草稿');
+  expect(b.posts.length).toBe(2); // 種子 3 篇，1 篇草稿
+});
+
+test('留言只回審核通過的', async ({ request }) => {
+  const b = await json(request, '/api/posts/1/comments');
+  const authors = b.comments.map((c: { author: string }) => c.author);
+  expect(authors).toContain('路過的讀者');
+  expect(authors, '待審核的不該公開').not.toContain('待審核的人');
+});
+
+test('碎念的 ref 解得出物件，原字串也還在', async ({ request }) => {
+  const b = await json(request, '/api/thoughts');
+  const withRef = b.thoughts.find((t: { ref_type: string | null }) => t.ref_type === 'link');
+  expect(withRef.ref.title).toBe('範例連結');
+  expect(withRef.ref.poster, 'media 那組欄位補成 null，而不是整筆解析失敗').toBeNull();
+  expect(typeof withRef.ref_json).toBe('string');
+});
+
+test('相簿 manifest 的整數不會變成浮點', async ({ request }) => {
+  const b = await json(request, '/api/gallery/photos');
+  expect(b.totalPhotos).toBe(b.photos.length);
+  const iso = b.photos.map((x: { exif?: { ISO?: unknown } }) => x.exif?.ISO).find((v: unknown) => typeof v === 'number');
+  if (iso !== undefined) expect(Number.isInteger(iso), 'manifest 會被反覆讀寫，序列化不該改數字寫法').toBe(true);
+});
+
+test('不存在的資源回 404', async ({ request }) => {
+  for (const p of ['/api/posts/99999', '/api/thoughts/99999']) {
+    expect((await request.get(p, { failOnStatusCode: false })).status(), p).toBe(404);
+  }
+});

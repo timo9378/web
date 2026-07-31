@@ -357,6 +357,8 @@
       "popular": "熱門"
     },
     "comment": "留言",
+    "like": "喜歡",
+    "unlike": "取消喜歡",
     "share": "分享",
     "shareCopied": "已複製!",
     "postCount": "文章",

@@ -246,7 +246,14 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
 
         {/* 底部互動列 */}
         <div className="note-actions">
-          <button className={`note-action-btn ${liked ? 'liked' : ''}`} onClick={(e) => { void handleLike(e); }}>
+          {/* aria-label 是必要的不是裝飾：讚數為 0 時 <span> 是空的、圖示是無名 SVG，
+              整顆按鈕對螢幕閱讀器就只剩「button」。axe 的 button-name 規則抓到的就是這個。 */}
+          <button
+            className={`note-action-btn ${liked ? 'liked' : ''}`}
+            aria-label={liked ? t('blog.unlike') : t('blog.like')}
+            aria-pressed={liked}
+            onClick={(e) => { void handleLike(e); }}
+          >
             {liked ? <FaHeart /> : <FaRegHeart />}
             <span>{likeCount > 0 ? likeCount : ''}</span>
           </button>

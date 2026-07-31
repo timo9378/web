@@ -357,6 +357,8 @@
       "popular": "Popular"
     },
     "comment": "Comment",
+    "like": "Like",
+    "unlike": "Unlike",
     "share": "Share",
     "shareCopied": "Copied!",
     "postCount": "Posts",

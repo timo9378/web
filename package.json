@@ -9,17 +9,20 @@
   "packageManager": "pnpm@11.17.0",
   "scripts": {
     "build": "vite build --config vite.config.start.ts",
-    "dev": "BACKEND_URL=http://127.0.0.1:3009 vite dev --config vite.config.start.ts --port 13998 --host",
-    "preview": "node .output/server/index.mjs",
-    "lint": "oxlint --type-aware --tsconfig=tsconfig.json src && oxlint scripts server packages",
-    "test": "vitest run",
-    "typecheck:server": "tsc -p server/tsconfig.json --noEmit",
-    "typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
+    "build:all": "pnpm run build:photos && pnpm run build",
     "build:gallery": "pnpm tsx scripts/builder/index.ts",
     "build:photos": "tsx scripts/builder/index.ts && node ../ai-tagger/clip_tagger.js",
-    "build:all": "pnpm run build:photos && pnpm run build",
+    "dev": "BACKEND_URL=http://127.0.0.1:3009 vite dev --config vite.config.start.ts --port 13998 --host",
+    "e2e": "playwright test",
+    "e2e:stack": "node tests/e2e/stack.mjs",
+    "e2e:ui": "playwright test --ui",
     "export:types": "cd backend && cargo run --bin export_types",
-    "start": "node .output/server/index.mjs"
+    "lint": "oxlint --type-aware --tsconfig=tsconfig.json src && oxlint scripts server packages",
+    "preview": "node .output/server/index.mjs",
+    "start": "node .output/server/index.mjs",
+    "test": "vitest run",
+    "typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
+    "typecheck:server": "tsc -p server/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@animateicons/react": "^0.3.3",
@@ -106,7 +109,9 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint-react/eslint-plugin": "^5.9.1",
+    "@playwright/test": "^1.62.0",
     "@rolldown/plugin-babel": "^0.2.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
@@ -116,6 +121,8 @@
     "@types/react-dom": "^19.0.4",
     "@types/three": "0.185.1",
     "@vitejs/plugin-react": "^6.0.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "^1.0.0",
     "heic-convert": "^2.1.0",

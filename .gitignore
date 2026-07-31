@@ -79,3 +79,9 @@ mutants.out.old/
 
 # C/C++ 編譯產物（誤留）
 a.out
+
+# playwright e2e 產物
+test-results/
+playwright-report/
+blob-report/
+.playwright/
