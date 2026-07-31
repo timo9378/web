@@ -27,14 +27,23 @@
 這些以前要手刻 CDP：光「節流 + 注入 PerformanceObserver + 算 session window + 歸因」
 就是 80 行,現在是 3~4 個工具呼叫。
 
-**`playwright` 用在它做不到的兩件事**，而這兩件都是實際踩過的坑：
+**`playwright` 只在一件事上不可取代**：**獨立 context**（`browser.newContext()`）。
+chrome-devtools 只有 `new_page`、共用 profile。曾經因此誤判：量到「CLS 3/4 歸零」以為修好了，
+用全新 context 重測才發現那是 **history 與快取造成的假象**，真實情況完全沒改善。要量
+「首次造訪」就必須有乾淨環境。（`--isolated` 只在 server 生命週期層級隔離，不是每次測試。）
 
-1. **獨立 context**（`browser.newContext()`）。chrome-devtools 只有 `new_page`，共用 profile。
-   曾經因此誤判：量到「CLS 3/4 歸零」以為修好了，用全新 context 重測才發現那是 **history
-   與快取造成的假象**，真實情況是該情境完全沒改善。要量「首次造訪」就必須有乾淨環境。
-   （chrome-devtools 的 `--isolated` 只在 server 生命週期層級隔離，不是每次測試。）
-2. **導覽前注入腳本**（`addInitScript`）。抓「第一幀就發生」的位移、或自訂追蹤（每 40ms 記
-   某元素的 offsetTop）都要它。`performance_start_trace` 對標準 CWV 夠用，自訂儀器不行。
+> 導覽前注入腳本不是差異點——`navigate_page` 有 `initScript` 參數，等同 `addInitScript`。
+
+⚠️ **`performance_start_trace` 的 `reload: true` 有陷阱。** 它自己的重載**不帶捲動還原**，
+量文章頁只會得到 0.03；要重現「捲在深處按 F5」必須 `reload: false` + `autoStop: false`，
+自己 `evaluate_script` 捲好、`navigate_page(type: reload)`、再 `performance_stop_trace`。
+用對之後它量到 0.4252，跟手刻 CDP 的數字一致。
+
+⚠️ **它測得到、不一定解釋得了。** 同一筆 0.4252 它回「No potential root causes identified」——
+CLSCulprits 認得的是字體、圖片無尺寸、動態插入這類標準模式，而這頁的成因是「瀏覽器在
+SSR HTML 還沒解析完（docH 2792 → 最終 7109）就還原捲動位置」，不在它的分類裡。
+遇到它答不出來的，還是得自己逐幀追 docH / scrollY / 各區塊高度。
+反過來它也抓到過我漏掉的：TASA Explorer 那支 latin webfont 造成 0.0337 位移。
 
 ⚠️ **Lighthouse 測不出實地才有的問題。** 同一頁在無節流本機跑是 CLS 0，開了節流還是 0
 （LCP 卻爆到 4.2s，證明節流有生效）——因為它永遠是冷啟動、無 history、單頁直接載入。
