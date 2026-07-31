@@ -100,8 +100,11 @@ fn today_utc() -> String {
 const GH_UA: &str = "Personal-Website-Backend";
 
 /// ghFetch 等價：失敗回 None（Express resolve(null)）。
-async fn gh_fetch(http: &reqwest::Client, path: &str, token: Option<&str>) -> Option<Value> {
-    let mut req = http.get(format!("https://api.github.com{path}")).header("User-Agent", GH_UA);
+///
+/// `base` 是 GitHub API 的 base URL（`state.external.github_api`）。傳進來而不是寫死，
+/// 測試才攔得到——理由見 `state::ExternalUrls`。
+async fn gh_fetch(http: &reqwest::Client, base: &str, path: &str, token: Option<&str>) -> Option<Value> {
+    let mut req = http.get(format!("{base}{path}")).header("User-Agent", GH_UA);
     if let Some(t) = token {
         req = req.header("Authorization", format!("Bearer {t}"));
     }
@@ -135,7 +138,7 @@ pub struct GithubUserResponse {
     params(("username" = String, Path)),
     responses((status = 200, body = GithubUserResponse)))]
 pub async fn github_user(State(state): State<AppState>, Path(username): Path<String>) -> Response {
-    let url = format!("https://api.github.com/users/{username}");
+    let url = format!("{}/users/{username}", state.external.github_api);
     let v = match fetch_json_lenient(&state.http, &url, Some(GH_UA), GH_PARSE_ERR, GH_FETCH_ERR).await {
         Ok(v) => v,
         Err(e) => {
@@ -200,7 +203,7 @@ pub async fn github_repos(
     let limit = q.limit.unwrap_or(5).clamp(1, 100);
     let token = std::env::var("GITHUB_TOKEN").ok().filter(|s| !s.is_empty());
     let path = format!("/users/{username}/repos?sort=updated&per_page={limit}");
-    let Some(v) = gh_fetch(&state.http, &path, token.as_deref()).await else {
+    let Some(v) = gh_fetch(&state.http, &state.external.github_api, &path, token.as_deref()).await else {
         return Json(GithubReposResponse { repos: vec![], error: Some(GH_FETCH_ERR.to_string()) })
             .into_response();
     };
@@ -300,7 +303,7 @@ pub async fn github_contributions(
     let body = json!({ "query": query, "variables": { "login": username } }).to_string();
     let resp = state
         .http
-        .post("https://api.github.com/graphql")
+        .post(format!("{}/graphql", state.external.github_api))
         .header("User-Agent", GH_UA)
         .bearer_auth(&token)
         .header("Content-Type", "application/json")
@@ -399,7 +402,7 @@ pub struct GithubEventsResponse {
 pub async fn github_events(State(state): State<AppState>, Path(username): Path<String>) -> Response {
     let token = std::env::var("GITHUB_TOKEN").ok().filter(|s| !s.is_empty());
     let path = format!("/users/{username}/events/public?per_page=30");
-    let events = gh_fetch(&state.http, &path, token.as_deref()).await;
+    let events = gh_fetch(&state.http, &state.external.github_api, &path, token.as_deref()).await;
 
     let Some(Value::Array(mut events)) = events else {
         // GitHub 錯誤物件（{message,…}）→ error 欄位；抓不到 / null → 空清單
@@ -436,7 +439,7 @@ pub async fn github_events(State(state): State<AppState>, Path(username): Path<S
                 before.and_then(|v| v.as_str().map(String::from)).unwrap_or_default(),
                 head.and_then(|v| v.as_str().map(String::from)).unwrap_or_default()
             );
-            let cmp = gh_fetch(&state.http, &cmp_path, Some(t)).await;
+            let cmp = gh_fetch(&state.http, &state.external.github_api, &cmp_path, Some(t)).await;
             if let Some(commits) = cmp.as_ref().and_then(|c| c.get("commits")).and_then(|c| c.as_array()) {
                 let mapped: Vec<Value> = commits
                     .iter()
@@ -629,8 +632,9 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
             .into_response();
     };
     let date = today_utc();
-    let url_summary = format!("https://wakatime.com/api/v1/users/current/summaries?start={date}&end={date}");
-    let url_durations = format!("https://wakatime.com/api/v1/users/current/durations?date={date}");
+    let base = &state.external.wakatime;
+    let url_summary = format!("{base}/api/v1/users/current/summaries?start={date}&end={date}");
+    let url_durations = format!("{base}/api/v1/users/current/durations?date={date}");
     let (summary, durations) =
         tokio::join!(waka_get(&state.http, &url_summary, &key), waka_get(&state.http, &url_durations, &key));
     let today_err = |e| {
@@ -687,7 +691,8 @@ async fn wakatime_stats(state: &AppState, err_kind: &str) -> Response {
         )
             .into_response();
     };
-    match waka_get(&state.http, "https://wakatime.com/api/v1/users/current/stats/last_7_days", &key).await {
+    let stats_url = format!("{}/api/v1/users/current/stats/last_7_days", state.external.wakatime);
+    match waka_get(&state.http, &stats_url, &key).await {
         Ok(v) => Json(WakatimeStatsResponse {
             languages: waka_stats_from(v.pointer("/data/languages").unwrap_or(&Value::Null)),
             projects: waka_stats_from(v.pointer("/data/projects").unwrap_or(&Value::Null)),
@@ -801,7 +806,7 @@ pub async fn steam_player(State(state): State<AppState>) -> Response {
     };
     let Some((key, id)) = steam_env() else { return unconf() };
     let url =
-        format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}");
+        format!("{}/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}", state.external.steam_api);
     match fetch_json_lenient(&state.http, &url, None, STEAM_PARSE_ERR, STEAM_FETCH_ERR).await {
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -859,7 +864,8 @@ fn steam_games_unconfigured() -> Response {
 pub async fn steam_recent_games(State(state): State<AppState>) -> Response {
     let Some((key, id)) = steam_env() else { return steam_games_unconfigured() };
     let url = format!(
-        "https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={key}&steamid={id}&format=json"
+        "{}/IPlayerService/GetRecentlyPlayedGames/v0001/?key={key}&steamid={id}&format=json",
+        state.external.steam_api
     );
     steam_games(&state, &url, false).await
 }
@@ -869,7 +875,8 @@ pub async fn steam_recent_games(State(state): State<AppState>) -> Response {
 pub async fn steam_owned_games(State(state): State<AppState>) -> Response {
     let Some((key, id)) = steam_env() else { return steam_games_unconfigured() };
     let url = format!(
-        "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={key}&steamid={id}&include_appinfo=true&include_played_free_games=true&format=json"
+        "{}/IPlayerService/GetOwnedGames/v0001/?key={key}&steamid={id}&include_appinfo=true&include_played_free_games=true&format=json",
+        state.external.steam_api
     );
     steam_games(&state, &url, true).await
 }
@@ -887,7 +894,10 @@ pub async fn steam_achievements(State(state): State<AppState>, Path(appid): Path
     let Some((key, id)) = steam_env() else { return steam_unconfigured() };
     passthrough_json(
         &state.http,
-        &format!("https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid={appid}&key={key}&steamid={id}"),
+        &format!(
+            "{}/ISteamUserStats/GetPlayerAchievements/v0001/?appid={appid}&key={key}&steamid={id}",
+            state.external.steam_api
+        ),
         None,
         "Failed to parse Steam API response",
         "Failed to fetch Steam achievements data",
@@ -920,9 +930,9 @@ fn s_or_empty(v: Option<&Value>) -> String {
     v.and_then(|x| x.as_str()).unwrap_or("").to_string()
 }
 
-async fn search_google_books(http: &reqwest::Client, q: &str) -> Vec<Value> {
-    let url =
-        format!("https://www.googleapis.com/books/v1/volumes?q={}&maxResults=10", encode_uri_component(q));
+/// `base` 是 Google Books 的 base URL（`state.external.google_books`）。
+async fn search_google_books(http: &reqwest::Client, base: &str, q: &str) -> Vec<Value> {
+    let url = format!("{base}/books/v1/volumes?q={}&maxResults=10", encode_uri_component(q));
     let Some(data) = fetch_json(http, &url).await else { return vec![] };
     let Some(items) = data.get("items").and_then(|i| i.as_array()) else { return vec![] };
     items
@@ -978,10 +988,11 @@ async fn fetch_json(http: &reqwest::Client, url: &str) -> Option<Value> {
     Some(v)
 }
 
-async fn search_open_library(http: &reqwest::Client, input: &str, is_isbn: bool) -> Vec<Value> {
+/// `base` 是 Open Library 的 base URL（`state.external.openlibrary`）。
+async fn search_open_library(http: &reqwest::Client, base: &str, input: &str, is_isbn: bool) -> Vec<Value> {
     if is_isbn {
         let clean: String = input.chars().filter(|c| *c != '-' && !c.is_whitespace()).collect();
-        let url = format!("https://openlibrary.org/api/books?bibkeys=ISBN:{clean}&format=json&jscmd=data");
+        let url = format!("{base}/api/books?bibkeys=ISBN:{clean}&format=json&jscmd=data");
         let Some(data) = fetch_json(http, &url).await else { return vec![] };
         let key = format!("ISBN:{clean}");
         let Some(b) = data.get(&key) else { return vec![] };
@@ -1034,7 +1045,7 @@ async fn search_open_library(http: &reqwest::Client, input: &str, is_isbn: bool)
             "source": "openlibrary",
         })]
     } else {
-        let url = format!("https://openlibrary.org/search.json?q={}&limit=10", encode_uri_component(input));
+        let url = format!("{base}/search.json?q={}&limit=10", encode_uri_component(input));
         let Some(data) = fetch_json(http, &url).await else { return vec![] };
         let Some(docs) = data.get("docs").and_then(|d| d.as_array()) else { return vec![] };
         docs.iter()
@@ -1101,9 +1112,9 @@ pub async fn books_search_external(
         input.clone()
     };
 
-    let mut books = search_google_books(&state.http, &search_query).await;
+    let mut books = search_google_books(&state.http, &state.external.google_books, &search_query).await;
     if books.is_empty() {
-        books = search_open_library(&state.http, &input, is_isbn).await;
+        books = search_open_library(&state.http, &state.external.openlibrary, &input, is_isbn).await;
     }
     Json(json!({ "message": "success", "books": books })).into_response()
 }
@@ -1245,10 +1256,10 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
         }
     };
     let u1 =
-        format!("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}");
-    let u2 = format!("https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={key}&steamid={id}");
-    let u3 = format!("https://api.steampowered.com/IPlayerService/GetBadges/v1/?key={key}&steamid={id}");
-    let u4 = format!("https://steamcommunity.com/miniprofile/{account_id}");
+        format!("{}/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}", state.external.steam_api);
+    let u2 = format!("{}/IPlayerService/GetSteamLevel/v1/?key={key}&steamid={id}", state.external.steam_api);
+    let u3 = format!("{}/IPlayerService/GetBadges/v1/?key={key}&steamid={id}", state.external.steam_api);
+    let u4 = format!("{}/miniprofile/{account_id}", state.external.steam_community);
     let (player, level, badges, mini_html) = tokio::join!(
         steam_fetch_json(&state.http, &u1),
         steam_fetch_json(&state.http, &u2),
@@ -1548,5 +1559,144 @@ mod tests {
         assert_eq!(stats[0].name, "Rust");
         assert!((stats[0].percent - 62.5).abs() < f64::EPSILON);
         assert_eq!(stats[1].text, "", "缺 text 退成空字串而不是整筆丟掉");
+    }
+
+    // ── 打 mock 上游的整合測試 ────────────────────────────────────────────
+    //
+    // 這一整組在 `state::ExternalUrls` 之前是**寫不出來**的：上游位址寫死在字串裡，
+    // 任何 mock 都攔不到，所以 thirdparty.rs 2248 個 region 有八成從來沒被執行過。
+    //
+    // 驗的是「上游回什麼 → 我們吐什麼」這層轉換。那正是最容易在改動時默默壞掉、
+    // 而且壞了只有讀者會看到的地方（前端拿到形狀不符的 JSON 就是空白區塊）。
+
+    use crate::state::ExternalUrls;
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    /// 建一個 state，並把全部外部位址指到這台 mock。
+    async fn state_with_mock(server: &MockServer) -> AppState {
+        let mut st = crate::state::test_state().await;
+        st.external = std::sync::Arc::new(ExternalUrls::all_pointing_at(&server.uri()));
+        st
+    }
+
+    async fn body_of(resp: Response) -> Value {
+        let bytes = http_body_util::BodyExt::collect(resp.into_body()).await.expect("collect").to_bytes();
+        serde_json::from_slice(&bytes).expect("回應應該是 JSON")
+    }
+
+    /// GitHub 的錯誤物件是 `{message, documentation_url}`，沒有 `error` 欄位。
+    /// 這支端點的存在理由之一就是把 message 收進 `error`——在此之前 404 / rate limit
+    /// 會變成「所有欄位都是 null 的使用者物件」悄悄穿過去，前端檢查 `.error` 檢查不到。
+    #[tokio::test]
+    async fn github_user_surfaces_upstream_error_message() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/ghost"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(json!({
+                "message": "Not Found",
+                "documentation_url": "https://docs.github.com/rest"
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v =
+            body_of(github_user(axum::extract::State(st), axum::extract::Path("ghost".into())).await).await;
+        assert_eq!(v["error"], "Not Found", "GitHub 的 message 要被收進 error 欄位");
+        assert!(v["login"].is_null(), "失敗時不該有半個看起來正常的欄位");
+    }
+
+    /// 正常路徑：只回我們宣告的那五欄，上游多給的欄位不轉發。
+    #[tokio::test]
+    async fn github_user_returns_only_the_declared_fields() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/timo9378"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "login": "timo9378",
+                "name": "Koi",
+                "avatar_url": "https://avatars.githubusercontent.com/u/1",
+                "html_url": "https://github.com/timo9378",
+                "public_repos": 42,
+                // 上游還會給幾十個欄位，這裡放一個代表：不該出現在回應裡
+                "gravatar_id": "should-not-be-forwarded"
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_user(axum::extract::State(st), axum::extract::Path("timo9378".into())).await)
+            .await;
+        assert_eq!(v["login"], "timo9378");
+        assert_eq!(v["public_repos"], 42);
+        assert!(v["error"].is_null());
+        assert!(v.get("gravatar_id").is_none(), "上游多給的欄位不該原樣轉發出去");
+    }
+
+    /// steam/player：上游把玩家包在 `{response:{players:[…]}}` 裡，這支要把那層挖掉。
+    /// 挖錯層前端就是拿到 undefined，而且不會有任何錯誤訊息。
+    #[tokio::test]
+    async fn steam_player_unwraps_the_response_envelope() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 靠 STEAM_ENV_LOCK 串行化；結束前還原。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "76561197960265729");
+        }
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUser/GetPlayerSummaries/v0002/"))
+            .and(query_param("key", "k"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "response": { "players": [{
+                    "personaname": "koi",
+                    "avatarfull": "https://avatars.steamstatic.com/x.jpg",
+                    "personastate": 1,
+                    "gameid": "730"
+                }]}
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(steam_player(axum::extract::State(st)).await).await;
+        assert_eq!(v["player"]["personaname"], "koi");
+        // gameid 上游回的是**字串**不是數字，轉成數字會讓「在遊戲中」的判斷壞掉
+        assert_eq!(v["player"]["gameid"], "730");
+        assert!(v["error"].is_null());
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    /// 上游回了但形狀不對（players 是空陣列）時不該 panic，也不該回一個假的玩家。
+    #[tokio::test]
+    async fn steam_player_handles_empty_players_without_panicking() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 見上。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "76561197960265729");
+        }
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUser/GetPlayerSummaries/v0002/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "response": { "players": [] } })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(steam_player(axum::extract::State(st)).await).await;
+        assert!(v["player"].is_null(), "沒有玩家就該是 null，不是一個空殼物件");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
     }
 }

@@ -22,6 +22,67 @@ pub struct AppState {
     pub watch: Arc<WatchState>,
     /// bahamut client + sync 控制。
     pub bahamut: Arc<BahamutState>,
+    /// 對外服務的 base URL（預設＝正式位址）。見 `ExternalUrls`。
+    pub external: Arc<ExternalUrls>,
+}
+
+/// 對外服務的 base URL。
+///
+/// **預設值就是正式位址、編譯進去**，所以正式路徑的行為與寫死在字串裡時完全相同。
+/// 這裡刻意不用環境變數：那會多開一個外部可控的注入面（改掉它就能讓伺服器去打任意
+/// 主機），而我們要的只是測試能替換。
+///
+/// 存在的理由是可測性。thirdparty.rs 2248 個 region、watch.rs 2239、spotify.rs 709，
+/// 三者合計五千多個 region 一直測不到——不是因為沒人想寫測試，是因為上游位址寫死在
+/// 字串裡，任何 mock server 都攔不下來。測試建 `AppState` 時把這裡指向本地 mock。
+///
+/// ⚠ 只放**會被 fetch 的位址**。回應裡給前端當連結用的網址不要放進來——
+/// 例如 `SteamProfile.profile_url`（使用者點了要去真的 Steam）、書封圖網址。
+/// 那些指到 mock 等於把測試設定洩漏到正式回應裡。
+#[derive(Debug, Clone)]
+pub struct ExternalUrls {
+    /// GitHub REST + GraphQL（handlers/thirdparty.rs）
+    pub github_api: String,
+    /// Steam Web API（handlers/thirdparty.rs）
+    pub steam_api: String,
+    /// Steam 社群站——miniprofile 那支 HTML 抓取用，**不是** profile_url
+    pub steam_community: String,
+    /// WakaTime API（handlers/thirdparty.rs）
+    pub wakatime: String,
+    /// Google Books（書籍搜尋）
+    pub google_books: String,
+    /// Open Library（ISBN 查詢與搜尋）
+    pub openlibrary: String,
+}
+
+impl Default for ExternalUrls {
+    fn default() -> Self {
+        Self {
+            github_api: "https://api.github.com".into(),
+            steam_api: "https://api.steampowered.com".into(),
+            steam_community: "https://steamcommunity.com".into(),
+            wakatime: "https://wakatime.com".into(),
+            google_books: "https://www.googleapis.com".into(),
+            openlibrary: "https://openlibrary.org".into(),
+        }
+    }
+}
+
+impl ExternalUrls {
+    /// 測試用：全部指向同一個 mock server。
+    /// 每個服務用不同路徑前綴，這樣一台 mock 就能同時扮演六個上游，
+    /// 而且 mock 收到的請求路徑一看就知道是打給誰的。
+    #[cfg(test)]
+    pub(crate) fn all_pointing_at(base: &str) -> Self {
+        Self {
+            github_api: format!("{base}/github"),
+            steam_api: format!("{base}/steam-api"),
+            steam_community: format!("{base}/steam-community"),
+            wakatime: format!("{base}/wakatime"),
+            google_books: format!("{base}/google-books"),
+            openlibrary: format!("{base}/openlibrary"),
+        }
+    }
 }
 
 /// Spotify 端的 in-process 狀態（token 快取 + top-*/audio-features 快取與熔斷）。
@@ -141,6 +202,8 @@ pub(crate) async fn test_state() -> AppState {
         steam: Arc::new(SteamState::default()),
         watch: Arc::new(WatchState::default()),
         bahamut: crate::handlers::bahamut::build_state(&fake_db_url),
+        // 預設值＝正式位址。要打 mock 的測試自己覆蓋這個欄位（見 all_pointing_at）。
+        external: Arc::new(ExternalUrls::default()),
     }
 }
 

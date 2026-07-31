@@ -45,6 +45,7 @@ pub async fn test_app_with_state() -> (Router, sqlx::SqlitePool, AppState) {
         steam: Arc::new(state::SteamState::default()),
         watch: Arc::new(state::WatchState::default()),
         bahamut: handlers::bahamut::build_state("sqlite::memory:"),
+        external: Arc::new(state::ExternalUrls::default()),
     };
     (build_router(state.clone()), pool, state)
 }

@@ -65,6 +65,8 @@ async fn main() -> anyhow::Result<()> {
         steam: Arc::new(state::SteamState::default()),
         watch: Arc::new(state::WatchState::default()),
         bahamut: handlers::bahamut::build_state(&database_url),
+        // 預設＝正式位址，編譯進去。這個欄位存在的理由見 state::ExternalUrls。
+        external: std::sync::Arc::new(state::ExternalUrls::default()),
     };
 
     // Trakt 歷史同步 worker（ENABLE_TRAKT_SYNC=1 才啟動；見 handlers/watch.rs）

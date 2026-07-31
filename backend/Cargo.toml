@@ -75,6 +75,11 @@ http-body-util = "0.1"
 # 而那批端點（rss/series/books/polls/watch）的回應是幾十個欄位的巢狀結構，
 # 手寫等於挑幾個欄位驗、其餘全放過。redactions 用來遮掉真的會變的值（例如 pubDate）。
 insta = { version = "1.48", features = ["json", "redactions"] }
+# 第三方代理的 mock 上游。thirdparty/watch/spotify 合計 5000+ region 一直測不到，
+# 因為上游位址寫死；`state::ExternalUrls` 讓它可注入之後，還需要一個能扮演上游的東西。
+# 選 wiremock 而不是自己用 axum 架一台：它自帶請求比對與「被呼叫幾次」的驗證，
+# 而「同一個上游只該被打一次」正是快取與去重要驗的事——那部分自己刻會刻很久。
+wiremock = "0.6"
 # property testing：JS 相容層（util.rs / og.rs）的不變量——手挑案例只能覆蓋想得到的，
 # 這些函式要對齊 JS 的 UTF-16 語意，CJK/emoji/surrogate 的邊界靠隨機輸入才掃得到。
 proptest = "1"
