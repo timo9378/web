@@ -303,9 +303,11 @@ jobs:
     # 真正的理由是 Actions Cache 有硬性 10 GB/repo 且會 LRU 淘汰——rust-cache 一撐大
     # 就把 docker layer 擠掉，於是冷建 546s（2026-07 實際發生過）。GHCR 沒有這個上限。
     #
-    # ⚠ 這兩個 package 首次建立時是 private，而 private package 會吃帳號的 Packages
-    # 儲存額度；要免費就得到 GHCR 頁面把它們改成 public。內容只有編譯產物與已公開的
-    # 原始碼——.dockerignore 擋掉 .env* 與 .git，不會把祕密烤進快取層。
+    # package 的可見性繼承來源 repo：這個 repo 是 public，所以兩個 buildcache 建立時
+    # 就直接是 public（實測：拿匿名 token 打 ghcr.io 的 manifest 回 200），不必手動去
+    # 改設定，也不吃帳號的 Packages 儲存額度。內容只有編譯產物與已經公開的原始碼——
+    # .dockerignore 擋掉 .env* 與 .git，不會把祕密烤進快取層。
+    # ⚠ 哪天 repo 轉成 private，這個前提就要重新確認。
     env:
       CACHE_FE: ghcr.io/${{ github.repository }}/buildcache-frontend
       CACHE_BE: ghcr.io/${{ github.repository }}/buildcache-backend
@@ -363,9 +365,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
       # cache-to 只在 push 到 main 開：PR 不該把未合併的狀態寫進主快取，
-      # 而且 fork PR 的 token 本來就寫不進去。快取不存在時 buildx 只警告不失敗，
-      # 所以第一次跑（package 還沒建立）不會紅。
+      # 而且 fork PR 的 token 本來就寫不進去。
       # image-manifest=true + oci-mediatypes=true 是 GHCR 相容 registry 快取的必要設定。
+      #
+      # ⚠ 快取還不存在時 log 裡會出現一行紅字：
+      #     ERROR: failed to configure registry cache importer: ...:latest: not found
+      #   那是 **ERROR 字樣但不致命**——buildx 照樣往下建，job 仍然是綠的（首次啟用時
+      #   實測過）。看到它不用緊張，它只代表這次沒東西可還原。
       - name: build frontend image
         if: steps.scope.outputs.frontend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
