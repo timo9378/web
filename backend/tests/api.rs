@@ -439,6 +439,30 @@ async fn watch_history_sync_is_idempotent() {
     assert_eq!(dune, 2, "同片名不同觀看日是兩筆，不該被去重掉");
 }
 
+/// 解不出數字的 limit 不能讓公開端點 500。
+///
+/// 原本綁的是 `Option::<i64>::None`，註解寫「LIMIT NULL=無限制」——那是錯的：
+/// SQLite 對 `LIMIT NULL` 回 `(code: 20) datatype mismatch`，於是
+/// `GET /api/films/recent?limit=abc` 這種免認證請求就 500。三支 watch 端點都中。
+///
+/// 這是 schemathesis 從 OpenAPI spec 自動生輸入撞出來的——手寫測試不會想到去試
+/// `limit=%F0%97%99%8C`，而且真正的觸發條件比那還寬：任何非數字都會。
+#[tokio::test]
+async fn watch_limit_never_500s_on_garbage() {
+    let (app, _pool) = test_app().await;
+    // 空字串與缺省走「用預設值」那條；其餘都該解不出數字 → 無上限，而不是 500
+    let garbage = ["abc", "%F0%97%99%8C", "99999999999999999999", "-", "+", "1e5", "NaN", "null"];
+    for path in ["/api/anime/history", "/api/films/recent", "/api/tv/recent"] {
+        for v in garbage {
+            let (status, body) = get(&app, &format!("{path}?limit={v}")).await;
+            assert_eq!(status, StatusCode::OK, "{path}?limit={v} 不該 500（回應：{body}）");
+        }
+        // 正常值仍要生效
+        let (status, _) = get(&app, &format!("{path}?limit=1")).await;
+        assert_eq!(status, StatusCode::OK, "{path} 正常 limit 也要能用");
+    }
+}
+
 /// `ref` 從自由格式的 Value 改成 `ThoughtRef` 之後的回歸網：link 形狀取自線上那兩則
 /// 碎念，media 形狀照 `enrich_media_ref` 實際會寫出的 key。壞掉的 ref_json 要落回
 /// `ref: null` 但 `ref_json` 原字串仍在——不能靜靜掉資料。

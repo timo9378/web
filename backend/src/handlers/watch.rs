@@ -203,10 +203,16 @@ pub struct LimitQuery {
     limit: Option<String>,
 }
 
-/// `parseInt(limit||default)` 後 `Math.min(cap)`；NaN → 綁 NULL（LIMIT NULL=無限制，同 node）。
-fn js_limit(q: &LimitQuery, default: &str, cap: i64) -> Option<i64> {
+/// `parseInt(limit||default)` 後 `Math.min(cap)`。
+///
+/// 解不出數字時回 **-1**（SQLite：LIMIT 為負＝沒有上限），不是 NULL。
+/// 原本綁的是 `Option::<i64>::None`，註解寫「LIMIT NULL=無限制」——那是錯的：
+/// SQLite 對 `LIMIT NULL` 直接回 `(code: 20) datatype mismatch`，於是
+/// `GET /api/films/recent?limit=abc` 這種**公開、免認證**的請求就是 500。
+/// 三支 watch 端點都中。（schemathesis 從 spec 自動生輸入時撞出來的）
+fn js_limit(q: &LimitQuery, default: &str, cap: i64) -> i64 {
     let raw = q.limit.as_deref().filter(|s| !s.is_empty()).unwrap_or(default);
-    crate::util::js_parse_int_opt(raw).map(|n| n.min(cap))
+    crate::util::js_parse_int_opt(raw).map_or(-1, |n| n.min(cap))
 }
 
 /// `GET /api/anime/history`
@@ -220,10 +226,7 @@ pub async fn anime_history(State(state): State<AppState>, Query(q): Query<LimitQ
         "SELECT anime_sn, video_sn, title, cover_url, episode, tmdb_id, last_watched_at \
          FROM anime_history ORDER BY last_watched_at DESC LIMIT ?",
     );
-    query = match js_limit(&q, "50", 2000) {
-        Some(n) => query.bind(n),
-        None => query.bind(Option::<i64>::None),
-    };
+    query = query.bind(js_limit(&q, "50", 2000));
     match query.fetch_all(&state.pool).await {
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
         Ok(history) => Json(AnimeHistoryResponse { message: "success".into(), history }).into_response(),
@@ -241,10 +244,7 @@ pub async fn films_recent(State(state): State<AppState>, Query(q): Query<LimitQu
         "SELECT id, title, watched_date, rating, source, tmdb_id, poster_url, release_year, genres \
          FROM film_history ORDER BY watched_date DESC NULLS LAST, id DESC LIMIT ?",
     );
-    query = match js_limit(&q, "50", 200) {
-        Some(n) => query.bind(n),
-        None => query.bind(Option::<i64>::None),
-    };
+    query = query.bind(js_limit(&q, "50", 200));
     match query.fetch_all(&state.pool).await {
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
         Ok(mut films) => {
@@ -277,10 +277,7 @@ pub async fn tv_recent(State(state): State<AppState>, Query(q): Query<LimitQuery
                 MAX(tmdb_id) AS tmdb_id, MAX(poster_url) AS poster_url, MAX(genres) AS genres, MAX(source) AS source \
          FROM tv_history GROUP BY series_name ORDER BY last_watched DESC NULLS LAST LIMIT ?",
     );
-    query = match js_limit(&q, "50", 200) {
-        Some(n) => query.bind(n),
-        None => query.bind(Option::<i64>::None),
-    };
+    query = query.bind(js_limit(&q, "50", 200));
     match query.fetch_all(&state.pool).await {
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
         Ok(series) => Json(TvResponse { message: "success".into(), series }).into_response(),
