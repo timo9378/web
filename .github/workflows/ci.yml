@@ -380,6 +380,9 @@ jobs:
       #     ERROR: failed to configure registry cache importer: ...:latest: not found
       #   那是 **ERROR 字樣但不致命**——buildx 照樣往下建，job 仍然是綠的（首次啟用時
       #   實測過）。看到它不用緊張，它只代表這次沒東西可還原。
+      # load: true 把建好的 image 匯進本機 daemon，trivy 才掃得到（build 完只留在
+      # buildx 的快取裡，daemon 看不見）。匯出有成本，所以只在那個 image 真的重建時才做
+      # ——上面的 scope 判斷已經幫我們擋掉不必要的那次。
       - name: build frontend image
         if: steps.scope.outputs.frontend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -387,6 +390,8 @@ jobs:
           context: .
           file: Dockerfile
           push: false
+          load: true
+          tags: local/web-frontend:ci
           cache-from: type=registry,ref=${{ env.CACHE_FE }}
           cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0},mode=max,image-manifest=true,oci-mediatypes=true', env.CACHE_FE) || '' }}
       - name: build backend image
@@ -396,8 +401,41 @@ jobs:
           context: .
           file: backend/Dockerfile
           push: false
+          load: true
+          tags: local/web-backend:ci
           cache-from: type=registry,ref=${{ env.CACHE_BE }}
           cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0},mode=max,image-manifest=true,oci-mediatypes=true', env.CACHE_BE) || '' }}
+
+      # runtime image 裡 Debian / npm 那些套件的 CVE，在這之前**完全沒有東西在看**
+      # ——cargo audit 只管 Cargo.lock，pnpm 那邊只管 package.json，兩者都看不到
+      # base image 帶進來的 ffmpeg、libexpat、tar。
+      #
+      # ⚠ 門檻是 `--ignore-unfixed`，不是「任何 HIGH/CRITICAL」。實測當下：
+      #     backend  138 筆 HIGH/CRITICAL，其中**只有 5 筆有修版**
+      #              （其餘約 64 筆是 ffmpeg + libav*，Debian 根本還沒出修版）
+      #     frontend  27 筆，其中 5 筆有修版
+      #   對「沒有修版可用」的東西擋 CI，結果只會是永遠紅、然後大家學會忽略它。
+      #   擋「有修版卻沒修」才是可行動的訊號。修完那 10 筆之後現在兩邊都是 0。
+      - name: trivy 掃 frontend image
+        if: steps.scope.outputs.frontend == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: local/web-frontend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+      - name: trivy 掃 backend image
+        if: steps.scope.outputs.backend == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: local/web-backend:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
 
   # workflow 自身的守門：actionlint 管正確性、zizmor 管安全（template injection、
   # 過寬權限、未釘 action、憑證外洩）。CI 自己也是攻擊面。

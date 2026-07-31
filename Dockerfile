@@ -46,6 +46,17 @@ WORKDIR /app
 ENV TZ=Asia/Taipei
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# node 官方 image 內建的 npm 自己帶一包 node_modules，而那包目前有 5 個
+# HIGH/CRITICAL 且**都有修版**（tar 7.5.16、brace-expansion 5.0.6、undici 6.26.0）。
+# 升 node patch 版清不掉（26.5.0 與 26.5.1 掃出來一模一樣）——它們是 npm bundle 的。
+#
+# 而這個 stage 只有 `node .output/server/index.mjs`，npm / npx / corepack 一次都不會執行。
+# 留著等於扛著五個永遠不會被觸發、卻會一直出現在掃描報告上的 CVE：
+# 報告裡的雜訊會讓真正要看的東西被淹掉。
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+ && node --version
+
 COPY --from=builder /app/.output ./.output
 
 EXPOSE 13579

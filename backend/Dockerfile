@@ -59,7 +59,11 @@ FROM debian:trixie-slim
 # fonts-noto-cjk：OG 圖 SVG 光柵化字型；ca-certificates：對外 HTTPS；curl：healthcheck
 # ffmpeg：上傳影片正規化（把 tkhd 旋轉矩陣烘進畫素，見 handlers/upload.rs）。
 # 用 -no-install-recommends 只帶必要相依，image 約多 100 MB。
-RUN apt-get update && apt-get install -y --no-install-recommends \
+#
+# `upgrade` 是為了吃到 base image 快照之後才發的安全更新：debian:trixie-slim 目前帶的
+# libexpat1 是 2.7.1-2，而 2.8.2-1~deb13u1 已經修掉 5 個 HIGH（trivy --ignore-unfixed 掃到的）。
+# 沒有這行的話，那 5 筆會一直掛在報告上，而它們其實一個 apt 就解決得掉。
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     fonts-noto-cjk ca-certificates curl tzdata ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/app
