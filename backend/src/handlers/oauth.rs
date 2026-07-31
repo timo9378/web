@@ -193,7 +193,7 @@ fn err_500() -> Response {
     responses((status = 200, description = "Google OAuth 登入成功，回 JWT + 使用者（動態 JSON）"), (status = 400, description = "缺少 code"), (status = 500, description = "登入失敗")))]
 pub async fn google_callback(
     State(state): State<AppState>,
-    Json(body): Json<Map<String, Value>>,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     let Some(code) = body.get("code").filter(|v| crate::util::js_truthy(Some(v))) else {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing code" }))).into_response();
@@ -257,7 +257,7 @@ pub async fn google_callback(
     responses((status = 200, description = "GitHub OAuth 登入成功，回 JWT + 使用者（動態 JSON）"), (status = 400, description = "缺少 code"), (status = 500, description = "登入失敗")))]
 pub async fn github_callback(
     State(state): State<AppState>,
-    Json(body): Json<Map<String, Value>>,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     let Some(code) = body.get("code").filter(|v| crate::util::js_truthy(Some(v))) else {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Missing code" }))).into_response();

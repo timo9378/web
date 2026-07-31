@@ -161,7 +161,7 @@ pub async fn post_comment(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Json(body): Json<CommentBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<CommentBody>,
 ) -> Response {
     create_comment(&state, &headers, "post_id", &id, body).await
 }
@@ -176,7 +176,7 @@ pub async fn thought_comment(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Json(body): Json<CommentBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<CommentBody>,
 ) -> Response {
     create_comment(&state, &headers, "thought_id", &id, body).await
 }

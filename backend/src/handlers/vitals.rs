@@ -77,7 +77,7 @@ fn clamp_attr(s: Option<String>) -> Option<String> {
     responses((status = 204, description = "已接收（驗證失敗也回 204，不給探測回饋）")))]
 pub async fn report_vital(
     State(state): State<AppState>,
-    Json(b): Json<VitalBeacon>,
+    crate::error::JsonBody(b): crate::error::JsonBody<VitalBeacon>,
 ) -> Result<StatusCode, AppError> {
     // 白名單 + 值域夾制（CLS 無單位通常 <1，其餘毫秒；120s 上限擋垃圾）
     let valid = METRICS.contains(&b.metric.as_str())

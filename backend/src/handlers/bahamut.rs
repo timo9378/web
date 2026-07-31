@@ -123,7 +123,7 @@ pub async fn status(State(state): State<AppState>, headers: HeaderMap) -> Respon
 pub async fn cookie(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<Map<String, Value>>,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     if let Err(r) = push_auth(&headers, &state).await {
         return r;

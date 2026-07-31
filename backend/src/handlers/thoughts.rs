@@ -282,7 +282,7 @@ pub struct ThoughtReactResponse {
 pub async fn thought_react(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(body): Json<ReactBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<ReactBody>,
 ) -> Response {
     if !react_ok(&body.prev) || !react_ok(&body.next) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "bad reaction" }))).into_response();
@@ -525,12 +525,9 @@ async fn resolve_ref_for_create(
     responses((status = 200, description = "建立碎念（動態 JSON）"), (status = 401, description = "未授權")))]
 pub async fn admin_create_thought(
     State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(body): Json<AdminThoughtBody>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<AdminThoughtBody>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let content = body.content.clone().unwrap_or_default();
     if content.trim().is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "content required" }))).into_response();
@@ -558,12 +555,9 @@ pub async fn admin_create_thought(
 pub async fn admin_update_thought(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: HeaderMap,
-    Json(body): Json<AdminThoughtBody>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<AdminThoughtBody>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let row = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>)>(
         "SELECT content, ref_type, ref_url, ref_json FROM thoughts WHERE id = ?",
     )

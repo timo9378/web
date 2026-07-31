@@ -700,7 +700,7 @@ pub struct ReactionBody {
 pub async fn post_reaction(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(body): Json<ReactionBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<ReactionBody>,
 ) -> Response {
     const ALLOWED: [&str; 6] = ["👍", "❤️", "🎉", "🚀", "🤔", "😂"];
     let emoji = body.emoji.unwrap_or_default();
@@ -792,12 +792,9 @@ fn v_to_s(v: &Value) -> Option<String> {
 )]
 pub async fn create_post_public(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     if !js_truthy(b.get("title")) || !js_truthy(b.get("content")) {
         return (
             StatusCode::BAD_REQUEST,
@@ -857,12 +854,9 @@ pub async fn create_post_public(
 pub async fn update_post_public(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: axum::http::HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let r = sqlx::query(
         "UPDATE posts SET title = COALESCE(?, title), content = COALESCE(?, content), \
          excerpt = COALESCE(?, excerpt), category = COALESCE(?, category), status = COALESCE(?, status), \
@@ -905,12 +899,9 @@ pub struct StatusBody {
 pub async fn patch_post_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: axum::http::HeaderMap,
-    Json(b): Json<StatusBody>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<StatusBody>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let status = b.status.unwrap_or_default();
     if status != "published" && status != "draft" {
         return (
@@ -969,12 +960,9 @@ pub async fn delete_post_public(
 )]
 pub async fn create_post_legacy(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    _auth: crate::auth::BasicAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Some(resp) = crate::auth::basic_auth_check(&headers) {
-        return resp;
-    }
     if !js_truthy(b.get("title")) || !js_truthy(b.get("content")) {
         return (
             StatusCode::BAD_REQUEST,

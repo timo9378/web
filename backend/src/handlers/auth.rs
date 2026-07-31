@@ -33,7 +33,10 @@ pub struct LoginBody {
         (status = 401, description = "帳密錯誤"),
     ),
 )]
-pub async fn login(State(state): State<AppState>, Json(body): Json<LoginBody>) -> Result<Response, AppError> {
+pub async fn login(
+    State(state): State<AppState>,
+    crate::error::JsonBody(body): crate::error::JsonBody<LoginBody>,
+) -> Result<Response, AppError> {
     let username = body.username.unwrap_or_default();
     let password = body.password.unwrap_or_default();
 

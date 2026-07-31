@@ -595,12 +595,9 @@ fn clamp_rating(v: &Value) -> Option<f64> {
     responses((status = 200, description = "新增收藏（動態 JSON）"), (status = 401, description = "未授權")))]
 pub async fn create_favorite(
     State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = crate::auth::require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     if !js_truthy(b.get("tmdbId")) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "tmdbId 必填" }))).into_response();
     }
@@ -642,12 +639,9 @@ pub async fn create_favorite(
 pub async fn update_favorite(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = crate::auth::require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     // `x != null`：排除 null 與缺 key
     let has = |k: &str| b.get(k).is_some_and(|v| !v.is_null());
     let mut sets: Vec<&str> = Vec::new();
@@ -752,7 +746,7 @@ fn tmdb_url_for(kind: &str, id: &Value) -> Value {
 pub async fn heartbeat(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(b): Json<Map<String, Value>>,
+    crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     if let Err(resp) = bahamut_push_auth(&headers, &state).await {
         return resp;

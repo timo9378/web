@@ -690,10 +690,9 @@ pub struct TagBody {
     ))]
 pub async fn create_tag(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<TagBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let name = body.name.unwrap_or_default();
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "標籤名稱為必填".into() }))
@@ -735,10 +734,9 @@ pub async fn create_tag(
 pub async fn update_tag(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<TagBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let name = body.name.unwrap_or_default();
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "標籤名稱為必填".into() }))
@@ -876,10 +874,9 @@ fn resolve_slug(slug: &Option<String>, name: &str) -> String {
     ))]
 pub async fn create_category(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<CategoryBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let name = body.name.clone().unwrap_or_default();
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "分類名稱為必填".into() }))
@@ -947,10 +944,9 @@ pub async fn create_category(
 pub async fn update_category(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<CategoryBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let name = body.name.clone().unwrap_or_default();
     if name.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "分類名稱為必填".into() }))
@@ -1076,10 +1072,9 @@ pub struct BlacklistBody {
     ))]
 pub async fn create_blacklist(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<BlacklistBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let ip = body.ip.unwrap_or_default();
     if ip.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "IP is required".into() }))
@@ -1142,10 +1137,9 @@ pub struct KeywordBody {
     ))]
 pub async fn create_keyword_filter(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<KeywordBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let keyword = body.keyword.unwrap_or_default();
     if keyword.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "Keyword is required".into() }))
@@ -1210,10 +1204,9 @@ pub struct StatusBody {
 pub async fn patch_comment_status(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<StatusBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let status = body.status.unwrap_or_default();
     if !VALID_STATUSES.contains(&status.as_str()) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Invalid status" }))).into_response();
@@ -1254,10 +1247,9 @@ pub struct ContentBody {
 pub async fn update_comment(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<ContentBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let content = body.content.unwrap_or_default();
     if content.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Content is required" }))).into_response();
@@ -1312,10 +1304,9 @@ pub async fn delete_comment(
 pub async fn reply_comment(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
+    _auth: crate::auth::AdminAuth,
     crate::error::JsonBody(body): crate::error::JsonBody<ContentBody>,
 ) -> Response {
-    auth_or_return!(&headers, &state);
     let content = body.content.unwrap_or_default();
     if content.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Content is required" }))).into_response();
@@ -1929,13 +1920,9 @@ pub async fn admin_stats(State(state): State<AppState>, headers: HeaderMap) -> R
 pub async fn admin_update_user_role(
     State(state): State<AppState>,
     crate::error::PathParam(id): crate::error::PathParam<i64>,
-    headers: HeaderMap,
-    Json(body): Json<Map<String, Value>>,
+    crate::auth::OwnerAuth(owner): crate::auth::OwnerAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    let owner = match require_owner(&headers, &state).await {
-        Ok(u) => u,
-        Err(e) => return e.into_response(),
-    };
     let role = body.get("role").and_then(|v| v.as_str()).unwrap_or("");
     if !matches!(role, "USER" | "ADMIN" | "OWNER") {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "無效的角色，允許值：USER, ADMIN, OWNER" })))
@@ -1973,12 +1960,9 @@ pub async fn admin_update_user_role(
     ))]
 pub async fn admin_batch_comment_status(
     State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(body): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let ids: Vec<i64> = body
         .get("ids")
         .and_then(|v| v.as_array())

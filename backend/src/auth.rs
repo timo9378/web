@@ -37,6 +37,23 @@ pub fn bearer_token(headers: &HeaderMap) -> Option<&str> {
     headers.get(header::AUTHORIZATION).and_then(|v| v.to_str().ok()).and_then(|h| h.strip_prefix("Bearer "))
 }
 
+/// `basic_auth_check` 的 extractor 版本，理由同 [`AdminAuth`]（`/posts/legacy` 用）。
+pub struct BasicAuth;
+
+impl<S: Send + Sync> axum::extract::FromRequestParts<S> for BasicAuth {
+    type Rejection = axum::response::Response;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        match basic_auth_check(&parts.headers) {
+            Some(resp) => Err(resp),
+            None => Ok(Self),
+        }
+    }
+}
+
 /// basicAuth 等價（/posts/legacy 用）：通過回 None、失敗回 Some(response)。
 /// 401 帶 `WWW-Authenticate: Basic`；env 未設 → 503。
 pub fn basic_auth_check(headers: &HeaderMap) -> Option<axum::response::Response> {
@@ -84,9 +101,50 @@ pub async fn require_admin(headers: &HeaderMap, state: &AppState) -> Result<Admi
     authorize(headers, state, false).await
 }
 
+/// `require_admin` 的 extractor 版本——**存在的理由是執行順序**。
+///
+/// 原本各 handler 是在函式體內呼叫 `require_admin`，但 body extractor（`Json` /
+/// `JsonBody`）比函式體先跑。結果是「沒帶 token 又沒帶 content-type」時先撞 415，
+/// 而不是 401——而 spec 上這些端點宣告的是 401。
+///
+/// axum 保證所有 `FromRequestParts` 都在唯一的 `FromRequest`（吃 body 的那個）之前
+/// 執行，且與參數順序無關。所以只要改成 extractor，順序自動就對了。
+///
+/// 抓到這件事的是 Schemathesis 的 `missing_required_header` 檢查（8 支端點）：
+///   Got 415 when missing required 'Authorization' header, expected 401
+/// 未授權的請求不該先被告知「你的 content-type 不對」。
+pub struct AdminAuth(#[allow(dead_code)] pub AdminUser);
+
+impl axum::extract::FromRequestParts<AppState> for AdminAuth {
+    type Rejection = axum::response::Response;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        use axum::response::IntoResponse;
+        require_admin(&parts.headers, state).await.map(Self).map_err(IntoResponse::into_response)
+    }
+}
+
 /// requireOwner：僅 OWNER。
 pub async fn require_owner(headers: &HeaderMap, state: &AppState) -> Result<AdminUser, AppError> {
     authorize(headers, state, true).await
+}
+
+/// `require_owner` 的 extractor 版本，理由同 [`AdminAuth`]。
+pub struct OwnerAuth(pub AdminUser);
+
+impl axum::extract::FromRequestParts<AppState> for OwnerAuth {
+    type Rejection = axum::response::Response;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        use axum::response::IntoResponse;
+        require_owner(&parts.headers, state).await.map(Self).map_err(IntoResponse::into_response)
+    }
 }
 
 /// 驗 Bearer JWT（HS256）→ 依 token 類型查角色。owner_only 決定角色門檻與不足時的訊息。

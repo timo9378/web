@@ -182,12 +182,9 @@ const BOOK_FIELDS: [&str; 13] = [
     responses((status = 200, description = "建立書籍（動態 JSON）"), (status = 401, description = "未授權")))]
 pub async fn create_book(
     State(state): State<AppState>,
-    headers: HeaderMap,
-    Json(body): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     if !js_truthy(body.get("title")) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "書名為必填欄位" }))).into_response();
     }
@@ -226,12 +223,9 @@ pub async fn create_book(
 pub async fn update_book(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: HeaderMap,
-    Json(body): Json<Map<String, Value>>,
+    _auth: crate::auth::AdminAuth,
+    crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
-    if let Err(e) = require_admin(&headers, &state).await {
-        return e.into_response();
-    }
     let mut q = sqlx::query(
         "UPDATE books SET \
          isbn = COALESCE(?, isbn), title = COALESCE(?, title), authors = COALESCE(?, authors), \

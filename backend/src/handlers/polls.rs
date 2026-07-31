@@ -73,7 +73,7 @@ pub async fn get_poll(State(state): State<AppState>, Path(id): Path<String>) -> 
 pub async fn vote_poll(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(body): Json<VoteBody>,
+    crate::error::JsonBody(body): crate::error::JsonBody<VoteBody>,
 ) -> Response {
     let option = body.option.unwrap_or_default();
     let option = option.trim();

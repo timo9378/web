@@ -57,7 +57,10 @@ pub struct SubscribeBody {
 /// `POST /api/newsletter/subscribe` —— 公開訂閱；重複 email 且非 active → 重新啟用。
 #[utoipa::path(post, path = "/api/newsletter/subscribe", tag = "newsletter",
     responses((status = 200, description = "訂閱電子報（動態 JSON）")))]
-pub async fn subscribe(State(state): State<AppState>, Json(b): Json<SubscribeBody>) -> Response {
+pub async fn subscribe(
+    State(state): State<AppState>,
+    crate::error::JsonBody(b): crate::error::JsonBody<SubscribeBody>,
+) -> Response {
     let email = b.email.unwrap_or_default();
     if email.is_empty() {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Email is required" }))).into_response();
@@ -124,7 +127,10 @@ pub struct UnsubscribeBody {
 /// `POST /api/newsletter/unsubscribe` —— email 或 token 擇一（token 優先）。
 #[utoipa::path(post, path = "/api/newsletter/unsubscribe", tag = "newsletter",
     responses((status = 200, description = "退訂電子報（動態 JSON）")))]
-pub async fn unsubscribe(State(state): State<AppState>, Json(b): Json<UnsubscribeBody>) -> Response {
+pub async fn unsubscribe(
+    State(state): State<AppState>,
+    crate::error::JsonBody(b): crate::error::JsonBody<UnsubscribeBody>,
+) -> Response {
     let email = b.email.filter(|s| !s.is_empty());
     let token = b.token.filter(|s| !s.is_empty());
     // token 優先於 email（對齊 Express `token || email`）；兩者皆無 → 400
