@@ -29,7 +29,7 @@
 }
 
 .blog-post-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 90, 240, 0.45); 
+  background: rgba(127, 90, 240, 0.45);
 }
 
 .blog-post-container * {
@@ -2051,7 +2051,7 @@ a.series-nav-title:hover {
 }
 .terminal-cursor {
   display: inline-block;
-  width: 0.55rem;
+  width: 0.40rem;
   height: 1rem;
   background: rgba(255, 255, 255, 0.78);
   animation: terminal-blink 1.05s steps(1) infinite;
