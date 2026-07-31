@@ -66,8 +66,12 @@ for (const route of discoverRoutes()) {
     await expect(main, `${route.path} 應該 render 出內容`).toContainText(route.expect ?? /\S/, {
       timeout: 15_000,
     });
-    await page.waitForLoadState('networkidle').catch(() => {
-      /* 有輪詢的頁面永遠不會 idle */
+    // 給 3 秒上限。這一步只是讓 client 端補資料落定再讀 innerText／檢查 console error，
+    // 內容是否 render 出來上面那個 15s 的 toContainText 已經保證了。
+    // 沒有 timeout 時，永遠不會 idle 的頁面會一路等到預設逾時才被 catch 吞掉——
+    // /portfolio 有 <video>，單獨跑實測 16.4s，其中絕大部分就是在這裡空等。
+    await page.waitForLoadState('networkidle', { timeout: 3_000 }).catch(() => {
+      /* 有輪詢或影片的頁面永遠不會 idle */
     });
 
     const text = await main.innerText();

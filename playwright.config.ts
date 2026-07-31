@@ -13,12 +13,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   // ubuntu-latest 是 4 vCPU，worker 數對齊核心數。
-  // 用 `taskset -c 0-3` 綁 4 核模擬 CI 實測（本機 16 核量不準）：
-  //   workers=2  43.3s   ← 原本
-  //   workers=3  35.7s
-  //   workers=4  32.4s   ← 取這個
-  //   workers=6  29.8s   多 2.5s 而已，爭用風險不划算
-  // workers=4 連跑六次全綠、零 retry（這裡曾經有過 1/3 機率的 flaky，所以特地多跑幾次）。
+  //
+  // ⚠ 本機用 `taskset -c 0-3` 綁 4 核模擬，量到 workers 2→4 是 43.3s→32.4s，
+  //   但**那個改善沒有轉移到 CI**（實測 57.0s → 58.1s，在雜訊範圍內）。
+  //   綁核心綁不掉記憶體頻寬與磁碟，runner 的單核也慢得多，2 個 worker 就已經吃滿。
+  //   留在 4 是因為它不比 2 差，而且六次跑下來零 retry；真正的瓶頸不在這裡——
+  //   是 smoke.spec.ts 那個沒設 timeout 的 networkidle（見該檔註解）。
   workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
   timeout: 30_000,
