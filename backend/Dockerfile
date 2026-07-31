@@ -40,6 +40,17 @@ WORKDIR /build
 FROM chef AS planner
 COPY Cargo.toml Cargo.lock ./
 COPY backend ./backend
+# ⚠ 這行不是可有可無的清理。`cargo chef prepare` 會用 `cargo metadata` 正規化 manifest，
+# 而 metadata 會**自動發現** tests/ benches/ examples/ 底下的檔案，把它們寫成明確的
+#   [[test]] path = "tests/admin.rs" name = "admin" …
+# 區塊塞進 recipe.json。結果是「新增一個測試檔」就讓 recipe 變了 → 下面的 cook 層失效
+# → 453 個相依從零重編。實測 CI 上是 306s，而 cook 只編**正式相依**、根本用不到
+# 測試 target。（追出來的方式：比對三次 CI，只有動過 Cargo.toml 的那次該重編，
+# 但新增 backend/tests/*.rs 的那次也重編了；用 docker 跑兩次 prepare 對 diff 確認。）
+#
+# dev-dependencies 仍留在 Cargo.toml 文字裡、不受影響；builder 稍後會把完整的
+# backend/ 再 COPY 一次，真正的建置看得到全部檔案。
+RUN rm -rf backend/tests backend/benches backend/examples
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
