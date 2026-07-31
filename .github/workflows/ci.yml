@@ -213,13 +213,22 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異
-      - name: install chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: build backend
-        run: cargo build --locked --bin koimsurai-web-backend
-      - name: build frontend
-        run: pnpm build
+      # 三件事互相獨立，卻本來排成序列（17s + 19s + 12s = 48s）。
+      # chromium 那步是 apt（IO-bound），兩個建置是 CPU-bound，重疊起來剛好互補。
+      # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異。
+      - name: 裝 chromium（背景）＋ 建置前後端
+        run: |
+          set -euo pipefail
+          # 背景那支的輸出另外收，不要跟 cargo 的交錯在一起；失敗時才印出來
+          pnpm exec playwright install --with-deps chromium > /tmp/pw-install.log 2>&1 &
+          pw=$!
+          cargo build --locked --bin koimsurai-web-backend
+          pnpm build
+          if ! wait $pw; then
+            echo "::error::playwright install 失敗"
+            cat /tmp/pw-install.log
+            exit 1
+          fi
       - name: playwright
         run: pnpm e2e
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
