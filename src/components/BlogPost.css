@@ -1115,9 +1115,28 @@ a.series-nav-title:hover {
   font-size: 1.05rem;
   line-height: 1.85;
   letter-spacing: 0.01em;
-  /* 長文章分段延後渲染，大幅改善滾動流暢度（超出視口的大段落先不 layout） */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 1200px;
+  /* ⚠ 這裡原本是 `content-visibility: auto; contain-intrinsic-size: auto 1200px;`，
+     理由寫「長文章分段延後渲染，大幅改善滾動流暢度」。拿掉的原因是它**量不到效益、
+     但造成 CLS 0.52**（Google 的 poor 門檻是 0.25）。
+
+     成因：整篇文章是**一個** .post-content 元素。content-visibility: auto 在它還沒被
+     渲染時，整篇塌成 contain-intrinsic-size 的 1200px 佔位。於是「捲在深處按 F5」時，
+     瀏覽器拿 docH=2904 的版面還原捲動位置，內容一補上去 docH 變 13157，
+     視口內的東西整批被推走 —— reaction-bar / prev-next-nav / #comments 全部位移。
+
+     實測（tests/e2e/cls.spec.ts 的情境，本機 4~5 次取中位，皆零變異）：
+
+                              CLS      捲動 long task   捲動幀 p95   LCP     load
+       content-visibility: auto   0.5183   200.0ms          63.5ms       376ms   686ms
+       拿掉                       0.0000   199.0ms          61.9ms       372ms   675ms
+
+     捲動與載入兩端都開 6× CPU 節流量過（不節流的桌機量不出差異），四個效能指標
+     全部落在雜訊內甚至略好。也就是說那句「大幅改善滾動流暢度」在這個頁面上不成立
+     —— content-visibility: auto 套在單一巨大容器上本來就是反模式，它的設計場景是
+     「多個大小相近的重複區塊」，套在一個元素上只會得到一次巨大的高度跳動。
+
+     線上同樣重現過（/blog/palworld-dedicated-server-docker：CLS 0.5266，同一個成因）。
+     回歸守門在 tests/e2e/cls.spec.ts。 */
   /* 中英排版優化：開頭/結尾標點懸掛、字距修整 */
   hanging-punctuation: first allow-end last;
   text-spacing-trim: trim-start;

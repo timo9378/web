@@ -6,9 +6,37 @@
 
 import { DatabaseSync } from 'node:sqlite';
 
+/**
+ * 種子裡「已發布」的文章數（草稿不算）。
+ *
+ * 讓斷言 import 這個常數而不是寫死數字：這個檔案本來就會因為別的需求增減文章
+ * （id=4 就是為了 CLS 測試加的），而寫死的那一版每加一篇就會讓一個不相干的
+ * API 契約測試變紅，讀的人還得回頭猜「這個 2 是哪來的」。
+ */
+export const PUBLISHED_POSTS = 3;
+
 /** 固定日期，讓「x 天前」這種相對時間在測試裡也穩定。 */
 const T = (daysAgo = 0) =>
   new Date(Date.UTC(2026, 0, 15, 3, 0, 0) - daysAgo * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
+
+/**
+ * 產生一篇夠長的文章給 CLS 測試用（見下方 id=4）。
+ *
+ * 目標是渲染後的頁面高度落在生產文章的量級（實地量到的最終 docH 約 7100px）。
+ * 段落長度刻意固定、不隨機——CLS 是量測，輸入每次不一樣的話數字就沒得比。
+ */
+function longArticle() {
+  const SECTIONS = 36;
+  const para =
+    '這一段是為了把頁面撐高而存在的內文。它的長度固定，因為 CLS 是量測而不是斷言字串，' +
+    '輸入每次不一樣的話跑出來的數字就沒有可比性。實際的文章段落大約就是這個長度，' +
+    '一段三到四行，這樣頁面高度才會接近線上真正的文章頁。';
+  const out = ['# CLS 量測用的長文', '', '這篇文章不是給人讀的，是給 tests/e2e/cls.spec.ts 捲的。', ''];
+  for (let i = 1; i <= SECTIONS; i++) {
+    out.push(`## 第 ${i} 節`, '', para, '', para, '');
+  }
+  return out.join('\n');
+}
 
 export function seed(dbPath) {
   const db = new DatabaseSync(dbPath);
@@ -46,6 +74,22 @@ export function seed(dbPath) {
     `INSERT INTO posts (id, title, content, status, created_at)
      VALUES (3, '未發布草稿', '草稿內文（不該出現在公開清單）', 'draft', ?)`,
     T(0),
+  );
+  // 第 4 篇存在的唯一理由是 CLS 測試（tests/e2e/cls.spec.ts）。
+  //
+  // 真正會出事的 CLS 情境是「捲在文章深處按 F5」：瀏覽器在 SSR 的 HTML 還沒解析完
+  // （docH 一路長大）就把捲動位置還原回去，於是後面每一段解析進來都算一次位移。
+  // 上面那三篇各只有幾行，頁面根本捲不動，這個情境重現不了——所以需要一篇真的長文。
+  //
+  // 內容用產生的而不是寫死一大段：長度是這篇唯一的重點，寫死幾百行假文字只會讓
+  // 這個檔難讀。SECTIONS 調大調小就等於調頁面高度。
+  run(
+    `INSERT INTO posts (id, title, content, excerpt, category, status, author, created_at, allow_comments)
+     VALUES (4, ?, ?, ?, '技術', 'published', 'Koimsurai', ?, 1)`,
+    'CLS 量測用的長文',
+    longArticle(),
+    '這篇存在的唯一理由是讓 CLS 測試有夠長的頁面可以捲',
+    T(2),
   );
   run('INSERT INTO post_tags (post_id, tag_id) VALUES (1, 1), (1, 2), (2, 3)');
   run("INSERT INTO post_reactions (post_id, emoji, count) VALUES (1, '👍', 5)");
