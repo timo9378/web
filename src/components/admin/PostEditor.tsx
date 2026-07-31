@@ -40,7 +40,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from '@tanstack/react-router';
 
 interface TagOption { label: string; value: string }
 interface N8NData {
@@ -126,7 +126,9 @@ function fieldNameFor(base: 'title' | 'content' | 'summary', activeLocale: strin
 }
 
 export default function PostEditor() {
-  const { id } = useParams();
+  // strict: false —— 這個元件同時服務 /admin/posts/create（沒有 id）與
+  // /admin/posts/edit/$id（有 id）。綁死單一路由的 Route.useParams() 在 create 那條會炸。
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -509,9 +511,10 @@ export default function PostEditor() {
         // 後端 create 回 { data: { id } }；沒抓到就會每次都 POST → 重複建立草稿
         const newId = result.data?.id ?? result.id;
         if (opts.exit) {
-          void navigate('/admin/posts'); // 「存並回列表」：存完直接回列表
+          void navigate({ to: '/admin/posts' }); // 「存並回列表」：存完直接回列表
         } else if (!id && newId) {
-          void navigate(`/admin/posts/edit/${newId}`); // 新草稿存完換到 edit 網址（避免重複建立）
+          // 動態段走 params 而不是字串內插——路徑本身因此是型別檢查過的
+          void navigate({ to: '/admin/posts/edit/$id', params: { id: String(newId) } });
         }
       } else {
         toast.error('儲存失敗');
@@ -559,7 +562,7 @@ export default function PostEditor() {
           else if (nl) toast.success(`電子報已寄出 ${nl.sent ?? 0} 封，失敗 ${nl.failed ?? 0}`);
         } catch { /* 回應非 JSON 不影響發佈成功 */ }
         try { localStorage.removeItem(autosaveKey); } catch { /* ignore */ }
-        void navigate('/admin/posts');
+        void navigate({ to: '/admin/posts' });
       } else {
         toast.error('發佈失敗');
       }

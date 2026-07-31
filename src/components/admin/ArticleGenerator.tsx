@@ -21,7 +21,7 @@ import {
     RotateCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 
 // ─── Prompt 模板 ─────────────────────────────
 const ARTICLE_TYPES = {
@@ -522,8 +522,12 @@ export default function ArticleGenerator() {
             status: 'draft',
         };
 
-        const encoded = encodeURIComponent(JSON.stringify(articleData));
-        void navigate(`/admin/posts/create?n8n_data=${encoded}`);
+        // 不自己 encodeURIComponent：TanStack 的 search 序列化會編碼一次，
+        // PostEditor 用 URLSearchParams.get() 解一次。這裡再編一次就會雙重編碼。
+        void navigate({
+            to: '/admin/posts/create',
+            search: { n8n_data: JSON.stringify(articleData) },
+        });
         toast.success('已匯入文章編輯器（含 AI 摘要與標籤）');
     };
 

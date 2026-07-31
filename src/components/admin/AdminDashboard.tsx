@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { AdminPostFull } from '@koimsurai/api-types';
 import { adminPostsQueryOptions, adminStatsQueryOptions } from '../../adminData';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { FileText, Eye, MessageSquare, TrendingUp, Plus, Edit, Clock, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -106,7 +106,7 @@ export const AdminDashboard = () => {
                       {post.status === 'published' ? '已發佈' : '草稿'}
                     </span>
                     <Link
-                      to={`/admin/posts/edit/${post.id}`}
+                      to="/admin/posts/edit/$id" params={{ id: String(post.id) }}
                       className="size-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground/60 hover:bg-accent/40 transition-colors"
                     >
                       <Edit className="size-3" />

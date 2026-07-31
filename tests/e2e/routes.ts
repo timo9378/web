@@ -8,8 +8,15 @@ import { fileURLToPath } from 'node:url';
  * 手寫清單的問題是它只涵蓋「寫的時候想到的」——新增一頁不會有任何測試提醒你它沒被測。
  * 從生成檔推導等於「有路由就會被掃到」，加頁面自動納入。
  *
- * 這裡用 regex 讀 `path: '...'` 而不是 import 那個模組：import 會把整棵路由樹連同
- * 所有頁面元件拉進 node 行程（含只能在瀏覽器跑的東西）。生成檔的格式是穩定的。
+ * 這裡用 regex 讀生成檔而不是 import 那個模組：import 會把整棵路由樹連同所有頁面元件
+ * 拉進 node 行程（含只能在瀏覽器跑的東西）。
+ *
+ * ⚠ 讀的是 `FileRoutesByFullPath` 這個介面，**不是**散落各處的 `path: '...'`。
+ * 差別是致命的：生成檔裡每個 route 物件的 `path` 是「相對於父路由的片段」，
+ * 巢狀路由會生出 `path: '/books'`（實際網址是 /admin/books）。後台從單一 splat
+ * 改成 13 條 file route 時就踩到了——`/^\/admin/` 這條 SKIP 一條都沒擋到，
+ * 於是 /books、/dashboard、/users 這些被當成公開頁去測，而且因為 404 頁面
+ * 「也沒有壞值」所以全部**假綠**。用完整路徑就不會受路由樹形狀影響。
  */
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -47,8 +54,18 @@ const CONTENT: Record<string, RegExp> = {
 
 function rawPaths(): string[] {
   const src = readFileSync(path.join(ROOT, 'src/routeTree.gen.ts'), 'utf8');
+  const start = src.indexOf('export interface FileRoutesByFullPath {');
+  if (start < 0) {
+    throw new Error(
+      'routeTree.gen.ts 裡找不到 FileRoutesByFullPath。' +
+        '\nTanStack 生成檔的格式可能變了——請確認新的完整路徑來源，' +
+        '\n**不要**退回去讀 `path:`，那個是相對片段，巢狀路由會被算成公開頁。',
+    );
+  }
+  const block = src.slice(start, src.indexOf('}', start));
   const found = new Set<string>();
-  for (const m of src.matchAll(/path: '([^']*)'/g)) found.add(m[1]);
+  for (const m of block.matchAll(/^\s*'([^']+)':/gm)) found.add(m[1]);
+  if (found.size === 0) throw new Error('FileRoutesByFullPath 解析出 0 條路由，抽取邏輯壞了');
   return [...found];
 }
 

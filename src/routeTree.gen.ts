@@ -22,16 +22,27 @@ import { Route as BookshelfRouteImport } from './routes/bookshelf'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AboutSiteRouteImport } from './routes/about-site'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WatchIndexRouteImport } from './routes/watch/index'
 import { Route as ThinkingIndexRouteImport } from './routes/thinking/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as LocaleIndexRouteImport } from './routes/$locale/index'
 import { Route as WatchLibraryRouteImport } from './routes/watch/library'
 import { Route as ThinkingIdRouteImport } from './routes/thinking/$id'
 import { Route as BlogIdRouteImport } from './routes/blog/$id'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
-import { Route as AdminSplatRouteImport } from './routes/admin/$'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminSubscribersRouteImport } from './routes/admin/subscribers'
+import { Route as AdminNotesRouteImport } from './routes/admin/notes'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
+import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
+import { Route as AdminBooksRouteImport } from './routes/admin/books'
+import { Route as AdminArticleGeneratorRouteImport } from './routes/admin/article-generator'
 import { Route as LocaleUnsubscribeRouteImport } from './routes/$locale/unsubscribe'
 import { Route as LocaleSetupRouteImport } from './routes/$locale/setup'
 import { Route as LocalePortfolioRouteImport } from './routes/$locale/portfolio'
@@ -44,12 +55,15 @@ import { Route as LocaleBookshelfRouteImport } from './routes/$locale/bookshelf'
 import { Route as LocaleActivityRouteImport } from './routes/$locale/activity'
 import { Route as LocaleAboutSiteRouteImport } from './routes/$locale/about-site'
 import { Route as LocaleAboutRouteImport } from './routes/$locale/about'
+import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
 import { Route as LocaleWatchIndexRouteImport } from './routes/$locale/watch/index'
 import { Route as LocaleThinkingIndexRouteImport } from './routes/$locale/thinking/index'
 import { Route as LocaleBlogIndexRouteImport } from './routes/$locale/blog/index'
+import { Route as AdminPostsCreateRouteImport } from './routes/admin/posts/create'
 import { Route as LocaleWatchLibraryRouteImport } from './routes/$locale/watch/library'
 import { Route as LocaleThinkingIdRouteImport } from './routes/$locale/thinking/$id'
 import { Route as LocaleBlogIdRouteImport } from './routes/$locale/blog/$id'
+import { Route as AdminPostsEditIdRouteImport } from './routes/admin/posts/edit.$id'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -116,6 +130,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -135,6 +154,11 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const LocaleIndexRoute = LocaleIndexRouteImport.update({
   id: '/$locale/',
@@ -161,10 +185,55 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminSplatRoute = AdminSplatRouteImport.update({
-  id: '/admin/$',
-  path: '/admin/$',
-  getParentRoute: () => rootRouteImport,
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminTagsRoute = AdminTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
+  id: '/subscribers',
+  path: '/subscribers',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminNotesRoute = AdminNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCommentsRoute = AdminCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBooksRoute = AdminBooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminArticleGeneratorRoute = AdminArticleGeneratorRouteImport.update({
+  id: '/article-generator',
+  path: '/article-generator',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const LocaleUnsubscribeRoute = LocaleUnsubscribeRouteImport.update({
   id: '/$locale/unsubscribe',
@@ -226,6 +295,11 @@ const LocaleAboutRoute = LocaleAboutRouteImport.update({
   path: '/$locale/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPostsIndexRoute = AdminPostsIndexRouteImport.update({
+  id: '/posts/',
+  path: '/posts/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const LocaleWatchIndexRoute = LocaleWatchIndexRouteImport.update({
   id: '/$locale/watch/',
   path: '/$locale/watch/',
@@ -240,6 +314,11 @@ const LocaleBlogIndexRoute = LocaleBlogIndexRouteImport.update({
   id: '/$locale/blog/',
   path: '/$locale/blog/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPostsCreateRoute = AdminPostsCreateRouteImport.update({
+  id: '/posts/create',
+  path: '/posts/create',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const LocaleWatchLibraryRoute = LocaleWatchLibraryRouteImport.update({
   id: '/$locale/watch/library',
@@ -256,9 +335,15 @@ const LocaleBlogIdRoute = LocaleBlogIdRouteImport.update({
   path: '/$locale/blog/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPostsEditIdRoute = AdminPostsEditIdRouteImport.update({
+  id: '/posts/edit/$id',
+  path: '/posts/edit/$id',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/about-site': typeof AboutSiteRoute
   '/activity': typeof ActivityRoute
@@ -284,21 +369,34 @@ export interface FileRoutesByFullPath {
   '/$locale/portfolio': typeof LocalePortfolioRoute
   '/$locale/setup': typeof LocaleSetupRoute
   '/$locale/unsubscribe': typeof LocaleUnsubscribeRoute
-  '/admin/$': typeof AdminSplatRoute
+  '/admin/article-generator': typeof AdminArticleGeneratorRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$id': typeof BlogIdRoute
   '/thinking/$id': typeof ThinkingIdRoute
   '/watch/library': typeof WatchLibraryRoute
   '/$locale/': typeof LocaleIndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/thinking/': typeof ThinkingIndexRoute
   '/watch/': typeof WatchIndexRoute
   '/$locale/blog/$id': typeof LocaleBlogIdRoute
   '/$locale/thinking/$id': typeof LocaleThinkingIdRoute
   '/$locale/watch/library': typeof LocaleWatchLibraryRoute
+  '/admin/posts/create': typeof AdminPostsCreateRoute
   '/$locale/blog/': typeof LocaleBlogIndexRoute
   '/$locale/thinking/': typeof LocaleThinkingIndexRoute
   '/$locale/watch/': typeof LocaleWatchIndexRoute
+  '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/posts/edit/$id': typeof AdminPostsEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -327,25 +425,39 @@ export interface FileRoutesByTo {
   '/$locale/portfolio': typeof LocalePortfolioRoute
   '/$locale/setup': typeof LocaleSetupRoute
   '/$locale/unsubscribe': typeof LocaleUnsubscribeRoute
-  '/admin/$': typeof AdminSplatRoute
+  '/admin/article-generator': typeof AdminArticleGeneratorRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$id': typeof BlogIdRoute
   '/thinking/$id': typeof ThinkingIdRoute
   '/watch/library': typeof WatchLibraryRoute
   '/$locale': typeof LocaleIndexRoute
+  '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/thinking': typeof ThinkingIndexRoute
   '/watch': typeof WatchIndexRoute
   '/$locale/blog/$id': typeof LocaleBlogIdRoute
   '/$locale/thinking/$id': typeof LocaleThinkingIdRoute
   '/$locale/watch/library': typeof LocaleWatchLibraryRoute
+  '/admin/posts/create': typeof AdminPostsCreateRoute
   '/$locale/blog': typeof LocaleBlogIndexRoute
   '/$locale/thinking': typeof LocaleThinkingIndexRoute
   '/$locale/watch': typeof LocaleWatchIndexRoute
+  '/admin/posts': typeof AdminPostsIndexRoute
+  '/admin/posts/edit/$id': typeof AdminPostsEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/about-site': typeof AboutSiteRoute
   '/activity': typeof ActivityRoute
@@ -371,26 +483,40 @@ export interface FileRoutesById {
   '/$locale/portfolio': typeof LocalePortfolioRoute
   '/$locale/setup': typeof LocaleSetupRoute
   '/$locale/unsubscribe': typeof LocaleUnsubscribeRoute
-  '/admin/$': typeof AdminSplatRoute
+  '/admin/article-generator': typeof AdminArticleGeneratorRoute
+  '/admin/books': typeof AdminBooksRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$id': typeof BlogIdRoute
   '/thinking/$id': typeof ThinkingIdRoute
   '/watch/library': typeof WatchLibraryRoute
   '/$locale/': typeof LocaleIndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/thinking/': typeof ThinkingIndexRoute
   '/watch/': typeof WatchIndexRoute
   '/$locale/blog/$id': typeof LocaleBlogIdRoute
   '/$locale/thinking/$id': typeof LocaleThinkingIdRoute
   '/$locale/watch/library': typeof LocaleWatchLibraryRoute
+  '/admin/posts/create': typeof AdminPostsCreateRoute
   '/$locale/blog/': typeof LocaleBlogIndexRoute
   '/$locale/thinking/': typeof LocaleThinkingIndexRoute
   '/$locale/watch/': typeof LocaleWatchIndexRoute
+  '/admin/posts/': typeof AdminPostsIndexRoute
+  '/admin/posts/edit/$id': typeof AdminPostsEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/about'
     | '/about-site'
     | '/activity'
@@ -416,21 +542,34 @@ export interface FileRouteTypes {
     | '/$locale/portfolio'
     | '/$locale/setup'
     | '/$locale/unsubscribe'
-    | '/admin/$'
+    | '/admin/article-generator'
+    | '/admin/books'
+    | '/admin/categories'
+    | '/admin/comments'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/notes'
+    | '/admin/subscribers'
+    | '/admin/tags'
+    | '/admin/users'
     | '/auth/callback'
     | '/blog/$id'
     | '/thinking/$id'
     | '/watch/library'
     | '/$locale/'
+    | '/admin/'
     | '/blog/'
     | '/thinking/'
     | '/watch/'
     | '/$locale/blog/$id'
     | '/$locale/thinking/$id'
     | '/$locale/watch/library'
+    | '/admin/posts/create'
     | '/$locale/blog/'
     | '/$locale/thinking/'
     | '/$locale/watch/'
+    | '/admin/posts/'
+    | '/admin/posts/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -459,24 +598,38 @@ export interface FileRouteTypes {
     | '/$locale/portfolio'
     | '/$locale/setup'
     | '/$locale/unsubscribe'
-    | '/admin/$'
+    | '/admin/article-generator'
+    | '/admin/books'
+    | '/admin/categories'
+    | '/admin/comments'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/notes'
+    | '/admin/subscribers'
+    | '/admin/tags'
+    | '/admin/users'
     | '/auth/callback'
     | '/blog/$id'
     | '/thinking/$id'
     | '/watch/library'
     | '/$locale'
+    | '/admin'
     | '/blog'
     | '/thinking'
     | '/watch'
     | '/$locale/blog/$id'
     | '/$locale/thinking/$id'
     | '/$locale/watch/library'
+    | '/admin/posts/create'
     | '/$locale/blog'
     | '/$locale/thinking'
     | '/$locale/watch'
+    | '/admin/posts'
+    | '/admin/posts/edit/$id'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/about'
     | '/about-site'
     | '/activity'
@@ -502,25 +655,39 @@ export interface FileRouteTypes {
     | '/$locale/portfolio'
     | '/$locale/setup'
     | '/$locale/unsubscribe'
-    | '/admin/$'
+    | '/admin/article-generator'
+    | '/admin/books'
+    | '/admin/categories'
+    | '/admin/comments'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/admin/notes'
+    | '/admin/subscribers'
+    | '/admin/tags'
+    | '/admin/users'
     | '/auth/callback'
     | '/blog/$id'
     | '/thinking/$id'
     | '/watch/library'
     | '/$locale/'
+    | '/admin/'
     | '/blog/'
     | '/thinking/'
     | '/watch/'
     | '/$locale/blog/$id'
     | '/$locale/thinking/$id'
     | '/$locale/watch/library'
+    | '/admin/posts/create'
     | '/$locale/blog/'
     | '/$locale/thinking/'
     | '/$locale/watch/'
+    | '/admin/posts/'
+    | '/admin/posts/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AboutSiteRoute: typeof AboutSiteRoute
   ActivityRoute: typeof ActivityRoute
@@ -546,7 +713,6 @@ export interface RootRouteChildren {
   LocalePortfolioRoute: typeof LocalePortfolioRoute
   LocaleSetupRoute: typeof LocaleSetupRoute
   LocaleUnsubscribeRoute: typeof LocaleUnsubscribeRoute
-  AdminSplatRoute: typeof AdminSplatRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogIdRoute: typeof BlogIdRoute
   ThinkingIdRoute: typeof ThinkingIdRoute
@@ -656,6 +822,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -683,6 +856,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/$locale/': {
       id: '/$locale/'
@@ -719,12 +899,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/$': {
-      id: '/admin/$'
-      path: '/admin/$'
-      fullPath: '/admin/$'
-      preLoaderRoute: typeof AdminSplatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/tags': {
+      id: '/admin/tags'
+      path: '/tags'
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/subscribers': {
+      id: '/admin/subscribers'
+      path: '/subscribers'
+      fullPath: '/admin/subscribers'
+      preLoaderRoute: typeof AdminSubscribersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/notes': {
+      id: '/admin/notes'
+      path: '/notes'
+      fullPath: '/admin/notes'
+      preLoaderRoute: typeof AdminNotesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/comments': {
+      id: '/admin/comments'
+      path: '/comments'
+      fullPath: '/admin/comments'
+      preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/books': {
+      id: '/admin/books'
+      path: '/books'
+      fullPath: '/admin/books'
+      preLoaderRoute: typeof AdminBooksRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/article-generator': {
+      id: '/admin/article-generator'
+      path: '/article-generator'
+      fullPath: '/admin/article-generator'
+      preLoaderRoute: typeof AdminArticleGeneratorRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/$locale/unsubscribe': {
       id: '/$locale/unsubscribe'
@@ -810,6 +1053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocaleAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/posts/': {
+      id: '/admin/posts/'
+      path: '/posts'
+      fullPath: '/admin/posts/'
+      preLoaderRoute: typeof AdminPostsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/$locale/watch/': {
       id: '/$locale/watch/'
       path: '/$locale/watch'
@@ -830,6 +1080,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$locale/blog/'
       preLoaderRoute: typeof LocaleBlogIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/posts/create': {
+      id: '/admin/posts/create'
+      path: '/posts/create'
+      fullPath: '/admin/posts/create'
+      preLoaderRoute: typeof AdminPostsCreateRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/$locale/watch/library': {
       id: '/$locale/watch/library'
@@ -852,11 +1109,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocaleBlogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/posts/edit/$id': {
+      id: '/admin/posts/edit/$id'
+      path: '/posts/edit/$id'
+      fullPath: '/admin/posts/edit/$id'
+      preLoaderRoute: typeof AdminPostsEditIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
+interface AdminRouteRouteChildren {
+  AdminArticleGeneratorRoute: typeof AdminArticleGeneratorRoute
+  AdminBooksRoute: typeof AdminBooksRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminNotesRoute: typeof AdminNotesRoute
+  AdminSubscribersRoute: typeof AdminSubscribersRoute
+  AdminTagsRoute: typeof AdminTagsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminPostsCreateRoute: typeof AdminPostsCreateRoute
+  AdminPostsIndexRoute: typeof AdminPostsIndexRoute
+  AdminPostsEditIdRoute: typeof AdminPostsEditIdRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminArticleGeneratorRoute: AdminArticleGeneratorRoute,
+  AdminBooksRoute: AdminBooksRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminCommentsRoute: AdminCommentsRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminNotesRoute: AdminNotesRoute,
+  AdminSubscribersRoute: AdminSubscribersRoute,
+  AdminTagsRoute: AdminTagsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminPostsCreateRoute: AdminPostsCreateRoute,
+  AdminPostsIndexRoute: AdminPostsIndexRoute,
+  AdminPostsEditIdRoute: AdminPostsEditIdRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AboutSiteRoute: AboutSiteRoute,
   ActivityRoute: ActivityRoute,
@@ -882,7 +1185,6 @@ const rootRouteChildren: RootRouteChildren = {
   LocalePortfolioRoute: LocalePortfolioRoute,
   LocaleSetupRoute: LocaleSetupRoute,
   LocaleUnsubscribeRoute: LocaleUnsubscribeRoute,
-  AdminSplatRoute: AdminSplatRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BlogIdRoute: BlogIdRoute,
   ThinkingIdRoute: ThinkingIdRoute,

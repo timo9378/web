@@ -123,9 +123,30 @@ test('草稿不會出現在公開清單', async ({ page }) => {
   await expect(mainOf(page)).not.toContainText('未發布草稿');
 });
 
-test('未登入進不了後台', async ({ page }) => {
-  const resp = await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-  expect(resp?.status()).toBeLessThan(500);
-  await page.waitForLoadState('networkidle').catch(() => {});
-  await expect(page.locator('body')).not.toContainText('未發布草稿');
-});
+/**
+ * 未登入者不該進得了後台的**任何**一條路徑。
+ *
+ * 原本這裡只驗「status < 500 且畫面上沒有草稿標題」——那太弱：一個什麼都不 render
+ * 的空白頁也會通過，而「守衛其實沒生效、只是資料還沒載進來」同樣會通過。
+ * 後台從 react-router island 改成 13 條 TanStack file route 時，守衛整個被重寫，
+ * 那種斷言擋不住任何東西，所以改成驗真正的契約：**最後會停在首頁**。
+ *
+ * 逐條列而不是只測 /admin：守衛掛在版面層 route 上，漏掉某條子路由的話
+ * 只測進入點是看不出來的。動態段（edit/$id）與純 redirect 路由（login）都要涵蓋。
+ */
+for (const path of ['/admin', '/admin/posts', '/admin/users', '/admin/login', '/admin/posts/edit/1']) {
+  test(`未登入進不了後台：${path}`, async ({ page }) => {
+    const resp = await page.goto(path, { waitUntil: 'domcontentloaded' });
+    expect(resp?.status()).toBeLessThan(500);
+    // 守衛是 client-side 的（後台整段 ClientOnly），所以要等它跑完才看得到結果。
+    //
+    // 落點是「首頁」而不是字面上的 '/'：站台首頁會依 Accept-Language 做 302 語系導向
+    // （見 tests/e2e/routes.ts 的 SKIP 註解），瀏覽器語系不同就會停在 /en、/ja…。
+    // 第一版寫死 '/' 時這五條全紅，而我手動用另一個語系的 context 測卻是綠的——
+    // 差的就是這個導向，不是守衛。
+    await expect
+      .poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
+      .toMatch(/^\/(en|ja|ko|zh-cn)?$/);
+    await expect(page.locator('body')).not.toContainText('未發布草稿');
+  });
+}

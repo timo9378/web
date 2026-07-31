@@ -1,0 +1,15 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { Suspense, lazy } from 'react';
+
+import KoimLoader from '../../components/KoimLoader';
+
+// AI 寫作。維持 lazy()：後台的重元件（monaco 等）要留在自己的 chunk，不進主 bundle。
+const Page = lazy(() => import('../../components/admin/ArticleGenerator'));
+
+export const Route = createFileRoute('/admin/article-generator')({
+  component: () => (
+    <Suspense fallback={<KoimLoader inline size="sm" />}>
+      <Page />
+    </Suspense>
+  ),
+});

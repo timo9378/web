@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, type LinkProps } from '@tanstack/react-router';
 import {
   LayoutDashboard,
   FileText,
@@ -62,9 +62,28 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   'article-generator': 'AI 寫作',
 };
 
+/**
+ * 麵包屑的中繼連結。
+ *
+ * TanStack 的 `Link` 把 `to` 對著 route tree 做型別檢查，而麵包屑是從當前 pathname
+ * 逐段拼出來的字串，型別上對不起來。這裡刻意退回原生 `<a>` 而不是硬轉型：
+ *
+ *   - 硬轉型（`to={href as never}`）會騙過編譯器，但拼錯路徑仍然只有執行期才知道，
+ *     等於付了型別的醜、卻沒買到型別的保障。
+ *   - 麵包屑的中繼層級只有 `/admin`、`/admin/posts` 這種，點下去整頁重載一次的成本
+ *     對後台可以接受（而且後台本來就是 client-only、沒有 SSR 要保）。
+ *
+ * 側欄那組連結是**寫死的已知路徑**，所以那邊照樣用 `Link`，享有型別檢查。
+ */
+const BreadcrumbAnchor = ({ href, label }: { href: string; label: string }) => (
+  <BreadcrumbLink asChild>
+    <a href={href}>{label}</a>
+  </BreadcrumbLink>
+);
+
 const AdminBreadcrumb = () => {
-  const location = useLocation();
-  const segments = location.pathname.split('/').filter(Boolean);
+  const { pathname } = useLocation();
+  const segments = pathname.split('/').filter(Boolean);
 
   return (
     <Breadcrumb>
@@ -80,9 +99,7 @@ const AdminBreadcrumb = () => {
                 {isLast ? (
                   <BreadcrumbPage>{label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={href}>{label}</Link>
-                  </BreadcrumbLink>
+                  <BreadcrumbAnchor href={href} label={label} />
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator><ChevronRight /></BreadcrumbSeparator>}
@@ -94,7 +111,10 @@ const AdminBreadcrumb = () => {
   );
 };
 
-interface SidebarItem { id: string; icon: LucideIcon; label: string; path: string; ownerOnly?: boolean }
+// path 用 Link 的 `to` 型別而不是 string：側欄路徑寫錯（或某天路由改名）會在編譯期就被抓到。
+// 這是換到 TanStack 之後真正多拿到的東西——react-router 時代這裡是純字串，打錯要等點下去才知道。
+type AdminPath = NonNullable<LinkProps['to']>;
+interface SidebarItem { id: string; icon: LucideIcon; label: string; path: AdminPath; ownerOnly?: boolean }
 
 const sidebarItems: SidebarItem[] = [
   { id: 'dashboard', icon: LayoutDashboard, label: '儀表板', path: '/admin/dashboard' },
@@ -112,13 +132,14 @@ const sidebarItems: SidebarItem[] = [
 export const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout, isOwner } = useAuth();
 
+  // TanStack 的 navigate 收物件（`{ to }`）而不是字串，這是與 react-router 最主要的簽名差異。
   const handleLogout = () => {
     logout();
-    void navigate('/');
+    void navigate({ to: '/' });
   };
 
   useEffect(() => {
@@ -175,7 +196,7 @@ export const AdminLayout = () => {
           <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
             {visibleSidebarItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname.startsWith(item.path);
+              const isActive = pathname.startsWith(item.path);
 
               return (
                 <Link
@@ -223,7 +244,7 @@ export const AdminLayout = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>我的帳戶</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { void navigate('/'); }}>
+                <DropdownMenuItem onClick={() => { void navigate({ to: '/' }); }}>
                   <Home className="mr-2 h-4 w-4" />
                   回到前台
                 </DropdownMenuItem>
@@ -264,7 +285,7 @@ export const AdminLayout = () => {
 
           <AdminBreadcrumb />
 
-          {location.pathname.includes('/admin/posts/edit') || location.pathname.includes('/admin/posts/create') || location.pathname === '/admin/posts/new' ? (
+          {pathname.includes('/admin/posts/edit') || pathname.includes('/admin/posts/create') || pathname === '/admin/posts/new' ? (
             <div className="ml-auto flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground/80 px-2.5" onClick={() => document.getElementById('save-draft-btn')?.click()}>
                 <Save className="size-3.5" />

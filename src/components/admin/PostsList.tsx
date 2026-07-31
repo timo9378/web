@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AdminPostFull } from '@koimsurai/api-types';
 import { adminPostsQueryOptions } from '../../adminData';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -190,7 +190,7 @@ export default function PostsList() {
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link
-                        to={`/admin/posts/edit/${post.id}`}
+                        to="/admin/posts/edit/$id" params={{ id: String(post.id) }}
                         className="size-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground/60 hover:bg-accent/40 transition-colors"
                       >
                         <Pencil className="size-3" />
