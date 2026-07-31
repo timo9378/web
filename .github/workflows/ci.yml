@@ -59,6 +59,14 @@ jobs:
       # --max-warnings 0：這三個目錄目前乾淨，直接鎖死，不留讓它從 0 無聲長大的空間。
       - name: oxlint (scripts + server + packages)
         run: pnpm exec oxlint scripts server packages --max-warnings 0
+      # 未使用的檔案／相依。設定見 knip.json。
+      #
+      # ⚠️ 只 gate files + dependencies 這幾類，因為它們現在是零；exports 類還有
+      # 24 個未使用匯出 + 11 個未使用型別沒清。那是另一批工作（要逐個判斷是「該刪」
+      # 還是「刻意留的公開介面」），清完再把 --include 拿掉。
+      # 這裡刻意不是用 ignore 把它們藏起來——藏起來就沒有人會回來清。
+      - name: knip（未使用的檔案與相依）
+        run: pnpm exec knip --no-progress --include files,dependencies,unlisted,unresolved,binaries
       - name: vitest
         run: pnpm test
       # 真正的建置驗證——tsc/lint 過不代表 Nitro/Vite build 不會炸

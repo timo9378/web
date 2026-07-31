@@ -9,15 +9,12 @@
         "backend/scripts/**/*.cjs",
         "tests/e2e/**/*.{ts,mjs}",
         "builder.config.js",
-        "public/sw.js"
+        "public/sw.js",
+        "src/components/ui/**",
+        "src/components/animate-ui/**"
       ],
       "project": ["src/**/*.{ts,tsx}", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"],
-      "ignore": [
-        "src/routeTree.gen.ts",
-        "src/components/ui/**",
-        "src/components/animate-ui/**",
-        "src/hooks/use-is-in-view.ts"
-      ]
+      "ignore": ["src/routeTree.gen.ts", "src/hooks/use-is-in-view.ts"]
     },
     "packages/api-types": { "entry": ["index.ts"] },
     "packages/mcp-server": { "entry": ["src/index.ts"] }
