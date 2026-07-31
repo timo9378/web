@@ -80,7 +80,7 @@ async fn access_token(state: &AppState) -> Result<String, SpErr> {
     let basic = base64::engine::general_purpose::STANDARD.encode(format!("{id}:{secret}"));
     let resp = state
         .http
-        .post("https://accounts.spotify.com/api/token")
+        .post(format!("{}/api/token", state.external.spotify_accounts))
         .header("Authorization", format!("Basic {basic}"))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(format!("grant_type=refresh_token&refresh_token={refresh}"))
@@ -102,13 +102,18 @@ async fn access_token(state: &AppState) -> Result<String, SpErr> {
 }
 
 /// axios GET 等價：非 2xx → Err(Http)。回 (status, normalized json)。
+///
+/// `path` 是**相對於 Spotify API base 的路徑**（例如 `/v1/me`），base 從
+/// `state.external.spotify_api` 取。所有呼叫端都走這裡，所以只要改這一個地方
+/// 就能讓整支檔案的上游可注入——理由見 `state::ExternalUrls`。
 async fn sp_get(
     state: &AppState,
-    url: &str,
+    path: &str,
     token: &str,
     timeout: Option<u64>,
 ) -> Result<(StatusCode, Value), SpErr> {
-    let mut req = state.http.get(url).header("Authorization", format!("Bearer {token}"));
+    let url = format!("{}{path}", state.external.spotify_api);
+    let mut req = state.http.get(&url).header("Authorization", format!("Bearer {token}"));
     if let Some(t) = timeout {
         req = req.timeout(std::time::Duration::from_secs(t));
     }
@@ -256,6 +261,8 @@ pub async fn login() -> Response {
     let scope = "user-read-recently-played user-top-read user-read-private user-read-email user-read-currently-playing user-read-playback-state";
     let client_id = std::env::var("SPOTIFY_CLIENT_ID").unwrap_or_else(|_| "undefined".into());
     let form = |s: &str| crate::util::encode_uri_component(s).replace("%20", "+");
+    // 這條**不**走 ExternalUrls：它是回給瀏覽器跳轉的 302 目的地，不是我們發出的請求。
+    // 而且要測它也不需要注入——直接呼叫這個函式、驗 Location 標頭就好，全程沒有網路。
     let url = format!(
         "https://accounts.spotify.com/authorize?response_type=code&client_id={}&scope={}&redirect_uri={}",
         form(&client_id),
@@ -276,9 +283,7 @@ pub async fn login() -> Response {
 pub async fn recently_played(State(state): State<AppState>) -> Response {
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
-        let (_, v) =
-            sp_get(&state, "https://api.spotify.com/v1/me/player/recently-played?limit=10", &token, None)
-                .await?;
+        let (_, v) = sp_get(&state, "/v1/me/player/recently-played?limit=10", &token, None).await?;
         Ok(v)
     }
     .await;
@@ -302,7 +307,7 @@ pub async fn now_playing(State(state): State<AppState>) -> Response {
             return Json(NowPlayingResponse::default()).into_response();
         }
     };
-    match sp_get(&state, "https://api.spotify.com/v1/me/player/currently-playing", &token, None).await {
+    match sp_get(&state, "/v1/me/player/currently-playing", &token, None).await {
         Ok((status, v)) => {
             // 204 或空 body = 沒在播
             if status == StatusCode::NO_CONTENT || !js_truthy(Some(&v)) {
@@ -333,13 +338,8 @@ pub async fn top_genres(State(state): State<AppState>) -> Response {
     }
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
-        let (_, v) = sp_get(
-            &state,
-            "https://api.spotify.com/v1/me/top/artists?limit=50&time_range=medium_term",
-            &token,
-            Some(10),
-        )
-        .await?;
+        let (_, v) =
+            sp_get(&state, "/v1/me/top/artists?limit=50&time_range=medium_term", &token, Some(10)).await?;
         Ok(v)
     }
     .await;
@@ -412,7 +412,7 @@ pub async fn top_tracks(State(state): State<AppState>, Query(q): Query<TopTracks
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
         let url = format!(
-            "https://api.spotify.com/v1/me/top/tracks?limit={}&time_range={}",
+            "/v1/me/top/tracks?limit={}&time_range={}",
             crate::util::encode_uri_component(&limit),
             crate::util::encode_uri_component(&time_range)
         );
@@ -481,10 +481,7 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
     }
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
-        let url = format!(
-            "https://api.spotify.com/v1/audio-features?ids={}",
-            crate::util::encode_uri_component(&missing.join(","))
-        );
+        let url = format!("/v1/audio-features?ids={}", crate::util::encode_uri_component(&missing.join(",")));
         let (_, v) = sp_get(&state, &url, &token, Some(10)).await?;
         Ok(v)
     }
@@ -519,7 +516,7 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
 pub async fn me(State(state): State<AppState>) -> Response {
     let r: Result<Value, SpErr> = async {
         let token = access_token(&state).await?;
-        let (_, v) = sp_get(&state, "https://api.spotify.com/v1/me", &token, None).await?;
+        let (_, v) = sp_get(&state, "/v1/me", &token, None).await?;
         Ok(v)
     }
     .await;
@@ -564,7 +561,7 @@ pub async fn spotify_callback(
     );
     let resp = state
         .http
-        .post("https://accounts.spotify.com/api/token")
+        .post(format!("{}/api/token", state.external.spotify_accounts))
         .basic_auth(&cid, Some(&secret))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
@@ -599,4 +596,137 @@ pub async fn spotify_callback(
          <p>此頁僅 setup 用，token 不會被儲存。</p></body></html>"
     );
     ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], html).into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::ExternalUrls;
+    use axum::extract::State as AxState;
+    use wiremock::matchers::{method, path as mock_path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // SPOTIFY_* 是 process 全域的；nextest 一個測試一個行程不會撞，
+    // 但 `cargo test`（cargo-mutants 用它）同行程平行跑 → 要串起來。
+    static ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    const REFRESH_BODY: &str = r#"{"access_token":"tok","expires_in":3600}"#;
+
+    async fn state_with_mock(server: &MockServer) -> AppState {
+        let mut st = crate::state::test_state().await;
+        st.external = std::sync::Arc::new(ExternalUrls::all_pointing_at(&server.uri()));
+        st
+    }
+
+    /// 讓 access_token() 拿得到 token：三個環境變數都要有值，且 mock 要回 refresh 結果。
+    async fn mount_token(server: &MockServer) {
+        Mock::given(method("POST"))
+            .and(mock_path("/spotify-accounts/api/token"))
+            .respond_with(ResponseTemplate::new(200).set_body_raw(REFRESH_BODY, "application/json"))
+            .mount(server)
+            .await;
+    }
+
+    /// SAFETY: 呼叫端持有 ENV_LOCK。
+    unsafe fn set_creds(on: bool) {
+        unsafe {
+            for k in ["SPOTIFY_CLIENT_ID", "SPOTIFY_CLIENT_SECRET", "SPOTIFY_REFRESH_TOKEN"] {
+                if on {
+                    std::env::set_var(k, "x");
+                } else {
+                    std::env::remove_var(k);
+                }
+            }
+        }
+    }
+
+    async fn body_of(resp: Response) -> Value {
+        let bytes = http_body_util::BodyExt::collect(resp.into_body()).await.expect("collect").to_bytes();
+        serde_json::from_slice(&bytes).expect("回應應該是 JSON")
+    }
+
+    /// 上游回 204（沒在播）時，這支要回一個「沒在播」的正常回應。
+    ///
+    /// ⚠ 這條**驗的是對外契約，不是那個提前返回的分支**。實測把
+    /// `if status == NO_CONTENT || !js_truthy(..)` 改成 `if false`，測試照樣通過——
+    /// 因為底下的 `unwrap_or_default()` 對 Null 也會產出同一個結果。那個提前返回是
+    /// 防禦性的、行為上冗餘。寫在這裡是因為「測試名字宣稱保護 X、實際上 X 拿掉也不會紅」
+    /// 是最容易累積的假保障，下一個人不該再花時間重新發現一次。
+    #[tokio::test]
+    async fn now_playing_on_204_returns_a_not_playing_response() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me/player/currently-playing"))
+            .respond_with(ResponseTemplate::new(204))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(now_playing(AxState(st)).await).await;
+        assert_eq!(v["is_playing"], false, "204 該被當成「沒在播」");
+        unsafe { set_creds(false) };
+    }
+
+    /// 上游回 429（限流）時要**開熔斷**，不是每次請求都再打一次。
+    /// 沒有熔斷的話 Spotify 一限流，這個站每個訪客都會替它多打一次，只會被鎖更久。
+    #[tokio::test]
+    async fn top_genres_opens_the_circuit_after_429() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me/top/artists"))
+            .respond_with(ResponseTemplate::new(429))
+            // 期望**剛好一次**：第二次請求要被熔斷擋下，不該再打到上游
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let _ = top_genres(AxState(st.clone())).await;
+        assert!(st.spotify.top_disabled_until.load(Ordering::Relaxed) > now_ms(), "429 之後熔斷應該是開的");
+
+        // 第二次：熔斷開著，不該再碰上游（由 server 的 .expect(1) 在 drop 時驗證）
+        let _ = top_genres(AxState(st)).await;
+        drop(server);
+        unsafe { set_creds(false) };
+    }
+
+    /// 沒設定環境變數時要優雅降級成空回應，而不是 500。
+    /// 這條在部署到還沒接 Spotify 的環境時就會走到。
+    #[tokio::test]
+    async fn now_playing_without_credentials_degrades_quietly() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(false) };
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+        let resp = now_playing(AxState(st)).await;
+        assert_eq!(resp.status(), StatusCode::OK, "未配置不該變成錯誤狀態碼");
+        let v = body_of(resp).await;
+        assert_eq!(v["is_playing"], false);
+    }
+
+    /// login() 只組字串回 302，全程沒有網路——所以不需要注入也測得了。
+    /// 驗的是「授權網址帶對參數」：scope 或 redirect_uri 錯了，使用者會在 Spotify 那邊
+    /// 看到一個看不懂的錯誤，而我們這邊完全沒有訊號。
+    #[tokio::test]
+    async fn login_redirect_carries_scope_and_redirect_uri() {
+        let _env = ENV_LOCK.lock().await;
+        // SAFETY: 持有 ENV_LOCK。
+        unsafe { std::env::set_var("SPOTIFY_CLIENT_ID", "cid-123") };
+        let resp = login().await;
+        assert_eq!(resp.status(), StatusCode::FOUND);
+        let loc = resp.headers().get(header::LOCATION).expect("要有 Location").to_str().unwrap().to_string();
+        assert!(loc.starts_with("https://accounts.spotify.com/authorize"), "應該導向 Spotify：{loc}");
+        assert!(loc.contains("client_id=cid-123"), "client_id 沒帶上：{loc}");
+        assert!(loc.contains("user-read-currently-playing"), "scope 少了正在播放的權限：{loc}");
+        assert!(loc.contains("redirect_uri="), "redirect_uri 沒帶上：{loc}");
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("SPOTIFY_CLIENT_ID") };
+    }
 }

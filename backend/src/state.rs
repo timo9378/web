@@ -53,6 +53,11 @@ pub struct ExternalUrls {
     pub google_books: String,
     /// Open Library（ISBN 查詢與搜尋）
     pub openlibrary: String,
+    /// Spotify Web API（handlers/spotify.rs 全部走 `sp_get`）
+    pub spotify_api: String,
+    /// Spotify 帳號服務——只放 token 交換那條。
+    /// `/authorize` 那個是回給瀏覽器跳轉的目的地不是我們發的請求，留在 spotify.rs 裡當字面值。
+    pub spotify_accounts: String,
 }
 
 impl Default for ExternalUrls {
@@ -64,6 +69,8 @@ impl Default for ExternalUrls {
             wakatime: "https://wakatime.com".into(),
             google_books: "https://www.googleapis.com".into(),
             openlibrary: "https://openlibrary.org".into(),
+            spotify_api: "https://api.spotify.com".into(),
+            spotify_accounts: "https://accounts.spotify.com".into(),
         }
     }
 }
@@ -81,6 +88,8 @@ impl ExternalUrls {
             wakatime: format!("{base}/wakatime"),
             google_books: format!("{base}/google-books"),
             openlibrary: format!("{base}/openlibrary"),
+            spotify_api: format!("{base}/spotify-api"),
+            spotify_accounts: format!("{base}/spotify-accounts"),
         }
     }
 }
