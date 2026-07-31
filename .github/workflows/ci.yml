@@ -134,10 +134,16 @@ jobs:
       # 用 region 而非 line 當門檻：line coverage 會被「格式化」影響——導入 rustfmt 時
       # 測試一個沒少，line 卻從 17.24% 掉到 14.14%（多行 if/else 被收成單行），
       # 而同一次 region 只從 12.44% 動到 12.45%。region 對應實際分支，不隨排版漂移。
-      # 現況 region 12.45%，門檻設 12 只擋退步。0% 的多是外部 API 整合
-      # （Trakt/動畫瘋/Spotify/OAuth），要 mock 外部服務才測得動，刻意不追高。
+      #
+      # 門檻要跟著漲，不然做過的事就沒被鎖住。歷程：
+      #   12  最初——當時 0% 的多是外部 API 整合，上游位址寫死在字串裡所以 mock 不了
+      #   30  現在——`state::ExternalUrls` 讓上游可注入（wiremock 接得上），
+      #       加上 admin/thoughts 的 CRUD 往返測試之後，實際來到 33.46%
+      #
+      # 留 3pp 餘裕：加一段還沒測到的新功能不該當場擋下，但「刪掉一批測試」會被抓到。
+      # 再往上拉之前先把 watch.rs（15%）與 oauth/mailer/upload（0%）補起來。
       - name: test + coverage (llvm-cov + nextest)
-        run: cargo llvm-cov nextest --locked --fail-under-regions 12
+        run: cargo llvm-cov nextest --locked --fail-under-regions 30
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |
