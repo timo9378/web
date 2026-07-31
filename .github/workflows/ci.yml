@@ -292,6 +292,23 @@ jobs:
   docker:
     name: Docker · frontend + backend image build
     runs-on: ubuntu-latest
+    # 只有這個 job 需要寫 package（把 build cache 推上 GHCR）。
+    # 全域仍是 contents: read，不要為了一個 job 把權限提到頂層。
+    permissions:
+      contents: read
+      packages: write
+    # 快取從 type=gha 換到 GHCR。要講清楚**不是**為了比較快：
+    # type=gha 打的是 Azure Blob 後端的 Actions Cache 服務，GHCR 也是 GitHub/Azure
+    # 側的 HTTP endpoint，兩者都走網路，換過去不多一個跳點，傳輸大約是同一個量級。
+    # 真正的理由是 Actions Cache 有硬性 10 GB/repo 且會 LRU 淘汰——rust-cache 一撐大
+    # 就把 docker layer 擠掉，於是冷建 546s（2026-07 實際發生過）。GHCR 沒有這個上限。
+    #
+    # ⚠ 這兩個 package 首次建立時是 private，而 private package 會吃帳號的 Packages
+    # 儲存額度；要免費就得到 GHCR 頁面把它們改成 public。內容只有編譯產物與已公開的
+    # 原始碼——.dockerignore 擋掉 .env* 與 .git，不會把祕密烤進快取層。
+    env:
+      CACHE_FE: ghcr.io/${{ github.repository }}/buildcache-frontend
+      CACHE_BE: ghcr.io/${{ github.repository }}/buildcache-backend
     steps:
       # fetch-depth: 2 是給下面那個 diff 用的（要有 HEAD^ 才比得出改了什麼）
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -300,10 +317,15 @@ jobs:
           fetch-depth: 2
       # 只建「輸入真的變過」的那個 image。
       #
-      # 後端 image 冷建要 360s：backend/Dockerfile 用 `--mount=type=cache` 存 target/，
-      # 而 **BuildKit 的 cache mount 不會被 type=gha 匯出**——它只活在 BuildKit daemon
-      # 的本機狀態。所以 CI 上只有兩種結果：整層命中（4s），或從零重編 453 個依賴（360s）。
-      # 既然沒有中間值，最有效的就是「沒必要就別觸發」。
+      # 我原本在這裡寫「cache mount 不會被 type=gha 匯出」——講太窄了。實情是
+      # **沒有任何** buildx cache backend 會匯出 `--mount=type=cache` 的內容
+      # （gha / registry / local / s3 都一樣，見 moby/buildkit#1512，2020-05 開到現在
+      # 未解，維護者明確反對）。那不是 gha 的限制，是 cache mount 的設計。
+      #
+      # 所以 backend/Dockerfile 已改用 cargo-chef：相依的編譯產物落在真正的 image
+      # layer 裡，匯得出去也復原得回來。現在 CI 上有三種結果而不是兩種——
+      # 整層命中、只重編自己的程式碼（cook 層命中）、或真的冷建。
+      # 即使如此，「沒必要就別觸發」仍然是最省的一手，所以這個判斷保留。
       #
       # 判不出來時（schedule / dispatch / 淺 clone）一律兩個都建——寧可多花時間，
       # 不要讓部署路徑的守門靜靜地不跑。
@@ -331,7 +353,19 @@ jobs:
           else
             echo "frontend=false" >> "$GITHUB_OUTPUT"
           fi
+      # fork 的 PR 拿到的 GITHUB_TOKEN 是唯讀的，登入照樣會成功（只是寫不進去），
+      # 所以這步不加條件；真正防護是下面 cache-to 只在 push 時才給值。
+      - name: 登入 GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+      # cache-to 只在 push 到 main 開：PR 不該把未合併的狀態寫進主快取，
+      # 而且 fork PR 的 token 本來就寫不進去。快取不存在時 buildx 只警告不失敗，
+      # 所以第一次跑（package 還沒建立）不會紅。
+      # image-manifest=true + oci-mediatypes=true 是 GHCR 相容 registry 快取的必要設定。
       - name: build frontend image
         if: steps.scope.outputs.frontend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -339,8 +373,8 @@ jobs:
           context: .
           file: Dockerfile
           push: false
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+          cache-from: type=registry,ref=${{ env.CACHE_FE }}
+          cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0},mode=max,image-manifest=true,oci-mediatypes=true', env.CACHE_FE) || '' }}
       - name: build backend image
         if: steps.scope.outputs.backend == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -348,8 +382,8 @@ jobs:
           context: .
           file: backend/Dockerfile
           push: false
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
+          cache-from: type=registry,ref=${{ env.CACHE_BE }}
+          cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0},mode=max,image-manifest=true,oci-mediatypes=true', env.CACHE_BE) || '' }}
 
   # workflow 自身的守門：actionlint 管正確性、zizmor 管安全（template injection、
   # 過寬權限、未釘 action、憑證外洩）。CI 自己也是攻擊面。
