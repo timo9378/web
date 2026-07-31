@@ -222,6 +222,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: MDX 編譯 + 未註冊 block 檢查
         run: pnpm check:mdx
+      # 安全標頭巡檢。放在這個排程 job 而不是 e2e/PR，理由有兩個：
+      #   1. 這些標頭是 nginx 加的，而 nginx 設定不在這個 repo 裡——PR 改不到它，
+      #      拿它擋 PR 只會製造無關的紅燈。
+      #   2. e2e 起的是 nitro + backend + 一個很小的假代理，裡面沒有 nginx；
+      #      在那裡斷言只會驗到假代理，綠了也不代表線上是對的。
+      # 所以它直接打正式站，每天一次。缺標頭這種事沒有任何症狀，沒人看就永遠不會發現。
+      - name: 正式站安全標頭巡檢
+        run: pnpm check:headers
 
   # 從 OpenAPI spec 自動生成 API 測試。跟 e2e 分開跑，因為它會對同一個 DB 打上千個
   # 請求，要自己的拋棄式 DB；而且它不需要前端，只起後端就好。
