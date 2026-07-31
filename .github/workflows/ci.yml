@@ -122,6 +122,12 @@ jobs:
           # 共用 key 只有在「產物真的一樣」時才成立。e2e 與 api-fuzz 之間成立，
           # 所以它們兩個維持共用；這個 job 拆出來自己一份。
           shared-key: workspace-lint-cov
+          # 只有 main 存。GitHub 的快取是**按 ref 隔離**的，PR 分支各存一份，
+          # 而 PR 本來就讀得到 base branch 的快取——自己存純粹是浪費額度。
+          # 實測：Dependabot 的 4 個 PR 各存了 1.36 GB，加上 main 共 6.8 GB，
+          # 把 repo 推到 10.46 / 10 GB → LRU 開始淘汰 → pnpm store 被清掉 →
+          # e2e 的 `pnpm install` 從 7s 變 1m41s。省的不是空間，是別人的命中率。
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2
         with:
           tool: cargo-nextest,cargo-audit,cargo-llvm-cov,cargo-shear,typos-cli
@@ -196,6 +202,8 @@ jobs:
           # backend job **不在**這把 key 裡——它的 clippy / llvm-cov 產物不同，
           # 硬共用的結果是它永遠存不進去、每次重編兩遍。理由寫在那個 job 底下。
           shared-key: workspace
+          # 只有 main 存（理由同 backend job 那段：PR 讀得到 base 的快取，自己存是浪費額度）
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
       # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異
       - name: install chromium
@@ -279,6 +287,8 @@ jobs:
           # 與 e2e 共用（產物相同，兩邊都只跑 `cargo build --bin`）。
           # backend job 不在這把 key 裡，理由見那個 job 底下的說明。
           shared-key: workspace
+          # 只有 main 存（理由同上）
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
       - run: pnpm install --frozen-lockfile
       - name: build backend
