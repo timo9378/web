@@ -5,17 +5,8 @@
 import { useMemo } from 'react';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { runSync } from '@mdx-js/mdx';
-import {
-  Annot, BarChart, Chart, CodeTabs, Details, Diff, FileTree, ImageCompare, Install, InteractiveChart,
-  Kbd, Math, Mention, Note, Poll, Refs, Ruby, Sketch, Spoiler, Stat, Stats, Step, Steps, Tab, Tabs, Video, YouTube,
-} from './mdx-blocks';
+import { MDX_BLOCKS } from './mdx-blocks-registry';
 import './MdxContent.css';
-
-// MDX 渲染可用的自訂 block。key = 文章裡寫的標籤名。
-const MDX_BLOCKS = {
-  Note, Annot, Spoiler, BarChart, Ruby, Mention, CodeTabs, Math, Tabs, Tab, Sketch, Chart, InteractiveChart,
-  Diff, Install, ImageCompare, Kbd, Details, Steps, Step, FileTree, Stats, Stat, Video, YouTube, Refs, Poll,
-};
 
 interface MdxContentProps {
   compiled: string;

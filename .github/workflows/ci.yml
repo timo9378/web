@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # 內容檢查（content job）用的：文章在 DB 裡不在 repo，PR 改的是程式碼不是內容，
+  # 所以那一項不擋 PR，改成每天跑一次 + 需要時手動觸發。
+  schedule:
+    - cron: '0 19 * * *' # 03:00 Asia/Taipei
+  workflow_dispatch:
 
 # 最小權限：所有 job 只需讀 repo（zizmor excessive-permissions）。
 permissions:
@@ -161,6 +166,31 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  # 已發布文章的 MDX 編譯守門。
+  #
+  # 為什麼需要：MDX 編譯失敗在前台是**靜默退回 markdown**（讀者看到裸標籤），而
+  # create/update API 仍回 success。錯誤 UI 其實寫好了卻永遠不會亮——它在 render 期，
+  # 而編譯已經在 blogList.ts 那層先失敗了。細節見 scripts/check-mdx.ts 的檔頭。
+  #
+  # 為什麼不擋 PR：文章存在 DB 裡不在 repo，PR 改的是程式碼不是內容。改成每天跑
+  # 一次 + workflow_dispatch，抓的是「有人發了一篇壞掉的文章」。
+  content:
+    name: 內容 · 已發布文章的 MDX 編譯得過
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: MDX 編譯 + 未註冊 block 檢查
+        run: pnpm check:mdx
 
   # 從 OpenAPI spec 自動生成 API 測試。跟 e2e 分開跑，因為它會對同一個 DB 打上千個
   # 請求，要自己的拋棄式 DB；而且它不需要前端，只起後端就好。

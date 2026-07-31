@@ -12,6 +12,7 @@
     "build:all": "pnpm run build:photos && pnpm run build",
     "build:gallery": "pnpm tsx scripts/builder/index.ts",
     "build:photos": "tsx scripts/builder/index.ts && node ../ai-tagger/clip_tagger.js",
+    "check:mdx": "tsx scripts/check-mdx.ts",
     "dev": "BACKEND_URL=http://127.0.0.1:3009 vite dev --config vite.config.start.ts --port 13998 --host",
     "e2e": "playwright test",
     "e2e:stack": "node tests/e2e/stack.mjs",
