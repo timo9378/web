@@ -1346,6 +1346,120 @@ pub async fn steam_profile(State(state): State<AppState>) -> Response {
 mod tests {
     use super::*;
 
+    /// STEAM_API_KEY / STEAM_ID 是 process 全域的。nextest 一個測試一個行程不會撞，
+    /// 但 `cargo test`（cargo-mutants 預設用它）是同行程平行跑 → 需要串起來。
+    static STEAM_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    fn fake_profile(persona: &str) -> SteamProfile {
+        SteamProfile {
+            player: SteamPlayer {
+                personaname: Some(persona.to_string()),
+                avatarfull: None,
+                profileurl: None,
+                personastate: Some(1),
+                gameid: None,
+            },
+            level: 42,
+            xp: 100,
+            xp_to_next: 200,
+            badge_count: 3,
+            customization: SteamCustomization::default(),
+            profile_url: "https://steamcommunity.com/profiles/1".to_string(),
+        }
+    }
+
+    /// **stampede**：64 個請求同時打「首抓」路徑。
+    ///
+    /// 契約是「同一時間只有一個去打上游，其餘的等；等到之後**重查快取**」——
+    /// `steam_profile` 裡拿到鎖之後的那次 `state.steam.cache.lock()` 就是這個 double-check。
+    ///
+    /// 這個測試把那條路徑逼出來的方式是：測試自己先佔住 `refresh_lock`，讓 64 個
+    /// handler 全部卡在鎖上，然後在牠們排隊期間把快取填好、再放開鎖。
+    /// 每一個醒來的人都應該讀到快取回 200。
+    ///
+    /// 把 double-check 拿掉的話，這 64 個會各自去打 api.steampowered.com（帶著
+    /// 測試用的假 key）→ 全部 503，測試就紅了。也就是說它擋的是真的會發生的退化，
+    /// 不是「有呼叫到 lock()」這種形式檢查。
+    #[tokio::test]
+    async fn steam_profile_stampede_rechecks_cache_instead_of_all_refetching() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 同上，靠 STEAM_ENV_LOCK 串行化；測試結束前還原。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "test-key-never-actually-used");
+            std::env::set_var("STEAM_ID", "76561197960265729");
+        }
+        let state = crate::state::test_state().await;
+
+        // 佔住鎖：後面每個 handler 走到首抓路徑都會停在這裡
+        let guard = state.steam.refresh_lock.lock().await;
+
+        let mut tasks = tokio::task::JoinSet::new();
+        for _ in 0..64 {
+            let st = state.clone();
+            tasks.spawn(async move { steam_profile(axum::extract::State(st)).await });
+        }
+        // 讓那 64 個 task 有機會被排程、走到鎖前面
+        for _ in 0..8 {
+            tokio::task::yield_now().await;
+        }
+
+        // 模擬「持鎖的那一個抓好了」。fetched_at 用當下時間——放舊的會讓後到的請求
+        // 判定快取過期而 spawn 背景重抓，那才是真的會打網路。
+        let now = now_ms();
+        *state.steam.cache.lock() = Some(crate::state::SteamProfileCache {
+            data: fake_profile("stampede-sentinel"),
+            fetched_at: now,
+            last_tried_at: now,
+        });
+        drop(guard);
+
+        let mut served = 0;
+        while let Some(joined) = tasks.join_next().await {
+            let resp = joined.expect("handler task panicked");
+            assert_eq!(
+                resp.status(),
+                StatusCode::OK,
+                "有人沒重查快取，跑去打上游了（503 = 假 key 被真的送出去）"
+            );
+            let bytes =
+                http_body_util::BodyExt::collect(resp.into_body()).await.expect("collect body").to_bytes();
+            let v: Value = serde_json::from_slice(&bytes).expect("response is JSON");
+            assert_eq!(v["player"]["personaname"], "stampede-sentinel", "回的不是快取那份");
+            assert_eq!(v["_cachedAt"], json!(now));
+            served += 1;
+        }
+        assert_eq!(served, 64);
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    /// 沒設 key/id 時要在碰鎖之前就回 500——否則未配置的部署會把所有請求排到鎖上。
+    #[tokio::test]
+    async fn steam_profile_without_env_fails_before_taking_the_lock() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+        let state = crate::state::test_state().await;
+
+        // 鎖被佔著；若 handler 會去搶鎖，這個呼叫就會卡住而不是回 500
+        let _guard = state.steam.refresh_lock.lock().await;
+        let resp = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            steam_profile(axum::extract::State(state.clone())),
+        )
+        .await
+        .expect("未配置時不該去等鎖");
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     /// 塑形這一步是這批改動唯一會出錯的地方（抓取本身走網路，測不到）。
     /// 樣本照 GitHub `/users/:u/events/public` 的實際形狀寫。
     #[test]

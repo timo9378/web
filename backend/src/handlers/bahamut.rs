@@ -486,3 +486,69 @@ pub fn spawn_sync(state: AppState) {
         }
     });
 }
+
+#[cfg(test)]
+mod sync_lock_tests {
+    use super::*;
+
+    /// BAHAMUT_COOKIE 是 process 全域的，而 `build_state` 在建 state 時就會讀它。
+    static COOKIE_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    /// `validate()` 要求這 7 個 cookie 都在且非空，少一個就會在碰鎖之前 skip。
+    const ALL_REQUIRED: &str = "BAHAID=1; BAHAHASHID=h; BAHANICK=n; BAHALV=1; \
+                                BAHAFLT=f; BAHAENUR=e; BAHARUNE=a.b.c";
+
+    async fn state_with_cookies(cookie: Option<&str>) -> AppState {
+        // SAFETY: 靠 COOKIE_ENV_LOCK 串行化（呼叫端持鎖）；讀完馬上還原。
+        unsafe {
+            match cookie {
+                Some(c) => std::env::set_var("BAHAMUT_COOKIE", c),
+                None => std::env::remove_var("BAHAMUT_COOKIE"),
+            }
+        }
+        let st = crate::state::test_state().await;
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("BAHAMUT_COOKIE") };
+        st
+    }
+
+    /// 防重入：已經有一個 sync 在跑時，第二個要直接 skip，**不是**排隊等它。
+    ///
+    /// 這裡不需要網路——`try_lock` 失敗的分支在 `history_all()` 之前就 return 了。
+    /// 反過來說，如果哪天有人把 try_lock 改成 lock().await，這個測試會直接卡死超時，
+    /// 那正是要擋的退化：sync 一次跑好幾分鐘，排隊等於把呼叫端全部掛住。
+    #[tokio::test]
+    async fn sync_skips_when_another_one_holds_the_lock() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let state = state_with_cookies(Some(ALL_REQUIRED)).await;
+
+        let guard = state.bahamut.sync_lock.lock().await;
+        let out = tokio::time::timeout(std::time::Duration::from_secs(5), sync_bahamut_history(&state))
+            .await
+            .expect("拿不到鎖時應該立刻 skip，不是等下去");
+
+        assert_eq!(out["busy"], json!(true), "第二個 sync 要回報 busy");
+        assert_eq!(out["ok"], json!(false));
+        drop(guard);
+    }
+
+    /// cookie 不齊時在碰鎖之前就 skip——順序反過來的話，沒設定的部署會白佔鎖。
+    /// 這個測試同時也擋住「無條件回 busy」那種讓上面測試綠掉的假實作。
+    #[tokio::test]
+    async fn sync_reports_missing_cookies_before_taking_the_lock() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let state = state_with_cookies(None).await;
+
+        // 鎖佔著也不影響：這條路徑根本走不到鎖
+        let _guard = state.bahamut.sync_lock.lock().await;
+        let out = tokio::time::timeout(std::time::Duration::from_secs(5), sync_bahamut_history(&state))
+            .await
+            .expect("cookie 不齊時不該去等鎖");
+
+        assert_eq!(out["skipped"], json!("missing-cookie"));
+        assert_ne!(out["busy"], json!(true), "缺 cookie 被誤報成 busy 會讓人以為只是撞到並發");
+        let missing = out["missing"].as_array().expect("missing 是陣列");
+        assert_eq!(missing.len(), 7, "7 個必要 cookie 應該全部列出來");
+    }
+}

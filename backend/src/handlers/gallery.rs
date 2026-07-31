@@ -722,3 +722,58 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         ("generatedAt".into(), Value::from(generated_at)),
     ])
 }
+
+#[cfg(test)]
+mod sync_lock_tests {
+    use super::*;
+
+    /// `GALLERY_SYNC_LOCK` 是模組私有的 static，整合測試（tests/api.rs 是另一個 crate）
+    /// 摸不到它。而「同時只跑一個」這件事**只有**佔住鎖才驗得了確定——靠兩個並發請求
+    /// 去賽跑會變成計時測試，在共用 runner 上必然間歇性失敗。所以這兩個測試寫在模組內。
+    #[tokio::test]
+    async fn sync_returns_409_while_another_is_running() {
+        let state = crate::state::test_state().await;
+        let headers = crate::state::test_admin_headers();
+
+        let guard = GALLERY_SYNC_LOCK.lock().await;
+        // 超時是斷言的一部分：try_lock 若被改成 lock().await，這裡會死等而不是回 409。
+        // 沒有 timeout 的話那個退化會表現成「測試掛住」，在 CI 上只看得到一個沒有訊息的逾時。
+        let resp =
+            tokio::time::timeout(std::time::Duration::from_secs(5), gallery_sync(State(state), headers))
+                .await
+                .expect("已經有 sync 在跑時應該立刻回 409，不是排隊等它");
+        assert_eq!(
+            resp.status(),
+            StatusCode::CONFLICT,
+            "已經有一個 sync 在跑時要回 409，而不是排隊等它（那會把 admin 請求掛住）"
+        );
+        drop(guard);
+    }
+
+    /// 配對的反向斷言：沒人佔鎖時**不能**回 409。
+    /// 少了這個，「無條件回 409」的實作也會讓上面那個測試綠。
+    /// 這裡來源目錄不存在，所以走的是 500（ENOENT）——重點是它不是 409。
+    #[tokio::test]
+    async fn sync_does_not_report_conflict_when_lock_is_free() {
+        let state = crate::state::test_state().await;
+        let headers = crate::state::test_admin_headers();
+
+        let resp = gallery_sync(State(state), headers).await;
+        assert_ne!(resp.status(), StatusCode::CONFLICT, "沒人在跑卻回 409");
+    }
+
+    /// 鎖在 admin 守衛**之後**才拿：未授權的人不該有辦法觸發 409/佔用語意。
+    #[tokio::test]
+    async fn sync_checks_admin_before_touching_the_lock() {
+        let state = crate::state::test_state().await;
+
+        let guard = GALLERY_SYNC_LOCK.lock().await;
+        let resp = gallery_sync(State(state), HeaderMap::new()).await;
+        assert_eq!(
+            resp.status(),
+            StatusCode::UNAUTHORIZED,
+            "沒帶 token 應該是 401，不是 409——409 會洩漏「現在有沒有在同步」"
+        );
+        drop(guard);
+    }
+}

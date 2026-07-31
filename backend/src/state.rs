@@ -95,3 +95,77 @@ pub struct BahamutState {
     /// rotated cookie 持久化路徑（與 db 同目錄）。
     pub cookie_file: std::path::PathBuf,
 }
+
+// ── 測試支援 ──────────────────────────────────────────────────────────────
+// 只在 cfg(test) 存在，不進正式 binary。
+//
+// 為什麼放這裡而不是 tests/api.rs：那邊測的是「打 HTTP 進去、看回應出來」，
+// 拿不到 `AppState` 上的那幾把鎖。而 inflight dedup 的契約（N 個並發只打上游一次、
+// 等到鎖之後要重查快取）只有直接摸得到鎖才驗得了——要嘛佔住鎖讓所有人排隊，
+// 要嘛在他們排隊期間改變共享狀態，看醒來的人有沒有重新看一眼。
+
+/// 測試用的共用 JWT 密鑰（與 tests/api.rs 的 `TEST_SECRET` 同值，兩邊不互相依賴）。
+#[cfg(test)]
+pub(crate) const TEST_SECRET: &str = "test-secret";
+
+/// 建一個接上獨立 in-memory DB 的 `AppState`。
+///
+/// bahamut 的 cookie 檔刻意指向唯一的暫存目錄——`build_state` 會先讀檔、讀不到才
+/// 回頭吃 `BAHAMUT_COOKIE` 環境變數。若讓它落在 CWD，本機那份真的 cookie 檔會蓋掉
+/// 測試想要的狀態，於是測試在我的機器上綠、在 CI 上紅（或反過來）。
+#[cfg(test)]
+pub(crate) async fn test_state() -> AppState {
+    use std::str::FromStr;
+
+    let opts = sqlx::sqlite::SqliteConnectOptions::from_str("sqlite::memory:")
+        .expect("in-memory sqlite URL")
+        .foreign_keys(true);
+    // in-memory DB 一條連線就是一份 DB → 鎖在單連線，全部操作共用同一份
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect_with(opts)
+        .await
+        .expect("connect in-memory sqlite");
+    sqlx::migrate!("./migrations").run(&pool).await.expect("run migrations");
+
+    let tmp =
+        std::env::temp_dir().join(format!("koimsurai-test-{}-{:p}", std::process::id(), &pool as *const _));
+    std::fs::create_dir_all(&tmp).expect("create temp dir");
+    let fake_db_url = format!("sqlite://{}/db.sqlite", tmp.display());
+
+    AppState {
+        pool,
+        http: reqwest::Client::new(),
+        jwt_secret: Arc::from(TEST_SECRET),
+        spotify: Arc::new(SpotifyState::default()),
+        steam: Arc::new(SteamState::default()),
+        watch: Arc::new(WatchState::default()),
+        bahamut: crate::handlers::bahamut::build_state(&fake_db_url),
+    }
+}
+
+/// OWNER 角色的 JWT（帶 exp），給需要過 `require_admin` 的測試用。
+#[cfg(test)]
+pub(crate) fn test_owner_token() -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system clock after epoch")
+        .as_secs() as i64;
+    jsonwebtoken::encode(
+        &jsonwebtoken::Header::default(),
+        &serde_json::json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now, "exp": now + 3600 }),
+        &jsonwebtoken::EncodingKey::from_secret(TEST_SECRET.as_bytes()),
+    )
+    .expect("sign test JWT")
+}
+
+/// `Authorization: Bearer <owner token>`，直接餵給 handler。
+#[cfg(test)]
+pub(crate) fn test_admin_headers() -> axum::http::HeaderMap {
+    let mut h = axum::http::HeaderMap::new();
+    h.insert(
+        axum::http::header::AUTHORIZATION,
+        format!("Bearer {}", test_owner_token()).parse().expect("valid header value"),
+    );
+    h
+}

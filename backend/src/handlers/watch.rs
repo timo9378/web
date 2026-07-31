@@ -1266,3 +1266,125 @@ pub fn spawn_trakt_sync(state: AppState) {
         }
     });
 }
+
+#[cfg(test)]
+mod trakt_refresh_lock_tests {
+    use super::*;
+
+    /// TRAKT_TOKEN_FILE 是 process 全域的。
+    static TOKEN_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    /// 建一個只屬於這個測試的 token 檔，回傳 (暫存目錄, 檔案路徑)。
+    fn temp_token_file(tag: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+        let dir = std::env::temp_dir().join(format!("trakt-lock-{}-{tag}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("create temp dir");
+        let file = dir.join("token.json");
+        // SAFETY: 靠 TOKEN_ENV_LOCK 串行化（呼叫端持鎖）。
+        unsafe { std::env::set_var("TRAKT_TOKEN_FILE", &file) };
+        (dir, file)
+    }
+
+    fn token(created_ago_ms: i64, expires_in_ms: i64, access: &str) -> Value {
+        let now = now_ms();
+        json!({
+            "access_token": access,
+            "refresh_token": format!("refresh-for-{access}"),
+            "created_at": now - created_ago_ms,
+            "expires_at": now + expires_in_ms,
+        })
+    }
+
+    /// 這把鎖是為了一個**真的發生過**的線上事故存在的（2026-06-29）：Trakt 的
+    /// refresh token 是一次性的，兩個 task 同時拿同一個去換，慢的那個換到
+    /// `invalid_grant`，然後就永久死了。
+    ///
+    /// 修法是「串行化 + double-check」——等到鎖之後要**重讀一次檔案**，因為在排隊
+    /// 期間別人可能已經刷好寫回去了。這個測試就驗那個重讀：
+    /// 佔住鎖 → 放 16 個呼叫者進來排隊 → 排隊期間把新 token 寫進檔案 → 放開鎖。
+    /// 每個醒來的人都應該看到新 token，而不是拿手上那份過期的去打 api.trakt.tv。
+    ///
+    /// 把 double-check 拿掉，這 16 個會各自呼叫 `refresh_trakt_token`——正是事故現場。
+    #[tokio::test]
+    async fn refresh_rereads_token_after_waiting_for_the_lock() {
+        let _env = TOKEN_ENV_LOCK.lock().await;
+        let (dir, file) = temp_token_file("double-check");
+
+        // 快到期：threshold = min(7d, lifetime/2) = 50s，而只剩 1s → 必須 refresh → 會去搶鎖
+        std::fs::write(&file, token(100_000, 1_000, "stale").to_string()).expect("write stale token");
+
+        let state = crate::state::test_state().await;
+        let guard = state.watch.trakt_refresh_lock.lock().await;
+
+        let mut tasks = tokio::task::JoinSet::new();
+        for _ in 0..16 {
+            let st = state.clone();
+            tasks.spawn(async move { get_valid_trakt_token(&st).await });
+        }
+        for _ in 0..8 {
+            tokio::task::yield_now().await;
+        }
+
+        // 模擬「持鎖的那一個刷好了、寫回檔案」：90 天有效 → 重讀後不需要再 refresh
+        std::fs::write(&file, token(0, 90 * 86_400_000, "fresh").to_string()).expect("write fresh token");
+        drop(guard);
+
+        let mut woke = 0;
+        while let Some(joined) = tasks.join_next().await {
+            let tok = joined.expect("task panicked").expect("等到鎖之後應該讀得到 token");
+            assert_eq!(
+                tok["access_token"], "fresh",
+                "沒有重讀檔案 → 拿著已經被換掉的 refresh token 去打 Trakt（invalid_grant 事故重演）"
+            );
+            woke += 1;
+        }
+        assert_eq!(woke, 16);
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("TRAKT_TOKEN_FILE") };
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 反向：token 還很新時要在**碰鎖之前**就回傳。
+    /// 少了這個斷言，「每次都進鎖」的實作也會讓上面那個測試綠——但那會把每一次
+    /// Trakt 讀取都串行化。這裡佔著鎖，所以真去搶鎖就會超時。
+    #[tokio::test]
+    async fn fresh_token_short_circuits_without_taking_the_lock() {
+        let _env = TOKEN_ENV_LOCK.lock().await;
+        let (dir, file) = temp_token_file("short-circuit");
+        std::fs::write(&file, token(0, 90 * 86_400_000, "fresh").to_string()).expect("write token");
+
+        let state = crate::state::test_state().await;
+        let _guard = state.watch.trakt_refresh_lock.lock().await;
+
+        let tok = tokio::time::timeout(std::time::Duration::from_secs(5), get_valid_trakt_token(&state))
+            .await
+            .expect("token 還新的時候不該去等鎖")
+            .expect("應該直接回傳現有 token");
+        assert_eq!(tok["access_token"], "fresh");
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("TRAKT_TOKEN_FILE") };
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// 沒有 token 檔就是 None——不該 panic，也不該去搶鎖。
+    #[tokio::test]
+    async fn missing_token_file_returns_none() {
+        let _env = TOKEN_ENV_LOCK.lock().await;
+        let (dir, file) = temp_token_file("missing");
+        let _ = std::fs::remove_file(&file);
+
+        let state = crate::state::test_state().await;
+        let _guard = state.watch.trakt_refresh_lock.lock().await;
+
+        let got = tokio::time::timeout(std::time::Duration::from_secs(5), get_valid_trakt_token(&state))
+            .await
+            .expect("沒有 token 檔時不該去等鎖");
+        assert!(got.is_none());
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("TRAKT_TOKEN_FILE") };
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
