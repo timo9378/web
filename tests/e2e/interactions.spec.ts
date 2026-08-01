@@ -12,9 +12,24 @@ import { expect, test, type Page } from '@playwright/test';
  * 這裡只收**公開面**的互動（後台另計）：留言、emoji 反應、站內導覽。
  */
 
+/**
+ * 切到匿名模式。
+ *
+ * 用 `toPass` 包住「點擊 + 確認欄位出現」而不是點一次就往下走：SSR 的頁面在 hydration
+ * 完成前，按鈕已經在 DOM 裡、Playwright 判定它可點，但 React 還沒掛上 onClick——
+ * 那一下會被吃掉，接著 `fill` 就一路等到 30s 逾時。CI 上實際發生過（本機沒事，
+ * 因為本機快）。重試整段是唯一能區分「還沒 hydrate」與「真的壞了」的方式。
+ */
+async function openAnonymousMode(page: Page) {
+  await expect(async () => {
+    await page.locator('.mode-btn--anon').click();
+    await expect(page.locator('input[name="author"]')).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 /** 留言表單：切到匿名模式並填好欄位（含算式驗證碼）。 */
 async function fillAnonymousComment(page: Page, author: string, content: string, correctCaptcha = true) {
-  await page.locator('.mode-btn--anon').click();
+  await openAnonymousMode(page);
 
   await page.locator('input[name="author"]').fill(author);
   await page.locator('textarea[name="content"]').fill(content);
@@ -77,7 +92,7 @@ test.describe('留言', () => {
       if (r.url().includes('/comments') && r.method() === 'POST') posted = true;
     });
 
-    await page.locator('.mode-btn--anon').click();
+    await openAnonymousMode(page);
     await page.locator('input[name="author"]').fill('e2e 訪客');
     await page.locator('button.submit-btn').click();
 
@@ -96,7 +111,7 @@ test.describe('留言', () => {
       if (r.url().includes('/comments') && r.method() === 'POST') posted = true;
     });
 
-    await page.locator('.mode-btn--anon').click();
+    await openAnonymousMode(page);
     await page.locator('textarea[name="content"]').fill(`有內容沒名字 ${Date.now()}`);
     await page.locator('button.submit-btn').click();
 
@@ -272,11 +287,39 @@ const A11Y_STRICT = [
   '/ko/blog/1',
 ];
 
+/**
+ * 等進場動畫跑完再掃。
+ *
+ * 對比檢查是拿**當下算出來的顏色**去算的。framer-motion 的進場多半從 opacity 0 淡入，
+ * 掃到一半的話文字比實際更淡，就會報出根本不存在的 color-contrast——CI 比本機慢，
+ * 於是「本機綠、CI 紅」而且每次紅的節點還不一樣。實際踩過：/setup 有一張卡在 CI 上
+ * 被判 serious:color-contrast，本機怎麼跑都是乾淨的。
+ *
+ * 判準是「沒有任何元素的 opacity 卡在 0 與 1 之間」——不用固定秒數，因為固定秒數在
+ * 更慢的機器上一樣會輸。
+ */
+async function waitForSettledOpacity(page: import('@playwright/test').Page) {
+  await page
+    .waitForFunction(
+      () =>
+        [...document.querySelectorAll<HTMLElement>('main *')].every((el) => {
+          const o = Number.parseFloat(getComputedStyle(el).opacity);
+          return Number.isNaN(o) || o === 0 || o >= 0.99;
+        }),
+      undefined,
+      { timeout: 10_000 },
+    )
+    .catch(() => {
+      /* 有無限循環動畫的頁面永遠到不了靜止，等到上限就掃 */
+    });
+}
+
 test.describe('a11y 嚴格門檻', () => {
   for (const path of A11Y_STRICT) {
     test(`${path} 沒有 moderate 以上的 a11y 違規`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'domcontentloaded' });
       await expect(page.locator('main').first()).toContainText(/\S/, { timeout: 15_000 });
+      await waitForSettledOpacity(page);
       const { violations } = await new AxeBuilder({ page }).analyze();
       const bad = violations.filter((v) => v.impact !== 'minor');
       expect(

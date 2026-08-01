@@ -343,9 +343,9 @@ const Activity = () => {
             transition={{ duration: 0.6, delay: 0.05 }}
           >
             <header className="steam-recent-header">
-              <span className="section-label">
+              <h2 className="section-label">
                 {steamData?.playerInfo?.gameid ? t('activity.steam.playingTwoWeeks') : t('activity.steam.recentTwoWeeks')}
-              </span>
+              </h2>
               <span className="steam-recent-count">{t('activity.titlesUnit', { count: steamData?.recentGames?.length ?? 0 })}</span>
             </header>
             {/* 不掛 role="list"/"listitem"：原本 role="listitem" 蓋在 <a> 上會覆寫連結語意，
@@ -409,7 +409,7 @@ const Activity = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="code-pulse-left">
-              <span className="section-label">CODE PULSE</span>
+              <h2 className="section-label">CODE PULSE</h2>
               <div className="code-pulse-today">
                 {wakatimeData.today?.text ?? '0 hrs 0 mins'}
               </div>
@@ -558,7 +558,7 @@ const Activity = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="section-label">RECENT COMMITS</span>
+            <h2 className="section-label">RECENT COMMITS</h2>
             <div className="commits-list">
               {(githubData?.recentCommits?.length ?? 0) === 0
                 ? Array.from({ length: 4 }).map((_, i) => (
@@ -629,7 +629,7 @@ const Activity = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="section-label">WEEKLY PROJECTS</span>
+            <h2 className="section-label">WEEKLY PROJECTS</h2>
             <div className="projects-bars">
               {wakatimeData?.week?.projects.slice(0, 6).map((project, i) => (
                 <div key={project.name} className="project-row">
@@ -662,7 +662,7 @@ const Activity = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="game-gallery-header">
-                <span className="section-label">GAME LIBRARY</span>
+                <h2 className="section-label">GAME LIBRARY</h2>
                 <span className="game-gallery-count">{steamData?.gameCount} games</span>
               </div>
               <div className="game-marquee-wrapper">
@@ -712,7 +712,7 @@ const Activity = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="section-label">RECENT REPOS</span>
+            <h2 className="section-label">RECENT REPOS</h2>
             <div className="repos-list">
               {githubData?.recentRepos?.map(repo => (
                 <a key={repo.id} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-row">

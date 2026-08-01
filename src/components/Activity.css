@@ -1009,6 +1009,12 @@
    SECTION LABEL — 統一的小型 label，所有段落共用
    ═══════════════════════════════════════════════════ */
 .section-label {
+  /* 這些是**區塊標題**，原本是 <span>——整頁因此只有項目層級的標題，
+     標題順序完全取決於「哪些區塊剛好有資料」。實測：e2e 環境沒有 Steam 金鑰時
+     該區塊不 render，於是 h1 直接接到 repo 名稱的 h3，CI 紅而本機綠。
+     改成 h2 之後 h1 → h2 → h3 的骨架不受資料影響，螢幕閱讀器也才跳得到各區塊。
+     margin-top 要顯式歸零：h2 有 UA 預設上邊距，不歸零會整頁位移。 */
+  margin-top: 0;
   display: block;
   font-size: 0.68rem;
   letter-spacing: 2.5px;
