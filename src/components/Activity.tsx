@@ -295,7 +295,10 @@ const Activity = () => {
                 </div>
                 <div className="steam-profile-meta">
                   <div className="steam-profile-name-row">
-                    <h3 className="steam-profile-name">{steamData.playerInfo.personaname}</h3>
+                    {/* h2 不是 h3：頁面只有一個 sr-only 的 h1，這是它底下的第一層區塊標題。
+                        ⚠ 這個跳級**本機測不出來**——沒有 Steam 金鑰時整個區塊不 render，
+                        所以是部署後對正式站跑 axe 才發現的。 */}
+                    <h2 className="steam-profile-name">{steamData.playerInfo.personaname}</h2>
                     {steamProfile?.level != null && (
                       <span className="steam-profile-level" title={`${steamProfile.xp} XP · 還需 ${steamProfile.xpToNext} XP 升級`}>
                         Lv.{steamProfile.level}
@@ -382,7 +385,7 @@ const Activity = () => {
                     <div className="steam-recent-overlay" />
                     {isCurrent && <span className="steam-recent-pulse">{t('activity.steam.ingame')}</span>}
                     <div className="steam-recent-info">
-                      <h4 className="steam-recent-title">{g.name}</h4>
+                      <h3 className="steam-recent-title">{g.name}</h3>
                       <div className="steam-recent-stats">
                         <span>{t('activity.playtime2w')} {formatPlaytime(g.playtime_2weeks ?? 0)}</span>
                         <span className="steam-recent-divider">·</span>
@@ -714,7 +717,7 @@ const Activity = () => {
               {githubData?.recentRepos?.map(repo => (
                 <a key={repo.id} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-row">
                   <div className="repo-row-left">
-                    <h4>{repo.name}</h4>
+                    <h3>{repo.name}</h3>
                     <p>{repo.description ?? '沒有描述'}</p>
                   </div>
                   <div className="repo-row-right">

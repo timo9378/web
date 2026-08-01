@@ -277,6 +277,14 @@ jobs:
       # 只有**自家**網址壞掉才會讓這步紅——外部網站掛掉不是我們的 bug。
       - name: 已發布文章的連結巡檢
         run: pnpm check:links
+      # 無障礙巡檢。tests/e2e 已經有一道 moderate 門檻，但它跑在**沒有第三方金鑰**的
+      # e2e stack 上——沒金鑰時 Steam / WakaTime / GitHub 那些區塊整段不 render，
+      # 裡面的標題與對比通通不在 DOM 裡，測不到。
+      # 實際發生過：/activity 在本機乾淨，部署後對正式站一掃就報 heading-order，
+      # 因為 <h2 class="steam-profile-name"> 只有真的抓得到 Steam 資料時才出現。
+      # 內容同理：某篇文章的圖沒 alt、表格缺表頭，PR 一次都不會碰到。
+      - name: 正式站無障礙巡檢
+        run: pnpm exec playwright install --with-deps chromium && pnpm check:a11y
 
   # 從 OpenAPI spec 自動生成 API 測試。跟 e2e 分開跑，因為它會對同一個 DB 打上千個
   # 請求，要自己的拋棄式 DB；而且它不需要前端，只起後端就好。

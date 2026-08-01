@@ -14,6 +14,7 @@
     "build:photos": "tsx scripts/builder/index.ts && node ../ai-tagger/clip_tagger.js",
     "check:headers": "tsx scripts/check-security-headers.ts",
     "check:links": "tsx scripts/check-links.ts",
+    "check:a11y": "tsx scripts/check-a11y-prod.ts",
     "check:mdx": "tsx scripts/check-mdx.ts",
     "dev": "BACKEND_URL=http://127.0.0.1:3009 vite dev --config vite.config.start.ts --port 13998 --host",
     "e2e": "playwright test",
