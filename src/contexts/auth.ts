@@ -51,3 +51,17 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
+
+/**
+ * `/api/auth/me` 回了非 2xx 時，要不要把 localStorage 的 token 清掉。
+ *
+ * 只有伺服器**明確說這個憑證不行**（401 / 403）才清。原本的寫法是「非 2xx 一律清」，
+ * 但 500、502、連線被斷都不是憑證問題——清掉的話一次後端重啟或網路抖動就把人登出，
+ * 而且因為站上只有 OAuth 登入，要重跑一次授權才回得來。
+ *
+ * 抽成純函式是為了測得到：vitest 跑在 node 環境（沒有 jsdom），
+ * 直接測 AuthContext 要多裝相依，而真正會寫錯的就是這個判斷本身。
+ */
+export function shouldClearToken(status: number): boolean {
+  return status === 401 || status === 403;
+}

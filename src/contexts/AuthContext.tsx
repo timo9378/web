@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { AuthContext, TOKEN_KEY, type User, type AuthProvidersResponse } from './auth';
+import { AuthContext, TOKEN_KEY, shouldClearToken, type User, type AuthProvidersResponse } from './auth';
 
 // 本檔只 export AuthProvider 元件；型別／context／useAuth 在 ./auth。
 
@@ -26,10 +26,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) { setLoading(false); return; }
     const ac = new AbortController();
     fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` }, signal: ac.signal })
-      .then((r) => { if (!r.ok) throw new Error(); return r.json() as Promise<User>; })
-      .then((u) => setUser(u))
-      // 關鍵：中止不等於驗證失敗。少了這道守衛，unmount 會把使用者的 token 洗掉＝被登出。
-      .catch(() => { if (!ac.signal.aborted) localStorage.removeItem(TOKEN_KEY); })
+      .then(async (r) => {
+        if (r.ok) return (await r.json()) as User;
+        // 只有伺服器**明確說這個 token 不行**才清掉。原本是「非 2xx 一律清」，
+        // 但 5xx、502、連線被斷都不是憑證問題——清掉的話一次後端重啟或網路抖動
+        // 就把人登出，而且因為站上只有 OAuth 登入，要重跑一次授權才回得來。
+        // （e2e 在高負載下就撞到過：/me 偶發失敗 → token 被刪 → 後台把人踢回首頁。）
+        if (shouldClearToken(r.status)) localStorage.removeItem(TOKEN_KEY);
+        return null;
+      })
+      .then((u) => { if (u) setUser(u); })
+      // 中止與網路錯誤都走這裡，兩者都不該動 token：
+      // 中止＝unmount，網路錯誤＝下次載入可能就好了。
+      .catch(() => { /* 保留 token，這一次當作未登入 */ })
       .finally(() => { if (!ac.signal.aborted) setLoading(false); });
     return () => { ac.abort(); };
   }, []);
