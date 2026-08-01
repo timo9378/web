@@ -854,15 +854,48 @@ async fn load_trakt_token() -> Option<Value> {
     serde_json::from_str(&content).ok()
 }
 
+/// 寫回 token 檔。**先寫暫存檔再 rename**，不是直接覆寫。
+///
+/// 直接 `write` 會先截斷再寫，而 `get_valid_trakt_token` 的**第一次**讀檔是不持鎖的
+/// （只有確定需要 refresh 才去搶鎖）。也就是說刷新正在寫的那一瞬間，任何一個
+/// 「其實不需要 refresh」的請求都可能讀到空檔或半個檔 → JSON parse 失敗 → None
+/// → 那次 Trakt 請求無聲降級。
+///
+/// 這不是理論：CI 上 `refresh_rereads_token_after_waiting_for_the_lock` 偶發紅過，
+/// 16 個並行 task 搶讀時就撞得到（本機 16 核跑 40 次都碰不到，4 核的 runner 才會）。
+/// rename 在同一個檔案系統上是原子的，讀者只會看到「舊的完整內容」或「新的完整內容」。
+///
+/// 順帶修掉權限的空窗：原本是寫完才 chmod 600，中間那段時間檔案是 0644。
+/// 改成建立暫存檔時就帶 0600，rename 會保留權限，任何時刻都不會出現可讀的 token 檔。
 async fn save_trakt_token(tok: &Value) {
     let file = trakt_token_file();
-    if tokio::fs::write(&file, serde_json::to_string_pretty(tok).unwrap_or_default()).await.is_ok() {
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            if let Err(e) = tokio::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600)).await {
-                tracing::warn!("[Trakt] token 檔 chmod 600 失敗: {e}");
+    let tmp = format!("{file}.tmp");
+    let data = serde_json::to_string_pretty(tok).unwrap_or_default();
+
+    let mut opts = tokio::fs::OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    // tokio 的 OpenOptions 自帶 unix 的 mode()，不需要額外 import trait
+    #[cfg(unix)]
+    opts.mode(0o600);
+    let written = async {
+        use tokio::io::AsyncWriteExt;
+        let mut f = opts.open(&tmp).await?;
+        f.write_all(data.as_bytes()).await?;
+        // rename 只保證「換過去」是原子的，不保證內容已經落盤；掉電時可能換到一個空檔。
+        f.sync_all().await
+    }
+    .await;
+
+    match written {
+        Ok(()) => {
+            if let Err(e) = tokio::fs::rename(&tmp, &file).await {
+                tracing::warn!("[Trakt] token 檔 rename 失敗，保留原檔: {e}");
+                let _ = tokio::fs::remove_file(&tmp).await;
             }
+        }
+        Err(e) => {
+            tracing::warn!("[Trakt] token 檔寫入失敗，保留原檔: {e}");
+            let _ = tokio::fs::remove_file(&tmp).await;
         }
     }
 }
@@ -1279,6 +1312,18 @@ mod trakt_refresh_lock_tests {
         (dir, file)
     }
 
+    /// 測試也要**原子地**寫 token 檔。
+    ///
+    /// `std::fs::write` 先截斷再寫，而這些測試就是在「16 個 task 並行讀」的情況下
+    /// 換檔案內容——直接寫的話測試自己就會製造出讀到空檔的 race，紅了還會誤以為是
+    /// 產品的問題。（正式的 `save_trakt_token` 已經改成 write-tmp + rename，
+    /// 這裡用同一招保持一致。）
+    fn write_token_atomically(file: &std::path::Path, tok: &Value) {
+        let tmp = file.with_extension("json.tmp");
+        std::fs::write(&tmp, tok.to_string()).expect("write tmp token");
+        std::fs::rename(&tmp, file).expect("rename token");
+    }
+
     fn token(created_ago_ms: i64, expires_in_ms: i64, access: &str) -> Value {
         let now = now_ms();
         json!({
@@ -1298,6 +1343,54 @@ mod trakt_refresh_lock_tests {
     /// 佔住鎖 → 放 16 個呼叫者進來排隊 → 排隊期間把新 token 寫進檔案 → 放開鎖。
     /// 每個醒來的人都應該看到新 token，而不是拿手上那份過期的去打 api.trakt.tv。
     ///
+    /// `save_trakt_token` 必須**原子地**換檔，而且任何時刻檔案權限都是 0600。
+    ///
+    /// 這條是 CI 上那次偶發紅逼出來的。原本用 `tokio::fs::write` 直接覆寫：
+    ///   · 先截斷再寫 → 並行的讀者（不持鎖的那條路徑）會讀到空檔 → token 無聲失效
+    ///   · 寫完才 chmod 600 → 中間有一段時間 token 檔是 0644
+    ///
+    /// 判準不是「寫完之後內容對不對」（那樣把 write 換回直接覆寫也會綠），
+    /// 而是「寫的當下，讀者看到的永遠是一份完整的 JSON」——所以邊寫邊讀。
+    #[tokio::test]
+    async fn saving_the_token_is_atomic_and_never_widens_permissions() {
+        let _env = TOKEN_ENV_LOCK.lock().await;
+        let (dir, file) = temp_token_file("atomic-save");
+        write_token_atomically(&file, &token(0, 90 * 86_400_000, "old"));
+
+        // 一邊反覆寫、一邊反覆讀；讀到的每一份都必須是完整可解析的
+        let writer = tokio::spawn(async move {
+            for i in 0..40 {
+                save_trakt_token(&token(0, 90 * 86_400_000, &format!("v{i}"))).await;
+            }
+        });
+        let mut reads = 0;
+        let mut torn = 0;
+        while !writer.is_finished() {
+            match load_trakt_token().await {
+                Some(v) => {
+                    assert!(v.get("access_token").is_some(), "讀到的 JSON 少了欄位");
+                    reads += 1;
+                }
+                None => torn += 1,
+            }
+            tokio::task::yield_now().await;
+        }
+        writer.await.expect("writer panicked");
+        assert!(reads > 0, "測試本身沒讀到東西，等於沒測（讀了 {reads} 次）");
+        assert_eq!(torn, 0, "邊寫邊讀時有 {torn} 次讀到殘缺的檔案——換檔不是原子的");
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&file).expect("stat token").permissions().mode() & 0o777;
+            assert_eq!(mode, 0o600, "token 檔權限應該是 0600，實際 {mode:o}");
+        }
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("TRAKT_TOKEN_FILE") };
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// 把 double-check 拿掉，這 16 個會各自呼叫 `refresh_trakt_token`——正是事故現場。
     #[tokio::test]
     async fn refresh_rereads_token_after_waiting_for_the_lock() {
@@ -1305,7 +1398,7 @@ mod trakt_refresh_lock_tests {
         let (dir, file) = temp_token_file("double-check");
 
         // 快到期：threshold = min(7d, lifetime/2) = 50s，而只剩 1s → 必須 refresh → 會去搶鎖
-        std::fs::write(&file, token(100_000, 1_000, "stale").to_string()).expect("write stale token");
+        write_token_atomically(&file, &token(100_000, 1_000, "stale"));
 
         let state = crate::state::test_state().await;
         let guard = state.watch.trakt_refresh_lock.lock().await;
@@ -1320,7 +1413,7 @@ mod trakt_refresh_lock_tests {
         }
 
         // 模擬「持鎖的那一個刷好了、寫回檔案」：90 天有效 → 重讀後不需要再 refresh
-        std::fs::write(&file, token(0, 90 * 86_400_000, "fresh").to_string()).expect("write fresh token");
+        write_token_atomically(&file, &token(0, 90 * 86_400_000, "fresh"));
         drop(guard);
 
         let mut woke = 0;
@@ -1346,7 +1439,7 @@ mod trakt_refresh_lock_tests {
     async fn fresh_token_short_circuits_without_taking_the_lock() {
         let _env = TOKEN_ENV_LOCK.lock().await;
         let (dir, file) = temp_token_file("short-circuit");
-        std::fs::write(&file, token(0, 90 * 86_400_000, "fresh").to_string()).expect("write token");
+        write_token_atomically(&file, &token(0, 90 * 86_400_000, "fresh"));
 
         let state = crate::state::test_state().await;
         let _guard = state.watch.trakt_refresh_lock.lock().await;
