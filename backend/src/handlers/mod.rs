@@ -17,6 +17,7 @@ pub mod posts;
 pub mod quote;
 pub mod rss;
 pub mod series;
+pub mod simkl;
 pub mod site;
 pub mod spotify;
 pub mod stats;

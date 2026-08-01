@@ -48,8 +48,28 @@ services:
       - FRONTEND_REVALIDATE_URL=http://frontend:13579/_revalidate
       - REVALIDATE_SECRET=${REVALIDATE_SECRET:-}
       # workers：Express 退役後 Rust 為 history 表唯一寫者
-      - ENABLE_TRAKT_SYNC=1
+      #
+      # ⚠️ Trakt 同步已停用（2026-08-02）。Trakt 在 2026-07-30 把「建立 API application」
+      # 改成 VIP 專屬（trakt/trakt-web PR #3057，i18n 字串就是
+      # "Creating new apps requires Trakt VIP"），且未經預告刪除了免費帳號的既有 app。
+      # 症狀：refresh 回 400 invalid_grant "session not found"、device/code 回 401
+      # invalid_client "client not found"——app 本身在 Trakt 那端已不存在，重新授權也沒用。
+      # 同一時間大量使用者回報相同狀況（forums.trakt.tv/t/119235、trakt-web issue #3061），
+      # 官方對「既有 app 被刪」至今沒有說明。
+      #
+      # 開著只會每 6 小時打一個必定失敗的請求。既有的 155 筆 trakt 紀錄保留不動
+      # （film_history 4 筆到 2026-07-25、tv_history 151 筆）。
+      # 若哪天 Trakt 改回來或改買 VIP，把這裡改回 1 即可，程式碼都還在。
+      - ENABLE_TRAKT_SYNC=0
       - ENABLE_BAHAMUT_SYNC=1
+      # Simkl 同步（Trakt 的替代）。每次只打一個很輕的 /sync/activities，時間戳沒變就結束；
+      # 有變才用 date_from 拉增量。Simkl 官方明文要求這個做法，無條件全量輪詢會被停權。
+      #
+      # ⚠️ SIMKL_CLIENT_ID / SIMKL_ACCESS_TOKEN 走下面的 env_file（./.env.backend），
+      # 不要在這裡寫 `- SIMKL_CLIENT_ID=${SIMKL_CLIENT_ID:-}`——compose 的 `environment`
+      # 優先於 `env_file`，而 `${VAR:-}` 讀的是 compose 自己的 .env（那裡沒有這些鍵），
+      # 結果會用空字串蓋掉 env_file 裡的真值。踩過一次：worker 起來直接說「缺 CLIENT_ID」。
+      - ENABLE_SIMKL_SYNC=1
     volumes:
       - backend-db-data:/usr/src/app/db
       - /mnt/hdd16tb_01/Blog/uploads:/usr/src/app/storage/uploads

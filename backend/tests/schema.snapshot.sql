@@ -120,6 +120,9 @@ table posts
 table site_counters
   CREATE TABLE site_counters ( key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP )
 
+table sync_state
+  CREATE TABLE sync_state ( key TEXT PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP )
+
 table tags
   CREATE TABLE tags ( id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP , name_en TEXT, name_ja TEXT, name_ko TEXT, name_zh_cn TEXT)
 
