@@ -463,7 +463,7 @@
   z-index: 1;
 }
 
-.comments-header h3 {
+.comments-header h2 {
   font-size: 0.88rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.4);

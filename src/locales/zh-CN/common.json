@@ -403,7 +403,8 @@
     "seriesLabel": "系列文",
     "prevPost": "上一篇",
     "nextPost": "下一篇",
-    "lastUpdated": "最近更新"
+    "lastUpdated": "最近更新",
+    "nearbyNav": "邻近文章"
   },
   "thinking": {
     "title": "碎念",

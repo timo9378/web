@@ -403,7 +403,8 @@
     "seriesLabel": "Series",
     "prevPost": "Previous",
     "nextPost": "Next",
-    "lastUpdated": "Updated"
+    "lastUpdated": "Updated",
+    "nearbyNav": "Nearby posts"
   },
   "thinking": {
     "title": "Murmurs",

@@ -10,15 +10,19 @@ export default function MainPage() {
   return (
     <>
       <NebulaBackground />
-      <main>
-        <section id="home">
-          <Hero />
-        </section>
-        <TransitionAnimation />
-        <section id="lately">
-          <HomeLately />
-        </section>
-      </main>
+      {/* 這裡刻意**不是** <main>：AppShell 已經把整頁內容包在一個 <main> 裡了。
+          再加一層會變成巢狀 main——HTML 規範只允許一個非隱藏的 main，
+          螢幕閱讀器會拿到兩個「主要內容」地標。axe 實測報 landmark-no-duplicate-main
+          / landmark-main-is-top-level / landmark-unique 三條（都是 moderate，
+          而既有的 a11y 測試只擋 critical，所以一直沒被抓到）。
+          原本沒有任何樣式掛在這個 main 上，直接拿掉即可。 */}
+      <section id="home">
+        <Hero />
+      </section>
+      <TransitionAnimation />
+      <section id="lately">
+        <HomeLately />
+      </section>
     </>
   );
 }

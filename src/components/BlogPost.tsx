@@ -1225,7 +1225,7 @@ const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | 
   // 只有它們會重播 side-item-in（逐行塞入）；還在窗內的列不動。
   const catBase = nearbyPosts.length;
   return (
-    <nav className="posts-nav">
+    <nav className="posts-nav" aria-label={t('blog.nearbyNav')}>
       {/* 附近文章列表（清單未到時先出骨架佔位，不是空白 → 不 raw pop）*/}
       {nearbyPosts.length > 0 ? (
         <div className="posts-nav-nearby">
@@ -1343,7 +1343,7 @@ const TableOfContents = React.memo(({ headings, activeHeading, readingProgress, 
           <span className="progress-text">{Math.round(readingProgress)}%</span>
         </div>
       </div>
-      <nav className="toc-nav" ref={tocRef}>
+      <nav className="toc-nav" aria-label={t('blog.toc')} ref={tocRef}>
         {headings.map((h, i) => (
           <button
             key={h.id}

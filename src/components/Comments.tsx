@@ -418,7 +418,9 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
         {/* loading 時用 visibility:hidden 而非 display:none：保留 header 的一行高度佔位，
             否則 loaded 時 header 出現又會撐高。文字不可見所以不會先閃「暫無留言」再跳成數字。 */}
         <div className="comments-header" style={loadingList ? { visibility: 'hidden' } : undefined}>
-          <h3>{comments.length > 0 ? t('comments.titleN', { count: comments.length }) : t('comments.titleEmpty')}</h3>
+          {/* h2 不是 h3：文章標題是 h1，跳到 h3 會被 axe 判 heading-order（標題層級只能逐級遞增）。
+              螢幕閱讀器使用者靠標題層級建立頁面結構，跳級等於少了一層。 */}
+          <h2>{comments.length > 0 ? t('comments.titleN', { count: comments.length }) : t('comments.titleEmpty')}</h2>
         </div>
 
         <AnimatePresence>

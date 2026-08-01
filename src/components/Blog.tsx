@@ -570,7 +570,10 @@ function Blog() {
 
         {/* ═══ 下方 Content 區（文章 + sidebar）═══ */}
         <div className="blog-layout">
-          <main className="blog-main">
+          {/* 這裡刻意是 div 不是 main：AppShell 外層已經有一個 <main> 了，
+              巢狀 main 會讓螢幕閱讀器拿到兩個「主要內容」地標（理由同 MainPage.tsx）。
+              class 保留原樣，樣式不受影響——沒有任何 CSS 選的是 main 元素本身。 */}
+          <div className="blog-main">
           {filteredPosts.length === 0 ? (
             <motion.div className="blog-empty" variants={fadeUp} initial="hidden" animate="visible">
               <div className="empty-icon">📝</div>
@@ -596,7 +599,7 @@ function Blog() {
               ))}
             </motion.div>
           )}
-          </main>
+          </div>
 
           {/* ── 側邊欄 — 融入星空風格（去卡片化） ── */}
           <aside className="blog-sidebar">

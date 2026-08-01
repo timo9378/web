@@ -403,7 +403,8 @@
     "seriesLabel": "シリーズ",
     "prevPost": "前の記事",
     "nextPost": "次の記事",
-    "lastUpdated": "最終更新"
+    "lastUpdated": "最終更新",
+    "nearbyNav": "近くの記事"
   },
   "thinking": {
     "title": "つぶやき",

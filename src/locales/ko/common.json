@@ -403,7 +403,8 @@
     "seriesLabel": "시리즈",
     "prevPost": "이전 글",
     "nextPost": "다음 글",
-    "lastUpdated": "최근 업데이트"
+    "lastUpdated": "최근 업데이트",
+    "nearbyNav": "주변 글"
   },
   "thinking": {
     "title": "혼잣말",
