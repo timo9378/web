@@ -43,6 +43,17 @@ fn compute_thumbhash(bytes: &[u8]) -> Option<String> {
 /// ffmpeg 最長跑多久（大檔重編可能要幾分鐘；超時就保留原檔，不讓上傳卡死）
 const FFMPEG_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
 
+/// 從 ffprobe 的 stdout 解出旋轉角度。抽成純函式是為了**不裝 ffmpeg 也測得到**——
+/// 這段的邏輯（跳過 0、容忍雜訊行、小數要 round）全在這裡，subprocess 只負責取字串。
+///
+/// ffprobe 會把兩個來源都印出來（新版在 `side_data` 的 rotation、舊檔在 tags 的 rotate），
+/// 一行一個值，沒有的那個是空行。取「第一個非 0 的」而不是第一行——因為兩者常常
+/// 一個有值一個是 0，順序還不保證。
+fn parse_rotation(stdout: &str) -> Option<i32> {
+    let deg = stdout.lines().filter_map(|l| l.trim().parse::<f64>().ok()).find(|d| *d != 0.0)?;
+    Some(deg.round() as i32)
+}
+
 /// 讀出影片的旋轉角度（0 表示不需要處理）。ffprobe 不在或讀不到 → None。
 async fn probe_rotation(path: &std::path::Path) -> Option<i32> {
     let out = tokio::process::Command::new("ffprobe")
@@ -61,9 +72,7 @@ async fn probe_rotation(path: &std::path::Path) -> Option<i32> {
         .output()
         .await
         .ok()?;
-    let text = String::from_utf8_lossy(&out.stdout);
-    let deg = text.lines().filter_map(|l| l.trim().parse::<f64>().ok()).find(|d| *d != 0.0)?;
-    Some(deg.round() as i32)
+    parse_rotation(&String::from_utf8_lossy(&out.stdout))
 }
 
 /// 上傳影片正規化。
@@ -219,4 +228,124 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
         "thumbhash": th,
     }))
     .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 造一張純色 PNG，給 thumbhash 用。
+    fn png(w: u32, h: u32) -> Vec<u8> {
+        let img = image::RgbImage::from_fn(w, h, |x, _| image::Rgb([(x % 256) as u8, 128, 64]));
+        let mut buf = std::io::Cursor::new(Vec::new());
+        image::DynamicImage::ImageRgb8(img).write_to(&mut buf, image::ImageFormat::Png).unwrap();
+        buf.into_inner()
+    }
+
+    /// sharp `withoutEnlargement`：本來就比上限小 → 原尺寸不動。
+    #[test]
+    fn fit_inside_never_enlarges() {
+        assert_eq!(fit_inside(50, 50, 100), (50, 50));
+        assert_eq!(fit_inside(100, 100, 100), (100, 100));
+        assert_eq!(fit_inside(1, 1, 100), (1, 1));
+    }
+
+    /// 長邊縮到上限、短邊按比例（`Math.round`，不是 floor 也不是 ceil）。
+    ///
+    /// 150×100 特別選來釘住捨入：100/150 = 0.6667，100×0.6667 = 66.67 →
+    /// round 是 **67**，floor 會得到 66。sharp 用的是 round，這裡對齊。
+    #[test]
+    fn fit_inside_scales_the_long_edge_and_rounds_the_short_one() {
+        assert_eq!(fit_inside(200, 100, 100), (100, 50), "橫式");
+        assert_eq!(fit_inside(100, 200, 100), (50, 100), "直式");
+        assert_eq!(fit_inside(150, 100, 100), (100, 67), "短邊要 round 成 67 而不是 floor 成 66");
+    }
+
+    /// 極端長寬比不能算出 0——thumbhash 收到 0 會 panic 或產生無效 hash。
+    #[test]
+    fn fit_inside_clamps_to_at_least_one_pixel() {
+        assert_eq!(fit_inside(1000, 1, 100), (100, 1));
+        assert_eq!(fit_inside(1, 1000, 100), (1, 100));
+    }
+
+    /// 合法圖片 → Some，而且是 base64url 無 padding（會被塞進 URL 的 `#th=` 片段，
+    /// 用標準 base64 的話 `+` `/` `=` 在 URL 裡會出事）。
+    #[test]
+    fn compute_thumbhash_returns_url_safe_base64() {
+        let th = compute_thumbhash(&png(200, 120)).expect("合法 PNG 應該算得出 thumbhash");
+        assert!(!th.is_empty());
+        assert!(!th.contains('='), "不該有 padding：{th}");
+        assert!(!th.contains('+') && !th.contains('/'), "必須是 URL-safe 字母表：{th}");
+        assert!(
+            th.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_'),
+            "出現非 base64url 字元：{th}"
+        );
+    }
+
+    /// 不是圖片 → None（對齊 Express 的 `catch → null`），不是 panic 也不是 Err。
+    #[test]
+    fn compute_thumbhash_returns_none_for_non_image_bytes() {
+        assert_eq!(compute_thumbhash(b"this is not an image"), None);
+        assert_eq!(compute_thumbhash(&[]), None);
+        // PNG magic 開頭但內容截斷——比純垃圾更容易讓解碼器走到別的分支
+        assert_eq!(compute_thumbhash(&png(10, 10)[..8]), None);
+    }
+
+    /// 同一張圖每次算出來要一樣（thumbhash 進 URL，不穩定的話快取與比對都會壞）。
+    #[test]
+    fn compute_thumbhash_is_deterministic() {
+        let bytes = png(64, 64);
+        assert_eq!(compute_thumbhash(&bytes), compute_thumbhash(&bytes));
+    }
+
+    /// ffprobe 真實輸出的兩種形狀：新版把值放 `side_data` 的 rotation，舊檔放 tags 的
+    /// rotate。兩行都會印，沒有的那個是空行——所以不能取第一行，要取第一個非 0 的。
+    #[test]
+    fn parse_rotation_reads_either_ffprobe_field() {
+        assert_eq!(parse_rotation("-90\n\n"), Some(-90), "側資料有值、tags 沒有");
+        assert_eq!(parse_rotation("\n90\n"), Some(90), "側資料沒有、tags 有");
+        assert_eq!(parse_rotation("-90\n270\n"), Some(-90), "兩個都有 → 取第一個");
+    }
+
+    /// 0 要被跳過而不是當成答案。
+    ///
+    /// 這是整段最容易寫錯的一行：`find(|d| *d != 0.0)`。改成 `== 0.0` 或拿掉 filter 的話，
+    /// 「side_data 是 0、tags 才是真正的 90」這種檔案會被判成不需要旋轉——而那正是
+    /// 手機直式影片最常見的形狀，結果就是 Chromium 上整片黑（檔頭註解那個線上問題）。
+    #[test]
+    fn parse_rotation_skips_zero_and_returns_none_when_all_zero() {
+        assert_eq!(parse_rotation("0\n90\n"), Some(90), "前面的 0 要跳過");
+        assert_eq!(parse_rotation("0\n0\n"), None, "全部是 0 → 不需要處理");
+        assert_eq!(parse_rotation("0\n"), None);
+        assert_eq!(parse_rotation("0.0\n-180\n"), Some(-180));
+    }
+
+    /// 沒有輸出、或輸出不是數字 → None（ffprobe 不在、或影片沒有旋轉欄位）。
+    #[test]
+    fn parse_rotation_tolerates_garbage() {
+        assert_eq!(parse_rotation(""), None);
+        assert_eq!(parse_rotation("\n\n\n"), None);
+        assert_eq!(parse_rotation("N/A\n"), None);
+        assert_eq!(parse_rotation("rotation=90\n"), None, "帶 key 的形式不是我們要的 -of 格式");
+        assert_eq!(parse_rotation("not a number\n90\n"), Some(90), "雜訊行要跳過而不是中斷");
+    }
+
+    /// 小數要 round（ffprobe 對某些檔案會印 `89.999998`）。
+    #[test]
+    fn parse_rotation_rounds_fractional_degrees() {
+        assert_eq!(parse_rotation("89.999998\n"), Some(90));
+        assert_eq!(parse_rotation("-90.4\n"), Some(-90));
+        assert_eq!(parse_rotation("  270.5  \n"), Some(271), "前後空白要 trim");
+    }
+
+    /// `UPLOAD_BASE_DIR` 有設就用它，沒設退回容器內的正式路徑。
+    ///
+    /// ⚠ 依賴 nextest 的行程隔離（每個測試各自一個行程）。
+    #[test]
+    fn uploads_base_honours_the_env_override() {
+        unsafe { std::env::remove_var("UPLOAD_BASE_DIR") };
+        assert_eq!(uploads_base(), std::path::PathBuf::from("/usr/src/app/storage/uploads"));
+        unsafe { std::env::set_var("UPLOAD_BASE_DIR", "/tmp/somewhere") };
+        assert_eq!(uploads_base(), std::path::PathBuf::from("/tmp/somewhere"));
+    }
 }
