@@ -98,12 +98,32 @@ fn iso_to_date(raw: Option<&str>) -> Option<String> {
 }
 
 /// Simkl 的 poster 是相對路徑（例 "15/15189563adfbde5fe9"），要自己組 CDN 網址。
+///
+/// ⚠️ **有 tmdb_id 就不要用這個**，見 `poster_for()`。
 fn poster_url(raw: Option<&str>) -> Option<String> {
     let p = raw?;
     if p.is_empty() {
         return None;
     }
     Some(format!("https://wsrv.nl/?url=https://simkl.in/posters/{p}_m.webp"))
+}
+
+/// 決定要不要把 Simkl 的海報寫進 DB。**有 tmdb_id 就回 None。**
+///
+/// `films_recent` / `tv_recent` 會對「poster_url 是空的」那些列去 TMDb 補圖，補的是
+/// w342 海報 **加上 original 的橫式 backdrop**（見 watch.rs 的 tmdb_detail）。填了 Simkl
+/// 海報反而把那段補圖擋掉——結果 backdrop 永遠是 NULL，而「在看什麼」的橫幅 hero 沒有
+/// backdrop 就退回拉寬海報，Simkl 的 `_m` 只有中等尺寸，拉寬就糊掉了。
+///
+/// 這是實際發生過的：Kung Fu Panda 4 同步進來之後橫幅明顯比 Trakt 那批模糊，
+/// 因為 Trakt 的同步只寫 title/date/tmdb_id，把補圖的路留著。
+///
+/// 所以只有「Simkl 沒給 tmdb_id」時才用它的圖——那種情況 TMDb 補不了，有圖總比沒有好。
+fn poster_for(tmdb_id: Option<i64>, raw: Option<&str>) -> Option<String> {
+    if tmdb_id.is_some() {
+        return None;
+    }
+    poster_url(raw)
 }
 
 fn as_i64(v: Option<&Value>) -> Option<i64> {
@@ -121,6 +141,8 @@ async fn upsert_film(state: &AppState, item: &Value) -> bool {
     let Some(title) = movie.get("title").and_then(|v| v.as_str()) else { return false };
     let watched = iso_to_date(item.get("last_watched_at").and_then(|v| v.as_str()));
 
+    let tmdb = as_i64(movie.pointer("/ids/tmdb"));
+
     let r = sqlx::query(
         "INSERT OR IGNORE INTO film_history \
            (title, watched_date, source, tmdb_id, poster_url, release_year) \
@@ -128,8 +150,8 @@ async fn upsert_film(state: &AppState, item: &Value) -> bool {
     )
     .bind(title)
     .bind(&watched)
-    .bind(as_i64(movie.pointer("/ids/tmdb")))
-    .bind(poster_url(movie.get("poster").and_then(|v| v.as_str())))
+    .bind(tmdb)
+    .bind(poster_for(tmdb, movie.get("poster").and_then(|v| v.as_str())))
     .bind(as_i64(movie.get("year")))
     .execute(&state.pool)
     .await;
@@ -152,7 +174,7 @@ async fn upsert_show_episodes(state: &AppState, item: &Value) -> u32 {
     let Some(show) = item.get("show").filter(|v| !v.is_null()) else { return 0 };
     let Some(series) = show.get("title").and_then(|v| v.as_str()) else { return 0 };
     let tmdb = as_i64(show.pointer("/ids/tmdb"));
-    let poster = poster_url(show.get("poster").and_then(|v| v.as_str()));
+    let poster = poster_for(tmdb, show.get("poster").and_then(|v| v.as_str()));
 
     let mut n = 0u32;
     for season in show.get("seasons").and_then(|v| v.as_array()).map(|a| a.as_slice()).unwrap_or(&[]) {
@@ -307,6 +329,19 @@ mod tests {
         assert!(u.contains("simkl.in/posters/15/15189563adfbde5fe9"), "{u}");
         assert_eq!(poster_url(Some("")), None);
         assert_eq!(poster_url(None), None);
+    }
+
+    #[test]
+    fn 有_tmdb_id_就不寫_simkl_海報_留給_tmdb_補圖() {
+        // 這是重點：填了 Simkl 海報會讓 films_recent 的補圖被跳過，連帶 backdrop 永遠是
+        // NULL，橫幅只好拿直式海報拉寬 → 糊。有 tmdb_id 就一定要讓路。
+        assert_eq!(poster_for(Some(1011985), Some("15/15189563adfbde5fe9")), None);
+        // 沒有 tmdb_id 時 TMDb 補不了，這時 Simkl 的圖有總比沒有好
+        let u = poster_for(None, Some("15/15189563adfbde5fe9")).unwrap();
+        assert!(u.contains("simkl.in"), "{u}");
+        // 兩邊都沒有就是沒有
+        assert_eq!(poster_for(None, None), None);
+        assert_eq!(poster_for(None, Some("")), None);
     }
 
     #[test]
