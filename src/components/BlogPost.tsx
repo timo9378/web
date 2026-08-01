@@ -1021,7 +1021,24 @@ const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnt
    ReactionBar — Emoji 反應列
    ══════════════════════════ */
 const REACTIONS = ['👍', '❤️', '🎉', '🚀', '🤔', '😂'];
-const Reactions = React.memo(({ postId }: { postId: string | number }) => {
+/** 文章頁 meta 與浮動按鈕上那顆愛心 = 反應列裡的這一個，不是舊的 `posts.likes`。 */
+const HEART = '❤️';
+
+/**
+ * 反應狀態（數量 + 自己按過哪些 + toggle），給反應列和愛心按鈕共用。
+ *
+ * 抽出來是因為同一顆愛心原本有兩套來源：文章頁 meta 的 `❤️ {likeCount}` 和右下浮動
+ * 按鈕走 `posts.likes`（`/api/posts/:id/like`），而下方反應列的 ❤️ 走 `post_reactions`。
+ * 兩個數字各自增減，同一篇文章因此顯示兩個不一樣的值。
+ *
+ * 現在三處都吃這個 hook，共用同一份 Query 快取與同一個 localStorage key，所以在任何
+ * 一處按下去，另外兩處會同步——它們本來就是同一個狀態，不是三份需要互相通知的副本。
+ *
+ * 不 export：列表卡片（Blog.tsx）刻意不用它，否則一頁十幾張卡片會各發一個 /reactions
+ * 請求；那邊的初始值走 `PostListItem.heart_count`。而 export 非元件的東西會破壞這個
+ * 檔案的 fast refresh（oxlint react/only-export-components）。
+ */
+function useReactions(postId: string | number) {
   const queryClient = useQueryClient();
   const reactionsKey = postReactionsQueryOptions(postId).queryKey;
   // 反應數改由 Query 讀；counts 由列表 derive。toggle 走 setQueryData optimistic +
@@ -1075,6 +1092,17 @@ const Reactions = React.memo(({ postId }: { postId: string | number }) => {
     }).catch(() => { /* 失敗就保持 optimistic 結果 */ });
   }, [mine, postId, patchCount]);
 
+  return { counts, mine, toggle };
+}
+
+/**
+ * 反應狀態由 BlogPost 持有並傳進來，這裡不自己呼叫 useReactions。
+ *
+ * 一開始兩邊各呼叫一次，結果 `counts` 會同步（同一份 Query 快取）但 `mine` 不會——那是
+ * 各自的 useState。症狀是在反應列取消 ❤️ 之後，浮動按鈕還是亮的，再按一次送出的 delta
+ * 是 -1（它以為自己還按著），數字卡在 0 動不了。同一個狀態就只能有一個持有者。
+ */
+const Reactions = React.memo(({ counts, mine, toggle }: ReturnType<typeof useReactions>) => {
   return (
     // role="group" + aria-label 把一排 emoji 按鈕歸成一組；建議的 fieldset/optgroup
     // 都帶有表單語意，用在這裡反而錯
@@ -1723,8 +1751,6 @@ function BlogPost() {
   // headings 改為同步 useMemo（在 post 定義後、下方 Extract headings 處）→ 第一幀就有值
   const [activeHeading, setActiveHeading] = useState('');
   const lastActiveRef = useRef('');
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -1839,12 +1865,11 @@ function BlogPost() {
     prevScrollKeyRef.current = key;
   }, [id, pathLocale]);
 
-  /* ── 成功載入一篇：重置 liked + 增加瀏覽數（每次載入新文章打一次）── */
+  /* ── 成功載入一篇：增加瀏覽數（每次載入新文章打一次）── */
   useEffect(() => {
     if (!postData?.id) return;
-    // 換文章時把讚的狀態歸零。postData 是非同步載入的，render 期還沒有值可推導。
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setLiked(false);
+    // 以前這裡要手動 setLiked(false) 把讚的狀態歸零。現在 liked 是從 useReactions 推導
+    // 的（key 帶 postId），換文章時自然就換成新文章的狀態，不必重置。
     // 刻意不用 AbortController：瀏覽數是 fire-and-forget，使用者讀完隨即跳頁正是常態，
     // 中止等於把要記的那一筆丟掉。sendBeacon 就是為這種卸載期送出設計的，
     // 後端 post_view 只吃 Path(id)、不讀 body，空 POST 即可。
@@ -1861,18 +1886,14 @@ function BlogPost() {
     try { sessionStorage.removeItem('__koim_anchor'); } catch { /* ignore */ }
   }, []);
 
-  /* ── Like state ── */
-  useEffect(() => {
-    if (!post) return;
-    const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
-    // 同上：likedPosts 在 localStorage；likeCount 之後會被按讚/取消在本地改動，
-    // 不是純衍生值，這裡是拿伺服器值做初始化。
-    /* eslint-disable @eslint-react/set-state-in-effect */
-    const pid = post.id;
-    if (stored.includes(pid)) setLiked(true);
-    setLikeCount(post.likes);
-    /* eslint-enable @eslint-react/set-state-in-effect */
-  }, [post, id]);
+  /* ── Like state ──
+     愛心 = 反應列裡的 ❤️。以前這裡另外維護 liked/likeCount 兩個 state（來源是
+     `posts.likes`），跟下方反應列的 ❤️ 是兩個獨立的數字，同一篇文章會顯示不一致的
+     值。現在共用 useReactions，三處是同一份狀態，不需要同步。 */
+  const { counts: reactionCounts, mine: myReactions, toggle: toggleReaction } =
+    useReactions(post?.id ?? id);
+  const likeCount = reactionCounts[HEART] ?? 0;
+  const liked = myReactions.has(HEART);
 
   /* ── 排版優化：CJK-Latin 自動加空格 + 腳註 hover 浮窗 ── */
   useEffect(() => {
@@ -1923,21 +1944,8 @@ function BlogPost() {
     return () => { document.removeEventListener('copy', preventCopy); };
   }, []);
 
-  /* ── Like handler ── */
-  const handleLike = async () => {
-    const pid = post?.id ?? parseInt(id, 10);
-    const next = !liked;
-    try {
-      const res = await fetch('/api/posts/' + pid + '/' + (next ? 'like' : 'unlike'), { method: 'POST' });
-      const data = await res.json() as { likes?: number };
-      if (res.ok) {
-        setLiked(next);
-        setLikeCount(data.likes ?? 0);
-        const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
-        localStorage.setItem('likedPosts', JSON.stringify(next ? [...stored.filter((i) => i !== pid), pid] : stored.filter((i) => i !== pid)));
-      }
-    } catch (err) { console.error('Like failed:', err); }
-  };
+  /* ── Like handler ── 就是切換 ❤️ 反應；optimistic 與校正都在 useReactions 裡 */
+  const handleLike = () => { toggleReaction(HEART); };
 
   const [showShareMenu, setShowShareMenu] = useState(false);
 
@@ -2244,7 +2252,7 @@ function BlogPost() {
             </div>
 
             {/* ── Emoji 反應 ── */}
-            <Reactions postId={post.id} />
+            <Reactions counts={reactionCounts} mine={myReactions} toggle={toggleReaction} />
 
             {/* ── Series 系列文導覽 ── */}
             {post.series_name && <SeriesNav seriesName={post.series_name} currentId={post.id} />}

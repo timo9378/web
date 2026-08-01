@@ -102,36 +102,52 @@ const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; inde
   const tagLabel = useTagLabel();
   const { t } = useTranslation();
   const prefetchArticle = usePrefetchArticle();
+  // 卡片上的愛心 = 文章頁反應列裡的 ❤️（post_reactions），不是舊的 posts.likes。
+  // 兩者以前各算各的，同一篇文章在列表和內頁會顯示不同的數字。
+  //
+  // 這裡沒有用 BlogPost 的 useReactions：那會讓列表上每張卡片各自發一個
+  // /reactions 請求（一頁十幾篇 = 十幾個請求）。列表的初始值改由後端在
+  // PostListItem.heart_count 一起送來，本地只處理按下去之後的增減。
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes);
+  const [likeCount, setLikeCount] = useState(post.heart_count);
   const [shareToast, setShareToast] = useState(false);
   const isColumn = post.layout_type === 'column';
 
   useEffect(() => {
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
     // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
+    // key 與文章頁的反應列共用，所以在內頁按過的愛心，回到列表也是亮的
     // eslint-disable-next-line @eslint-react/set-state-in-effect
-    if (likedPosts.includes(post.id)) setLiked(true);
+    try { setLiked((JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[]).includes('❤️')); }
+    catch { /* localStorage 不可用就當作沒按過 */ }
   }, [post.id]);
+
+  // 後端重新給值時（換頁、重新整理、切分類）跟著更新，否則會停在第一次 render 的數字
+  useEffect(() => {
+    // eslint-disable-next-line @eslint-react/set-state-in-effect
+    setLikeCount(post.heart_count);
+  }, [post.heart_count]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const newState = !liked;
+    const delta = newState ? 1 : -1;
+    // optimistic：先動 UI，伺服器回真值再校正（與文章頁反應列同樣的流程）
+    setLiked(newState);
+    setLikeCount(c => Math.max(0, c + delta));
     try {
-      const endpoint = newState ? 'like' : 'unlike';
-      const res = await fetch(`/api/posts/${post.id}/${endpoint}`, { method: 'POST' });
-      const data = await res.json() as { likes?: number };
-      if (res.ok) {
-        setLiked(newState);
-        setLikeCount(data.likes ?? 0);
-        const stored = JSON.parse(localStorage.getItem('likedPosts') ?? '[]') as unknown[];
-        if (newState) {
-          if (!stored.includes(post.id)) localStorage.setItem('likedPosts', JSON.stringify([...stored, post.id]));
-        } else {
-          localStorage.setItem('likedPosts', JSON.stringify(stored.filter(id => id !== post.id)));
-        }
-      }
+      const stored = JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[];
+      const next = newState ? [...new Set([...stored, '❤️'])] : stored.filter(x => x !== '❤️');
+      localStorage.setItem(`reactions:${post.id}`, JSON.stringify(next));
+    } catch { /* localStorage 不可用就略過，伺服器那筆還是會記 */ }
+    try {
+      const res = await fetch(`/api/posts/${post.id}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: '❤️', delta }),
+      });
+      const data = await res.json() as { count?: number };
+      if (res.ok && typeof data.count === 'number') setLikeCount(data.count);
     } catch (err) {
       console.error('Like failed:', err);
     }

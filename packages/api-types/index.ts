@@ -746,6 +746,18 @@ export type PostListItem = {
 	author: string | null,
 	view_count: number,
 	likes: number,
+	/**
+	 *  `post_reactions` 裡 ❤️ 的數量——列表卡片的愛心顯示這個，不是上面的 `likes`。
+	 * 
+	 *  兩個數字並存是有歷史的：`posts.likes` 是舊的按讚計數器（`/api/posts/:id/like`），
+	 *  而文章頁下方的 emoji 反應列另外存在 `post_reactions`。同一顆愛心在列表卡片走
+	 *  前者、在文章頁的反應列走後者，於是同一篇文章會出現兩個不一樣的數字——使用者
+	 *  看到的「愛心沒有同步」就是這個。
+	 * 
+	 *  統一成以 `post_reactions.❤️` 為準。`likes` 欄位留著不動（舊資料還在，而且
+	 *  `/api/posts/:id/like` 還有其他呼叫端），但前端不再顯示它。
+	 */
+	heart_count: number,
 	layout_type: string | null,
 	allow_comments: boolean,
 	created_at: string,

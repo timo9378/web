@@ -209,6 +209,17 @@ pub struct PostListItem {
     pub view_count: i64,
     #[specta(type = specta_typescript::Number)]
     pub likes: i64,
+    /// `post_reactions` 裡 ❤️ 的數量——列表卡片的愛心顯示這個，不是上面的 `likes`。
+    ///
+    /// 兩個數字並存是有歷史的：`posts.likes` 是舊的按讚計數器（`/api/posts/:id/like`），
+    /// 而文章頁下方的 emoji 反應列另外存在 `post_reactions`。同一顆愛心在列表卡片走
+    /// 前者、在文章頁的反應列走後者，於是同一篇文章會出現兩個不一樣的數字——使用者
+    /// 看到的「愛心沒有同步」就是這個。
+    ///
+    /// 統一成以 `post_reactions.❤️` 為準。`likes` 欄位留著不動（舊資料還在，而且
+    /// `/api/posts/:id/like` 還有其他呼叫端），但前端不再顯示它。
+    #[specta(type = specta_typescript::Number)]
+    pub heart_count: i64,
     pub layout_type: Option<String>,
     pub allow_comments: bool,
     pub created_at: String,
@@ -216,6 +227,30 @@ pub struct PostListItem {
     pub source_language: String,
     pub available_locales: Vec<String>,
     pub tags: Vec<String>,
+}
+
+/// 一次撈完這一頁所有文章的 ❤️ 數，避免每篇一個查詢。
+///
+/// 不把它 JOIN 進列表主查詢，是因為那個查詢是 `SELECT p.*` 直接餵給 `PostRow`，而
+/// `PostRow` 的欄位序被 admin 端點的 JSON key 序綁著（見 `PostRow` 的註解）。多一個
+/// 輕量查詢比動那個結構安全。
+async fn heart_counts(state: &AppState, ids: &[i64]) -> std::collections::HashMap<i64, i64> {
+    if ids.is_empty() {
+        return std::collections::HashMap::new();
+    }
+    // id 是 DB 來的 i64，不是使用者輸入，所以內插進 IN (...) 沒有注入面；
+    // sqlx 沒有辦法 bind 一個可變長度的清單。
+    let placeholders = ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(",");
+    let sql = format!(
+        "SELECT post_id, count FROM post_reactions \
+         WHERE emoji = '❤️' AND post_id IN ({placeholders})"
+    );
+    sqlx::query_as::<_, (i64, i64)>(sqlx::AssertSqlSafe(sql.as_str()))
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .collect()
 }
 
 #[derive(Debug, Serialize, specta::Type, utoipa::ToSchema)]
@@ -334,6 +369,8 @@ pub async fn list_posts(
     }
     let total: i64 = count_q.fetch_one(&state.pool).await?;
 
+    let hearts = heart_counts(&state, &rows.iter().map(|r| r.id).collect::<Vec<_>>()).await;
+
     let mut posts = Vec::new();
     for row in &rows {
         let content = match requested_locale {
@@ -354,6 +391,7 @@ pub async fn list_posts(
             author: row.author.clone(),
             view_count: row.view_count,
             likes: row.likes,
+            heart_count: hearts.get(&row.id).copied().unwrap_or(0),
             layout_type: row.layout_type.clone(),
             allow_comments: row.allow_comments(),
             created_at: row.created_at.clone(),
