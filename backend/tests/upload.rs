@@ -321,3 +321,200 @@ async fn filename_without_extension_produces_a_bare_name() {
     let filename = resp["filename"].as_str().unwrap();
     assert!(!filename.contains('.'), "沒有副檔名時不該多出一個點：{filename}");
 }
+
+// ── ffmpeg 正規化：用 stub 取代真的執行檔 ─────────────────────────────────
+//
+// `FFMPEG_BIN` / `FFPROBE_BIN` 可注入之後，這段邏輯才測得到。在此之前
+// `cargo mutants` 有 10 個變異無人看守——包含「有旋轉卻走 -c copy」這種
+// 會讓手機直式影片在 Chromium 上整片黑的錯誤（見 upload.rs 檔頭）。
+//
+// ⚠ 這段用 Unix 的檔案權限位元寫可執行的 stub。專案只跑在 Linux（debian image）。
+
+use std::os::unix::fs::PermissionsExt;
+
+fn write_stub(path: &std::path::Path, script: &str) {
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, script).unwrap();
+    let mut perms = std::fs::metadata(path).unwrap().permissions();
+    perms.set_mode(0o755);
+    std::fs::set_permissions(path, perms).unwrap();
+}
+
+/// 架好 ffprobe / ffmpeg 的 stub。
+///
+/// - `rotation`：ffprobe 要吐出的內容（原樣印到 stdout）
+/// - `ffmpeg_ok`：ffmpeg stub 要成功還是失敗
+///
+/// ffmpeg stub 一律先建出輸出檔**再**決定離開碼——這樣「失敗時要清掉 tmp」
+/// 那條路徑才驗得到（不建的話，殘骸本來就不存在，測不出有沒有清）。
+/// 回傳記錄 argv 的檔案路徑。
+fn stub_ffmpeg(dir: &std::path::Path, rotation: &str, ffmpeg_ok: bool) -> std::path::PathBuf {
+    let bin = dir.join("bin");
+    let argv_log = bin.join("argv.txt");
+    write_stub(&bin.join("ffprobe"), &format!("#!/bin/sh\nprintf '%s\\n' '{rotation}'\n"));
+    write_stub(
+        &bin.join("ffmpeg"),
+        &format!(
+            "#!/bin/sh\n\
+             printf '%s\\n' \"$@\" > '{}'\n\
+             for last in \"$@\"; do :; done\n\
+             printf 'NORMALISED' > \"$last\"\n\
+             exit {}\n",
+            argv_log.display(),
+            if ffmpeg_ok { 0 } else { 1 }
+        ),
+    );
+    unsafe {
+        std::env::set_var("FFPROBE_BIN", bin.join("ffprobe"));
+        std::env::set_var("FFMPEG_BIN", bin.join("ffmpeg"));
+    }
+    argv_log
+}
+
+async fn upload_video(app: &axum::Router, payload: &[u8]) -> Value {
+    let body = multipart("file", "clip.mp4", "video/mp4", payload);
+    let (status, resp) = post_upload(
+        app,
+        Some(&owner_token(true)),
+        body,
+        &format!("multipart/form-data; boundary={BOUNDARY}"),
+    )
+    .await;
+    assert_eq!(status, 200, "{resp}");
+    resp
+}
+
+/// 上傳落地的那個檔（排除 stub 那些）。
+fn uploaded_file(dir: &std::path::Path) -> std::path::PathBuf {
+    let f: Vec<_> = walk(dir).into_iter().filter(|p| !p.starts_with("bin")).collect();
+    assert_eq!(f.len(), 1, "應該只有一個上傳檔：{f:?}");
+    dir.join(&f[0])
+}
+
+/// **有旋轉 → 重編**（`libx264`），而不是無損重封裝。
+///
+/// 這是整個檔案最重要的一條。判錯的話旋轉矩陣會原封不動留在檔案裡，
+/// 而那正是 Chromium 上 `<video>` 整片黑的成因。
+#[tokio::test]
+async fn video_with_rotation_is_re_encoded_not_remuxed() {
+    let dir = temp_upload_dir("rot-reencode");
+    let argv_log = stub_ffmpeg(&dir, "90", true);
+    let (app, _pool) = test_app().await;
+
+    upload_video(&app, b"pretend mp4").await;
+
+    let argv = std::fs::read_to_string(&argv_log).expect("ffmpeg stub 應該有被呼叫");
+    let args: Vec<&str> = argv.lines().collect();
+    assert!(args.contains(&"libx264"), "有旋轉時必須重編，實際 argv：{args:?}");
+    assert!(!args.contains(&"copy"), "有旋轉時不能只做 -c copy：{args:?}");
+    assert!(args.contains(&"+faststart"), "moov atom 要搬到檔頭：{args:?}");
+    assert_eq!(
+        std::fs::read(uploaded_file(&dir)).unwrap(),
+        b"NORMALISED",
+        "成功之後要用正規化的結果換掉原檔"
+    );
+}
+
+/// **沒旋轉 → 無損重封裝**（`-c copy`），不該白白重編一次。
+#[tokio::test]
+async fn video_without_rotation_is_remuxed_losslessly() {
+    let dir = temp_upload_dir("rot-copy");
+    let argv_log = stub_ffmpeg(&dir, "0", true);
+    let (app, _pool) = test_app().await;
+
+    upload_video(&app, b"pretend mp4").await;
+
+    let argv = std::fs::read_to_string(&argv_log).unwrap();
+    let args: Vec<&str> = argv.lines().collect();
+    assert!(args.contains(&"copy"), "沒旋轉時應該 -c copy：{args:?}");
+    assert!(!args.contains(&"libx264"), "沒旋轉不該重編（會白白掉畫質又慢）：{args:?}");
+    assert!(args.contains(&"+faststart"));
+    assert_eq!(std::fs::read(uploaded_file(&dir)).unwrap(), b"NORMALISED");
+}
+
+/// ffprobe 讀不到旋轉（不存在／沒有該欄位）→ 當成沒旋轉，走 copy。
+#[tokio::test]
+async fn missing_ffprobe_falls_back_to_lossless_remux() {
+    let dir = temp_upload_dir("no-ffprobe");
+    let argv_log = stub_ffmpeg(&dir, "", true);
+    unsafe { std::env::set_var("FFPROBE_BIN", dir.join("bin/does-not-exist")) };
+    let (app, _pool) = test_app().await;
+
+    upload_video(&app, b"pretend mp4").await;
+
+    let args: Vec<String> = std::fs::read_to_string(&argv_log).unwrap().lines().map(str::to_string).collect();
+    assert!(args.iter().any(|a| a == "copy"), "讀不到旋轉時應該保守走 copy：{args:?}");
+    assert!(!args.iter().any(|a| a == "libx264"));
+}
+
+/// ffmpeg 失敗 → **保留原檔，並且清掉 tmp**。
+///
+/// stub 會先把輸出檔建出來再回非 0，所以「有沒有清乾淨」這件事驗得到。
+#[tokio::test]
+async fn ffmpeg_failure_keeps_the_original_and_removes_the_temp_file() {
+    let dir = temp_upload_dir("ffmpeg-fail");
+    stub_ffmpeg(&dir, "90", false);
+    let (app, _pool) = test_app().await;
+    let payload = b"pretend mp4";
+
+    upload_video(&app, payload).await;
+
+    let f: Vec<_> = walk(&dir).into_iter().filter(|p| !p.starts_with("bin")).collect();
+    assert_eq!(f.len(), 1, "失敗時不該留下 .normalizing.mp4 殘骸：{f:?}");
+    assert_eq!(std::fs::read(dir.join(&f[0])).unwrap(), payload, "原檔必須原封不動");
+}
+
+/// ffmpeg 執行檔不存在 → 保留原檔（本機沒裝 ffmpeg 時就是這條路徑）。
+#[tokio::test]
+async fn missing_ffmpeg_binary_keeps_the_original() {
+    let dir = temp_upload_dir("no-ffmpeg");
+    stub_ffmpeg(&dir, "90", true);
+    unsafe { std::env::set_var("FFMPEG_BIN", dir.join("bin/does-not-exist")) };
+    let (app, _pool) = test_app().await;
+    let payload = b"pretend mp4";
+
+    upload_video(&app, payload).await;
+
+    assert_eq!(std::fs::read(uploaded_file(&dir)).unwrap(), payload);
+}
+
+/// 圖片不該去碰 ffmpeg（只有 `video/` 才正規化）。
+#[tokio::test]
+async fn images_never_invoke_ffmpeg() {
+    let dir = temp_upload_dir("image-no-ffmpeg");
+    let argv_log = stub_ffmpeg(&dir, "90", true);
+    let (app, _pool) = test_app().await;
+
+    let body = multipart("file", "a.png", "image/png", &png(8, 8));
+    let (status, _) = post_upload(
+        &app,
+        Some(&owner_token(true)),
+        body,
+        &format!("multipart/form-data; boundary={BOUNDARY}"),
+    )
+    .await;
+    assert_eq!(status, 200);
+    assert!(!argv_log.exists(), "圖片不該呼叫 ffmpeg");
+}
+
+/// ffprobe 吐出 `0.4` → `parse_rotation` 回 **Some(0)** 而不是 None。
+///
+/// 這條是 `cargo mutants` 逼出來的。`deg != 0` 那個 guard 看起來像死碼——
+/// `parse_rotation` 不是已經濾掉 0 了嗎？沒有：它濾的是**字串解析出來的浮點數**，
+/// 而回傳前還有一次 `round()`。0.4 過得了 `!= 0.0` 的濾網，round 之後卻是 0。
+///
+/// 少了 guard 的話，這種檔案會被當成「有旋轉」而白白重編一次（掉畫質又慢），
+/// 實際上它根本不需要轉。
+#[tokio::test]
+async fn rotation_that_rounds_to_zero_is_treated_as_no_rotation() {
+    let dir = temp_upload_dir("rot-rounds-to-zero");
+    let argv_log = stub_ffmpeg(&dir, "0.4", true);
+    let (app, _pool) = test_app().await;
+
+    upload_video(&app, b"pretend mp4").await;
+
+    let argv = std::fs::read_to_string(&argv_log).unwrap();
+    let args: Vec<&str> = argv.lines().collect();
+    assert!(args.contains(&"copy"), "0.4° round 成 0，應該走無損重封裝：{args:?}");
+    assert!(!args.contains(&"libx264"), "不該為了 0 度白白重編：{args:?}");
+}

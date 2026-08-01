@@ -21,6 +21,21 @@ fn uploads_base() -> std::path::PathBuf {
     std::env::var("UPLOAD_BASE_DIR").map(Into::into).unwrap_or_else(|_| "/usr/src/app/storage/uploads".into())
 }
 
+/// ffmpeg / ffprobe 的執行檔名，可用 env 覆寫。
+///
+/// 存在的理由跟 `state::ExternalUrls` 一樣：**讓外部相依可被替換，否則測不到**。
+/// 這兩個函式的邏輯（有沒有旋轉 → 重編還是無損重封裝、成功要換檔、失敗要清 tmp）
+/// 全都藏在 subprocess 後面，不注入的話只驗得到「ffmpeg 不在時保留原檔」那一條——
+/// 實測 `cargo mutants` 有 10 個變異因此無人看守。
+///
+/// 正式環境完全不受影響：不設 env 就是 `ffmpeg` / `ffprobe`，跟原本一樣走 PATH。
+fn ffmpeg_bin() -> String {
+    std::env::var("FFMPEG_BIN").unwrap_or_else(|_| "ffmpeg".into())
+}
+fn ffprobe_bin() -> String {
+    std::env::var("FFPROBE_BIN").unwrap_or_else(|_| "ffprobe".into())
+}
+
 /// sharp `fit:'inside'` + `withoutEnlargement` 尺寸公式（Math.round；實測 5/5 對齊）。
 fn fit_inside(w: u32, h: u32, max: u32) -> (u32, u32) {
     if w <= max && h <= max {
@@ -56,7 +71,7 @@ fn parse_rotation(stdout: &str) -> Option<i32> {
 
 /// 讀出影片的旋轉角度（0 表示不需要處理）。ffprobe 不在或讀不到 → None。
 async fn probe_rotation(path: &std::path::Path) -> Option<i32> {
-    let out = tokio::process::Command::new("ffprobe")
+    let out = tokio::process::Command::new(ffprobe_bin())
         .args([
             "-v",
             "error",
@@ -89,7 +104,7 @@ async fn normalize_video(path: &std::path::Path) {
     let rotation = probe_rotation(path).await;
     let tmp = path.with_extension("normalizing.mp4");
 
-    let mut cmd = tokio::process::Command::new("ffmpeg");
+    let mut cmd = tokio::process::Command::new(ffmpeg_bin());
     cmd.arg("-y").arg("-i").arg(path);
     match rotation {
         // 有旋轉 → 只能重編才能把畫面轉正（ffmpeg 解碼時預設就會套用顯示矩陣，
@@ -336,6 +351,16 @@ mod tests {
         assert_eq!(parse_rotation("89.999998\n"), Some(90));
         assert_eq!(parse_rotation("-90.4\n"), Some(-90));
         assert_eq!(parse_rotation("  270.5  \n"), Some(271), "前後空白要 trim");
+    }
+
+    /// **round 之後可能變成 0**——所以這裡回的是 `Some(0)` 而不是 `None`。
+    ///
+    /// 濾網 `!= 0.0` 看的是解析出來的浮點數（0.4 通過），round 才把它變成 0。
+    /// `normalize_video` 那邊的 `deg != 0` guard 因此不是死碼，它擋的正是這種值。
+    #[test]
+    fn parse_rotation_can_round_down_to_zero() {
+        assert_eq!(parse_rotation("0.4\n"), Some(0));
+        assert_eq!(parse_rotation("-0.2\n"), Some(0));
     }
 
     /// `UPLOAD_BASE_DIR` 有設就用它，沒設退回容器內的正式路徑。
