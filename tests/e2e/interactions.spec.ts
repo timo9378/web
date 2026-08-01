@@ -233,27 +233,55 @@ test.describe('地標結構', () => {
     });
   }
 
-  /**
-   * 整個 `landmark-*` 類別都必須是乾淨的。
-   *
-   * 上面那條只釘住 main 的數量，但同一次修正還處理了「兩個 `<nav>` 沒有可區分的
-   * 名稱」（landmark-unique）。那個修法是給各個 nav 加 `aria-label`，很容易在
-   * 後續重構時被順手拿掉而沒人發現——所以整類一起鎖。
-   *
-   * ⚠ 加標籤時要確認**各語系的字串真的不同**：`nav.menu` 與 `blog.sideNav` 在
-   * ja / ko 都是同一個詞（ナビゲーション / 내비게이션），沿用的話中英文看起來好了、
-   * 日韓文卻還是撞名。所以 posts-nav 另外開了 `blog.nearbyNav`。
-   * 這條測試在 zh-TW 之外也跑，就是為了擋這種只在部分語系成立的修法。
-   */
-  for (const path of ['/blog/1', '/ja/blog/1', '/ko/blog/1']) {
-    test(`${path} 沒有 landmark 類的 a11y 違規`, async ({ page }) => {
+});
+
+/**
+ * **moderate 以上一律零違規。**
+ *
+ * smoke.spec.ts 的那條只擋 critical，是當時的現實水準。這次把地標與標題層級整理過
+ * 之後，全站（除了 /photos）在 axe 的**所有等級**上都是乾淨的，所以趁現在把門檻鎖住
+ * ——不然下一次改版又會慢慢長回來，而且因為只擋 critical，長回來時沒有人會知道。
+ *
+ * 這次修掉的東西（都在 moderate/serious，全部躲過了 critical 那道門）：
+ *   landmark-no-duplicate-main   AppShell 之外 MainPage / Blog 又各放了一個 <main>
+ *   landmark-unique              兩個 <nav> 沒有可區分的名稱
+ *   heading-order                footer 從 h3 起跳；書卡 / 碎念嵌入卡 / 作品集也跳級
+ *   page-has-heading-one         /activity 整頁沒有 h1
+ *   color-contrast（serious）    /setup 的副標 3.32:1，AA 要 4.5:1
+ *
+ * 為什麼是 moderate 以上而不是全部：`minor` 多半是內容造成的（例如某篇文章的表格
+ * 少了表頭），那不是程式的問題，擋在這裡只會逼人去改文章。
+ *
+ * ja / ko 一起跑是刻意的：nav 標籤那次差點只修好中英文——`nav.menu` 與
+ * `blog.sideNav` 在日韓文是同一個字串，沿用的話那兩個語系還是撞名。
+ */
+const A11Y_STRICT = [
+  '/',
+  '/blog',
+  '/blog/1',
+  '/thinking',
+  '/bookshelf',
+  '/watch',
+  '/activity',
+  '/setup',
+  '/portfolio',
+  '/music',
+  '/about-site',
+  '/en/blog',
+  '/ja/blog/1',
+  '/ko/blog/1',
+];
+
+test.describe('a11y 嚴格門檻', () => {
+  for (const path of A11Y_STRICT) {
+    test(`${path} 沒有 moderate 以上的 a11y 違規`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'domcontentloaded' });
       await expect(page.locator('main').first()).toContainText(/\S/, { timeout: 15_000 });
       const { violations } = await new AxeBuilder({ page }).analyze();
-      const landmark = violations.filter((v) => v.id.startsWith('landmark-'));
+      const bad = violations.filter((v) => v.impact !== 'minor');
       expect(
-        landmark.map((v) => `${v.id}（${v.nodes.length} 處）— ${v.nodes[0]?.html.slice(0, 90)}`),
-        `${path} 的 landmark 違規`,
+        bad.map((v) => `${v.impact}:${v.id}（${v.nodes.length} 處）— ${v.nodes[0]?.html.slice(0, 90)}`),
+        `${path} 的 a11y 違規`,
       ).toEqual([]);
     });
   }

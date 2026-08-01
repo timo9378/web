@@ -202,6 +202,9 @@ const Activity = () => {
       </div>
 
       <div className="activity-content-wrapper">
+        {/* 視覺上不出現，但頁面必須有 h1——這頁的排版從狀態列開始，原本整頁沒有任何
+            h1（axe: page-has-heading-one）。螢幕閱讀器使用者進來會不知道自己在哪。 */}
+        <h1 className="sr-only">{t('activity.title')}</h1>
 
         {/* ─── Section 1: Status Bar ─── */}
         <motion.div

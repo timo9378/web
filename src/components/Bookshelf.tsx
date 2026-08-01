@@ -100,7 +100,11 @@ const BookCard = ({ book, delay, onClick, getStatusBadge, renderStars }: {
         </div>
       </div>
       <div className="book-info">
-        <h3 className="book-title">{book.title}</h3>
+        {/* h2 不是 h3：每張書卡是頁面 h1 底下的項目，中間沒有區塊標題，
+          h3 會跳級（axe: heading-order）。class 保留，樣式不動。
+          注意 456/463 那兩個 h3（簡介／個人筆記）是**對的**——它們在 modal 裡，
+          上面有 h2（書名），不要一起改。 */}
+        <h2 className="book-title">{book.title}</h2>
         {book.authors && <p className="book-author">{book.authors}</p>}
         {renderStars(book.rating)}
       </div>

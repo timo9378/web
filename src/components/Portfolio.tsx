@@ -168,7 +168,9 @@ const Portfolio = () => {
           <span className="section-label">{FEATURE.category}</span>
           <span className="portfolio-status">{FEATURE.status}</span>
         </div>
-        <h3 className="portfolio-feature-title">{FEATURE.title}</h3>
+        {/* h2 不是 h3：頁面標題是 h1，中間沒有其他層級，h3 會跳級（axe: heading-order）。
+            下面的次要作品跟著從 h4 降成 h3。class 都保留，樣式不動。 */}
+        <h2 className="portfolio-feature-title">{FEATURE.title}</h2>
         <p className="portfolio-feature-desc">{FEATURE.description}</p>
         <div className="portfolio-tags">
           {FEATURE.tags.map((t) => (
@@ -220,7 +222,7 @@ const Portfolio = () => {
           )}
           <div className="portfolio-secondary-body">
             <span className="section-label">{item.category}</span>
-            <h4 className="portfolio-secondary-title">{item.title}</h4>
+            <h3 className="portfolio-secondary-title">{item.title}</h3>
             <p className="portfolio-secondary-desc">{item.description}</p>
             <div className="portfolio-tags">
               {item.tags.map((t) => (

@@ -114,7 +114,7 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
       {th.ref_type === 'link' && th.ref && (
         <a className="tk-embed tk-embed--link tk-linkcard" href={th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
           <div className="tk-embed-info">
-            <h3 className="tk-embed-title">{th.ref.title ?? th.ref_url}</h3>
+            <h2 className="tk-embed-title">{th.ref.title ?? th.ref_url}</h2>
             {th.ref.desc && <p className="tk-embed-desc">{th.ref.desc}</p>}
             <span className="tk-embed-meta"><span className="tk-embed-site">🌐 {th.ref.site}</span></span>
           </div>
@@ -126,7 +126,7 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         <a className="tk-embed tk-embed--media tk-media" href={th.ref.url ?? th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
           <div className="tk-embed-info">
             <span className="tk-embed-kind">{th.ref.kind} · {th.ref.year}</span>
-            <h3 className="tk-embed-title">{th.ref.title}</h3>
+            <h2 className="tk-embed-title">{th.ref.title}</h2>
             {th.ref.overview && <p className="tk-embed-desc">{th.ref.overview}</p>}
             <span className="tk-embed-meta">★ {th.ref.rating} · {th.ref.genres} · {th.ref.source}</span>
           </div>

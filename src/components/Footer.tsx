@@ -51,7 +51,11 @@ function Footer() {
         <div className="app-footer-grid">
           {/* 品牌欄 */}
           <div className="app-footer-brand">
-            <h3 className="app-footer-brand-name brand-wordmark">Koimsurai</h3>
+            {/* h2 不是 h3：footer 出現在**每一頁**，而它的層級只有在該頁剛好有 h2 時才不會跳級。
+                實測 /thinking、/bookshelf、以及 404 頁（只有 h1）都因此被 axe 判 heading-order，
+                /watch 剛好有 h2 所以是乾淨的——這種「看該頁內容碰運氣」的結構本身就是問題。
+                改成 h2/h3 之後，footer 在任何頁面都接得上 h1。class 保留，樣式不受影響。 */}
+            <h2 className="app-footer-brand-name brand-wordmark">Koimsurai</h2>
             <p className="app-footer-brand-tagline">{t('footer.tagline')}</p>
             <p className="app-footer-copy">
               © {YEAR_RANGE} {t('footer.poweredBy')}{' '}
@@ -75,7 +79,7 @@ function Footer() {
 
           {/* 關於 */}
           <div className="app-footer-col">
-            <h4 className="app-footer-col-title">{t('footer.sections.about')}</h4>
+            <h3 className="app-footer-col-title">{t('footer.sections.about')}</h3>
             <LocaleLink to="/about-site" className="app-footer-link">{t('footer.links.aboutSite')}</LocaleLink>
             <LocaleLink to="/about" className="app-footer-link">{t('footer.links.aboutMe')}</LocaleLink>
             <a
@@ -90,7 +94,7 @@ function Footer() {
 
           {/* 更多 — 配備改放服務狀態（Kuma），配備仍可從導覽列「更多」進 */}
           <div className="app-footer-col">
-            <h4 className="app-footer-col-title">{t('footer.sections.more')}</h4>
+            <h3 className="app-footer-col-title">{t('footer.sections.more')}</h3>
             <LocaleLink to="/photos" className="app-footer-link">{t('footer.links.photos')}</LocaleLink>
             <LocaleLink to="/activity" className="app-footer-link">{t('footer.links.activity')}</LocaleLink>
             <a
@@ -105,7 +109,7 @@ function Footer() {
 
           {/* 聯絡 */}
           <div className="app-footer-col">
-            <h4 className="app-footer-col-title">{t('footer.sections.contact')}</h4>
+            <h3 className="app-footer-col-title">{t('footer.sections.contact')}</h3>
             {/* 寫留言改連留言板頁（原本 /#contact 在 lazy section 掛載前 hash 捲動會失敗） */}
             <LocaleLink to="/messages" className="app-footer-link">{t('footer.links.messages')}</LocaleLink>
             <a href="mailto:timo9378@gmail.com" className="app-footer-link">

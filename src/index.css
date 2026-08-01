@@ -425,3 +425,22 @@ html.no-gpu .post-content-wrapper::before {
     display: none !important;
   }
 }
+
+/* 只給輔助技術讀的文字。
+   用在「頁面在視覺上不需要標題、但結構上必須有 h1」的情況——/activity 是儀表板式
+   排版，第一個元素是狀態列，整頁一個 h1 都沒有（axe: page-has-heading-one）。
+   對螢幕閱讀器使用者的影響是進到這頁不知道自己在哪，也無法用標題跳轉定位。
+
+   不用 display:none / visibility:hidden：那兩個會讓輔助技術也讀不到，等於沒加。
+   這裡是「畫面上佔 1px 且被裁掉、但仍在無障礙樹裡」的標準寫法。 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
