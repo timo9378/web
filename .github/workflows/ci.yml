@@ -160,15 +160,14 @@ jobs:
       #   37  現在——auth（0→96.8%）、upload（0→96.3%）、oauth（0→95.8%）三個
       #       安全相關的 0% 檔案補完，實際 40.44%
       #
-      # 這三個都用 `cargo mutants` 驗過「弄壞會不會紅」而不是只看百分比：
-      # auth 28/28、upload 40/40、oauth 25/25（可編譯的變異全數被抓到）。
+      # 這幾個都用 `cargo mutants` 驗過「弄壞會不會紅」而不是只看百分比：
+      # auth 28/28、upload 40/40、oauth 25/25、watch 71/71（可編譯的變異全數被抓到）。
       # 覆蓋率高不代表測得有效——vitals.rs 曾經覆蓋 98.67% 而變異分數只有 43%。
       #
       # 留 3pp 餘裕：加一段還沒測到的新功能不該當場擋下，但「刪掉一批測試」會被抓到。
-      # 下一個目標是 watch.rs（2239 region、15%，但 Trakt 那把鎖有線上事故史）
-      # 與 mailer.rs（420 region、0%，需要 Resend 的 base URL 可注入）。
+      # 下一個目標是 thirdparty.rs（1688 region、31%）與 admin.rs（918、59%）。
       - name: test + coverage (llvm-cov + nextest)
-        run: cargo llvm-cov nextest --locked --fail-under-regions 37
+        run: cargo llvm-cov nextest --locked --fail-under-regions 49
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |

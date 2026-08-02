@@ -265,7 +265,8 @@ async fn tmdb_search_tv_id(state: &AppState, token: &str, title: &str) -> Option
         async move {
             let resp = http
                 .get(format!(
-                    "https://api.themoviedb.org/3/search/tv?query={}&language=zh-TW&include_adult=false",
+                    "{}/3/search/tv?query={}&language=zh-TW&include_adult=false",
+                    crate::util::tmdb_api(),
                     crate::util::encode_uri_component(&query)
                 ))
                 .bearer_auth(&token)

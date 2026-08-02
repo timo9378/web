@@ -46,8 +46,9 @@ interface WatchEntry {
 // AnimeRow/FilmRow/TvRow/WatchStatsResponse 改由後端 specta 生成（見 backend/SPECTA_PLAN.md）。
 // LiveNow（watch/now 即時狀態，動態組）與 WatchFavorite（favorites TMDb 在地化）維持手寫（非 row_to_json 端點）。
 // 改吃後端 specta 生成的型別（backend handlers::watch::NowWatching）。
-// 手寫那份把大半欄位標成可選、episode 還標成 number | string —— 實際上後端兩個寫入點
-// （擴充 heartbeat、Trakt 輪詢）都給字串，title/source/type/startedAt 也一定在。
+// 手寫那份把大半欄位標成可選、episode 還標成 number | string —— 實際上後端的寫入點
+// （動畫瘋擴充的 heartbeat；Trakt 輪詢那條已移除）給的是字串，
+// title/source/type/startedAt 也一定在。
 export type LiveNow = NowWatching;
 // 改吃後端 specta 生成的型別（backend handlers::watch::WatchFavoriteRow）。
 // 手寫那份少了 kind / tmdbId 兩個欄位，rating 標成必填（DB 允許 NULL），

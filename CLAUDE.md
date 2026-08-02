@@ -86,7 +86,7 @@ pnpm build         # vite + nitro
 ```bash
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
-cargo llvm-cov nextest --locked --fail-under-regions 30
+cargo llvm-cov nextest --locked --fail-under-regions 49   # 門檻以 ci.yml 為準
 # specta：改過會進 API 的 struct 就要重跑 export_types 並提交，否則 drift gate 會擋
 ```
 

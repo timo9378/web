@@ -270,9 +270,10 @@ Sentry SaaS / LogRocket 仍 ❌（GlitchTip 已覆蓋且自主）。
   已有 admin 守衛整合測試護著（401/200/exp/錯 secret）。
 
 ### 🟡 中價值 + 需先解耦再拆（不急）
-- **後端 admin.rs（1554）/ watch.rs（1162）god-module**：watch.rs 實測耦合重（now_ms / tmdb_detail /
-  now-watching state / Trakt 輪詢交織）→ 純拆會留十幾個 `pub(super)`、降不了耦合。要拆得先抽真正獨立的
-  子域（Trakt 整合＝token 狀態機 + 輪詢 + 同步 ~400 行，是最乾淨的邊界）。
+- **後端 admin.rs（1554）god-module**：拆分價值仍在，但一樣要先找到獨立子域再動。
+  ~~watch.rs（1162）~~ 已於 2026-08-02 隨 Trakt 移除縮到 **880 行**——當初判斷「最乾淨的切割邊界
+  是 Trakt 整合（token 狀態機 + 輪詢 + 同步 ~400 行）」是對的，只是實際發生的是整段刪掉而不是搬走。
+  剩下的部分（公開讀 / TMDb / favorites / heartbeat）耦合不重，暫時不值得再拆。
 - **components/ 頂層 129 檔平鋪** → feature 資料夾分組。
 - **狀態快取加 TTL**：`WatchState.tmdb_detail` / `SpotifyState.audio_features` 無 TTL 無淘汰（個人站流量下
   是慢性洩漏非災難，但該補 moka 或過期戳）。

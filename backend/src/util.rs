@@ -1,6 +1,17 @@
 use serde_json::{Map, Value};
 use sqlx::{Column, Row, TypeInfo, ValueRef, sqlite::SqliteRow};
 
+/// TMDb API 的 base URL。正式一律是官方位址，`TMDB_BASE_URL` 只是為了讓測試指向 wiremock。
+///
+/// 這裡刻意做成共用而不是各檔一份：watch.rs（detail／search）、bahamut.rs（劇名搜尋）、
+/// thoughts.rs（補圖）三處都打 TMDb，各自硬編就等於三個檔案都測不了外部呼叫。
+pub fn tmdb_api() -> String {
+    std::env::var("TMDB_BASE_URL")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "https://api.themoviedb.org".into())
+}
+
 /// 把一列 sqlite row 動態轉成 JSON object，**保留 DB 欄位順序**（serde_json preserve_order）。
 /// 用於 Express 端 `SELECT *`/`p.*` 直接 spread 整列的端點（/admin/posts、/admin/comments），
 /// 免枚舉欄位、不依賴記住的實體欄位順序。
@@ -279,7 +290,15 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
     let doy = (153 * mp + 2) / 5 + d as i64 - 1;
     let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
     let days = era * 146_097 + doe - 719_468;
-    let dow = ((days % 7 + 4) % 7 + 7) % 7; // 1970-01-01 = Thu(4)；Sunday=0
+    // 1970-01-01 = Thu(4)；Sunday=0。
+    //
+    // ⚠️ `cargo mutants` 會回報這兩行有三個「存活」的變異（`era * 146_097` → `/`、
+    // 以及兩個 `%` → `+`）。那三個是**等價變異**，不是測試漏掉：
+    //   - 146_097 = 20871 × 7，格里曆 400 年週期剛好是整數週，所以 `era * 146_097`
+    //     對 dow 的貢獻恆為 0 mod 7；而 `days` 只被 dow 用到。
+    //   - `(days % 7 + 4) % 7` 與 `(days + 11) % 7` 同餘且正規化區間相同。
+    // 不必為了讓分數好看而去寫測試——寫不出能分辨的輸入。
+    let dow = ((days % 7 + 4) % 7 + 7) % 7;
     const DOW: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const MON: [&str; 12] =
         ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -293,6 +312,248 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
         mi,
         se
     )
+}
+
+#[cfg(test)]
+mod value_tests {
+    use super::*;
+
+    // 這三條都是 `cargo mutants` 指出來的：改掉之後測試全綠，因為既有的整合測試
+    // 剛好都走在「兩種寫法結果相同」的輸入上。
+
+    #[test]
+    fn js_num_value_的整數化上限是九乘十的十五次方() {
+        assert_eq!(js_num_value(4.0), Value::from(4i64));
+        assert_eq!(js_num_value(4.5), Value::from(4.5f64));
+        assert_eq!(js_num_value(-0.0), Value::from(0i64));
+        // 邊界本身要留在浮點側（`<` 不是 `<=`）——超過 2^53 之後 i64 轉換已經不保真，
+        // 硬轉會讓「原樣讀進來、原樣寫回去」的欄位悄悄變值。
+        let boundary = js_num_value(9.0e15);
+        assert!(boundary.is_f64(), "9.0e15 本身不該被整數化，得到 {boundary}");
+        assert!(js_num_value(8.999e15).is_i64(), "剛好低於邊界的要整數化");
+    }
+
+    #[test]
+    fn js_parse_int_opt_接受正負號前綴() {
+        // `+5` 是唯一分得出 `c == '+'` 與 `c != '+'` 的輸入：其餘字元兩種寫法結果相同
+        assert_eq!(js_parse_int_opt("+5"), Some(5));
+        assert_eq!(js_parse_int_opt("-5"), Some(-5));
+        assert_eq!(js_parse_int_opt("  +12xy"), Some(12), "JS 的 parseInt 會跳過前導空白");
+        assert_eq!(js_parse_int_opt("+"), None, "只有正負號沒有數字");
+        assert_eq!(js_parse_int_opt("-"), None);
+        assert_eq!(js_parse_int_opt("++5"), None, "第二個符號不是數字，前綴到此為止");
+        assert_eq!(js_parse_int_opt("5+"), Some(5));
+        assert_eq!(js_parse_int_opt(""), None);
+    }
+
+    #[test]
+    fn split_tags_把_group_concat_的字串切開_空值回空陣列() {
+        // 這支整個沒有測試——六個變異（含「直接回 vec![]」）全數存活。
+        // 症狀會是文章的標籤靜靜地全部消失或多出一個空標籤，不會有錯誤。
+        assert_eq!(split_tags(Some("rust,axum,sqlite")), vec!["rust", "axum", "sqlite"]);
+        assert_eq!(split_tags(Some("單一")), vec!["單一"]);
+        assert_eq!(split_tags(None), Vec::<String>::new());
+        assert_eq!(split_tags(Some("")), Vec::<String>::new(), "空字串是沒有標籤，不是一個空標籤");
+        // GROUP_CONCAT 不會自己去空白，照抄 Express 的 split(',') 語意
+        assert_eq!(split_tags(Some("a, b")), vec!["a", " b"]);
+        assert_eq!(split_tags(Some("a,,b")), vec!["a", "", "b"]);
+    }
+
+    #[test]
+    fn gen_slug_的實際對應關係() {
+        // 檔案下面已經有 gen_slug 的 proptest，但那兩條性質（字元集、全小寫）**太弱**：
+        // 「整支函式改成回傳 "xyzzy"」與「把三個 || 都換成 &&（結果恆為空字串）」
+        // 兩種寫法都同時滿足，於是 cargo mutants 讓它們全部存活。
+        // 性質測邊界、定樁測對應，兩者要一起才擋得住。
+        assert_eq!(gen_slug("Hello World"), "hello-world");
+        assert_eq!(gen_slug("Hello   World"), "hello-world", "連續空白折成單一 -");
+        assert_eq!(gen_slug("Rust & Axum"), "rust--axum", "& 被濾掉但兩側的 - 都留著（照抄 JS）");
+        assert_eq!(gen_slug("技術文章"), "技術文章", "CJK 保留");
+        assert_eq!(gen_slug("日本語テスト"), "日本語", "片假名不在 一-龥 區段內，會被濾掉");
+        assert_eq!(gen_slug("a_b-c"), "a_b-c", "底線與連字號是白名單內的");
+        assert_eq!(gen_slug("Ünïcödé"), "ncd", "JS 的 \\w 沒有 /u 旗標，帶音標的拉丁字母不算字元");
+        assert_eq!(gen_slug("!!!"), "", "全部被濾掉就是空字串");
+        assert_eq!(gen_slug(""), "");
+        assert_eq!(gen_slug("  前導空白"), "-前導空白", "開頭的空白也會生出一個 -");
+    }
+
+    #[test]
+    fn js_normalize_numbers_把整值浮點折成整數且遞迴進容器() {
+        use serde_json::json;
+        // 直接對純量
+        let mut v = json!(4.0);
+        js_normalize_numbers(&mut v);
+        assert_eq!(v, json!(4), "4.0 要變 4（JSON.stringify 的語意）");
+
+        let mut v = json!(4.5);
+        js_normalize_numbers(&mut v);
+        assert_eq!(v, json!(4.5), "有小數的不動");
+
+        // 陣列與物件都要遞迴進去——這兩條 match arm 刪掉之後原本沒有測試會紅
+        let mut v = json!({ "a": [1.0, 2.5, { "b": 3.0 }], "c": { "d": [[7.0]] } });
+        js_normalize_numbers(&mut v);
+        assert_eq!(v, json!({ "a": [1, 2.5, { "b": 3 }], "c": { "d": [[7]] } }));
+
+        // 邊界：超過 9e15 不折（i64 轉換已不保真）
+        let mut v = json!(9.0e15);
+        js_normalize_numbers(&mut v);
+        assert!(v.is_f64(), "9.0e15 要留在浮點側，得到 {v}");
+        let mut v = json!(8.999e15);
+        js_normalize_numbers(&mut v);
+        assert!(v.is_i64(), "剛好低於邊界的要折成整數");
+
+        // 負的整值也要折
+        let mut v = json!(-6.0);
+        js_normalize_numbers(&mut v);
+        assert_eq!(v, json!(-6));
+
+        // 字串與 bool 不該被碰
+        let mut v = json!({ "s": "4.0", "b": true, "n": null });
+        js_normalize_numbers(&mut v);
+        assert_eq!(v, json!({ "s": "4.0", "b": true, "n": null }));
+    }
+}
+
+#[cfg(test)]
+mod date_tests {
+    use super::*;
+
+    // `iso_from_millis` 與 `js_date_to_utc_string` 各自手刻了一份曆法換算
+    // （Howard Hinnant 的 days_from_civil / civil_from_days）。這種程式錯了不會爆，
+    // 只會讓 RSS 的 pubDate 差一天或星期寫錯——閱讀器多半照收，於是沒有人會發現。
+    //
+    // chrono 本來就是直接依賴，拿它當對照組比手挑案例可靠：下面兩條 property
+    // 掃的是「兩百年份 × 每一天 × 每一秒」的空間，閏年、閏世紀、月末都在裡面。
+
+    #[test]
+    fn iso_from_millis_的_epoch_與負數邊界() {
+        assert_eq!(iso_from_millis(0), "1970-01-01T00:00:00.000Z");
+        // 這條是給 div_euclid 的：用一般的 `/` 與 `%`，-1 會算成 1970-01-01T00:00:00.-001Z
+        assert_eq!(iso_from_millis(-1), "1969-12-31T23:59:59.999Z");
+        assert_eq!(iso_from_millis(-86_400_000), "1969-12-31T00:00:00.000Z");
+        assert_eq!(iso_from_millis(1_709_164_800_000), "2024-02-29T00:00:00.000Z", "閏日");
+        assert_eq!(iso_from_millis(951_782_400_000), "2000-02-29T00:00:00.000Z", "整除 400 的閏年");
+    }
+
+    #[test]
+    fn js_date_to_utc_string_的壞輸入一律回_invalid_date() {
+        // 對齊 JS：`String(null)` 是 "null"，再怎麼 parse 都不會成功
+        assert_eq!(js_date_to_utc_string(None), "Invalid Date");
+        for bad in [
+            "",
+            "not a date",
+            "2026-13-01 00:00:00",    // 月份越界
+            "2026-01-32 00:00:00",    // 日越界
+            "2026-01-01 24:00:00",    // 時越界
+            "2026-01-01 00:60:00",    // 分越界
+            "2026-01-01 00:00:61",    // 秒越界（60 是閏秒，允許；61 不行）
+            "2026-01-01",             // 沒有時間
+            "2026-01-01-01 00:00:00", // 多一段
+            "2026-01 00:00:00",       // 少一段
+        ] {
+            assert_eq!(js_date_to_utc_string(Some(bad)), "Invalid Date", "輸入 {bad:?}");
+        }
+    }
+
+    #[test]
+    fn js_date_to_utc_string_算得出西元零年附近的星期() {
+        // `era = if yy >= 0 { yy } else { yy - 399 } / 400` 的 else 分支只有 y <= 0 會走到
+        // （Rust 的整數除法向零截斷，負數要先減 399 才等同向下取整）。
+        // 正式資料不會有這種日期，但那個分支寫錯就是靜靜地算錯——留兩個定樁。
+        // 對照組一樣是 chrono，不手寫預期值——下面的 property test 掃不到這裡，
+        // 是因為它的年份範圍取 1900..2200（讓 uniform 取樣真的掃得到每一年）。
+        // 西元前的年份只能經由 y=0 且 mo<=2 走到那條分支——負年份的**字串**（"-001-06-15"）
+        // 解不出來是對的：開頭的 `-` 會被當成日期分隔符，回 Invalid Date。
+        for (y, mo, d) in [(0, 1, 1), (0, 2, 29), (0, 3, 1), (0, 12, 31), (1, 1, 1)] {
+            let input = format!("{y:04}-{mo:02}-{d:02} 00:00:00");
+            let want = chrono::NaiveDate::from_ymd_opt(y, mo, d)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                .format("%a, %d %b %Y %H:%M:%S GMT")
+                .to_string();
+            assert_eq!(js_date_to_utc_string(Some(&input)), want, "輸入 {input}");
+        }
+    }
+
+    #[test]
+    fn js_date_to_utc_string_接受閏秒與結尾的_z() {
+        // 60 秒放行是刻意的（對齊 JS Date 對閏秒的寬容）
+        assert_eq!(js_date_to_utc_string(Some("2016-12-31 23:59:60")), "Sat, 31 Dec 2016 23:59:60 GMT");
+        // SQLite 的 datetime 不帶 Z，但外部塞進來的可能帶
+        assert_eq!(
+            js_date_to_utc_string(Some("2026-01-01 12:00:00Z")),
+            js_date_to_utc_string(Some("2026-01-01 12:00:00")),
+        );
+    }
+
+    #[test]
+    fn xml_esc_先換_and_才不會二次轉義() {
+        assert_eq!(xml_esc("a & b"), "a &amp; b");
+        assert_eq!(xml_esc("<b>x</b>"), "&lt;b&gt;x&lt;/b&gt;");
+        // 若順序反過來（先換 < 再換 &），這個結果會變成 &amp;lt;
+        assert_eq!(xml_esc("<"), "&lt;");
+        assert_eq!(xml_esc("&amp;"), "&amp;amp;", "輸入本來就是實體時照樣再轉一次（同 Express）");
+        // 引號與撇號不轉——這是 Express 的 esc 行為，寫下來免得有人「順手補齊」
+        assert_eq!(xml_esc("\"'"), "\"'");
+    }
+
+    /// 逐日走完 1900–2200，兩支換算都跟 chrono 對字。
+    ///
+    /// 為什麼不只靠下面的 proptest：`doe / 36_524`（世紀閏年修正）那一項改壞之後，
+    /// 絕大多數日子的結果**不變**——只有世紀交界前後那幾天會發散。256 次均勻取樣
+    /// 掃到的機率極低，實測 `cargo mutants` 就是這樣讓它活下來的。日期空間只有十萬個，
+    /// 與其想辦法引導取樣，不如整個走完。
+    #[test]
+    fn 曆法換算逐日對齊_chrono() {
+        let end = chrono::NaiveDate::from_ymd_opt(2200, 1, 1).unwrap();
+        let mut day = chrono::NaiveDate::from_ymd_opt(1900, 1, 1).unwrap();
+        while day < end {
+            // 取一個非午夜的時間，順便讓時分秒的拆解也走過每一天
+            let dt = day.and_hms_opt(13, 45, 30).unwrap();
+            let ms = dt.and_utc().timestamp_millis();
+            assert_eq!(iso_from_millis(ms), dt.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(), "{day}");
+            let input = dt.format("%Y-%m-%d %H:%M:%S").to_string();
+            assert_eq!(
+                js_date_to_utc_string(Some(&input)),
+                dt.format("%a, %d %b %Y %H:%M:%S GMT").to_string(),
+                "{day}"
+            );
+            day = day.succ_opt().unwrap();
+        }
+    }
+
+    proptest::proptest! {
+        /// epoch ms → ISO 字串必須與 chrono 逐字相同。
+        #[test]
+        fn iso_from_millis_對齊_chrono(ms in -2_208_988_800_000i64..4_102_444_800_000i64) {
+            let want = chrono::DateTime::from_timestamp_millis(ms)
+                .unwrap()
+                .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+                .to_string();
+            proptest::prop_assert_eq!(iso_from_millis(ms), want);
+        }
+
+        /// SQLite datetime → RFC 1123（RSS 的 pubDate）必須與 chrono 逐字相同，星期在內。
+        #[test]
+        fn js_date_to_utc_string_對齊_chrono(
+            y in 1900i32..2200i32,
+            mo in 1u32..=12u32,
+            d in 1u32..=31u32,
+            h in 0u32..24u32,
+            mi in 0u32..60u32,
+            se in 0u32..60u32,
+        ) {
+            // 2 月 31 日這種組合本函式其實會照算（不驗月份天數），但正式資料一律來自
+            // SQLite 的 datetime('now')，不可能生出來——所以這裡只比對真實存在的日期。
+            let Some(nd) = chrono::NaiveDate::from_ymd_opt(y, mo, d) else {
+                return Ok(());
+            };
+            let input = format!("{y:04}-{mo:02}-{d:02} {h:02}:{mi:02}:{se:02}");
+            let want = nd.and_hms_opt(h, mi, se).unwrap().format("%a, %d %b %Y %H:%M:%S GMT").to_string();
+            proptest::prop_assert_eq!(js_date_to_utc_string(Some(&input)), want);
+        }
+    }
 }
 
 #[cfg(test)]

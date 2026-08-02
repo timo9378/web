@@ -1,4 +1,4 @@
-//! Simkl 觀看紀錄同步（取代已停用的 Trakt 同步，見 docker-compose.yml 的 ENABLE_TRAKT_SYNC）。
+//! Simkl 觀看紀錄同步（取代已移除的 Trakt 同步，見 handlers/watch.rs 檔頭）。
 //!
 //! 背景：Trakt 在 2026-07-30 把「建立 API application」改成 VIP-only，並未預告刪除了免費
 //! 帳號的既有 app（trakt/trakt-web PR #3057；症狀是 refresh 回 "session not found"、

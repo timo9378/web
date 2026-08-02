@@ -337,7 +337,7 @@ async fn tmdb_detail(state: &AppState, kind: &str, id: &Value, locale: &str) -> 
     let path = if kind == "tv" { "tv" } else { "movie" };
     let resp = state
         .http
-        .get(format!("https://api.themoviedb.org/3/{path}/{id_s}?language={lang}"))
+        .get(format!("{}/3/{path}/{id_s}?language={lang}", crate::util::tmdb_api()))
         .bearer_auth(&token)
         .header("accept", "application/json")
         .send()
@@ -377,18 +377,10 @@ async fn tmdb_detail(state: &AppState, kind: &str, id: &Value, locale: &str) -> 
         .filter(|&y| y != 0)
         .map(Value::from)
         .unwrap_or(Value::Null);
-    // runtime（分鐘）：movie 直接有 runtime；tv 用 episode_run_time[0]。給進度條算穩定 duration。
-    let runtime_min = j
-        .get("runtime")
-        .and_then(|v| v.as_i64())
-        .or_else(|| {
-            j.get("episode_run_time")
-                .and_then(|v| v.as_array())
-                .and_then(|a| a.first())
-                .and_then(|v| v.as_i64())
-        })
-        .filter(|&r| r > 0);
-    let out = json!({ "title": title, "poster_url": poster, "backdrop_url": backdrop, "year": year, "runtime_min": runtime_min });
+    // runtime（分鐘）曾經算在這裡，唯一的讀者是 Trakt 那條「用 duration 推 endsAt」的路徑。
+    // Trakt 移除後就沒有人讀它了——`cargo mutants` 是這樣抓到的：把 `r > 0` 改成 `r >= 0`、
+    // `r < 0`、`r == 0` 測試全綠，因為那個值根本不會被任何斷言看到。一併刪掉。
+    let out = json!({ "title": title, "poster_url": poster, "backdrop_url": backdrop, "year": year });
     state.watch.tmdb_detail.lock().insert(key, out.clone());
     Some(out)
 }
@@ -514,7 +506,8 @@ pub async fn tmdb_search(
         let resp = state
             .http
             .get(format!(
-                "https://api.themoviedb.org/3/search/{kind}?query={}&language=zh-TW&include_adult=false",
+                "{}/3/search/{kind}?query={}&language=zh-TW&include_adult=false",
+                crate::util::tmdb_api(),
                 crate::util::encode_uri_component(&q)
             ))
             .bearer_auth(&token)
@@ -697,7 +690,7 @@ pub async fn delete_favorite(
     }
 }
 
-// ── now-watching（heartbeat push + Trakt 按需輪詢）─────────────────────────
+// ── now-watching（唯一來源＝bahamut heartbeat push）────────────────────────
 
 const NOW_WATCHING_TTL_MS: i64 = 90 * 1000;
 
@@ -726,9 +719,16 @@ async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), 
     crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
 }
 
+/// TTL 的邊界判定，抽出來只為了讓它可測：夾在 `now_ms()` 裡面的話，`<` 與 `<=` 的差別
+/// 是「剛好那一毫秒」，任何測試都碰不到，於是這個比較符號可以隨便改而沒有人會知道。
+/// 語意是半開區間 `[started, expires)`——`expires_at` 當下那一刻已經算過期。
+fn is_live(now: i64, expires_at: i64) -> bool {
+    now < expires_at
+}
+
 fn current_now_watching(state: &AppState) -> Option<NowWatching> {
     let g = state.watch.now.lock();
-    g.as_ref().filter(|(_, expires_at)| now_ms() < *expires_at).map(|(w, _)| w.clone())
+    g.as_ref().filter(|(_, expires_at)| is_live(now_ms(), *expires_at)).map(|(w, _)| w.clone())
 }
 
 fn tmdb_url_for(kind: &str, id: &Value) -> Value {
@@ -851,4 +851,103 @@ pub async fn heartbeat(
 pub async fn watch_now(State(state): State<AppState>) -> Response {
     // 不再需要 remove("expiresAt")：過期時間存在 state 的另一半，本來就不在這個型別裡。
     Json(WatchNowResponse { watching: current_now_watching(&state) }).into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn lq(v: Option<&str>) -> LimitQuery {
+        LimitQuery { limit: v.map(str::to_owned) }
+    }
+
+    #[test]
+    fn js_limit_無值或空字串都走預設() {
+        assert_eq!(js_limit(&lq(None), "50", 200), 50);
+        // 空字串在 JS 是 `limit || default` 的 falsy 側，不是「parseInt('') → NaN」
+        assert_eq!(js_limit(&lq(Some("")), "50", 200), 50);
+    }
+
+    #[test]
+    fn js_limit_解不出數字時回負一而不是_null() {
+        // 這條是回歸測試：綁 NULL 會讓 SQLite 回 `datatype mismatch`，
+        // 於是 `/api/films/recent?limit=abc` 這種公開免認證請求變成 500。
+        assert_eq!(js_limit(&lq(Some("abc")), "50", 200), -1);
+        assert_eq!(js_limit(&lq(Some("  ")), "50", 200), -1);
+    }
+
+    #[test]
+    fn js_limit_照抄_parse_int_的前綴語意並套上限() {
+        assert_eq!(js_limit(&lq(Some("12abc")), "50", 200), 12);
+        assert_eq!(js_limit(&lq(Some("999")), "50", 200), 200, "超過 cap 要被夾");
+        assert_eq!(js_limit(&lq(Some("199")), "50", 200), 199, "cap 邊界內不動");
+        assert_eq!(js_limit(&lq(Some("-5")), "50", 200), -5, "負數是 SQLite 的「無上限」，不夾");
+    }
+
+    #[test]
+    fn tmdb_lang_五個語系各自對應_其餘回_none() {
+        assert_eq!(tmdb_lang("zh-TW"), Some("zh-TW"));
+        assert_eq!(tmdb_lang("zh-CN"), Some("zh-CN"));
+        assert_eq!(tmdb_lang("en"), Some("en-US"));
+        assert_eq!(tmdb_lang("ja"), Some("ja-JP"));
+        assert_eq!(tmdb_lang("ko"), Some("ko-KR"));
+        // None 這一側有意義：favorites 用它判斷 locale 合不合法，回 Some 就會把亂值送去 TMDb
+        assert_eq!(tmdb_lang("de"), None);
+        assert_eq!(tmdb_lang("zh"), None);
+        assert_eq!(tmdb_lang(""), None);
+    }
+
+    #[test]
+    fn clamp_rating_照抄_js_的_to_number_再夾到一到五() {
+        assert_eq!(clamp_rating(&json!(3)), Some(3.0));
+        assert_eq!(clamp_rating(&json!(7)), Some(5.0));
+        assert_eq!(clamp_rating(&json!(-3)), Some(1.0));
+        assert_eq!(clamp_rating(&json!(1)), Some(1.0), "下界含本身");
+        assert_eq!(clamp_rating(&json!(5)), Some(5.0), "上界含本身");
+        assert_eq!(clamp_rating(&Value::Null), Some(1.0), "Number(null) === 0 → 夾成 1");
+        assert_eq!(clamp_rating(&json!("3.5")), Some(3.5));
+        assert_eq!(clamp_rating(&json!("  4  ")), Some(4.0), "前後空白 JS 會忽略");
+        assert_eq!(clamp_rating(&json!("")), Some(1.0), "Number('') === 0");
+        // bool 這條分支容易被當成不可能發生而刪掉，但 JSON body 是使用者送的，
+        // `{"rating": true}` 完全合法：JS 的 Number(true)===1、Number(false)===0
+        assert_eq!(clamp_rating(&json!(true)), Some(1.0));
+        assert_eq!(clamp_rating(&json!(false)), Some(1.0), "0 夾上來也是 1，但不能變成 NULL");
+    }
+
+    #[test]
+    fn clamp_rating_算不出數字時回_none_以便綁_null() {
+        // NaN 在 JS 會一路傳染到 SQL 綁值，這裡改成 None → 綁 NULL，不是夾成 1
+        assert_eq!(clamp_rating(&json!("abc")), None);
+        assert_eq!(clamp_rating(&json!([1, 2])), None);
+        assert_eq!(clamp_rating(&json!({"a": 1})), None);
+    }
+
+    #[test]
+    fn is_live_的邊界是半開區間() {
+        assert!(is_live(0, 1));
+        assert!(is_live(89_999, 90_000));
+        assert!(!is_live(90_000, 90_000), "剛好到期那一刻算過期，不是還活著");
+        assert!(!is_live(90_001, 90_000));
+    }
+
+    #[test]
+    fn timing_safe_eq_長度不同直接否_同長逐位元比() {
+        assert!(timing_safe_eq(b"secret", b"secret"));
+        assert!(!timing_safe_eq(b"secret", b"secrets"), "長度不同");
+        assert!(!timing_safe_eq(b"secret", b"secreT"), "同長但差一位元");
+        assert!(!timing_safe_eq(b"", b"x"));
+        assert!(timing_safe_eq(b"", b""));
+    }
+
+    #[test]
+    fn tmdb_url_for_依_kind_分流_falsy_的_id_回_null() {
+        assert_eq!(tmdb_url_for("movie", &json!(603)), json!("https://www.themoviedb.org/movie/603"));
+        assert_eq!(tmdb_url_for("tv", &json!(1396)), json!("https://www.themoviedb.org/tv/1396"));
+        // 只有 "movie" 走 movie，其餘一律 tv（含空字串這種非預期值）
+        assert_eq!(tmdb_url_for("anime", &json!(7)), json!("https://www.themoviedb.org/tv/7"));
+        // js_truthy：0 與 null 都是 falsy → 不要組出 /movie/0 這種連不到的網址
+        assert_eq!(tmdb_url_for("movie", &Value::Null), Value::Null);
+        assert_eq!(tmdb_url_for("movie", &json!(0)), Value::Null);
+        assert_eq!(tmdb_url_for("movie", &json!("")), Value::Null);
+    }
 }

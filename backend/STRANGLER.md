@@ -94,7 +94,7 @@
 | 94-97 | watch 公開讀：`GET /anime/history` `/films/recent` `/tv/recent` `/watch/stats` | `handlers/watch.rs` | limit 的 `parseInt→Math.min`（NaN→LIMIT NULL 照抄）；NULLS LAST；stats 物件 spread 順序 |
 | 98-101 | `GET/POST /watch/favorites` `PUT/DELETE /watch/favorites/:id` | `handlers/watch.rs` | TMDb 在地化（per kind:id:lang 快取無 TTL）＋DB 快照 fallback；`Cache-Control: no-store`；rating `Math.max(1,Math.min(5,ToNumber))`；quote UTF-16 slice 280；無 404（照抄）|
 | 102 | `GET /watch/tmdb-search` | `handlers/watch.rs` | admin；fetch 不看狀態碼直接 parse（照抄）|
-| 103 | `GET /watch/now` | `handlers/watch.rs` | bahamut push 優先；Trakt **按需+25s 節流**輪詢（token file 讀檔→<7 天到期才 refresh 寫回+chmod600）|
+| 103 | `GET /watch/now` | `handlers/watch.rs` | 純讀記憶體 state。~~Trakt 按需+25s 節流輪詢~~ 已於 2026-08-02 移除（Trakt 刪掉了免費帳號的 app，那支呼叫必定失敗卻仍掛在公開路徑上：實測首發 513ms → 移除後 0.1ms）|
 | 104 | `POST /admin/watch/now` | `handlers/watch.rs` | heartbeat：`bahamutPushAuth`（X-Bahamut-Token constant-time ∥ admin JWT）；videoSn 反查 anime_history enrich；同片保留 startedAt；90s TTL |
 | 105 | `GET /admin/bahamut/status` | `handlers/bahamut.rs` | **anigamer crate**；`bahamutPushAuth`；純讀記憶體 jar+解碼 BAHARUNE。對**live Express** byte-identical（push-token / admin-JWT 兩路徑 + 401 拒絕全一致）|
 | 106 | `POST /admin/bahamut/cookie` | `handlers/bahamut.rs` | cookie 熱抽換（`set_cookies` 內部短鎖，非換 client）+ 觸發 `sync_bahamut_history`。對 live-db 副本跑真 session：回應形狀一致、upsert **冪等**（879 entries / 0 new / 0 covers）、997 列 title/cover/episode **零差異**、enrich 47 填 0 退，剩 3 個 TVSP/劇場版 TMDb 本就無 TV 對應（與 Express 同）|
@@ -113,8 +113,9 @@
 | 120 | `GET /api/health` | `handlers/home.rs` | 純文字 `OK`，byte-identical |
 
 > **watch 域要點**：
-> - **cron 同步（bahamut anigamer SDK / Trakt 歷史）刻意留在 Express**——單寫者原則：`anime/film/tv_history`
->   寫者=Express cron，Rust 只讀；`watch_favorites` 寫者切為 Rust HTTP。`/admin/bahamut/*` 留 proxy（anigamer 輪）。
+> - **bahamut cron 同步刻意留在 Express**——單寫者原則：`anime_history` 寫者=Express cron，Rust 只讀；
+>   `watch_favorites` 寫者切為 Rust HTTP。`/admin/bahamut/*` 留 proxy（anigamer 輪）。
+>   （`film/tv_history` 原本的寫者是 Trakt 同步，已移除；現在的寫者是 Rust 的 Simkl worker。）
 > - **`GET /watch/now` 與 `POST /admin/watch/now` 成對接管**（now-watching 狀態在記憶體，拆開會狀態分裂）。
 > - Trakt token file：Rust 端 `TRAKT_TOKEN_FILE` env（預設 DATABASE_URL 同目錄 `.trakt-token.json`）。
 >   兩邊都「每次讀檔、<7 天才 refresh 寫回」→ 與 Express cron 相容（它也每次重讀檔）；併發 refresh

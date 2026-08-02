@@ -133,8 +133,9 @@ async function main() {
     // 相簿讀既有的測試 fixture（形狀取自線上 manifest），不必準備真的圖片
     GALLERY_MANIFEST_PATH: path.join(ROOT, 'backend/tests/fixtures/gallery_manifest.json'),
     // 第三方同步器一律關掉：E2E 不該打外部 API
-    ENABLE_TRAKT_SYNC: '',
+    // （Trakt 那支已整個移除，不再有對應的 flag）
     ENABLE_BAHAMUT_SYNC: '',
+    ENABLE_SIMKL_SYNC: '',
     RUST_LOG: process.env.RUST_LOG ?? 'warn',
   });
   await waitFor(`http://127.0.0.1:${PORTS.backend}/api/health`, '後端');

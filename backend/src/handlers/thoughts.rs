@@ -417,7 +417,7 @@ async fn enrich_media_ref(http: &reqwest::Client, json: &Map<String, Value>) -> 
         && let Some(id) = &tmdb_id
     {
         let resp = http
-            .get(format!("https://api.themoviedb.org/3/{mt}/{id}?language=zh-TW"))
+            .get(format!("{}/3/{mt}/{id}?language=zh-TW", crate::util::tmdb_api()))
             .bearer_auth(&token)
             .header("accept", "application/json")
             .send()

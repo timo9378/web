@@ -18,7 +18,23 @@ test_tool = "nextest"
 #   net_guard.rs   image-proxy 的 SSRF 防護——守衛被削弱不會有任何症狀
 #   handlers/vitals.rs  p75 的 offset 算式——不會 crash，只會永遠回錯的百分位數
 #   handlers/posts.rs   語系過濾與計數——數字錯了只會變成「側欄寫 4 篇、點進去 0 篇」
+#   handlers/watch.rs   「只對缺海報的列打 TMDb」這種條件——破掉之後功能完全正常，
+#                       只是每次請求多打 N 個外部呼叫。llvm-cov 對此完全無感。
 # 反過來，炸了就會知道的東西（大部分第三方整合的 passthrough）不必花這個時間。
 #
-# 也刻意不進 CI：跑太久，而且分數會被 watch/spotify/mailer/bahamut 這些
-# 本來就沒打算測的整合層（合計 550+ missed）稀釋到失去意義。
+# 也刻意不進 CI：跑太久，而且分數會被 spotify/bahamut/thirdparty 這些還沒測的
+# 整合層稀釋到失去意義。（auth / upload / oauth / mailer / simkl / watch 已逐檔跑過，
+# 全數 0 missed；那幾個檔的分數不必再靠全 repo 跑一次才知道。）
+#
+# ⚠️ util.rs 重跑會看到 **3 個 missed，那三個是等價變異，不要追**：
+# `js_date_to_utc_string` 裡 `era * 146_097` 改成 `/`、以及 dow 那行兩個 `%` 改成 `+`。
+# 146_097 = 20871 × 7（格里曆 400 年週期剛好整數週），而那個值只被星期用到，
+# 所以三種寫法在 mod 7 意義下完全相同——寫不出能分辨的輸入。理由記在 util.rs 該行旁邊。
+#
+# 另一個教訓（gen_slug）：**性質測試不會讓變異分數自動變好**。它原本有兩條 proptest
+# （字元集、全小寫），但「整支函式改成回傳 "xyzzy"」同時滿足這兩條，於是照樣存活。
+# 性質測邊界、定樁測對應，要一起放。
+#
+# ⚠️ 會碰 SQL 的測試不要寫在 `src/**` 的 `#[cfg(test)]` 裡：tests/schema.rs 會掃 src
+# 底下所有字面 SQL 拿去 prepare，認不得 cfg(test)，測試用的 CREATE TABLE 會讓它紅。
+# 放 `backend/tests/` 底下（見 tests/util.rs）。
