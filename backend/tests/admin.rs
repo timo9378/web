@@ -352,3 +352,216 @@ async fn post_round_trip_keeps_i18n_and_status() {
     let (st, _) = admin(&app, "GET", &format!("/api/admin/posts/{id}"), None).await;
     assert_eq!(st, StatusCode::NOT_FOUND, "刪掉之後該查不到");
 }
+
+// ── 文章更新：三態欄位、slug 歷史、標籤 ──────────────────────────────────
+//
+// `admin_update_post` 是後台最大的一支（58 行未覆蓋），也是 PostEditor 每次按儲存
+// 都會打的那支。它的語意全部是「靜靜地錯」那一類：欄位該清的沒清、不該動的被動了、
+// 改了 slug 之後舊網址全部 404。回應一律 200，從外面完全看不出來。
+
+/// 建一篇文章，回它的 id。
+async fn create_post(app: &axum::Router, body: serde_json::Value) -> i64 {
+    let (st, created) = admin(app, "POST", "/api/admin/posts", Some(body)).await;
+    assert!(st.is_success(), "建立文章失敗：{st} {created}");
+    ["data", "post"]
+        .iter()
+        .find_map(|k| created[*k]["id"].as_i64())
+        .or_else(|| created["id"].as_i64())
+        .unwrap_or_else(|| panic!("建立回應要帶 id：{created}"))
+}
+
+async fn get_post(app: &axum::Router, id: i64) -> serde_json::Value {
+    let (_, one) = admin(app, "GET", &format!("/api/admin/posts/{id}"), None).await;
+    if one["post"].is_object() { one["post"].clone() } else { one }
+}
+
+/// **三態**：缺 key → 不動；`""` → 清成 NULL；有值 → 設定。
+///
+/// 這三種都回 200，差別只在資料庫裡。搞錯的後果很具體：
+///   · 「缺 key = 清空」→ PostEditor 只送了改動的欄位，其他語系的譯文全部被抹掉
+///   · 「空字串 = 不動」→ 站長想刪掉某個語系的舊譯文，怎麼刪都刪不掉
+#[tokio::test]
+async fn 更新文章時缺欄位不動_空字串才清空() {
+    let (app, _pool) = test_app().await;
+    let id = create_post(
+        &app,
+        json!({
+            "title": "原標題", "content": "原內文", "excerpt": "原摘要", "category": "技術",
+            "title_en": "EN title", "content_en": "EN body", "excerpt_en": "EN summary",
+            "title_ja": "JA タイトル", "content_ja": "JA 本文",
+        }),
+    )
+    .await;
+
+    // 只送 title —— 其餘一律不該被動到
+    let (st, _) =
+        admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "title": "新標題" }))).await;
+    assert!(st.is_success());
+    let p = get_post(&app, id).await;
+    assert_eq!(p["title"], "新標題");
+    assert_eq!(p["content"], "原內文", "沒送的欄位被動到了");
+    assert_eq!(p["title_en"], "EN title", "沒送的語系欄位被抹掉了——這會吃掉整份譯文");
+    assert_eq!(p["title_ja"], "JA タイトル");
+    assert_eq!(p["category"], "技術");
+
+    // 空字串 → 真的清成 NULL（站長要刪掉舊譯文的唯一方式）
+    let (st, _) = admin(
+        &app,
+        "PUT",
+        &format!("/api/admin/posts/{id}"),
+        Some(json!({ "title_en": "", "content_en": "", "excerpt_en": "" })),
+    )
+    .await;
+    assert!(st.is_success());
+    let p = get_post(&app, id).await;
+    assert!(p["title_en"].is_null(), "空字串應該清成 null，得到 {}", p["title_en"]);
+    assert!(p["content_en"].is_null());
+    assert_eq!(p["title_ja"], "JA タイトル", "只清 en 不該波及 ja");
+    assert_eq!(p["title"], "新標題", "更不該波及主語系");
+}
+
+/// 改 slug 要把舊的存進 `post_slug_history`，舊網址才不會斷。
+/// 這條壞掉的症狀是：站長改了網址，之前所有分享出去的連結全部 404，
+/// 而後台看起來一切正常。
+#[tokio::test]
+async fn 改_slug_會保留舊網址的轉址() {
+    let (app, pool) = test_app().await;
+    let id =
+        create_post(&app, json!({ "title": "會改網址的文章", "content": "內文", "slug": "old-slug" })).await;
+    assert_eq!(get_post(&app, id).await["slug"], "old-slug");
+
+    let (st, _) =
+        admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "slug": "new-slug" }))).await;
+    assert!(st.is_success());
+    assert_eq!(get_post(&app, id).await["slug"], "new-slug");
+
+    let history = sqlx::query_scalar::<_, String>("SELECT old_slug FROM post_slug_history WHERE post_id = ?")
+        .bind(id)
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+    assert_eq!(history, vec!["old-slug"], "舊 slug 沒進 history，之前分享出去的連結會全部 404");
+
+    // 沒帶 slug 的更新不該動到它（也不該多寫一筆歷史）
+    let (st, _) =
+        admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "title": "改標題" }))).await;
+    assert!(st.is_success());
+    assert_eq!(get_post(&app, id).await["slug"], "new-slug");
+    let n: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM post_slug_history WHERE post_id = ?")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(n, 1, "沒改 slug 卻多了一筆歷史");
+}
+
+/// `tags` 帶空陣列＝清空關聯，缺 key＝不動。兩者都回 200。
+#[tokio::test]
+async fn 標籤帶空陣列是清空_不帶則不動() {
+    let (app, pool) = test_app().await;
+    let id = create_post(&app, json!({ "title": "有標籤的文章", "content": "內文", "tags": ["rust"] })).await;
+    let count = |pool: sqlx::SqlitePool, id: i64| async move {
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM post_tags WHERE post_id = ?")
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+    };
+    assert_eq!(count(pool.clone(), id).await, 1, "建立時的標籤沒掛上");
+
+    // 不帶 tags → 關聯不動
+    let (st, _) =
+        admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "title": "改個標題" }))).await;
+    assert!(st.is_success());
+    assert_eq!(count(pool.clone(), id).await, 1, "沒帶 tags 卻把關聯清掉了");
+
+    // 帶空陣列 → 真的清空
+    let (st, _) = admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "tags": [] }))).await;
+    assert!(st.is_success());
+    assert_eq!(count(pool, id).await, 0, "帶空陣列應該清空關聯");
+}
+
+/// `source_language` 只接受五個語系。它會決定編輯器把內容寫進哪一組欄位，
+/// 收了亂值等於資料寫到不存在的語系去。
+#[tokio::test]
+async fn 無效的_source_language_會被擋下() {
+    let (app, _pool) = test_app().await;
+    let id = create_post(&app, json!({ "title": "文章", "content": "內文" })).await;
+
+    for bad in [json!("de"), json!("zh"), json!(""), json!(123), json!(null)] {
+        let (st, body) =
+            admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "source_language": bad })))
+                .await;
+        assert_eq!(st, StatusCode::BAD_REQUEST, "source_language={bad} 應該被擋，得到 {body}");
+        assert!(body["error"].as_str().unwrap().contains("source_language"));
+    }
+    for ok in ["zh-TW", "zh-CN", "en", "ja", "ko"] {
+        let (st, _) =
+            admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "source_language": ok })))
+                .await;
+        assert!(st.is_success(), "{ok} 應該放行");
+    }
+}
+
+/// `series_order` 是數字欄位但表單送過來的是字串；三態同其他欄位。
+#[tokio::test]
+async fn 系列順序接受字串數字_空字串則清空() {
+    let (app, _pool) = test_app().await;
+    let id = create_post(&app, json!({ "title": "系列文", "content": "內文" })).await;
+
+    let put = |body: serde_json::Value| {
+        let app = app.clone();
+        async move { admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(body)).await }
+    };
+
+    let (st, _) = put(json!({ "series_name": "測試系列", "series_order": "3" })).await;
+    assert!(st.is_success());
+    let p = get_post(&app, id).await;
+    assert_eq!(p["series_name"], "測試系列");
+    assert_eq!(p["series_order"], 3, "字串的 \"3\" 要存成數字 3");
+
+    // 空字串 → 清空（站長把文章移出系列）
+    let (st, _) = put(json!({ "series_name": "", "series_order": "" })).await;
+    assert!(st.is_success());
+    let p = get_post(&app, id).await;
+    assert!(p["series_name"].is_null(), "得到 {}", p["series_name"]);
+    assert!(p["series_order"].is_null());
+
+    // 不是數字的字串不該存成 0（那會讓它排到系列最前面）
+    let (st, _) = put(json!({ "series_order": "不是數字" })).await;
+    assert!(st.is_success());
+    assert!(get_post(&app, id).await["series_order"].is_null(), "解不出數字要留 null，不是 0");
+}
+
+/// `allow_comments` 走 JS truthy：表單可能送 boolean、0/1、"true"。
+#[tokio::test]
+async fn 留言開關照_js_truthy_解讀() {
+    let (app, _pool) = test_app().await;
+    let id = create_post(&app, json!({ "title": "文章", "content": "內文" })).await;
+
+    // 回應是 typed struct（bool），不是 row_to_json 的 0/1
+    for (given, want) in [
+        (json!(false), false),
+        (json!(true), true),
+        (json!(0), false),
+        (json!(1), true),
+        (json!(""), false),
+        (json!("false"), true), // 非空字串在 JS 是 truthy——照抄，不是筆誤
+    ] {
+        let (st, _) =
+            admin(&app, "PUT", &format!("/api/admin/posts/{id}"), Some(json!({ "allow_comments": given })))
+                .await;
+        assert!(st.is_success());
+        assert_eq!(get_post(&app, id).await["allow_comments"], want, "allow_comments={given}");
+    }
+}
+
+/// 更新不存在的文章要 404，而不是「成功但什麼都沒改」。
+#[tokio::test]
+async fn 更新不存在的文章是_404() {
+    let (app, _pool) = test_app().await;
+    let (st, body) =
+        admin(&app, "PUT", "/api/admin/posts/999999", Some(json!({ "title": "改一個不存在的" }))).await;
+    assert_eq!(st, StatusCode::NOT_FOUND, "得到 {body}");
+    assert_eq!(body["error"], "文章不存在");
+}

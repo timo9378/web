@@ -492,6 +492,40 @@ pub fn spawn_sync(state: AppState) {
 mod sync_lock_tests {
     use super::*;
 
+    /// 動畫瘋的標題帶季數／中括號標記，拿去查 TMDb 之前要正規化。
+    ///
+    /// 這支錯了不會有錯誤訊息：TMDb 查不到 → tmdb_id 是 null → 那部動畫在
+    /// 「正在看」與影集牆上就是**沒有封面的一格灰底**。而它出錯的方式很細，
+    /// 例如把「第一季」的規則寫成不錨定行尾，會連片名裡的「第一次」都吃掉。
+    #[test]
+    fn simplify_anime_title_只去掉季數標記不動片名() {
+        // 括號裡的「第 N 季」
+        assert_eq!(simplify_anime_title("葬送的芙莉蓮（第二季）"), "葬送的芙莉蓮");
+        assert_eq!(simplify_anime_title("孤獨搖滾 (第 2 季)"), "孤獨搖滾");
+        // 行尾的「第 N 季／期」（中文數字與阿拉伯數字都要）
+        assert_eq!(simplify_anime_title("進擊的巨人 第三季"), "進擊的巨人");
+        assert_eq!(simplify_anime_title("咒術迴戰 第2期"), "咒術迴戰");
+        assert_eq!(simplify_anime_title("鬼滅之刃 第十二季"), "鬼滅之刃");
+        // 行尾的 S2 / Season 2
+        assert_eq!(simplify_anime_title("SPY×FAMILY S2"), "SPY×FAMILY");
+        assert_eq!(simplify_anime_title("Vinland Saga Season 2"), "Vinland Saga");
+        // 中括號標記
+        assert_eq!(simplify_anime_title("[中文字幕] 電鋸人"), "電鋸人");
+        assert_eq!(simplify_anime_title("轉生史萊姆[劇場版]"), "轉生史萊姆");
+        // 全形冒號換半形（TMDb 的資料用半形）
+        assert_eq!(simplify_anime_title("刀劍神域：序列爭戰"), "刀劍神域:序列爭戰");
+        // 多餘空白收成一個並 trim
+        assert_eq!(simplify_anime_title("  空白   很多   的片名  "), "空白 很多 的片名");
+
+        // ⚠ 不該被誤傷的：季數規則錨定行尾，片名中間的「第…」要留著
+        assert_eq!(simplify_anime_title("我的第一次戀愛"), "我的第一次戀愛");
+        assert_eq!(simplify_anime_title("第五人格"), "第五人格");
+        assert_eq!(simplify_anime_title("三月的獅子"), "三月的獅子");
+        // 沒有任何標記的原樣返回
+        assert_eq!(simplify_anime_title("戀愛可以持續到天長地久"), "戀愛可以持續到天長地久");
+        assert_eq!(simplify_anime_title(""), "");
+    }
+
     /// BAHAMUT_COOKIE 是 process 全域的，而 `build_state` 在建 state 時就會讀它。
     static COOKIE_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
         std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
