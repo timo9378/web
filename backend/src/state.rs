@@ -58,6 +58,15 @@ pub struct ExternalUrls {
     /// Spotify 帳號服務——只放 token 交換那條。
     /// `/authorize` 那個是回給瀏覽器跳轉的目的地不是我們發的請求，留在 spotify.rs 裡當字面值。
     pub spotify_accounts: String,
+    /// 每日名言的四個來源（handlers/quote.rs）。
+    ///
+    /// 分成四個欄位而不是一個 base：它們是四個不同的站，路徑也各自不同。
+    /// 不注入的話 `quote_daily` 的測試會真的打到那四個站——而且在 CI 上**可能會成功**，
+    /// 於是測試結果取決於別人的服務今天有沒有掛，那比沒有測試更糟。
+    pub hitokoto: String,
+    pub zenquotes: String,
+    pub meigen: String,
+    pub korean_advice: String,
 }
 
 impl Default for ExternalUrls {
@@ -71,6 +80,10 @@ impl Default for ExternalUrls {
             openlibrary: "https://openlibrary.org".into(),
             spotify_api: "https://api.spotify.com".into(),
             spotify_accounts: "https://accounts.spotify.com".into(),
+            hitokoto: "https://v1.hitokoto.cn".into(),
+            zenquotes: "https://zenquotes.io".into(),
+            meigen: "https://meigen.doodlenote.net".into(),
+            korean_advice: "https://korean-advice-open-api.vercel.app".into(),
         }
     }
 }
@@ -90,6 +103,10 @@ impl ExternalUrls {
             openlibrary: format!("{base}/openlibrary"),
             spotify_api: format!("{base}/spotify-api"),
             spotify_accounts: format!("{base}/spotify-accounts"),
+            hitokoto: format!("{base}/hitokoto"),
+            zenquotes: format!("{base}/zenquotes"),
+            meigen: format!("{base}/meigen"),
+            korean_advice: format!("{base}/korean-advice"),
         }
     }
 }

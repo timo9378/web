@@ -59,31 +59,10 @@ async fn fetch_json_lenient(
     Ok(v)
 }
 
-/// JS `new Date(ms).toISOString()`（YYYY-MM-DDTHH:MM:SS.mmmZ）。
-fn iso_from_millis(ms: i64) -> String {
-    let days = ms.div_euclid(86_400_000);
-    let rem = ms.rem_euclid(86_400_000);
-    let (y, m, d) = civil_from_days(days);
-    let h = rem / 3_600_000;
-    let mi = rem % 3_600_000 / 60_000;
-    let s = rem % 60_000 / 1000;
-    let mil = rem % 1000;
-    format!("{y:04}-{m:02}-{d:02}T{h:02}:{mi:02}:{s:02}.{mil:03}Z")
-}
-
-/// Howard Hinnant civil_from_days（days since 1970-01-01 → (y,m,d)）。
-fn civil_from_days(z: i64) -> (i64, u32, u32) {
-    let z = z + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
-    (if m <= 2 { y + 1 } else { y }, m, d)
-}
+// ⚠️ `iso_from_millis` 與 `civil_from_days` 原本在這裡也有一份，跟 util.rs 那份
+// 逐字相同。手刻的曆法算式最怕兩份各自演化——錯了不會爆，只會讓某個日期差一天。
+// 已經合併到 util.rs，那邊有「逐日對照 chrono 走完 1900–2200」的測試罩著。
+use crate::util::{civil_from_days, iso_from_millis};
 
 /// 今日 UTC 日期字串（`new Date().toISOString().split('T')[0]`）。
 fn today_utc() -> String {
@@ -1607,6 +1586,51 @@ mod tests {
         assert!(v["login"].is_null(), "失敗時不該有半個看起來正常的欄位");
     }
 
+    /// 上游回的**根本不是 JSON**（Cloudflare 擋頁、502 的 HTML…）走的是另一條分支：
+    /// 前一條測的是「合法 JSON 但內容是錯誤物件」。兩條都要有訊息，
+    /// 否則前端拿到的是一個所有欄位都是 null 又沒有 error 的使用者物件。
+    #[tokio::test]
+    async fn github_user_回應不是_json_時也要有錯誤訊息() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("<html>502 Bad Gateway</html>"))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let resp = github_user(axum::extract::State(st), axum::extract::Path("u".into())).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let v = body_of(resp).await;
+        assert_eq!(v["error"], GH_PARSE_ERR);
+        assert!(v["login"].is_null());
+    }
+
+    #[tokio::test]
+    async fn steam_player_回應不是_json_時也要有錯誤訊息() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 靠 STEAM_ENV_LOCK 串行化。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "1");
+        }
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUser/GetPlayerSummaries/v0002/"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("not json at all"))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let resp = steam_player(axum::extract::State(st)).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body_of(resp).await["error"], STEAM_PARSE_ERR);
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
     /// 正常路徑：只回我們宣告的那五欄，上游多給的欄位不轉發。
     #[tokio::test]
     async fn github_user_returns_only_the_declared_fields() {
@@ -1698,5 +1722,1363 @@ mod tests {
             std::env::remove_var("STEAM_API_KEY");
             std::env::remove_var("STEAM_ID");
         }
+    }
+
+    // ── WakaTime ──────────────────────────────────────────────────────────
+    //
+    // 這一整塊在補之前是 0 覆蓋。它全部是「重新塑形上游回應」的程式：塑錯了不會
+    // crash，前端只會拿到 undefined 然後畫出一片空白，而且沒有任何錯誤訊息。
+
+    /// WAKATIME_API_KEY 同樣是 process 全域，理由同 STEAM_ENV_LOCK。
+    static WAKA_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    /// 設好 key、跑完自動還原。回傳的 guard 一 drop 就清掉。
+    // 這個欄位不會被讀，只是把鎖握到 guard 被 drop 為止（env 是 process 全域的）。
+    struct WakaKey(#[allow(dead_code)] tokio::sync::MutexGuard<'static, ()>);
+    impl Drop for WakaKey {
+        fn drop(&mut self) {
+            // SAFETY: 靠 WAKA_ENV_LOCK 串行化（guard 還握在手上）。
+            unsafe { std::env::remove_var("WAKATIME_API_KEY") };
+        }
+    }
+    async fn with_waka_key() -> WakaKey {
+        let g = WAKA_ENV_LOCK.lock().await;
+        // SAFETY: 同上。
+        unsafe { std::env::set_var("WAKATIME_API_KEY", "test-waka-key") };
+        WakaKey(g)
+    }
+
+    #[test]
+    fn waka_auth_是_base64_的_basic() {
+        // 打錯就是每一次請求都 401，而 handler 會把它包成 error 欄位回 200 給前端——
+        // 看起來像「今天沒寫程式」而不是「認證壞了」。
+        assert_eq!(waka_auth("abc"), "Basic YWJj");
+        assert_eq!(waka_auth(""), "Basic ");
+    }
+
+    #[test]
+    fn waka_stats_from_跳過沒有名字的列並補預設值() {
+        let v = json!([
+            { "name": "Rust", "text": "10 hrs", "percent": 62.5 },
+            { "name": "TypeScript" },                      // 缺 text/percent → 補預設
+            { "text": "沒有名字", "percent": 100 },          // 缺 name → 整列不收
+        ]);
+        let out = waka_stats_from(&v);
+        assert_eq!(out.len(), 2, "缺 name 的那列要被丟掉");
+        assert_eq!(out[0].name, "Rust");
+        assert_eq!(out[0].percent, 62.5);
+        assert_eq!(out[1].name, "TypeScript");
+        assert_eq!(out[1].text, "", "缺 text 補空字串，不是 null");
+        assert_eq!(out[1].percent, 0.0);
+        // 不是陣列時回空陣列而不是 panic——前端直接 .map，給 null 會炸
+        assert!(waka_stats_from(&Value::Null).is_empty());
+        assert!(waka_stats_from(&json!({ "languages": [] })).is_empty());
+    }
+
+    #[test]
+    fn waka_err_parts_把上游的_body_轉成_details_字串() {
+        let (st, err, det) = waka_err_parts("kind", (StatusCode::UNAUTHORIZED, Value::from("Unauthorized")));
+        assert_eq!(st, StatusCode::UNAUTHORIZED, "上游的狀態碼要原樣帶出來");
+        assert_eq!(err.as_deref(), Some("kind"));
+        assert_eq!(det.as_deref(), Some("Unauthorized"), "字串就原樣放，不要再包一層引號");
+
+        let (_, _, det) = waka_err_parts("kind", (StatusCode::BAD_GATEWAY, json!({ "error": "nope" })));
+        assert_eq!(det.as_deref(), Some(r#"{"error":"nope"}"#), "物件轉成 JSON 字串");
+
+        let (_, _, det) = waka_err_parts("kind", (StatusCode::BAD_GATEWAY, Value::Null));
+        assert_eq!(det, None, "沒有 body 就不要生一個 \"null\" 字串出來");
+    }
+
+    #[tokio::test]
+    async fn wakatime_today_把只有一個元素的_data_陣列攤平並算出實際編碼區間() {
+        let _key = with_waka_key().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/summaries"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{ "grand_total": { "text": "3 hrs 12 mins", "total_seconds": 11520.0 } }],
+                "start": "2026-08-02T00:00:00Z",
+                "end": "2026-08-02T23:59:59Z",
+            })))
+            .mount(&server)
+            .await;
+        // 刻意亂序：actualCodingTime 要取 min(time) 與 max(time+duration)，不是第一筆與最後一筆
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/durations"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [
+                    { "time": 1_770_000_600.0, "duration": 600.0 },
+                    { "time": 1_770_000_000.0, "duration": 120.0 },
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(wakatime_today(axum::extract::State(st)).await).await;
+
+        // 查的日期必須真的是「今天」。這條看起來瑣碎，但 today_utc 回空字串或亂值時
+        // WakaTime 會回一片空白，而畫面上就是「今天沒寫程式」——沒有任何錯誤。
+        let (y, m, d) = crate::util::civil_from_days(
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64
+                / 86_400_000,
+        );
+        let today = format!("{y:04}-{m:02}-{d:02}");
+        let reqs = server.received_requests().await.unwrap();
+        let summ = reqs.iter().find(|r| r.url.path().ends_with("/summaries")).unwrap();
+        let qp = |r: &wiremock::Request, k: &str| {
+            r.url.query_pairs().find(|(a, _)| a == k).map(|(_, v)| v.into_owned())
+        };
+        assert_eq!(qp(summ, "start").as_deref(), Some(today.as_str()), "start 要是今天");
+        assert_eq!(qp(summ, "end").as_deref(), Some(today.as_str()), "end 也是今天（單日查詢）");
+        let dur = reqs.iter().find(|r| r.url.path().ends_with("/durations")).unwrap();
+        assert_eq!(qp(dur, "date").as_deref(), Some(today.as_str()));
+
+        assert_eq!(v["grand_total"]["text"], "3 hrs 12 mins", "data[0] 那層要被攤掉");
+        assert_eq!(v["grand_total"]["total_seconds"], 11520);
+        assert_eq!(v["start"], "2026-08-02T00:00:00Z");
+        assert_eq!(v["actualCodingTime"]["hasData"], true);
+        assert_eq!(
+            v["actualCodingTime"]["start"],
+            crate::util::iso_from_millis(1_770_000_000_000),
+            "start 取的是最小的 time，不是陣列第一筆"
+        );
+        assert_eq!(
+            v["actualCodingTime"]["end"],
+            crate::util::iso_from_millis(1_770_001_200_000),
+            "end 取的是最大的 time+duration"
+        );
+        assert!(v["error"].is_null());
+    }
+
+    #[tokio::test]
+    async fn wakatime_today_沒有_durations_時_hasdata_是_false() {
+        let _key = with_waka_key().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/summaries"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": [] })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/durations"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": [] })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(wakatime_today(axum::extract::State(st)).await).await;
+        assert_eq!(v["actualCodingTime"]["hasData"], false);
+        assert!(v["actualCodingTime"]["start"].is_null(), "沒資料時不該生出 1970-01-01");
+        assert!(v["grand_total"].is_null(), "data 是空陣列 → 沒有 grand_total");
+    }
+
+    #[tokio::test]
+    async fn wakatime_today_把上游的錯誤狀態碼與內容帶出來() {
+        let _key = with_waka_key().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/summaries"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(json!({ "error": "Unauthorized" })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/durations"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": [] })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let resp = wakatime_today(axum::extract::State(st)).await;
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "401 不該被吞成 200");
+        let v = body_of(resp).await;
+        assert_eq!(v["error"], "Failed to fetch WakaTime today data");
+        assert!(v["details"].as_str().unwrap().contains("Unauthorized"), "要看得出上游說了什麼");
+    }
+
+    #[tokio::test]
+    async fn wakatime_沒設定_key_時三支都回_500_並說明原因() {
+        let _g = WAKA_ENV_LOCK.lock().await;
+        // SAFETY: 靠 WAKA_ENV_LOCK 串行化。
+        unsafe { std::env::remove_var("WAKATIME_API_KEY") };
+        let server = MockServer::start().await; // 不掛任何 route：一旦有人送請求就會 404
+        let st = state_with_mock(&server).await;
+
+        for resp in [
+            wakatime_today(axum::extract::State(st.clone())).await,
+            wakatime_week(axum::extract::State(st.clone())).await,
+            wakatime_projects(axum::extract::State(st.clone())).await,
+        ] {
+            assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+            let v = body_of(resp).await;
+            assert_eq!(v["error"], WAKA_UNCONFIGURED, "要說得出是「沒設定」而不是「壞了」");
+        }
+        assert!(server.received_requests().await.unwrap().is_empty(), "沒有 key 就不該對外發請求");
+    }
+
+    #[tokio::test]
+    async fn wakatime_week_與_projects_打同一支上游_只有錯誤字串不同() {
+        let _key = with_waka_key().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/stats/last_7_days"))
+            .respond_with(ResponseTemplate::new(500).set_body_json(json!({ "error": "boom" })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        let w = body_of(wakatime_week(axum::extract::State(st.clone())).await).await;
+        let p = body_of(wakatime_projects(axum::extract::State(st)).await).await;
+        assert_eq!(w["error"], "Failed to fetch WakaTime week data");
+        assert_eq!(p["error"], "Failed to fetch WakaTime projects data");
+        // details 是「上游到底說了什麼」——只有 error 的話查起來完全沒有線索
+        assert!(w["details"].as_str().unwrap().contains("boom"), "得到 {}", w["details"]);
+        assert!(w["languages"].is_array(), "出錯時陣列欄位也要在（前端直接 .map）");
+        // 兩支打的是同一個路徑（Express 就這樣，照抄）——這條把那件事釘住
+        let paths: Vec<String> =
+            server.received_requests().await.unwrap().iter().map(|r| r.url.path().to_string()).collect();
+        assert_eq!(paths.len(), 2);
+        assert_eq!(paths[0], paths[1], "week 與 projects 是同一支上游 API");
+    }
+
+    #[tokio::test]
+    async fn wakatime_week_把_data_攤成_languages_與_projects() {
+        let _key = with_waka_key().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/wakatime/api/v1/users/current/stats/last_7_days"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": {
+                    "languages": [{ "name": "Rust", "text": "9 hrs", "percent": 70.0 }],
+                    "projects": [{ "name": "web", "text": "5 hrs", "percent": 40.0 }],
+                    // 上游還會給 editors / machines / …，不該轉發
+                    "editors": [{ "name": "VS Code", "text": "9 hrs", "percent": 100.0 }],
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(wakatime_week(axum::extract::State(st)).await).await;
+        assert_eq!(v["languages"][0]["name"], "Rust");
+        assert_eq!(v["projects"][0]["name"], "web");
+        assert!(v.get("editors").is_none(), "只留前端會 render 的兩組");
+        assert!(v.get("data").is_none(), "data 那層要被攤掉");
+    }
+
+    // ── GitHub ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn github_event_from_缺必要欄位就整筆不收() {
+        // 這四欄是 render 一列的必需品，缺了留著只會是一列空白
+        let full = json!({
+            "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+            "repo": { "name": "timo9378/web" },
+        });
+        assert!(github_event_from(&full).is_some());
+        for missing in ["id", "type", "created_at"] {
+            let mut ev = full.clone();
+            ev.as_object_mut().unwrap().remove(missing);
+            assert!(github_event_from(&ev).is_none(), "缺 {missing} 應該整筆不收");
+        }
+        let mut no_repo = full.clone();
+        no_repo["repo"] = json!({});
+        assert!(github_event_from(&no_repo).is_none(), "缺 repo.name 也一樣");
+    }
+
+    #[test]
+    fn github_event_from_的_commits_缺_sha_就跳過該筆() {
+        let ev = json!({
+            "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+            "repo": { "name": "timo9378/web" },
+            "payload": {
+                "before": "aaa", "head": "bbb", "size": 2,
+                "commits": [
+                    { "sha": "c1", "message": "第一筆", "author": { "name": "Koi", "email": "k@example.com" } },
+                    { "message": "沒有 sha 的不收" },
+                    { "sha": "c3" },
+                ],
+            },
+        });
+        let e = github_event_from(&ev).expect("完整事件");
+        assert_eq!(e.kind, "PushEvent");
+        assert_eq!(e.repo.name, "timo9378/web");
+        assert_eq!(e.payload.before.as_deref(), Some("aaa"));
+        assert_eq!(e.payload.size, Some(2));
+        assert_eq!(e.payload.commits.len(), 2, "缺 sha 的那筆要跳過");
+        assert_eq!(e.payload.commits[0].message, "第一筆");
+        assert_eq!(e.payload.commits[0].author.as_ref().unwrap().name.as_deref(), Some("Koi"));
+        assert_eq!(e.payload.commits[1].message, "", "缺 message 補空字串");
+        assert!(e.payload.commits[1].author.is_none());
+    }
+
+    #[test]
+    fn github_event_from_沒有_payload_也不會炸() {
+        let ev = json!({
+            "id": "1", "type": "WatchEvent", "created_at": "2026-08-02T00:00:00Z",
+            "repo": { "name": "a/b" },
+        });
+        let e = github_event_from(&ev).expect("沒有 payload 的事件仍然有效");
+        assert!(e.payload.commits.is_empty());
+        assert!(e.payload.before.is_none());
+        assert!(e.payload.size.is_none());
+    }
+
+    #[tokio::test]
+    async fn github_repos_丟掉缺必要欄位的列並補齊選填欄位() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/timo9378/repos"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+                { "id": 1, "name": "web", "html_url": "https://github.com/timo9378/web",
+                  "description": null, "language": "Rust", "stargazers_count": 7 },
+                { "id": 2, "name": "沒有網址的" },                 // 缺 html_url → 不收
+                { "name": "沒有 id 的", "html_url": "https://x/" }, // 缺 id → 不收
+            ])))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            github_repos(
+                axum::extract::State(st),
+                axum::extract::Path("timo9378".into()),
+                axum::extract::Query(ReposQuery { limit: None }),
+            )
+            .await,
+        )
+        .await;
+        let repos = v["repos"].as_array().unwrap();
+        assert_eq!(repos.len(), 1, "兩筆殘缺的要被丟掉");
+        assert_eq!(repos[0]["name"], "web");
+        assert!(repos[0]["description"].is_null());
+        assert_eq!(repos[0]["stargazers_count"], 7);
+        assert!(v["error"].is_null());
+    }
+
+    #[tokio::test]
+    async fn github_repos_的_limit_夾在一到一百() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/repos"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        for (given, want) in [(None, "5"), (Some(0), "1"), (Some(999), "100"), (Some(20), "20")] {
+            let _ = github_repos(
+                axum::extract::State(st.clone()),
+                axum::extract::Path("u".into()),
+                axum::extract::Query(ReposQuery { limit: given }),
+            )
+            .await;
+            let last = server.received_requests().await.unwrap().pop().unwrap();
+            let per_page = last.url.query_pairs().find(|(k, _)| k == "per_page").unwrap().1.into_owned();
+            assert_eq!(per_page, want, "limit={given:?} 應該送出 per_page={want}");
+        }
+    }
+
+    /// 有設 GITHUB_TOKEN 就要真的帶上去。沒帶的話 REST 只剩每小時 60 次的匿名額度，
+    /// 撞到之後 GitHub 回錯誤物件 → 前端顯示「這個人沒有任何 repo」。
+    #[tokio::test]
+    async fn github_repos_有_token_時會帶上_authorization() {
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/repos"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let _ = github_repos(
+            axum::extract::State(st),
+            axum::extract::Path("u".into()),
+            axum::extract::Query(ReposQuery { limit: None }),
+        )
+        .await;
+        let req = server.received_requests().await.unwrap().pop().unwrap();
+        let auth = req.headers.get("authorization").map(|v| v.to_str().unwrap().to_string());
+        assert_eq!(auth.as_deref(), Some("Bearer test-gh-token"));
+    }
+
+    #[tokio::test]
+    async fn github_repos_遇到錯誤物件時把_message_放進_error() {
+        // GitHub 的錯誤是物件不是陣列；不處理的話 `as_array()` 失敗會變成空清單 + 沒有錯誤，
+        // 前端顯示「這個人沒有任何 repo」——把 rate limit 說成事實。
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/repos"))
+            .respond_with(
+                ResponseTemplate::new(403).set_body_json(json!({ "message": "API rate limit exceeded" })),
+            )
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            github_repos(
+                axum::extract::State(st),
+                axum::extract::Path("u".into()),
+                axum::extract::Query(ReposQuery { limit: None }),
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(v["error"], "API rate limit exceeded");
+        assert_eq!(v["repos"].as_array().unwrap().len(), 0);
+    }
+
+    /// GITHUB_TOKEN 同樣是 process 全域。
+    static GH_ENV_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
+    // 這個欄位不會被讀，只是把鎖握到 guard 被 drop 為止（env 是 process 全域的）。
+    struct GhToken(#[allow(dead_code)] tokio::sync::MutexGuard<'static, ()>);
+    impl Drop for GhToken {
+        fn drop(&mut self) {
+            // SAFETY: 靠 GH_ENV_LOCK 串行化。
+            unsafe { std::env::remove_var("GITHUB_TOKEN") };
+        }
+    }
+    async fn with_gh_token() -> GhToken {
+        let g = GH_ENV_LOCK.lock().await;
+        // SAFETY: 同上。
+        unsafe { std::env::set_var("GITHUB_TOKEN", "test-gh-token") };
+        GhToken(g)
+    }
+
+    #[tokio::test]
+    async fn github_contributions_把週攤平成日並帶出總數() {
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/github/graphql"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": { "user": { "contributionsCollection": { "contributionCalendar": {
+                    "totalContributions": 123,
+                    "weeks": [
+                        { "contributionDays": [
+                            { "date": "2026-01-01", "contributionCount": 3 },
+                            { "date": "2026-01-02", "contributionCount": 0 },
+                        ]},
+                        { "contributionDays": [{ "date": "2026-01-03", "contributionCount": 5 }]},
+                    ],
+                }}}}
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            github_contributions(
+                axum::extract::State(st),
+                axum::extract::Path("u".into()),
+                axum::extract::Query(ContributionsQuery { year: None }),
+            )
+            .await,
+        )
+        .await;
+        let days = v["contributions"].as_array().unwrap();
+        assert_eq!(days.len(), 3, "兩週共三天要被攤成一個平陣列");
+        assert_eq!(days[0]["date"], "2026-01-01");
+        assert_eq!(days[2]["count"], 5);
+        assert_eq!(v["total"], 123);
+        assert!(v["error"].is_null());
+    }
+
+    #[tokio::test]
+    async fn github_contributions_的_graphql_錯誤是_200_加_errors_不是狀態碼() {
+        // 這是 GraphQL 的特性：查詢失敗照樣回 200。只看狀態碼的話會把錯誤當成
+        // 「這個人今年一次貢獻都沒有」畫出一張全白的熱圖。
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/github/graphql"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "errors": [{ "message": "Could not resolve to a User with the login of 'nobody'." }]
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            github_contributions(
+                axum::extract::State(st),
+                axum::extract::Path("nobody".into()),
+                axum::extract::Query(ContributionsQuery { year: None }),
+            )
+            .await,
+        )
+        .await;
+        assert!(v["error"].as_str().unwrap().contains("Could not resolve"));
+        assert_eq!(v["total"], 0);
+        assert_eq!(v["contributions"].as_array().unwrap().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn github_contributions_的_year_只接受四位數字() {
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/github/graphql"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": {} })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        // year 會被拼進 GraphQL 的時間字串，所以它是注入面——擋在送出之前
+        for bad in ["20xx", "12345", "2026'", "", "1"] {
+            let v = body_of(
+                github_contributions(
+                    axum::extract::State(st.clone()),
+                    axum::extract::Path("u".into()),
+                    axum::extract::Query(ContributionsQuery { year: Some(bad.to_string()) }),
+                )
+                .await,
+            )
+            .await;
+            assert_eq!(v["error"], "year 格式不正確", "year={bad:?} 應該被擋下");
+        }
+        assert!(server.received_requests().await.unwrap().is_empty(), "格式不對就不該送出查詢");
+
+        // 合法的四位數字與 "last" 都要放行
+        for ok in ["2026", "last"] {
+            let v = body_of(
+                github_contributions(
+                    axum::extract::State(st.clone()),
+                    axum::extract::Path("u".into()),
+                    axum::extract::Query(ContributionsQuery { year: Some(ok.to_string()) }),
+                )
+                .await,
+            )
+            .await;
+            assert!(v["error"].is_null(), "year={ok} 應該放行");
+        }
+    }
+
+    #[tokio::test]
+    async fn github_contributions_沒有_token_就不送出查詢() {
+        let _g = GH_ENV_LOCK.lock().await;
+        // SAFETY: 靠 GH_ENV_LOCK 串行化。
+        unsafe { std::env::remove_var("GITHUB_TOKEN") };
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            github_contributions(
+                axum::extract::State(st),
+                axum::extract::Path("u".into()),
+                axum::extract::Query(ContributionsQuery { year: None }),
+            )
+            .await,
+        )
+        .await;
+        assert!(v["error"].as_str().unwrap().contains("GITHUB_TOKEN"));
+        assert!(server.received_requests().await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn github_events_套用_github_event_from_的過濾() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/events/public"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([
+                { "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+                  "repo": { "name": "a/b" }, "payload": { "size": 1 } },
+                { "id": "2", "type": "PushEvent" },  // 殘缺 → 丟掉
+            ])))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_events(axum::extract::State(st), axum::extract::Path("u".into())).await).await;
+        let events = v["events"].as_array().unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0]["type"], "PushEvent", "序列化欄位名是 type 不是 kind");
+        assert_eq!(events[0]["repo"]["name"], "a/b");
+    }
+
+    /// GitHub 的 events API 會把 PushEvent 的 commits 截斷（常常是空陣列），
+    /// 所以有 before/head 時要再去打 compare API 補回來。
+    /// 這段壞掉的話動態牆會顯示「推了 N 個 commit」卻一條訊息都沒有。
+    #[tokio::test]
+    async fn github_events_用_compare_api_補回被截斷的_commits() {
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/events/public"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([{
+                "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+                "repo": { "name": "timo9378/web" },
+                "payload": { "commits": [], "before": "aaa", "head": "bbb", "size": 0 },
+            }])))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/github/repos/timo9378/web/compare/aaa...bbb"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "commits": [
+                    { "sha": "c1", "commit": { "message": "第一個 commit", "author": { "name": "Koi" } } },
+                    { "sha": "c2", "commit": { "message": "第二個 commit", "author": { "name": "Koi" } } },
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_events(axum::extract::State(st), axum::extract::Path("u".into())).await).await;
+        let commits = v["events"][0]["payload"]["commits"].as_array().unwrap();
+        assert_eq!(commits.len(), 2, "compare 回來的 commits 要被填進去");
+        assert_eq!(commits[0]["message"], "第一個 commit", "訊息在 commit.message 那層，要挖出來");
+        assert_eq!(commits[0]["author"]["name"], "Koi");
+        assert_eq!(v["events"][0]["payload"]["size"], 2, "size 要跟著補正，不是留著上游的 0");
+    }
+
+    #[tokio::test]
+    async fn github_events_沒有_token_時不打_compare_api() {
+        // compare 需要認證；沒 token 就不該白跑一趟（也不該因此整筆失敗）
+        let _g = GH_ENV_LOCK.lock().await;
+        // SAFETY: 靠 GH_ENV_LOCK 串行化。
+        unsafe { std::env::remove_var("GITHUB_TOKEN") };
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/events/public"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([{
+                "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+                "repo": { "name": "a/b" },
+                "payload": { "commits": [], "before": "aaa", "head": "bbb" },
+            }])))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_events(axum::extract::State(st), axum::extract::Path("u".into())).await).await;
+        assert_eq!(v["events"].as_array().unwrap().len(), 1, "沒有 commits 也還是要顯示這筆");
+        let paths: Vec<String> =
+            server.received_requests().await.unwrap().iter().map(|r| r.url.path().to_string()).collect();
+        assert!(!paths.iter().any(|p| p.contains("/compare/")), "沒有 token 就不該打 compare");
+    }
+
+    /// 只有「commits 是空的」才需要去補；已經有 commits 的不能再打一次 compare。
+    ///
+    /// `cargo mutants` 指出來的：把那串條件的 `&&` 換成 `||` 測試照樣全綠。
+    /// 後果是每一筆 PushEvent 都多打一次 GitHub API（很快就撞到 rate limit），
+    /// 而且會用 compare 的結果**覆蓋掉原本就正確的 commits**。
+    #[tokio::test]
+    async fn github_events_已經有_commits_時不再打_compare() {
+        let _t = with_gh_token().await;
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/events/public"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([{
+                "id": "1", "type": "PushEvent", "created_at": "2026-08-02T00:00:00Z",
+                "repo": { "name": "a/b" },
+                // commits 非空，但 before/head 也在——這正是 `||` 會誤判的組合
+                "payload": {
+                    "commits": [{ "sha": "已有的", "message": "原本就抓得到" }],
+                    "before": "aaa", "head": "bbb", "size": 1,
+                },
+            }])))
+            .mount(&server)
+            .await;
+        // 刻意不掛 compare：真的去打就會 404，下面的斷言會看到 commits 被清空
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_events(axum::extract::State(st), axum::extract::Path("u".into())).await).await;
+
+        let commits = v["events"][0]["payload"]["commits"].as_array().unwrap();
+        assert_eq!(commits.len(), 1);
+        assert_eq!(commits[0]["sha"], "已有的", "原本就有的 commits 不該被覆蓋");
+        let paths: Vec<String> =
+            server.received_requests().await.unwrap().iter().map(|r| r.url.path().to_string()).collect();
+        assert!(
+            !paths.iter().any(|p| p.contains("/compare/")),
+            "已經有 commits 就不必補，實際打了 {paths:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn github_events_遇到錯誤物件時把_message_放進_error() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/github/users/u/events/public"))
+            .respond_with(
+                ResponseTemplate::new(403).set_body_json(json!({ "message": "API rate limit exceeded" })),
+            )
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let v = body_of(github_events(axum::extract::State(st), axum::extract::Path("u".into())).await).await;
+        assert_eq!(v["error"], "API rate limit exceeded", "不然前端會以為這個人真的沒有動態");
+        assert_eq!(v["events"].as_array().unwrap().len(), 0);
+    }
+
+    // ── Steam 的未配置降級路徑 ────────────────────────────────────────────
+    //
+    // 這條路只有在「金鑰沒設好」時才會走到，平常沒有人經過——正因如此它壞掉了
+    // 也不會有人發現，直到某次換機器忘了帶 env。形狀由 e2e 的 api-contract 也驗一次，
+    // 這裡驗的是狀態碼與訊息。
+
+    #[tokio::test]
+    async fn steam_沒設定金鑰時回_500_且陣列欄位仍然存在() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 靠 STEAM_ENV_LOCK 串行化。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+
+        for resp in [
+            steam_recent_games(axum::extract::State(st.clone())).await,
+            steam_owned_games(axum::extract::State(st.clone())).await,
+        ] {
+            assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+            let v = body_of(resp).await;
+            assert_eq!(v["error"], STEAM_UNCONFIGURED);
+            assert!(v["games"].is_array(), "前端直接 .map，games 一定要是陣列不能是 undefined");
+        }
+
+        let resp = steam_player(axum::extract::State(st.clone())).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body_of(resp).await["error"], STEAM_UNCONFIGURED);
+
+        let resp = steam_achievements(axum::extract::State(st), axum::extract::Path("440".into())).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body_of(resp).await["error"], STEAM_UNCONFIGURED);
+
+        assert!(server.received_requests().await.unwrap().is_empty(), "沒金鑰就不該對外發請求");
+    }
+
+    /// `steam_games` 這個共用 helper 原本只有它裡面的純函式（`steam_games_from`）被測過，
+    /// 整條 HTTP 路徑沒走過——包含「只有 owned-games 才帶 gameCount」這個差別。
+    #[tokio::test]
+    async fn steam_的兩支遊戲清單只有_owned_帶_gamecount() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 靠 STEAM_ENV_LOCK 串行化。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "1");
+        }
+        let server = MockServer::start().await;
+        let body = json!({ "response": {
+            "game_count": 87,
+            "games": [{ "appid": 730, "name": "CS2", "playtime_forever": 9999 }],
+        }});
+        for p in [
+            "/steam-api/IPlayerService/GetRecentlyPlayedGames/v0001/",
+            "/steam-api/IPlayerService/GetOwnedGames/v0001/",
+        ] {
+            Mock::given(method("GET"))
+                .and(path(p))
+                .respond_with(ResponseTemplate::new(200).set_body_json(body.clone()))
+                .mount(&server)
+                .await;
+        }
+        let st = state_with_mock(&server).await;
+
+        let recent = body_of(steam_recent_games(axum::extract::State(st.clone())).await).await;
+        assert_eq!(recent["games"][0]["name"], "CS2");
+        assert!(recent["gameCount"].is_null(), "recent-games 不帶 gameCount（上游有給也不轉發）");
+
+        let owned = body_of(steam_owned_games(axum::extract::State(st.clone())).await).await;
+        assert_eq!(owned["games"][0]["appid"], 730);
+        assert_eq!(owned["gameCount"], 87, "owned-games 才帶 gameCount");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    #[tokio::test]
+    async fn steam_遊戲清單遇到非_json_回應時仍然給得出陣列() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 見上。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "1");
+        }
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/IPlayerService/GetRecentlyPlayedGames/v0001/"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("<html>Steam is down</html>"))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        let resp = steam_recent_games(axum::extract::State(st)).await;
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let v = body_of(resp).await;
+        assert_eq!(v["error"], STEAM_PARSE_ERR);
+        assert!(v["games"].is_array(), "前端直接 .map，錯誤時 games 也不能是 undefined");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    #[tokio::test]
+    async fn steam_achievements_是唯一保留原樣轉發的一支() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 見上。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", "1");
+        }
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUserStats/GetPlayerAchievements/v0001/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "playerstats": { "achievements": [{ "apiname": "A", "achieved": 1 }] }
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v =
+            body_of(steam_achievements(axum::extract::State(st), axum::extract::Path("440".into())).await)
+                .await;
+        // 這支刻意不塑形（註解說明了理由），所以上游的巢狀結構要原樣出現
+        assert_eq!(v["playerstats"]["achievements"][0]["apiname"], "A");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    // ── steam/profile 的 SWR 與 refresh ───────────────────────────────────
+    //
+    // `cargo mutants` 指出來的一整片洞。這裡每一個判斷壞掉都是**沒有症狀**的：
+    // 要嘛個人檔案永遠停在舊資料，要嘛每一次請求都去打 Steam（而 Steam 會限流）。
+
+    /// 用真的 Steam ID 算出 miniprofile 的 accountid。這個減法寫錯的話 miniprofile
+    /// 會抓到別人的頁面或 404 —— 客製全部消失，但個人檔案其他欄位都正常。
+    const STEAM_ID64: &str = "76561198000000000";
+    const ACCOUNT_ID: &str = "39734272"; // 76561198000000000 - 76561197960265728
+
+    /// 掛好 refresh 需要的四支上游。`mini` 是 miniprofile 的 HTML。
+    async fn mount_steam_profile_upstreams(server: &MockServer, mini: &str) {
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUser/GetPlayerSummaries/v0002/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "response": { "players": [{ "personaname": "Koi", "personastate": 1 }] }
+            })))
+            .mount(server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/IPlayerService/GetSteamLevel/v1/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "response": { "player_level": 42 }
+            })))
+            .mount(server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/IPlayerService/GetBadges/v1/"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "response": { "badges": [{}, {}, {}], "player_xp": 100, "player_xp_needed_to_level_up": 200 }
+            })))
+            .mount(server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path(format!("/steam-community/miniprofile/{ACCOUNT_ID}")))
+            .respond_with(ResponseTemplate::new(200).set_body_string(mini))
+            .mount(server)
+            .await;
+    }
+
+    #[tokio::test]
+    async fn refresh_steam_profile_合併四支上游並算對_miniprofile_的_accountid() {
+        let server = MockServer::start().await;
+        mount_steam_profile_upstreams(&server, MINI_PROFILE_HTML).await;
+        let st = state_with_mock(&server).await;
+
+        let p = refresh_steam_profile(&st, "k", STEAM_ID64).await.expect("四支都成功");
+        assert_eq!(p.player.personaname.as_deref(), Some("Koi"));
+        assert_eq!(p.level, 42);
+        assert_eq!(p.xp, 100);
+        assert_eq!(p.xp_to_next, 200);
+        assert_eq!(p.badge_count, 3, "badge_count 是 badges 陣列的長度");
+        assert_eq!(p.profile_url, format!("https://steamcommunity.com/profiles/{STEAM_ID64}"));
+        // miniprofile 的 HTML 真的有被解析（不是拿到空字串就算了）
+        assert_eq!(p.customization.avatar_frame.as_deref(), Some("https://cdn/frame.png"));
+        // accountid 算錯就會 404 → 上面那條會是 None。這裡再直接確認打的是哪個路徑。
+        let paths: Vec<String> =
+            server.received_requests().await.unwrap().iter().map(|r| r.url.path().to_string()).collect();
+        assert!(
+            paths.iter().any(|p| p.ends_with(&format!("/miniprofile/{ACCOUNT_ID}"))),
+            "SteamID64 要減掉 76561197960265728 才是 accountid，實際打了 {paths:?}"
+        );
+
+        // 成功要寫進快取，且兩個時間戳一致
+        let c = st.steam.cache.lock().clone().expect("成功後應該有快取");
+        assert_eq!(c.fetched_at, c.last_tried_at);
+        assert_eq!(c.data.level, 42);
+    }
+
+    #[tokio::test]
+    async fn refresh_steam_profile_失敗時只更新_last_tried_at_不動舊資料() {
+        let server = MockServer::start().await;
+        // level 那支掛掉 → 整次 refresh 失敗
+        Mock::given(method("GET"))
+            .and(path("/steam-api/ISteamUser/GetPlayerSummaries/v0002/"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_json(json!({ "response": { "players": [{}] } })),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/steam-api/IPlayerService/GetSteamLevel/v1/"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        *st.steam.cache.lock() = Some(crate::state::SteamProfileCache {
+            data: fake_profile("舊資料"),
+            fetched_at: 1_000,
+            last_tried_at: 1_000,
+        });
+
+        assert!(refresh_steam_profile(&st, "k", STEAM_ID64).await.is_err());
+        let c = st.steam.cache.lock().clone().unwrap();
+        assert_eq!(c.data.player.personaname.as_deref(), Some("舊資料"), "失敗不該清掉能用的舊資料");
+        assert_eq!(c.fetched_at, 1_000, "fetched_at 不動——不然會被當成剛抓過而不再重試");
+        assert!(c.last_tried_at > 1_000, "只有 last_tried_at 前進，退避才有依據");
+    }
+
+    #[tokio::test]
+    async fn refresh_steam_profile_的_steam_id_不是數字時直接失敗() {
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+        let e = refresh_steam_profile(&st, "k", "not-a-number").await.unwrap_err();
+        assert_eq!(e, "invalid STEAM_ID");
+        assert!(server.received_requests().await.unwrap().is_empty(), "算不出 accountid 就不該送出請求");
+    }
+
+    /// SWR 的重抓判斷：`距上次成功 >= 30 分鐘` **且** `距上次嘗試 >= 5 分鐘`。
+    ///
+    /// 三種寫壞的方式各有各的無聲後果：
+    ///   · `>=` 反向 → 新鮮時狂抓、過期時反而不抓
+    ///   · `&&` 換 `||` → 上游掛掉之後每一次請求都重試，退避形同虛設（Steam 會限流）
+    ///   · 常數乘號寫成加號 → 30*60*1000 變 1090ms，等於每次請求都重抓
+    /// 全部都不會有錯誤訊息，只會在 Steam 那端變成一個很吵的客戶端。
+    #[tokio::test]
+    async fn steam_profile_的_swr_只在夠舊且過了退避期才背景重抓() {
+        let _env = STEAM_ENV_LOCK.lock().await;
+        // SAFETY: 靠 STEAM_ENV_LOCK 串行化。
+        unsafe {
+            std::env::set_var("STEAM_API_KEY", "k");
+            std::env::set_var("STEAM_ID", STEAM_ID64);
+        }
+
+        // (距上次成功, 距上次嘗試, 是否該重抓)
+        //
+        // ⚠ 「十分鐘」那一組是刻意的：它落在 30 分鐘門檻之內，但**超過**把常數的
+        // `30 * 60 * 1000` 誤寫成 `30 + 60 * 1000`（＝60030ms）之後的門檻。
+        // 第一版只放了 60 秒，兩種寫法都判定為新鮮，於是那個變異活了下來。
+        let cases = [
+            (1_000i64, 1_000i64, false, "剛抓完"),
+            (600_000, 600_000, false, "十分鐘——還沒到 30 分鐘的重抓門檻"),
+            // ⚠ 這裡的 120 秒也是刻意挑的，理由同上：它在 5 分鐘退避之內，但**超過**
+            // 把 `5 * 60 * 1000` 誤寫成 `5 + 60 * 1000`（＝60005ms）之後的門檻。
+            // 第一版寫 60 秒，兩種寫法都判定為「還在退避中」，那個變異因此活了下來。
+            (STEAM_PROFILE_REFRESH_AFTER + 1, 120_000, false, "夠舊了但兩分鐘前才試過 → 要等退避"),
+            (600_000, STEAM_PROFILE_RETRY_BACKOFF + 1, false, "退避過了但資料還新鮮"),
+            (STEAM_PROFILE_REFRESH_AFTER + 1, STEAM_PROFILE_RETRY_BACKOFF + 1, true, "兩個條件都成立"),
+        ];
+        for (since_fetch, since_try, should_refetch, why) in cases {
+            let server = MockServer::start().await;
+            mount_steam_profile_upstreams(&server, "").await;
+            let st = state_with_mock(&server).await;
+            let now = now_ms();
+            *st.steam.cache.lock() = Some(crate::state::SteamProfileCache {
+                data: fake_profile("快取裡的"),
+                fetched_at: now - since_fetch,
+                last_tried_at: now - since_try,
+            });
+
+            let v = body_of(steam_profile(axum::extract::State(st.clone())).await).await;
+            assert_eq!(v["player"]["personaname"], "快取裡的", "{why}：不管重不重抓，這一次都該直接回快取");
+
+            // 背景重抓是 tokio::spawn，給它一點時間跑完
+            for _ in 0..50 {
+                if !server.received_requests().await.unwrap().is_empty() {
+                    break;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            }
+            let hit = !server.received_requests().await.unwrap().is_empty();
+            assert_eq!(hit, should_refetch, "{why}：預期重抓={should_refetch}，實際={hit}");
+        }
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("STEAM_API_KEY");
+            std::env::remove_var("STEAM_ID");
+        }
+    }
+
+    // ── Books 外部搜尋 ────────────────────────────────────────────────────
+
+    #[test]
+    fn upgrade_google_cover_照抄_js_replace_只換第一次出現() {
+        // 空字串直接回空——不要生出一個 "&zoom=0&w=500&h=800" 這種連不到的網址
+        assert_eq!(upgrade_google_cover(""), "");
+
+        let got = upgrade_google_cover("https://books.google.com/x?id=1&zoom=1&edge=curl&img=1");
+        assert!(got.contains("&zoom=0"), "zoom=1 要換成 zoom=0（要高解析度）");
+        assert!(!got.contains("edge=curl"), "捲角效果要拿掉");
+        assert!(got.contains("&img=1&w=500&h=800"));
+
+        // 本來就沒有 zoom / w 的要補上
+        let got = upgrade_google_cover("https://books.google.com/x?id=1");
+        assert!(got.ends_with("&zoom=0&w=500&h=800"), "得到 {got}");
+
+        // 只換第一次出現（JS 的 String.replace 語意）
+        let got = upgrade_google_cover("https://x/?a&zoom=1&b&zoom=1");
+        assert_eq!(got.matches("zoom=1").count(), 1, "第二個 zoom=1 不該被換掉");
+    }
+
+    #[tokio::test]
+    async fn books_search_external_沒給關鍵字就_400() {
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+        let resp = books_search_external(
+            axum::extract::State(st),
+            axum::extract::Query(BookSearchQuery { query: None, isbn: Some(String::new()) }),
+        )
+        .await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(body_of(resp).await["error"], "請提供書名或 ISBN");
+        assert!(server.received_requests().await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn books_search_external_認得出_isbn_並改用_isbn_查詢() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/openlibrary/search.json"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "docs": [] })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        // 帶連字號的 ISBN：查詢字串要變成 isbn:<去掉連字號>
+        let _ = books_search_external(
+            axum::extract::State(st),
+            axum::extract::Query(BookSearchQuery { query: None, isbn: Some("978-1-234-56789-0".into()) }),
+        )
+        .await;
+        let reqs = server.received_requests().await.unwrap();
+        let google = reqs.iter().find(|r| r.url.path().contains("volumes")).expect("該打 Google Books");
+        let q = google.url.query_pairs().find(|(k, _)| k == "q").unwrap().1.into_owned();
+        assert_eq!(q, "isbn:9781234567890", "連字號要去掉，而且加上 isbn: 前綴");
+    }
+
+    #[tokio::test]
+    async fn books_search_external_google_有結果就不打_openlibrary() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "items": [{ "volumeInfo": {
+                    "title": "測試書名",
+                    "authors": ["作者一", "作者二"],
+                    "publisher": "某出版社",
+                    "industryIdentifiers": [
+                        { "type": "ISBN_10", "identifier": "1234567890" },
+                        { "type": "ISBN_13", "identifier": "9781234567890" },
+                    ],
+                    "imageLinks": { "thumbnail": "https://books.google.com/x?img=1&zoom=1" },
+                    "pageCount": 320,
+                    "categories": ["Computers", "Programming"],
+                }}]
+            })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        let v = body_of(
+            books_search_external(
+                axum::extract::State(st),
+                axum::extract::Query(BookSearchQuery { query: Some("測試".into()), isbn: None }),
+            )
+            .await,
+        )
+        .await;
+        let books = v["books"].as_array().unwrap();
+        assert_eq!(books.len(), 1);
+        assert_eq!(books[0]["isbn"], "9781234567890", "ISBN_13 優先於 ISBN_10");
+        assert_eq!(books[0]["authors"], "作者一, 作者二", "多位作者用逗號串起來");
+        assert_eq!(books[0]["categories"], "Computers, Programming");
+        assert_eq!(books[0]["page_count"], 320);
+        assert_eq!(books[0]["source"], "google");
+        assert!(books[0]["cover_url"].as_str().unwrap().contains("zoom=0"));
+        // 有結果就不該再打補位的那支
+        let paths: Vec<String> =
+            server.received_requests().await.unwrap().iter().map(|r| r.url.path().to_string()).collect();
+        assert!(!paths.iter().any(|p| p.contains("openlibrary")), "Google 有結果就不必補位");
+    }
+
+    // ── Steam miniprofile 的 HTML 爬取 ────────────────────────────────────
+    //
+    // 五條 regex 在刮 Steam 的頁面。Steam 改版或 regex 寫歪的話，個人檔案只會靜靜地
+    // 少掉頭像框／名牌／徽章——沒有錯誤、沒有 log，而且沒有人會注意到。
+
+    /// 形狀取自實際的 miniprofile 頁面（屬性順序與換行都照原樣）。
+    const MINI_PROFILE_HTML: &str = r#"
+<div class="miniprofile_nameplate_container">
+  <video class="miniprofile_nameplate" autoplay loop muted playsinline poster="https://cdn/poster.png">
+    <source src="https://cdn/nameplate.webm" type="video/webm">
+    <source src="https://cdn/nameplate.mp4" type="video/mp4">
+  </video>
+</div>
+<div class="playersection_avatar_frame">
+  <img src="https://cdn/frame.png">
+</div>
+<div class="playersection_avatar has_frame">
+  <img src="https://cdn/avatar.gif">
+</div>
+<div class="miniprofile_featuredcontainer">
+  <img src="https://cdn/badge.png" class="badge_icon">
+  <div class="description">
+    <div class="name">  Steam 十週年  </div>
+    <div class="xp">1,234 XP</div>
+  </div>
+</div>
+"#;
+
+    #[test]
+    fn parse_mini_profile_刮得出五種客製() {
+        let c = parse_mini_profile(MINI_PROFILE_HTML);
+        assert_eq!(c.nameplate_webm.as_deref(), Some("https://cdn/nameplate.webm"));
+        assert_eq!(c.nameplate_mp4.as_deref(), Some("https://cdn/nameplate.mp4"));
+        assert_eq!(c.avatar_frame.as_deref(), Some("https://cdn/frame.png"));
+        assert_eq!(
+            c.animated_avatar.as_deref(),
+            Some("https://cdn/avatar.gif"),
+            "動態頭像不能抓到頭像框那張——兩個 class 名字只差一個底線"
+        );
+        let b = c.featured_badge.expect("展示徽章");
+        assert_eq!(b.icon, "https://cdn/badge.png");
+        assert_eq!(b.name, "Steam 十週年", "name 與 xp 都要 trim");
+        assert_eq!(b.xp, "1,234 XP", "XP 是已格式化的字串不是數字");
+    }
+
+    #[test]
+    fn parse_mini_profile_沒有客製時全部是_none() {
+        // 大多數帳號長這樣。這條擋的是「regex 太寬鬆而抓到不相干的東西」。
+        let plain = r#"<div class="miniprofile_container"><img src="https://cdn/plain.jpg"></div>"#;
+        let c = parse_mini_profile(plain);
+        assert!(c.nameplate_webm.is_none());
+        assert!(c.nameplate_mp4.is_none());
+        assert!(c.avatar_frame.is_none());
+        assert!(c.animated_avatar.is_none());
+        assert!(c.featured_badge.is_none());
+
+        let c = parse_mini_profile("");
+        assert!(c.animated_avatar.is_none(), "空字串要早退，不是丟給 regex");
+    }
+
+    #[test]
+    fn parse_mini_profile_只有部分客製時其餘保持_none() {
+        // 只有頭像框沒有名牌——很常見的組合。全有或全無的實作會在這裡露餡。
+        let only_frame = r#"<div class="playersection_avatar_frame">
+  <img src="https://cdn/only-frame.png">
+</div>"#;
+        let c = parse_mini_profile(only_frame);
+        assert_eq!(c.avatar_frame.as_deref(), Some("https://cdn/only-frame.png"));
+        assert!(c.nameplate_webm.is_none());
+        assert!(c.featured_badge.is_none());
+
+        // 名牌只有 webm 沒有 mp4（Steam 上真的有這種）
+        let webm_only = r#"<video class="miniprofile_nameplate" autoplay>
+  <source src="https://cdn/a.webm" type="video/webm">
+</video>"#;
+        let c = parse_mini_profile(webm_only);
+        assert_eq!(c.nameplate_webm.as_deref(), Some("https://cdn/a.webm"));
+        assert!(c.nameplate_mp4.is_none(), "沒有 mp4 就是 None，不要退回 webm 那條");
+    }
+
+    #[test]
+    fn parse_mini_profile_的名牌來源只從_video_區塊內找() {
+        // 頁面別處也可能有 .mp4 的連結；抓錯範圍會把不相干的影片當成名牌。
+        let html = r#"
+<a href="https://cdn/unrelated.mp4">別的影片</a>
+<video class="miniprofile_nameplate" autoplay>
+  <source src="https://cdn/real-nameplate.mp4" type="video/mp4">
+</video>"#;
+        let c = parse_mini_profile(html);
+        assert_eq!(
+            c.nameplate_mp4.as_deref(),
+            Some("https://cdn/real-nameplate.mp4"),
+            "要從 <video> 區塊裡找，不是整頁亂抓"
+        );
+    }
+
+    #[tokio::test]
+    async fn books_search_external_google_空手時退到_openlibrary() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/openlibrary/search.json"))
+            .and(query_param("q", "冷門書"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "docs": [{
+                    "title": "冷門書",
+                    "author_name": ["某人"],
+                    "first_publish_year": 1999,
+                    "number_of_pages_median": 250,
+                }]
+            })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        let v = body_of(
+            books_search_external(
+                axum::extract::State(st),
+                axum::extract::Query(BookSearchQuery { query: Some("冷門書".into()), isbn: None }),
+            )
+            .await,
+        )
+        .await;
+        let books = v["books"].as_array().unwrap();
+        assert_eq!(books.len(), 1, "Google 沒結果就該換 OpenLibrary");
+        assert_eq!(books[0]["title"], "冷門書");
+        assert_eq!(books[0]["source"], "openlibrary");
+        assert_eq!(books[0]["page_count"], 250);
+    }
+
+    /// OpenLibrary 的 **ISBN 分支走完全不同的端點與回應形狀**（`/api/books` 而不是
+    /// `/search.json`，資料包在 `"ISBN:<號碼>"` 這個 key 底下）。同一支函式兩條路，
+    /// 只測其中一條等於沒測到另一條——而 ISBN 查詢正是新增書籍最常走的那條。
+    #[tokio::test]
+    async fn books_search_external_的_isbn_走_openlibrary_的另一支端點() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/openlibrary/api/books"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "ISBN:9781234567890": {
+                    "title": "以 ISBN 查到的書",
+                    "authors": [{ "name": "作者甲" }, { "name": "作者乙" }],
+                    "publishers": [{ "name": "某出版社" }],
+                    "publish_date": "2020",
+                    "number_of_pages": 512,
+                    "cover": { "medium": "https://covers.openlibrary.org/m.jpg" },
+                    "subjects": [
+                        { "name": "分類一" }, { "name": "分類二" }, { "name": "分類三" },
+                        { "name": "分類四" }, { "name": "分類五" }, { "name": "第六個不該出現" },
+                    ],
+                    "excerpts": [{ "text": "摘錄的內容" }],
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            books_search_external(
+                axum::extract::State(st),
+                axum::extract::Query(BookSearchQuery { query: None, isbn: Some("978-1-234-56789-0".into()) }),
+            )
+            .await,
+        )
+        .await;
+        let b = &v["books"][0];
+        assert_eq!(b["isbn"], "9781234567890", "連字號要去掉才對得上回應的 key");
+        assert_eq!(b["title"], "以 ISBN 查到的書");
+        assert_eq!(b["authors"], "作者甲, 作者乙", "這裡的作者是物件陣列不是字串陣列");
+        assert_eq!(b["publisher"], "某出版社");
+        assert_eq!(b["page_count"], 512);
+        assert_eq!(b["cover_url"], "https://covers.openlibrary.org/m.jpg", "large 沒有就退 medium");
+        assert_eq!(b["description"], "摘錄的內容", "沒有 notes 時退到 excerpts[0].text");
+        // 註：`notes` 是**空字串**時也要退到 excerpts，見下面那條測試。
+        assert_eq!(b["categories"], "分類一, 分類二, 分類三, 分類四, 分類五", "分類只取前五個");
+        assert_eq!(b["source"], "openlibrary");
+    }
+
+    /// `notes` 是**空字串**時要當成沒有，退到 excerpts。
+    ///
+    /// 這條是 `cargo mutants` 指出來的：把 `.filter(|s| !s.is_empty())` 的驚嘆號刪掉
+    /// 測試照樣全綠，因為既有的案例裡 notes 根本不存在（走的是 `and_then` 的 None 那側）。
+    /// OpenLibrary 實際上很常回空字串，那時書籍簡介會整個變空白。
+    #[tokio::test]
+    async fn books_search_external_的_notes_是空字串時退到_excerpts() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/openlibrary/api/books"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "ISBN:9781234567890": {
+                    "title": "有空 notes 的書",
+                    "notes": "",
+                    "excerpts": [{ "text": "退而求其次的簡介" }],
+                }
+            })))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            books_search_external(
+                axum::extract::State(st),
+                axum::extract::Query(BookSearchQuery { query: None, isbn: Some("9781234567890".into()) }),
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(v["books"][0]["description"], "退而求其次的簡介", "空字串的 notes 不算有值");
+    }
+
+    #[tokio::test]
+    async fn books_search_external_的_isbn_查不到時回空清單而不是報錯() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/google-books/books/v1/volumes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        // OpenLibrary 查不到時回的是 `{}`，不是 404
+        Mock::given(method("GET"))
+            .and(path("/openlibrary/api/books"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({})))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            books_search_external(
+                axum::extract::State(st),
+                axum::extract::Query(BookSearchQuery { query: None, isbn: Some("9789999999999".into()) }),
+            )
+            .await,
+        )
+        .await;
+        assert_eq!(v["message"], "success", "查不到不是錯誤");
+        assert_eq!(v["books"].as_array().unwrap().len(), 0);
     }
 }
