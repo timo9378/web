@@ -724,6 +724,243 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
 }
 
 #[cfg(test)]
+mod pure_tests {
+    use super::*;
+
+    // 這一塊全是「錯了不會有錯誤訊息」的純函式：照片轉錯方向、尺寸算錯、
+    // 某個資料夾整個被跳過——都要有人去看相簿才會發現，而站長不會天天看。
+
+    #[test]
+    fn is_excluded_dir_是子字串比對而且不分大小寫() {
+        for name in ["@eaDir", "@eadir", ".DS_Store", "Thumbs", "cache", "gallery"] {
+            assert!(is_excluded_dir(name), "{name} 應該被排除");
+        }
+        // ⚠ 是 `contains` 不是相等 —— 所以使用者自己取名叫「Gallery 2024」或
+        // 「快取備份cache」的資料夾會**整個被跳過**，而且不會有任何訊息。
+        // 這是既有行為（輸出目錄就叫 gallery，靠它避免自我遞迴），寫下來免得日後
+        // 有人花時間查「為什麼那個資料夾的照片都沒進相簿」。
+        assert!(is_excluded_dir("Gallery 2024"));
+        assert!(is_excluded_dir("我的cache備份"));
+        // 正常的相片資料夾不該被誤傷
+        for name in ["2026-01 京都", "Photos", "raw", "Lightroom Export"] {
+            assert!(!is_excluded_dir(name), "{name} 不該被排除");
+        }
+    }
+
+    #[test]
+    fn is_supported_image_只認四種副檔名_不分大小寫() {
+        for ok in ["a.jpg", "a.JPG", "a.jpeg", "a.PNG", "a.webp", "深/巢/狀/b.WebP"] {
+            assert!(is_supported_image(std::path::Path::new(ok)), "{ok}");
+        }
+        for no in ["a.heic", "a.raw", "a.cr3", "a.mp4", "a.txt", "沒有副檔名", "a.jpg.bak"] {
+            assert!(!is_supported_image(std::path::Path::new(no)), "{no}");
+        }
+    }
+
+    #[test]
+    fn is_utc_offset_只接受正負時分的六字元格式() {
+        for ok in ["+08:00", "-05:00", "+00:00", "+13:45"] {
+            assert!(is_utc_offset(ok), "{ok}");
+        }
+        // 格式不對就當沒有：接一個壞掉的 offset 上去，整串時間會變成解不開的字串
+        for no in ["+8:00", "08:00", "+0800", "Z", "", "+08:0", "+08:000", "＋08:00"] {
+            assert!(!is_utc_offset(no), "{no:?} 不該被當成合法 offset");
+        }
+    }
+
+    #[test]
+    fn fit_width_只縮不放且四捨五入() {
+        // 比上限小的原樣返回（withoutEnlargement）——放大會變成糊的
+        assert_eq!(fit_width(800, 600, 1920), (800, 600));
+        assert_eq!(fit_width(1920, 1080, 1920), (1920, 1080), "剛好等於上限不動");
+        // 縮小要維持比例並四捨五入
+        assert_eq!(fit_width(3840, 2160, 1920), (1920, 1080));
+        assert_eq!(fit_width(4000, 3000, 1920), (1920, 1440));
+        // 3:1 的極寬幅縮到 400：高度 133.33 → 133
+        assert_eq!(fit_width(1200, 400, 400), (400, 133));
+        // 極端長寬比不能算出 0（0 會讓 resize 直接失敗）
+        assert_eq!(fit_width(10_000, 3, 400), (400, 1), "算出來不足 1 也要保底 1");
+    }
+
+    /// 用 2×2 的四色圖驗八個方向。EXIF orientation 錯了照片就是躺著或鏡像，
+    /// 而且**只有人眼看得出來**——沒有任何自動化的東西會抱怨。
+    #[test]
+    fn apply_orientation_八個方向都對() {
+        use image::{Rgb, RgbImage};
+        // A B
+        // C D
+        let (a, b, c, d) = (Rgb([1, 0, 0]), Rgb([2, 0, 0]), Rgb([3, 0, 0]), Rgb([4, 0, 0]));
+        let mut src = RgbImage::new(2, 2);
+        src.put_pixel(0, 0, a);
+        src.put_pixel(1, 0, b);
+        src.put_pixel(0, 1, c);
+        src.put_pixel(1, 1, d);
+        let base = image::DynamicImage::ImageRgb8(src);
+
+        let grid = |o: u32| -> [u8; 4] {
+            let img = apply_orientation(base.clone(), o).to_rgb8();
+            [img.get_pixel(0, 0)[0], img.get_pixel(1, 0)[0], img.get_pixel(0, 1)[0], img.get_pixel(1, 1)[0]]
+        };
+        assert_eq!(grid(1), [1, 2, 3, 4], "1＝不動");
+        assert_eq!(grid(2), [2, 1, 4, 3], "2＝左右鏡像");
+        assert_eq!(grid(3), [4, 3, 2, 1], "3＝旋轉 180");
+        assert_eq!(grid(4), [3, 4, 1, 2], "4＝上下鏡像");
+        assert_eq!(grid(5), [1, 3, 2, 4], "5＝轉置");
+        assert_eq!(grid(6), [3, 1, 4, 2], "6＝順時針 90（最常見：直拍）");
+        assert_eq!(grid(7), [4, 2, 3, 1], "7＝反轉置");
+        assert_eq!(grid(8), [2, 4, 1, 3], "8＝逆時針 90");
+        // 沒有 EXIF 或值不合法時原樣返回，不要亂轉
+        assert_eq!(grid(0), [1, 2, 3, 4]);
+        assert_eq!(grid(9), [1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn extract_exif_對不是圖片的位元組不會炸() {
+        // 相簿裡混進壞檔或非 JPEG 時，整個 sync 不該掛掉
+        let (exif, orientation) = extract_exif(b"not an image at all");
+        assert!(exif.is_none());
+        assert_eq!(orientation, 1, "讀不到就用 1（不轉），不是 0");
+        let (exif, o) = extract_exif(&[]);
+        assert!(exif.is_none());
+        assert_eq!(o, 1);
+    }
+
+    fn photo_json(id: &str) -> Value {
+        json!({
+            "id": id, "title": "標題", "urls": { "full": "f", "regular": "r", "small": "s", "thumb": "t" },
+            "originalUrl": "o", "thumbnailUrl": "th", "width": 1920, "height": 1080,
+            "aspectRatio": 1.777, "size": 12345, "format": "webp",
+        })
+    }
+
+    #[test]
+    fn photos_from_values_只丟掉壞的那張不是整包() {
+        // manifest 是舊的 Node builder 寫的，沒有任何東西保證每張都齊。
+        // 一張壞的就 500 的話，整個相簿頁會空白——寧可少一張。
+        let arr = [
+            photo_json("ok-1"),
+            json!({ "id": "缺一堆必填欄位" }),
+            photo_json("ok-2"),
+            json!("根本不是物件"),
+        ];
+        let out = photos_from_values(&arr);
+        assert_eq!(out.len(), 2, "只留得下兩張");
+        assert_eq!(out[0].id, "ok-1");
+        assert_eq!(out[1].id, "ok-2");
+        // 選填欄位要有預設值而不是讓整張被丟掉
+        assert_eq!(out[0].description, "");
+        assert!(out[0].tags.is_empty());
+        assert!(out[0].thumb_hash.is_none());
+    }
+
+    #[test]
+    fn manifest_from_value_的_total_取實際張數而不是檔案裡寫的() {
+        // 兩者本來就該一致；真不一致時（有照片被跳過）回一個對不上的數字
+        // 會讓前端的分頁或「共 N 張」跟實際內容打架。
+        let v = json!({
+            "version": "2.0",
+            "generatedAt": "2026-01-01T00:00:00.000Z",
+            "totalPhotos": 999,
+            "photos": [photo_json("a"), json!({ "id": "壞的" }), photo_json("b")],
+        });
+        let m = manifest_from_value(&v);
+        assert_eq!(m.total_photos, 2, "檔案寫 999、實際只有 2 張解得開");
+        assert_eq!(m.photos.len(), 2);
+        assert_eq!(m.version, "2.0");
+        assert_eq!(m.generated_at, "2026-01-01T00:00:00.000Z");
+    }
+
+    #[test]
+    fn manifest_from_value_缺欄位時有合理預設() {
+        let m = manifest_from_value(&json!({}));
+        assert_eq!(m.version, "1.0", "沒寫版本就當 1.0");
+        assert_eq!(m.generated_at, "");
+        assert_eq!(m.total_photos, 0);
+        assert!(m.photos.is_empty());
+        // 空字串的 version 也要退回預設（不是原樣吐空字串出去）
+        let m = manifest_from_value(&json!({ "version": "" }));
+        assert_eq!(m.version, "1.0");
+        // photos 不是陣列時不該炸
+        let m = manifest_from_value(&json!({ "photos": "不是陣列" }));
+        assert!(m.photos.is_empty());
+    }
+
+    /// 圖片處理管線本身：旋轉 → 縮到 1920/400 → 轉 webp。
+    ///
+    /// 這是相簿唯一會**改寫使用者資料**的地方，而輸出好不好只有人眼看得出來。
+    /// 特別驗「回傳的寬高取的是旋轉**後**的值」——註解說得很清楚：
+    /// orientation 5~8 會交換寬高，用旋轉前的值會讓直式照片的 aspectRatio 顛倒，
+    /// 瀑布流版面就整個錯位。
+    #[test]
+    fn process_single_image_縮圖轉檔並回報旋轉後的尺寸() {
+        let dir = std::env::temp_dir().join(format!("gallery-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("src.png");
+        let full = dir.join("full.webp");
+        let thumb = dir.join("thumb.webp");
+
+        // 3000×1000 的橫幅（沒有 EXIF → orientation 1）
+        let img = image::DynamicImage::ImageRgb8(image::RgbImage::from_fn(3000, 1000, |x, _| {
+            image::Rgb([(x % 256) as u8, 128, 64])
+        }));
+        img.save(&src).unwrap();
+
+        let p = process_single_image(&src, &full, &thumb).expect("處理成功");
+        assert_eq!((p.width, p.height), (3000, 1000), "回報的是原始（旋轉後）尺寸，不是縮圖尺寸");
+        assert_eq!(p.format, "png", "format 取自來源檔而不是輸出檔");
+        assert!(p.exif.is_none(), "PNG 沒有 EXIF");
+        assert!(p.size > 0);
+        assert_eq!(p.size, std::fs::metadata(&full).unwrap().len(), "size 取的是 full 那張");
+
+        // 兩張輸出都要是 webp，而且尺寸依 1920 / 400 縮
+        for (path, want_w, want_h) in [(&full, 1920u32, 640u32), (&thumb, 400, 133)] {
+            let bytes = std::fs::read(path).unwrap();
+            assert_eq!(
+                image::guess_format(&bytes).unwrap(),
+                image::ImageFormat::WebP,
+                "{path:?} 應該是 webp"
+            );
+            let out = image::load_from_memory(&bytes).unwrap();
+            assert_eq!((out.width(), out.height()), (want_w, want_h), "{path:?} 的尺寸");
+        }
+
+        // 比上限小的圖不放大（withoutEnlargement）
+        let small_src = dir.join("small.png");
+        image::DynamicImage::ImageRgb8(image::RgbImage::new(300, 200)).save(&small_src).unwrap();
+        let p = process_single_image(&small_src, &full, &thumb).expect("處理成功");
+        assert_eq!((p.width, p.height), (300, 200));
+        let out = image::load_from_memory(&std::fs::read(&full).unwrap()).unwrap();
+        assert_eq!((out.width(), out.height()), (300, 200), "小圖不該被放大成 1920");
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn process_single_image_遇到不是圖片的檔案回_err_而不是_panic() {
+        // 相簿來源目錄裡混進壞檔時，整批 sync 應該跳過那張而不是整個掛掉
+        let dir = std::env::temp_dir().join(format!("gallery-bad-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("broken.jpg");
+        std::fs::write(&src, "這其實不是 JPEG".as_bytes()).unwrap();
+        let r = process_single_image(&src, &dir.join("f.webp"), &dir.join("t.webp"));
+        assert!(r.is_err(), "壞檔應該回 Err");
+        // 來源不存在也一樣
+        assert!(
+            process_single_image(&dir.join("不存在.jpg"), &dir.join("f.webp"), &dir.join("t.webp")).is_err()
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn empty_manifest_的形狀跟正常回應一致() {
+        let m = empty_manifest();
+        assert_eq!(m.version, "1.0");
+        assert_eq!(m.total_photos, 0);
+        assert!(m.photos.is_empty(), "photos 一定要是陣列——前端直接 .map");
+    }
+}
+
+#[cfg(test)]
 mod sync_lock_tests {
     use super::*;
 
