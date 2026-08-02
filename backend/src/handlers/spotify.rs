@@ -646,6 +646,285 @@ mod tests {
         serde_json::from_slice(&bytes).expect("回應應該是 JSON")
     }
 
+    // ── top-genres / top-tracks / audio-features / me / callback ──────────
+    //
+    // 這幾支的共同點是「快取 + 熔斷 + 優雅降級」。三者都是壞了不會有錯誤訊息的東西：
+    // 快取失效 → 每次載入首頁都打 Spotify（很快被限流）；熔斷沒生效 → 被限流之後
+    // 繼續猛打；降級寫錯 → 前端拿到 undefined 畫出一片空白。
+
+    #[tokio::test]
+    async fn top_genres_計數後取前五_同數保持插入序() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me/top/artists"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [
+                { "genres": ["shoegaze", "dream pop"] },
+                { "genres": ["shoegaze", "post-rock"] },
+                { "genres": ["shoegaze"] },
+                { "genres": ["dream pop"] },
+                { "genres": ["city pop"] },
+                { "genres": ["jazz"] },
+                { "genres": ["ambient"] },
+            ]})))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(top_genres(AxState(st.clone())).await).await;
+        let g = v["genres"].as_array().expect("genres 應該是陣列");
+        assert_eq!(g.len(), 5, "只取前五");
+        assert_eq!(g[0]["genre"], "shoegaze");
+        assert_eq!(g[0]["count"], 3);
+        assert_eq!(g[1]["genre"], "dream pop");
+        assert_eq!(g[1]["count"], 2);
+        // 以下三個都是 1 —— 排序必須**穩定**，同數保持插入序（對齊 V8 的 sort）
+        assert_eq!(
+            [g[2]["genre"].as_str(), g[3]["genre"].as_str(), g[4]["genre"].as_str()],
+            [Some("post-rock"), Some("city pop"), Some("jazz")],
+            "同票數要保持出現順序，否則同一份資料每次刷新排序都不一樣"
+        );
+
+        // 第二次要吃快取（6 小時），不該再打上游
+        let before = server.received_requests().await.unwrap().len();
+        let _ = top_genres(AxState(st)).await;
+        assert_eq!(server.received_requests().await.unwrap().len(), before, "第二次應該吃快取");
+        unsafe { set_creds(false) };
+    }
+
+    #[tokio::test]
+    async fn top_genres_被限流時熔斷_沒有快取才回_429() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me/top/artists"))
+            .respond_with(ResponseTemplate::new(429))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let resp = top_genres(AxState(st.clone())).await;
+        assert_eq!(resp.status(), StatusCode::TOO_MANY_REQUESTS, "沒有快取可回退時要說明被限流");
+        assert!(
+            st.spotify.top_disabled_until.load(Ordering::Relaxed) > now_ms(),
+            "429 之後要熔斷一小時，不然會繼續猛打"
+        );
+
+        // 熔斷期間不該再打上游
+        let before = server.received_requests().await.unwrap().len();
+        let _ = top_genres(AxState(st)).await;
+        assert_eq!(server.received_requests().await.unwrap().len(), before, "熔斷期間不該再打");
+        unsafe { set_creds(false) };
+    }
+
+    #[tokio::test]
+    async fn top_tracks_的快取以_time_range_與_limit_分開() {
+        // 共用一個 key 的話，切「最近一個月／半年」會拿到同一份資料而沒有人會發現。
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me/top/tracks"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "items": [] })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        let q = |tr: &str, lim: &str| TopTracksQuery {
+            time_range: Some(tr.to_string()),
+            limit: Some(lim.to_string()),
+        };
+        let _ = top_tracks(AxState(st.clone()), axum::extract::Query(q("short_term", "20"))).await;
+        let after_first = server.received_requests().await.unwrap().len();
+        // 同一組 → 吃快取
+        let _ = top_tracks(AxState(st.clone()), axum::extract::Query(q("short_term", "20"))).await;
+        assert_eq!(server.received_requests().await.unwrap().len(), after_first, "同一組要吃快取");
+        // 換 time_range → 另一個 key，要重打
+        let _ = top_tracks(AxState(st.clone()), axum::extract::Query(q("long_term", "20"))).await;
+        assert!(server.received_requests().await.unwrap().len() > after_first, "換 time_range 要重新抓");
+        let after_second = server.received_requests().await.unwrap().len();
+        // 換 limit → 又是另一個 key
+        let _ = top_tracks(AxState(st), axum::extract::Query(q("long_term", "5"))).await;
+        assert!(server.received_requests().await.unwrap().len() > after_second, "換 limit 也要重新抓");
+        unsafe { set_creds(false) };
+    }
+
+    /// 回應順序必須對齊請求的 ids，查不到的位置給 **null**。
+    /// 前端是依位置建 id → feature 的 map，順序錯或少一格就會整個對錯。
+    #[tokio::test]
+    async fn audio_features_的順序對齊請求_查不到的給_null() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        // 上游只回得出 b 與 a（順序還跟請求相反），c 完全沒有
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/audio-features"))
+            // 三個數值欄位都是必填——少一個整份 parse 就失敗，於是**全部**變成 null。
+            // 第一版只給了 energy，測試因此紅在「a 是 null」，而症狀完全指不到「解析失敗」。
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "audio_features": [
+                { "id": "b", "energy": 0.5, "danceability": 0.4, "valence": 0.3 },
+                { "id": "a", "energy": 0.9, "danceability": 0.8, "valence": 0.7 },
+                null,
+            ]})))
+            .mount(&server)
+            .await;
+
+        let st = state_with_mock(&server).await;
+        let v = body_of(
+            audio_features(
+                AxState(st.clone()),
+                axum::extract::Query(AudioFeaturesQuery { ids: Some("a,b,c".into()) }),
+            )
+            .await,
+        )
+        .await;
+        let af = v["audio_features"].as_array().expect("陣列");
+        assert_eq!(af.len(), 3, "有幾個 id 就要回幾格");
+        assert_eq!(af[0]["id"], "a", "順序要對齊請求，不是上游回的順序");
+        assert_eq!(af[1]["id"], "b");
+        assert!(af[2].is_null(), "查不到的位置要留 null 佔位");
+
+        // 第二次全部命中快取，不再打上游
+        let before = server.received_requests().await.unwrap().len();
+        let v = body_of(
+            audio_features(AxState(st), axum::extract::Query(AudioFeaturesQuery { ids: Some("a,b".into()) }))
+                .await,
+        )
+        .await;
+        assert_eq!(server.received_requests().await.unwrap().len(), before, "已快取的不該再打");
+        assert_eq!(v["audio_features"].as_array().unwrap().len(), 2);
+        unsafe { set_creds(false) };
+    }
+
+    #[tokio::test]
+    async fn audio_features_缺_ids_是_400_上游失敗則優雅降級() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/audio-features"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+
+        for ids in [None, Some(String::new())] {
+            let resp =
+                audio_features(AxState(st.clone()), axum::extract::Query(AudioFeaturesQuery { ids })).await;
+            assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        }
+
+        // 上游 403 → 這支**不回錯誤**，回一整排 null（前端照樣畫得出來，只是沒有特徵值）
+        let resp = audio_features(
+            AxState(st.clone()),
+            axum::extract::Query(AudioFeaturesQuery { ids: Some("x,y".into()) }),
+        )
+        .await;
+        assert_eq!(resp.status(), StatusCode::OK, "這支一律優雅降級，不把上游錯誤丟給前端");
+        let v = body_of(resp).await;
+        let af = v["audio_features"].as_array().unwrap();
+        assert_eq!(af.len(), 2);
+        assert!(af.iter().all(|x| x.is_null()));
+        assert!(st.spotify.af_disabled_until.load(Ordering::Relaxed) > now_ms(), "403 也要熔斷");
+        unsafe { set_creds(false) };
+    }
+
+    #[tokio::test]
+    async fn me_原樣轉發使用者資料() {
+        let _env = ENV_LOCK.lock().await;
+        unsafe { set_creds(true) };
+        let server = MockServer::start().await;
+        mount_token(&server).await;
+        Mock::given(method("GET"))
+            .and(mock_path("/spotify-api/v1/me"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "display_name": "Koi", "id": "koi", "followers": { "total": 3 }
+            })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let v = body_of(me(AxState(st)).await).await;
+        assert_eq!(v["display_name"], "Koi");
+        assert_eq!(v["followers"]["total"], 3, "巢狀結構原樣帶過去");
+        unsafe { set_creds(false) };
+    }
+
+    /// callback 是一次性的 setup 頁：把 refresh token 顯示出來給人複製進 .env。
+    /// 三條錯誤路徑都要是 HTML（這是給瀏覽器看的頁面，不是 API）。
+    #[tokio::test]
+    async fn callback_的三條錯誤路徑都回_html() {
+        let _env = ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        let st = state_with_mock(&server).await;
+        let q = |pairs: &[(&str, &str)]| {
+            axum::extract::Query(
+                pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<HashMap<_, _>>(),
+            )
+        };
+        let html_of = |resp: Response| async move {
+            let ct = resp
+                .headers()
+                .get(axum::http::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("")
+                .to_string();
+            let status = resp.status();
+            let bytes = http_body_util::BodyExt::collect(resp.into_body()).await.unwrap().to_bytes();
+            (status, ct, String::from_utf8_lossy(&bytes).into_owned())
+        };
+
+        // 使用者按了「拒絕」
+        let (status, ct, body) =
+            html_of(spotify_callback(AxState(st.clone()), q(&[("error", "access_denied")])).await).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(ct.starts_with("text/html"), "得到 {ct}");
+        assert!(body.contains("access_denied"), "要說得出上游給的原因");
+
+        // 什麼都沒帶
+        let (status, ct, _) = html_of(spotify_callback(AxState(st.clone()), q(&[])).await).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(ct.starts_with("text/html"));
+
+        // 有 code 但 token 交換失敗（mock 沒掛 /api/token → 404）
+        let (status, ct, body) = html_of(spotify_callback(AxState(st), q(&[("code", "abc")])).await).await;
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(ct.starts_with("text/html"));
+        assert!(body.contains("token 交換失敗"));
+    }
+
+    #[tokio::test]
+    async fn callback_成功時把_refresh_token_顯示出來() {
+        let _env = ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(mock_path("/spotify-accounts/api/token"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "access_token": "at", "refresh_token": "這是要複製進 env 的值"
+            })))
+            .mount(&server)
+            .await;
+        let st = state_with_mock(&server).await;
+        let resp = spotify_callback(
+            AxState(st),
+            axum::extract::Query(
+                [("code".to_string(), "abc".to_string())].into_iter().collect::<HashMap<_, _>>(),
+            ),
+        )
+        .await;
+        assert_eq!(resp.status(), StatusCode::OK);
+        let bytes = http_body_util::BodyExt::collect(resp.into_body()).await.unwrap().to_bytes();
+        let html = String::from_utf8_lossy(&bytes);
+        assert!(html.contains("這是要複製進 env 的值"), "整個頁面的用途就是顯示這個值");
+        assert!(html.contains("SPOTIFY_REFRESH_TOKEN"), "要告訴人這個值要放哪裡");
+    }
+
     /// 上游回 204（沒在播）時，這支要回一個「沒在播」的正常回應。
     ///
     /// ⚠ 這條**驗的是對外契約，不是那個提前返回的分支**。實測把
