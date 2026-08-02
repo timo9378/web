@@ -117,6 +117,34 @@ const LOCALE_TABS = [
   { code: 'ja',    label: '日本語',  column: 'ja' },
   { code: 'ko',    label: '한국어',  column: 'ko' },
 ];
+/**
+ * API 回來的值 → 表單要的字串。
+ *
+ * `postSchema` 把這些欄位宣告成 `z.string().optional()`，而 zod 的 optional
+ * **只接受 undefined**：DB 的 NULL（category、series_name…）與數字（series_order）
+ * 都會讓整份表單驗不過。用 `?? ''` 只擋得掉 null／undefined，擋不掉數字。
+ */
+function asText(v: string | number | null | undefined): string {
+  if (v === null || v === undefined) return '';
+  return typeof v === 'string' ? v : String(v);
+}
+
+/**
+ * 驗證沒過時要說**哪一欄**沒過。
+ *
+ * 原本四個送出點都寫死「請先填寫標題與內容」，於是任何一個欄位驗不過都顯示同一句話。
+ * 那不只是不精確——它會主動把人帶往錯的方向：實際發生過的是 `category` 為 null
+ * 讓整篇存不起來，而畫面告訴站長去檢查標題與內容（那兩欄好好的）。
+ * 帶上欄位名之後，同樣的情況會顯示「category：Invalid input」，至少查得下去。
+ */
+function firstErrorText(errors: Record<string, unknown>): string {
+  for (const [field, err] of Object.entries(errors)) {
+    const message = (err as { message?: unknown } | undefined)?.message;
+    if (typeof message === 'string' && message) return `${field}：${message}`;
+  }
+  return '表單有欄位沒通過驗證';
+}
+
 // 依 activeLocale + sourceLanguage 取得表單 field 名稱
 function fieldNameFor(base: 'title' | 'content' | 'summary', activeLocale: string, sourceLanguage: string): LocalizedField {
   if (activeLocale === sourceLanguage) return base;
@@ -291,15 +319,25 @@ export default function PostEditor() {
     const formattedData = {
       ...postData,
       tags: formatTags(postData.tags),
-      summary: postData.excerpt ?? '',
+      summary: asText(postData.excerpt),
+      // ⚠️ 每一個「schema 宣告成 optional string」的欄位都要過 asText，一個都不能漏。
+      //
+      // 漏掉的後果不是「少了預設值」而是**整篇文章存不起來**，而且症狀完全指不到這裡：
+      // zod 的 `.optional()` 只接受 undefined，不接受 null 也不接受 number。
+      // DB 裡 category 是 NULL（沒選分類就是這樣）、series_order 是數字，
+      // 兩者都會讓 reset 進來的表單永遠驗不過——站長按儲存只會看到一句錯誤訊息，
+      // 而標題與內容明明都填了。是寫 e2e 時撞到的，兩個欄位是分兩次才找齊的
+      // （第一次修完 category 又冒出 series_order），所以這裡改成統一走同一個函式。
+      category: asText(postData.category),
+      slug: asText(postData.slug),
       source_language: postData.source_language ?? 'zh-TW',
-      title_en: postData.title_en ?? '', content_en: postData.content_en ?? '', summary_en: postData.excerpt_en ?? '',
-      title_zh_cn: postData.title_zh_cn ?? '', content_zh_cn: postData.content_zh_cn ?? '', summary_zh_cn: postData.excerpt_zh_cn ?? '',
-      title_ja: postData.title_ja ?? '', content_ja: postData.content_ja ?? '', summary_ja: postData.excerpt_ja ?? '',
-      title_ko: postData.title_ko ?? '', content_ko: postData.content_ko ?? '', summary_ko: postData.excerpt_ko ?? '',
+      title_en: asText(postData.title_en), content_en: asText(postData.content_en), summary_en: asText(postData.excerpt_en),
+      title_zh_cn: asText(postData.title_zh_cn), content_zh_cn: asText(postData.content_zh_cn), summary_zh_cn: asText(postData.excerpt_zh_cn),
+      title_ja: asText(postData.title_ja), content_ja: asText(postData.content_ja), summary_ja: asText(postData.excerpt_ja),
+      title_ko: asText(postData.title_ko), content_ko: asText(postData.content_ko), summary_ko: asText(postData.excerpt_ko),
       allow_comments: postData.allow_comments,
-      series_name: postData.series_name ?? '',
-      series_order: postData.series_order ?? '',
+      series_name: asText(postData.series_name),
+      series_order: asText(postData.series_order),
       send_newsletter: false,
     };
     form.reset(formattedData as PostFormInput);
@@ -729,7 +767,7 @@ export default function PostEditor() {
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d), () => toast.error('請先填寫標題與內容'))(e); }}
+              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d), (errs) => toast.error(firstErrorText(errs)))(e); }}
             />
             <button
               id="save-exit-btn"
@@ -737,7 +775,7 @@ export default function PostEditor() {
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d, { exit: true }), () => toast.error('請先填寫標題與內容'))(e); }}
+              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d, { exit: true }), (errs) => toast.error(firstErrorText(errs)))(e); }}
             />
             <button
               id="publish-btn"
@@ -745,7 +783,7 @@ export default function PostEditor() {
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit(onPublish, () => toast.error('請先填寫標題與內容'))(e); }}
+              onClick={(e) => { void form.handleSubmit(onPublish, (errs) => toast.error(firstErrorText(errs)))(e); }}
             />
             {/* Left Column - Editor */}
             <main className="flex-1 overflow-y-auto p-6 min-w-0 space-y-0">
@@ -858,7 +896,7 @@ export default function PostEditor() {
                       language="markdown"
                       height={editorView === 'split' ? '360px' : '700px'}
                       theme="vs-dark"
-                      onSave={() => { void form.handleSubmit((d) => onSaveDraft(d), () => toast.error('請先填寫標題與內容'))(); }}
+                      onSave={() => { void form.handleSubmit((d) => onSaveDraft(d), (errs) => toast.error(firstErrorText(errs)))(); }}
                     />
                   )}
 

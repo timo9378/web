@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { E2E_POST_PREFIX } from './seed.mjs';
+
 /**
  * 語言切換與文章篩選——兩批「使用者最常按、但一條測試都沒有」的互動。
  *
@@ -104,7 +106,12 @@ test.describe('文章篩選', () => {
   // ⚠ 必須是 `.note-card`，不能用 `main a[href^="/blog/"]`——側邊欄的「精選」與
   // 「導航」也是指向 /blog/ 的連結，用寬選擇器會把它們算成文章，於是
   // 「搜尋不到時應該是 0 筆」永遠不成立（第一版就是這樣紅的）。
-  const cards = (page: import('@playwright/test').Page) => page.locator('.note-card');
+  //
+  // 排掉測試自己建的文章：post-editor.spec.ts 有一條會真的發佈一篇，而跨檔是平行跑的。
+  // 下面幾條都是「先數一次 before，做點事，再數一次」——中間插進來一篇就會紅，
+  // 而且是那種跑十次紅一次、最難查的紅。改成從來源就不看它們，比縮短競爭窗口可靠。
+  const cards = (page: import('@playwright/test').Page) =>
+    page.locator('.note-card').filter({ hasNotText: E2E_POST_PREFIX });
 
   /** 搜尋只留下符合的文章。 */
   test('搜尋會縮小清單', async ({ page }) => {

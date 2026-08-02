@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/sonner';
 import { useAuth } from '../../contexts/auth';
 import './AdminTheme.css';
 import './ModernEnhancements.css';
@@ -154,6 +155,26 @@ export const AdminLayout = () => {
 
   return (
     <div className="min-h-screen admin-layout deep-space-bg">
+      {/*
+        後台的 toast 出口。`components/ui/sonner.tsx` 連配色都寫好了，但在這行之前
+        **沒有任何地方掛載它**——於是 11 個後台元件裡所有的 `toast.success/error`
+        全部靜靜地不見，站長按下儲存、發佈、刪除都沒有任何回饋。
+
+        比「少了提示」更嚴重的是 PostEditor 的**草稿還原**：自動備份確實寫進
+        localStorage，但唯一的還原入口是 toast 裡的「還原」按鈕，那顆按鈕從來
+        沒有出現過——備份寫了卻永遠取不回來。整個功能等於是死的。
+        （是寫 e2e 時發現的：存草稿明明回 201 也轉頁了，畫面上卻找不到任何 toast。）
+
+        ⚠️ 位置要放在 `<Outlet />` **之前**。sonner 的 `toast()` 是推給已經訂閱的
+        Toaster，而 React 的 effect 依樹的順序跑——放在 Outlet 後面的話，
+        頁面元件「在掛載當下就發出」的那些 toast（PostEditor 的草稿還原提示就是）
+        會在 Toaster 訂閱之前送出，直接消失。使用者按鈕觸發的看起來正常，
+        只有這種開場提示會不見，很難察覺。
+
+        掛在這裡而不是 __root：目前 `toast` 的使用者全部在 components/admin/ 底下。
+      */}
+      <Toaster />
+
       {/* Stars overlay */}
       <div className="stars" />
 

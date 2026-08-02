@@ -1,7 +1,7 @@
 import { Validator } from '@cfworker/json-schema';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 
-import { PUBLISHED_POSTS } from './seed.mjs';
+import { E2E_POST_PREFIX, PUBLISHED_POSTS } from './seed.mjs';
 
 /**
  * 前後端契約：**拿後端自己發布的 OpenAPI schema 去驗它自己的回應**，不手寫欄位斷言。
@@ -152,10 +152,16 @@ const json = async (request: APIRequestContext, path: string) => (await request.
 
 test('公開清單只回已發布的文章', async ({ request }) => {
   const b = await json(request, '/api/posts');
-  expect(b.posts.map((p: { title: string }) => p.title)).not.toContain('未發布草稿');
+  const titles: string[] = b.posts.map((p: { title: string }) => p.title);
+  expect(titles).not.toContain('未發布草稿');
   // 張數從 seed 那邊 import，不寫死——seed 因為別的需求增減文章時（例如 CLS 測試
   // 用的長文），不該連帶讓這個不相干的斷言變紅。
-  expect(b.posts.length).toBe(PUBLISHED_POSTS);
+  //
+  // 排掉 post-editor.spec.ts 建的那些：它有一條「發佈之後讀者看得到」會真的發一篇文章，
+  // 而跨檔是平行跑的——不排掉的話這條斷言會依執行順序**間歇性**變紅，
+  // 那種紅比沒有斷言更糟。前綴是兩邊的約定（E2E_POST_PREFIX），改要一起改。
+  const seeded = titles.filter((t) => !t.startsWith(E2E_POST_PREFIX));
+  expect(seeded.length).toBe(PUBLISHED_POSTS);
 });
 
 test('留言只回審核通過的', async ({ request }) => {

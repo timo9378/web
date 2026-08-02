@@ -15,6 +15,18 @@ import { DatabaseSync } from 'node:sqlite';
  */
 export const PUBLISHED_POSTS = 3;
 
+/**
+ * 測試自己建立的文章一律用這個前綴命名。
+ *
+ * 放在這裡是因為它跟 `PUBLISHED_POSTS` 是同一件事的兩面：這個檔案知道「e2e 的 DB
+ * 裡有哪些資料」。post-editor.spec.ts 用它命名（並在收尾時據此刪除），
+ * api-contract.spec.ts 用它把那些文章從精確篇數的斷言裡排掉——跨檔是平行跑的，
+ * 不排掉的話那條斷言會依執行順序間歇性變紅。
+ *
+ * ⚠ 兩邊都 import 這個常數而不是各寫一份字串；改名要改這裡。
+ */
+export const E2E_POST_PREFIX = 'e2e-post-';
+
 /** 固定日期，讓「x 天前」這種相對時間在測試裡也穩定。 */
 const T = (daysAgo = 0) =>
   new Date(Date.UTC(2026, 0, 15, 3, 0, 0) - daysAgo * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);

@@ -25,6 +25,8 @@ export const PORTS = {
   backend: Number(process.env.E2E_BACKEND_PORT ?? 13999),
 };
 const DB_PATH = process.env.E2E_DB ?? '/tmp/koimsurai-e2e.db';
+/** 後端與 nitro 都要拿到同一組，`/_revalidate` 才會放行（沒設 = 那支回 404）。 */
+const REVALIDATE_SECRET = 'e2e-revalidate-secret';
 
 // backend 是 workspace member（根目錄的 Cargo.toml 是 [workspace] members = ["backend"]），
 // 所以產物在 web/target/ 而不是 web/backend/target/。debug 優先——CI 就是建那個。
@@ -136,6 +138,17 @@ async function main() {
     // （Trakt 那支已整個移除，不再有對應的 flag）
     ENABLE_BAHAMUT_SYNC: '',
     ENABLE_SIMKL_SYNC: '',
+    // ISR 快取失效：發文／改文之後後端會打 nitro 的 /_revalidate。
+    //
+    // 在這行之前 e2e 沒有接這條線，於是測試環境的 /blog 永遠停在 swr 快取上
+    // （列表 300 秒、文章頁 3600 秒），「發佈之後讀者看得到」根本測不出來——
+    // 而那正是這套機制存在的理由。整條路徑（後端發請求 → nitro 驗密鑰 → 清 route-rules）
+    // 原本零覆蓋，壞掉的症狀是「我明明發了，讀者卻要等一小時」，沒有任何錯誤訊息。
+    //
+    // 指向 nitro 而不是 proxy：正式環境 nginx 也是把 /_revalidate 導到前端服務
+    // （那支刻意不放 /api/*，因為 nginx 會把 /api/ 全導給 Rust）。
+    FRONTEND_REVALIDATE_URL: `http://127.0.0.1:${PORTS.nitro}/_revalidate`,
+    REVALIDATE_SECRET: REVALIDATE_SECRET,
     RUST_LOG: process.env.RUST_LOG ?? 'warn',
   });
   await waitFor(`http://127.0.0.1:${PORTS.backend}/api/health`, '後端');
@@ -149,6 +162,8 @@ async function main() {
     HOST: '127.0.0.1',
     // SSR 端的 apiUrl() 直連後端（見 src/api.ts），不繞 koimsurai.com
     BACKEND_URL: `http://127.0.0.1:${PORTS.backend}`,
+    // 兩邊要是同一組，否則 /_revalidate 會回 401；沒設的話它直接 404（功能停用）
+    REVALIDATE_SECRET: REVALIDATE_SECRET,
   });
   await waitFor(`http://127.0.0.1:${PORTS.nitro}/blog`, 'nitro');
 
