@@ -97,9 +97,14 @@ cd .. && typos          # 錯字；白名單在 .typos.toml
 cd .. && cargo shear    # 未使用的 Rust 相依
 ```
 
-`typos` 會掃**變數名**，不是只掃註解與字串。實際擋過：把 `NaiveDate` 的區域變數取名
-`nd`，它判定應為 `and` → Backend job 直接紅，而 fmt/clippy/測試全都是綠的。
-命名時避開 `nd`／`ba`／`te` 這類看起來像縮寫的兩字母名。
+`typos` 會掃**變數名**，不是只掃註解與字串。實際擋過：把 `NaiveDate` 的區域變數取了個
+兩字母縮寫名，它判定那是某個英文字漏字母 → Backend job 直接紅，而 fmt/clippy/測試全綠。
+命名時避開看起來像英文字缺字母的兩字母縮寫，寫完整的字。
+
+⚠️ 它掃**整個 repo**，`.md` 也在內——包含用來說明這件事的文件本身。所以這裡刻意不把
+那些會被判定成錯字的字面寫出來；要寫就得進 `.typos.toml` 白名單，而那個白名單只放
+真正被誤報的字，不該為了寫說明而放寬。**一定要 `cd` 到 repo 根目錄跑**，在 `backend/`
+底下跑會漏掉根目錄的 `.md` 與 workflow 檔（這個錯我犯過一次）。
 
 ⚠️ **`cargo audit` 要在 repo 根目錄跑，不是 `backend/`。** `Cargo.lock` 在 workspace root
 （根目錄的 `Cargo.toml` 是 `[workspace] members = ["backend"]`），在 `backend/` 下跑會得到
