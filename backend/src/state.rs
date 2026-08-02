@@ -8,7 +8,7 @@ pub struct AppState {
     /// sqlx 連線池，連到與 Express 相同的 sqlite 檔（strangler 期間共用）。
     /// sqlx pool over the SAME sqlite file Express uses (shared during the strangler period).
     pub pool: Pool<Sqlite>,
-    /// 對外部 API（TMDb / Trakt / Resend / Spotify / Steam）發請求用的 HTTP client。
+    /// 對外部 API（TMDb / Simkl / Resend / Spotify / Steam）發請求用的 HTTP client。
     /// HTTP client for outbound calls to third-party APIs.
     pub http: reqwest::Client,
     /// JWT 簽章密鑰，與 Express 的 `JWT_SECRET` 共用（HS256）。
@@ -18,7 +18,7 @@ pub struct AppState {
     pub spotify: Arc<SpotifyState>,
     /// steam/profile SWR 快取。
     pub steam: Arc<SteamState>,
-    /// watch 域狀態（now-watching / Trakt / TMDb detail 快取）。
+    /// watch 域狀態（now-watching / TMDb detail 快取）。
     pub watch: Arc<WatchState>,
     /// bahamut client + sync 控制。
     pub bahamut: Arc<BahamutState>,
@@ -135,22 +135,15 @@ pub struct SteamState {
     pub refresh_lock: tokio::sync::Mutex<()>,
 }
 
-/// watch 域的 in-process 狀態（now-watching + Trakt slug + TMDb detail 快取）。
+/// watch 域的 in-process 狀態（now-watching + TMDb detail 快取）。
 #[derive(Default)]
 pub struct WatchState {
     /// 目前即時觀看：(對外資料, 過期時間 epoch ms)。
     /// 過期時間刻意不放進 NowWatching —— 那是伺服器記帳，不是 API 欄位。
     /// 舊寫法把 expiresAt 塞在同一個 JSON 裡、serve 時再 remove()，靠「記得移除」維持正確。
     pub now: parking_lot::Mutex<Option<(crate::handlers::watch::NowWatching, i64)>>,
-    /// 上次 Trakt /watching 輪詢時間（ms；25s 節流）
-    pub last_trakt_poll: std::sync::atomic::AtomicI64,
-    /// Trakt user slug（首次查 /users/settings 後常駐）
-    pub trakt_slug: parking_lot::Mutex<Option<String>>,
     /// TMDb detail 快取：`kind:id:lang` → {title, poster_url, year}（同 Express：無 TTL）
     pub tmdb_detail: parking_lot::Mutex<std::collections::HashMap<String, serde_json::Value>>,
-    /// Trakt token refresh 串行鎖（deviation：Express 無鎖，併發 refresh race 會吃掉
-    /// 一次性 refresh token → invalid_grant 永久死，live 已發生過）
-    pub trakt_refresh_lock: tokio::sync::Mutex<()>,
 }
 
 /// bahamut（動畫瘋）client + sync 控制。

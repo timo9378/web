@@ -604,19 +604,22 @@ export type NowPlayingResponse = {
  *  現在改由 WatchState 以 (NowWatching, expires_at_ms) 分開存，型別上就不可能洩漏。
  */
 export type NowWatching = {
-	/**  "anime"（bahamut）/ "movie" / "tv"（trakt） */
+	/**
+	 *  目前只會是 "anime"——唯一的產生者是 bahamut 的 heartbeat。
+	 *  舊資料裡還有 "movie" / "tv"（Trakt 時期），型別因此保持字串不收窄。
+	 */
 	type: string,
 	title: string,
 	cover: string | null,
 	tmdbId: number | null,
 	episode: string | null,
 	progressPct: number | null,
-	/**  "bahamut" | "trakt" */
+	/**  目前只會是 "bahamut"（Trakt 輪詢已移除）。歷史列仍可能是 "trakt"。 */
 	source: string,
 	externalUrl: string | null,
 	/**  epoch ms；與 endsAt 一起給前端做 client 端進度插值 */
 	startedAt: number,
-	/**  只有 Trakt 那條算得出結束時間；bahamut heartbeat 沒有 */
+	/**  bahamut 的 heartbeat 給不出結束時間，所以目前恆為 None（Trakt 那條已移除） */
 	endsAt: number | null,
 };
 

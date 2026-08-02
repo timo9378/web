@@ -69,10 +69,8 @@ async fn main() -> anyhow::Result<()> {
         external: std::sync::Arc::new(state::ExternalUrls::default()),
     };
 
-    // Trakt 歷史同步 worker（ENABLE_TRAKT_SYNC=1 才啟動；見 handlers/watch.rs）
-    // ⚠️ 2026-08-02 起預設關閉——Trakt 未預告刪除了免費帳號的 API app，見 docker-compose.yml。
-    handlers::watch::spawn_trakt_sync(state.clone());
-    // Simkl 歷史同步 worker（ENABLE_SIMKL_SYNC=1 才啟動；見 handlers/simkl.rs）—— Trakt 的替代
+    // Simkl 歷史同步 worker（ENABLE_SIMKL_SYNC=1 才啟動；見 handlers/simkl.rs）。
+    // 取代已移除的 Trakt 同步——Trakt 未預告刪掉了免費帳號的 API app。
     handlers::simkl::spawn_sync(state.clone());
     // 動畫瘋同步 worker（ENABLE_BAHAMUT_SYNC=1 才啟動；見 handlers/bahamut.rs）
     handlers::bahamut::spawn_sync(state.clone());

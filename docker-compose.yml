@@ -49,18 +49,18 @@ services:
       - REVALIDATE_SECRET=${REVALIDATE_SECRET:-}
       # workers：Express 退役後 Rust 為 history 表唯一寫者
       #
-      # ⚠️ Trakt 同步已停用（2026-08-02）。Trakt 在 2026-07-30 把「建立 API application」
-      # 改成 VIP 專屬（trakt/trakt-web PR #3057，i18n 字串就是
-      # "Creating new apps requires Trakt VIP"），且未經預告刪除了免費帳號的既有 app。
-      # 症狀：refresh 回 400 invalid_grant "session not found"、device/code 回 401
-      # invalid_client "client not found"——app 本身在 Trakt 那端已不存在，重新授權也沒用。
-      # 同一時間大量使用者回報相同狀況（forums.trakt.tv/t/119235、trakt-web issue #3061），
-      # 官方對「既有 app 被刪」至今沒有說明。
+      # ⚠️ Trakt 相關的程式碼已於 2026-08-02 整個移除（約 580 行），連同 ENABLE_TRAKT_SYNC。
+      # Trakt 在 2026-07-30 把「建立 API application」改成 VIP 專屬（trakt/trakt-web PR #3057，
+      # i18n 字串就是 "Creating new apps requires Trakt VIP"），且未經預告刪除了免費帳號的
+      # 既有 app——refresh 回 400 invalid_grant "session not found"、device/code 回 401
+      # invalid_client "client not found"，app 在 Trakt 那端已不存在，重新授權也沒用。
+      # 同一時間大量使用者回報相同狀況（forums.trakt.tv/t/119235、trakt-web issue #3061）。
       #
-      # 開著只會每 6 小時打一個必定失敗的請求。既有的 155 筆 trakt 紀錄保留不動
+      # 之前只是把 flag 關掉、程式碼留著，但那沒有把成本歸零：/api/watch/now 的**即時輪詢**
+      # 沒有受這個 flag 管，每 25 秒仍會為一支必定失敗的呼叫付一次連線成本（實測正式站
+      # 首發 513ms，移除後 1–2 ms）。既有的 155 筆 trakt 紀錄保留不動
       # （film_history 4 筆到 2026-07-25、tv_history 151 筆）。
-      # 若哪天 Trakt 改回來或改買 VIP，把這裡改回 1 即可，程式碼都還在。
-      - ENABLE_TRAKT_SYNC=0
+      # 要復原的話 git 裡找得回來，但更可能的路是繼續用 Simkl。
       - ENABLE_BAHAMUT_SYNC=1
       # Simkl 同步（Trakt 的替代）。每次只打一個很輕的 /sync/activities，時間戳沒變就結束；
       # 有變才用 date_from 拉增量。Simkl 官方明文要求這個做法，無條件全量輪詢會被停權。
