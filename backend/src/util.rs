@@ -546,11 +546,11 @@ mod date_tests {
         ) {
             // 2 月 31 日這種組合本函式其實會照算（不驗月份天數），但正式資料一律來自
             // SQLite 的 datetime('now')，不可能生出來——所以這裡只比對真實存在的日期。
-            let Some(nd) = chrono::NaiveDate::from_ymd_opt(y, mo, d) else {
+            let Some(date) = chrono::NaiveDate::from_ymd_opt(y, mo, d) else {
                 return Ok(());
             };
             let input = format!("{y:04}-{mo:02}-{d:02} {h:02}:{mi:02}:{se:02}");
-            let want = nd.and_hms_opt(h, mi, se).unwrap().format("%a, %d %b %Y %H:%M:%S GMT").to_string();
+            let want = date.and_hms_opt(h, mi, se).unwrap().format("%a, %d %b %Y %H:%M:%S GMT").to_string();
             proptest::prop_assert_eq!(js_date_to_utc_string(Some(&input)), want);
         }
     }

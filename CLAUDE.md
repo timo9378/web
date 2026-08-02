@@ -90,6 +90,17 @@ cargo llvm-cov nextest --locked --fail-under-regions 49   # 門檻以 ci.yml 為
 # specta：改過會進 API 的 struct 就要重跑 export_types 並提交，否則 drift gate 會擋
 ```
 
+⚠️ **還有兩道在 repo 根目錄跑、很容易漏掉的門檻**（Backend job 裡排在 fmt 之前）：
+
+```bash
+cd .. && typos          # 錯字；白名單在 .typos.toml
+cd .. && cargo shear    # 未使用的 Rust 相依
+```
+
+`typos` 會掃**變數名**，不是只掃註解與字串。實際擋過：把 `NaiveDate` 的區域變數取名
+`nd`，它判定應為 `and` → Backend job 直接紅，而 fmt/clippy/測試全都是綠的。
+命名時避開 `nd`／`ba`／`te` 這類看起來像縮寫的兩字母名。
+
 ⚠️ **`cargo audit` 要在 repo 根目錄跑，不是 `backend/`。** `Cargo.lock` 在 workspace root
 （根目錄的 `Cargo.toml` 是 `[workspace] members = ["backend"]`），在 `backend/` 下跑會得到
 `error: not found: Couldn't load Cargo.lock`。
