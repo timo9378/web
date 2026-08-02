@@ -167,9 +167,10 @@ jobs:
       # 錯誤路徑的訊息、GitHub compare 的觸發條件），全部是不會有症狀的那種。
       #
       # 留 5pp 餘裕：加一段還沒測到的新功能不該當場擋下，但「刪掉一批測試」會被抓到。
-      # 下一個目標是 admin.rs（918 region、59%）與 gallery.rs（735、21%）。
+      # 下一個目標是 bahamut.rs（678 region、24%，主體是要 anigamer client 的 sync worker）
+      # 與 posts.rs（551、50%）。
       - name: test + coverage (llvm-cov + nextest)
-        run: cargo llvm-cov nextest --locked --fail-under-regions 64
+        run: cargo llvm-cov nextest --locked --fail-under-regions 69
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |

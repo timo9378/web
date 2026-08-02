@@ -696,3 +696,221 @@ pub async fn thoughts_rss(State(state): State<AppState>) -> Response {
     );
     ([(axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8")], xml).into_response()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wiremock::matchers::{method as m, path as p};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // 這一塊全是「解析別人給的東西」：JS 語意的數字解析、HTML entity、og meta、
+    // TMDb 回應塑形。解錯了不會有錯誤訊息——碎念的連結卡就是少一張圖、少一行說明，
+    // 或是整張卡的標題變空白。
+
+    #[test]
+    fn js_parse_int_照抄_parseint_的前綴語意() {
+        assert_eq!(js_parse_int("30", 0), 30);
+        assert_eq!(js_parse_int("  42  ", 0), 42, "前導空白要跳過");
+        assert_eq!(js_parse_int("12abc", 0), 12, "取到第一個非數字為止");
+        assert_eq!(js_parse_int("-5", 0), -5);
+        assert_eq!(js_parse_int("+7", 0), 7);
+        // 解不出數字時用預設值——回 0 的話 limit 會變成「一則都不給」
+        assert_eq!(js_parse_int("abc", 30), 30);
+        assert_eq!(js_parse_int("", 30), 30);
+        assert_eq!(js_parse_int("   ", 30), 30);
+        assert_eq!(js_parse_int("+", 30), 30, "只有符號不算數字");
+        assert_eq!(js_parse_int("-", 30), 30);
+        assert_eq!(js_parse_int("3.9", 0), 3, "小數點之後不吃（parseInt 不是 parseFloat）");
+    }
+
+    #[test]
+    fn dec_把_html_entity_還原_兩種單引號都要() {
+        assert_eq!(dec(Some("a &amp; b".into())).unwrap(), "a & b");
+        assert_eq!(dec(Some("&lt;b&gt;".into())).unwrap(), "<b>");
+        assert_eq!(dec(Some("&quot;引用&quot;".into())).unwrap(), "\"引用\"");
+        // 兩種寫法都要處理：不同網站產的 HTML 各用一種
+        assert_eq!(dec(Some("it&#039;s".into())).unwrap(), "it's");
+        assert_eq!(dec(Some("it&#39;s".into())).unwrap(), "it's");
+        assert_eq!(dec(None), None);
+        // 沒有 entity 的原樣返回
+        assert_eq!(dec(Some("純文字".into())).unwrap(), "純文字");
+    }
+
+    #[test]
+    fn og_兩種屬性順序都抓得到() {
+        // 實務上兩種寫法都很常見（Next.js 產一種、WordPress 產另一種），
+        // 只支援一種的話有一半的網站會抓不到卡片。
+        let a = r#"<meta property="og:title" content="標題 A">"#;
+        assert_eq!(og(a, "og:title").as_deref(), Some("標題 A"), "property 在 content 之前");
+        let b = r#"<meta content="標題 B" property="og:title">"#;
+        assert_eq!(og(b, "og:title").as_deref(), Some("標題 B"), "content 在 property 之前");
+        // name= 而不是 property=（description 常這樣寫）
+        let c = r#"<meta name="description" content="說明">"#;
+        assert_eq!(og(c, "description").as_deref(), Some("說明"));
+        // 大小寫不敏感
+        let d = r#"<META PROPERTY="OG:TITLE" CONTENT="大寫">"#;
+        assert_eq!(og(d, "og:title").as_deref(), Some("大寫"));
+        // 單引號
+        let e = r#"<meta property='og:image' content='https://x/i.png'>"#;
+        assert_eq!(og(e, "og:image").as_deref(), Some("https://x/i.png"));
+        // 找不到就是 None（不要回空字串，呼叫端靠 None 決定要不要 fallback）
+        assert_eq!(og("<html></html>", "og:title"), None);
+    }
+
+    #[test]
+    fn react_ok_只收四種值() {
+        for ok in [Some("like"), Some("dislike"), Some(""), None] {
+            assert!(react_ok(&ok.map(str::to_owned)), "{ok:?} 應該放行");
+        }
+        for bad in ["love", "LIKE", "1", "null"] {
+            assert!(!react_ok(&Some(bad.to_string())), "{bad} 應該被擋");
+        }
+    }
+
+    #[tokio::test]
+    async fn unfurl_url_優先用_og_沒有才退到_title() {
+        let server = MockServer::start().await;
+        Mock::given(m("GET"))
+            .and(p("/full"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(
+                r#"<html><head><title>頁面標題</title>
+                <meta property="og:title" content="OG 標題">
+                <meta property="og:description" content="OG 說明">
+                <meta property="og:image" content="https://x/i.png">
+                <meta property="og:site_name" content="某站">
+                </head></html>"#,
+            ))
+            .mount(&server)
+            .await;
+        Mock::given(m("GET"))
+            .and(p("/bare"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_string("<html><head><title>  只有 title  </title></head></html>"),
+            )
+            .mount(&server)
+            .await;
+
+        let http = reqwest::Client::new();
+        let v = unfurl_url(&http, &format!("{}/full", server.uri())).await.expect("抓得到");
+        assert_eq!(v["title"], "OG 標題");
+        assert_eq!(v["desc"], "OG 說明");
+        assert_eq!(v["image"], "https://x/i.png");
+        assert_eq!(v["site"], "某站");
+
+        // 沒有 og:title → 退回 <title>，而且要 trim
+        let v = unfurl_url(&http, &format!("{}/bare", server.uri())).await.expect("抓得到");
+        assert_eq!(v["title"], "只有 title");
+        assert!(v["desc"].is_null());
+        // 沒有 og:site_name → 用 host（並去掉 www.）
+        assert_eq!(v["site"], "127.0.0.1", "退回 host");
+    }
+
+    #[tokio::test]
+    async fn unfurl_url_對非_http_與非_2xx_回_none() {
+        let server = MockServer::start().await;
+        Mock::given(m("GET")).and(p("/gone")).respond_with(ResponseTemplate::new(404)).mount(&server).await;
+        let http = reqwest::Client::new();
+
+        // 非 http(s) 一律拒絕——不然這支會變成任意 scheme 的讀取器
+        for bad in ["file:///etc/passwd", "ftp://example.com/x", "javascript:alert(1)", "不是網址"] {
+            assert!(unfurl_url(&http, bad).await.is_none(), "{bad} 應該回 None");
+        }
+        // 非 2xx 也不該生出一張空卡片
+        assert!(unfurl_url(&http, &format!("{}/gone", server.uri())).await.is_none());
+    }
+
+    /// TMDb enrich：碎念引用影劇時的卡片內容。
+    /// 這裡每一個 fallback 都是「使用者已經填了就別覆蓋」的規則。
+    #[tokio::test]
+    async fn enrich_media_ref_補完卡片但不覆蓋使用者已填的欄位() {
+        let server = MockServer::start().await;
+        // SAFETY: 測試專用 env；nextest 一測試一行程。
+        unsafe {
+            std::env::set_var("TMDB_BASE_URL", server.uri());
+            std::env::set_var("TMDB_API_TOKEN", "t");
+        }
+        Mock::given(m("GET"))
+            .and(p("/3/tv/1396"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "name": "絕命毒師",
+                "overview": "高中化學老師的故事",
+                "vote_average": 8.879,
+                "genres": [{ "name": "劇情" }, { "name": "犯罪" }],
+                "first_air_date": "2008-01-20",
+                "poster_path": "/bb.jpg",
+            })))
+            .mount(&server)
+            .await;
+
+        let http = reqwest::Client::new();
+        let mut input = Map::new();
+        input.insert("tmdbId".into(), json!(1396));
+        input.insert("mediaType".into(), json!("tv"));
+        let out = enrich_media_ref(&http, &input).await;
+
+        assert_eq!(out["source"], "www.themoviedb.org");
+        assert_eq!(out["url"], "https://www.themoviedb.org/tv/1396");
+        assert_eq!(out["title"], "絕命毒師", "tv 沒有 title 欄位，要退到 name");
+        assert_eq!(out["overview"], "高中化學老師的故事");
+        assert_eq!(out["rating"], "8.9", "評分固定一位小數");
+        assert_eq!(out["genres"], "劇情, 犯罪", "類型用逗號串起來");
+        assert_eq!(out["year"], "2008", "tv 走 first_air_date 的前四碼");
+        assert_eq!(out["poster"], "https://image.tmdb.org/t/p/w500/bb.jpg");
+
+        // 使用者自己填過的 title / poster / year 不該被 TMDb 蓋掉
+        let mut input = Map::new();
+        input.insert("tmdbId".into(), json!(1396));
+        input.insert("mediaType".into(), json!("tv"));
+        input.insert("title".into(), json!("我自己取的標題"));
+        input.insert("poster".into(), json!("https://my/own.jpg"));
+        let out = enrich_media_ref(&http, &input).await;
+        assert_eq!(out["title"], "我自己取的標題");
+        assert_eq!(out["poster"], "https://my/own.jpg");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("TMDB_BASE_URL");
+            std::env::remove_var("TMDB_API_TOKEN");
+        }
+    }
+
+    #[tokio::test]
+    async fn enrich_media_ref_沒有_tmdbid_時_url_是_null_也不打外部() {
+        let server = MockServer::start().await;
+        // SAFETY: 見上。
+        unsafe {
+            std::env::set_var("TMDB_BASE_URL", server.uri());
+            std::env::set_var("TMDB_API_TOKEN", "t");
+        }
+        let http = reqwest::Client::new();
+        let mut input = Map::new();
+        input.insert("mediaType".into(), json!("movie"));
+        let out = enrich_media_ref(&http, &input).await;
+        assert_eq!(out["source"], "www.themoviedb.org");
+        assert!(out["url"].is_null(), "沒有 id 就組不出網址，不該生一個 /movie/undefined 出來");
+        assert!(server.received_requests().await.unwrap().is_empty(), "沒有 id 就不該打 TMDb");
+
+        // 評分是 0 時當成沒有（TMDb 對沒人評分的作品回 0）
+        Mock::given(m("GET"))
+            .and(p("/3/movie/1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "title": "沒人評分的電影", "vote_average": 0.0, "genres": [],
+            })))
+            .mount(&server)
+            .await;
+        let mut input = Map::new();
+        input.insert("tmdbId".into(), json!(1));
+        input.insert("mediaType".into(), json!("movie"));
+        let out = enrich_media_ref(&http, &input).await;
+        assert!(out["rating"].is_null(), "0 分要當成沒有評分，不是顯示 0.0");
+        assert!(out["genres"].is_null(), "空的類型陣列不該變成空字串");
+        assert!(out["year"].is_null(), "沒有日期就是 null");
+
+        // SAFETY: 見上。
+        unsafe {
+            std::env::remove_var("TMDB_BASE_URL");
+            std::env::remove_var("TMDB_API_TOKEN");
+        }
+    }
+}
