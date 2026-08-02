@@ -23,6 +23,18 @@ use serde_json::Value;
 
 use crate::state::AppState;
 
+/// API 根位址。可用 `SIMKL_BASE_URL` 覆寫——**存在的理由只有測試**。
+///
+/// 這支最該被守住的不是資料轉換（那些純函式下面已經測了），而是 `sync_once` 裡
+/// 那三條「違反就會被 Simkl 停權」的規則：先問 activities、游標沒變不准拉
+/// all-items、增量一定要帶 date_from。要驗證那些就得攔得到實際發出的請求。
+///
+/// 正式環境不設 env 就是官方位址，行為完全不變。
+/// （同 `state::ExternalUrls`、`RESEND_BASE_URL`、`FFMPEG_BIN` 的做法。）
+fn simkl_api() -> String {
+    std::env::var("SIMKL_BASE_URL").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| SIMKL_API.into())
+}
+
 const SIMKL_API: &str = "https://api.simkl.com";
 /// 官方要求帶「描述性」的 User-Agent（文件範例：`PlexMediaServer/1.43.1.10540`）。
 const SIMKL_UA: &str = "koimsurai/1.0 (+https://koimsurai.com)";
@@ -40,7 +52,7 @@ fn access_token() -> String {
 /// 官方要求每個請求都帶 client_id / app-name / app-version 這三個 query 參數。
 fn with_required_params(path: &str) -> String {
     let sep = if path.contains('?') { '&' } else { '?' };
-    format!("{SIMKL_API}{path}{sep}client_id={}&app-name=koimsurai&app-version=1.0", client_id())
+    format!("{}{path}{sep}client_id={}&app-name=koimsurai&app-version=1.0", simkl_api(), client_id())
 }
 
 async fn simkl_get(state: &AppState, path: &str) -> Option<Value> {
@@ -274,24 +286,53 @@ pub async fn sync_once(state: &AppState) -> (u32, u32) {
 /// 週期預設 6 小時，但每次只會打一個很輕的 /sync/activities；只有時間戳變了才拉資料。
 /// 這是官方 "Never run unconditional background polling timers" 那條規則的做法——
 /// 被禁止的是無條件全量輪詢，不是定期檢查有沒有變動。
-pub fn spawn_sync(state: AppState) {
-    let enabled = std::env::var("ENABLE_SIMKL_SYNC")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
-    if !enabled {
-        tracing::info!("[Simkl] sync worker disabled (ENABLE_SIMKL_SYNC unset)");
-        return;
+/// `ENABLE_SIMKL_SYNC` 的解讀。**預設關閉**——沒設定就不跑。
+///
+/// 抽成純函式是為了測得到：`spawn_sync` 本身會 spawn 一個先睡 45 秒的 task，
+/// 從外面觀察不到，但「有沒有啟用」判斷錯的後果很具體——同步靜靜地再也不跑，
+/// 而「在看什麼」只是停在最後一次的資料，沒有任何錯誤訊息。
+pub(crate) fn sync_enabled(raw: Option<&str>) -> bool {
+    match raw {
+        Some(v) => v == "1" || v.eq_ignore_ascii_case("true"),
+        None => false,
     }
-    let delay = std::env::var("SIMKL_SYNC_DELAY_SECS").ok().and_then(|v| v.parse().ok()).unwrap_or(45u64);
-    let period =
-        std::env::var("SIMKL_SYNC_PERIOD_SECS").ok().and_then(|v| v.parse().ok()).unwrap_or(6 * 3600u64);
-    tokio::spawn(async move {
+}
+
+/// 輪詢週期（秒），預設 6 小時。
+///
+/// 這個數字直接關係到會不會被停權：Simkl 明文禁止「無條件的背景輪詢」，
+/// 而我們的做法是「低頻檢查 activities、有變才拉」。把 6 小時算錯成一小時
+/// 就等於把頻率提高六倍，而**資料照樣是對的**——直到 client_id 被停用。
+pub(crate) fn period_secs(raw: Option<&str>) -> u64 {
+    raw.and_then(|v| v.parse().ok()).unwrap_or(6 * 3600)
+}
+
+/// 啟動後第一次跑之前的延遲（秒），預設 45——讓伺服器先把啟動的事做完。
+pub(crate) fn delay_secs(raw: Option<&str>) -> u64 {
+    raw.and_then(|v| v.parse().ok()).unwrap_or(45)
+}
+
+/// 回傳 worker 的 handle；沒啟用時回 `None`。
+///
+/// 回傳值存在的理由是**可觀察**：`tokio::spawn` 之後這個 task 先睡 45 秒，
+/// 從外面完全看不出「到底有沒有啟動」。`cargo mutants` 因此可以把整個函式
+/// 換成 no-op、或把 `!sync_enabled(...)` 的驚嘆號刪掉（啟用與否顛倒），
+/// 兩種都沒有任何測試會紅——而後果分別是「同步永遠不跑」與
+/// 「沒設定卻自己開始打上游」。呼叫端（main.rs）照舊忽略回傳值。
+pub fn spawn_sync(state: AppState) -> Option<tokio::task::JoinHandle<()>> {
+    if !sync_enabled(std::env::var("ENABLE_SIMKL_SYNC").ok().as_deref()) {
+        tracing::info!("[Simkl] sync worker disabled (ENABLE_SIMKL_SYNC unset)");
+        return None;
+    }
+    let delay = delay_secs(std::env::var("SIMKL_SYNC_DELAY_SECS").ok().as_deref());
+    let period = period_secs(std::env::var("SIMKL_SYNC_PERIOD_SECS").ok().as_deref());
+    Some(tokio::spawn(async move {
         tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
         loop {
             let _ = sync_once(&state).await;
             tokio::time::sleep(std::time::Duration::from_secs(period)).await;
         }
-    });
+    }))
 }
 
 #[cfg(test)]
@@ -342,6 +383,36 @@ mod tests {
         // 兩邊都沒有就是沒有
         assert_eq!(poster_for(None, None), None);
         assert_eq!(poster_for(None, Some("")), None);
+    }
+
+    #[test]
+    fn 啟用判斷_預設關閉_只認_1_與_true() {
+        // 預設關閉是刻意的：忘了設 env 的後果應該是「不跑」而不是「偷偷開始打上游」
+        assert!(!sync_enabled(None));
+        assert!(!sync_enabled(Some("")));
+        assert!(!sync_enabled(Some("0")));
+        assert!(!sync_enabled(Some("yes")));
+        assert!(sync_enabled(Some("1")));
+        assert!(sync_enabled(Some("true")));
+        assert!(sync_enabled(Some("TRUE")), "大小寫不該影響");
+        assert!(sync_enabled(Some("True")));
+    }
+
+    #[test]
+    fn 週期預設六小時_算錯就是提高輪詢頻率() {
+        // 6 * 3600 而不是 6 + 3600（1h）或 6 / 3600（0）——Simkl 會因為過度輪詢停權，
+        // 而這種錯誤不會讓資料變錯，只會讓帳號某天被停掉
+        assert_eq!(period_secs(None), 21_600);
+        assert_eq!(period_secs(Some("")), 21_600, "空字串當成沒設");
+        assert_eq!(period_secs(Some("not-a-number")), 21_600, "壞值退回預設而不是 0");
+        assert_eq!(period_secs(Some("900")), 900);
+    }
+
+    #[test]
+    fn 啟動延遲預設四十五秒() {
+        assert_eq!(delay_secs(None), 45);
+        assert_eq!(delay_secs(Some("abc")), 45);
+        assert_eq!(delay_secs(Some("5")), 5);
     }
 
     #[test]
