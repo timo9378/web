@@ -12,7 +12,6 @@ use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use base64::Engine;
 use parking_lot::Mutex;
 use resvg::{tiny_skia, usvg};
 
@@ -140,6 +139,26 @@ fn rasterize(svg: &str, fontdb: Arc<usvg::fontdb::Database>) -> anyhow::Result<V
     Ok(pixmap.encode_png()?)
 }
 
+/// ETag 用的雜湊。FNV-1a：不需要相依、跨版本永遠決定性（ETag 會被客戶端與 CDN
+/// 存著，換 Rust 版本就變值的話等於每次升級都讓全站的圖失效）。
+///
+/// ⚠️ 這裡原本是 `base64(cacheKey).slice(0, 12)`（照抄 Express）。那是**壞的**：
+/// 12 個 base64 字元只編碼 9 個 byte，而 cacheKey 是 `{id}::{時間戳}::{標題}`——
+/// 前 9 個 byte 只到 `1::2026-0`。也就是說標題與大部分時間戳從來沒有進入 ETag，
+/// 同一篇文章改標題前後算出來是同一個值（實測驗證過）。
+///
+/// 後果不是「少了最佳化」而是**讀者看到舊圖**：站長改標題後伺服器端快取會失效並
+/// 重新產圖，但 ETag 沒變 → 下一個帶著舊 ETag 來的讀者拿到 304 →
+/// 他的瀏覽器繼續用舊圖，而且不會再問第二次。
+fn fnv1a(s: &str) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in s.as_bytes() {
+        h ^= *b as u64;
+        h = h.wrapping_mul(0x1000_0000_01b3);
+    }
+    h
+}
+
 fn text_resp(code: StatusCode, body: &'static str) -> Response {
     (code, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], body).into_response()
 }
@@ -200,9 +219,7 @@ pub async fn og_png(State(state): State<AppState>, Path(file): Path<String>, req
         Ok(Ok(p)) => Arc::new(p),
         _ => return text_resp(StatusCode::INTERNAL_SERVER_ERROR, "og generation failed"),
     };
-    // etag = `"og-${id}-${base64(cacheKey).slice(0,12)}"`（標準 base64，切 ASCII 前 12）
-    let b64 = base64::engine::general_purpose::STANDARD.encode(cache_key.as_bytes());
-    let etag = format!("\"og-{post_id}-{}\"", &b64[..b64.len().min(12)]);
+    let etag = format!("\"og-{post_id}-{:016x}\"", fnv1a(&cache_key));
     og.cache.lock().insert(post_id, CachedOg { png: png.clone(), etag: etag.clone(), key: cache_key });
     (
         [
@@ -244,6 +261,24 @@ mod tests {
             wrap_title(&"A".repeat(49), 16, 3),
             vec!["A".repeat(16), "A".repeat(16), format!("{}…", "A".repeat(15))]
         );
+    }
+
+    /// ETag 的雜湊必須涵蓋**整個** cache key。
+    ///
+    /// 回歸測試：原本是 `base64(cacheKey).slice(0, 12)`，而 12 個 base64 字元
+    /// 只編碼 9 個 byte——cacheKey 是 `{id}::{時間戳}::{標題}`，前 9 個 byte
+    /// 只到 `1::2026-0`。下面前兩組在舊寫法下算出來是**同一個值**。
+    #[test]
+    fn etag_雜湊要涵蓋整個_cache_key() {
+        let a = fnv1a("1::2026-08-03 20:00:00::公開文章");
+        let b = fnv1a("1::2026-02-01 00:00:00::改過的標題");
+        let c = fnv1a("1::2026-08-03 20:00:00::公開文章 "); // 只差一個空白
+        assert_ne!(a, b, "改了標題與時間戳卻算出同一個 ETag——讀者會一直看到舊圖");
+        assert_ne!(a, c, "只差一個字元也要換值");
+        // 同樣的輸入永遠是同樣的輸出（ETag 存在客戶端與 CDN，不能每次重啟就變）
+        assert_eq!(a, fnv1a("1::2026-08-03 20:00:00::公開文章"));
+        // 空字串也要能算（沒有標題、沒有時間戳的文章）
+        assert_ne!(fnv1a(""), fnv1a("1::::"));
     }
 
     #[test]

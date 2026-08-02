@@ -565,3 +565,75 @@ async fn 更新不存在的文章是_404() {
     assert_eq!(st, StatusCode::NOT_FOUND, "得到 {body}");
     assert_eq!(body["error"], "文章不存在");
 }
+
+// ── 繁→簡自動轉換（generate-zh-cn）─────────────────────────────────────────
+//
+// 轉換函式本身（含「日文原樣保留」）在 handlers/opencc.rs 內有單元測試；
+// 這裡補的是那支端點的守衛與副作用：轉錯對象、把空摘要寫成空字串、
+// 或是轉完沒存回 DB——三種都回 200，只有回頭讀一次才看得見。
+
+#[tokio::test]
+async fn 自動轉簡體會把結果寫回文章() {
+    let (app, _pool) = test_app().await;
+    let id = create_post(
+        &app,
+        json!({
+            "title": "這是繁體標題", "content": "鞋帶鬆了開來", "excerpt": "簡短的摘要",
+            "source_language": "zh-TW",
+        }),
+    )
+    .await;
+
+    let (st, v) = admin(&app, "POST", &format!("/api/admin/posts/{id}/generate-zh-cn"), None).await;
+    assert!(st.is_success(), "得到 {st} {v}");
+    assert_eq!(v["title_zh_cn"], "这是繁体标题");
+    assert_eq!(v["content_zh_cn"], "鞋带松了开来");
+    assert_eq!(v["excerpt_zh_cn"], "简短的摘要");
+
+    // 回應對了不代表存進去了——回頭讀一次
+    let p = get_post(&app, id).await;
+    assert_eq!(p["title_zh_cn"], "这是繁体标题", "轉換結果沒寫回 DB");
+    assert_eq!(p["content_zh_cn"], "鞋带松了开来");
+    assert_eq!(p["excerpt_zh_cn"], "简短的摘要");
+    assert_eq!(p["title"], "這是繁體標題", "原文不該被動到");
+}
+
+#[tokio::test]
+async fn 沒有摘要時轉出來的是_null_不是空字串() {
+    // 空字串會讓前端的「有沒有簡體版摘要」判斷（truthy）誤判成有，
+    // 然後在簡中版顯示一段空白的摘要區塊。
+    let (app, _pool) = test_app().await;
+    let id = create_post(&app, json!({ "title": "沒有摘要", "content": "內文" })).await;
+    let (st, v) = admin(&app, "POST", &format!("/api/admin/posts/{id}/generate-zh-cn"), None).await;
+    assert!(st.is_success(), "得到 {v}");
+    assert!(v["excerpt_zh_cn"].is_null(), "得到 {}", v["excerpt_zh_cn"]);
+}
+
+#[tokio::test]
+async fn 只能從_zh_tw_原文轉_其餘一律_400() {
+    // 拿日文原文去跑繁簡轉換會把日文漢字改掉——而那是不可逆的（原文已被覆寫）。
+    let (app, _pool) = test_app().await;
+    for lang in ["ja", "en", "ko", "zh-CN"] {
+        let id =
+            create_post(&app, json!({ "title": "標題", "content": "內文", "source_language": lang })).await;
+        let (st, v) = admin(&app, "POST", &format!("/api/admin/posts/{id}/generate-zh-cn"), None).await;
+        assert_eq!(st, StatusCode::BAD_REQUEST, "source_language={lang} 應該被擋，得到 {v}");
+    }
+}
+
+#[tokio::test]
+async fn 原文缺標題或內容時_400_不存在的文章_404() {
+    let (app, pool) = test_app().await;
+    // 直接插一筆內容為空的（正常路徑建不出來）
+    sqlx::query(
+        "INSERT INTO posts (id, title, content, status, source_language) VALUES (700, '有標題', '', 'draft', 'zh-TW')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    let (st, v) = admin(&app, "POST", "/api/admin/posts/700/generate-zh-cn", None).await;
+    assert_eq!(st, StatusCode::BAD_REQUEST, "得到 {v}");
+
+    let (st, v) = admin(&app, "POST", "/api/admin/posts/999999/generate-zh-cn", None).await;
+    assert_eq!(st, StatusCode::NOT_FOUND, "得到 {v}");
+}
