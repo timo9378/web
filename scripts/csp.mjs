@@ -102,8 +102,13 @@ const DIRECTIVES = {
   'frame-src': FRAME,
   // 字體全部自帶（@fontsource-variable），data: 給 inline 的圖示字體留活口
   'font-src': ["'self'", 'data:'],
-  // API 與 vitals 上報都是同源（nginx 把 /api 併到同一個 origin）
-  'connect-src': ["'self'"],
+  // API 與 vitals 上報都是同源（nginx 把 /api 併到同一個 origin）。
+  //
+  // ⚠ Steam 的遊戲預告片要**同時**放進 media-src 與 connect-src。掃正式站時抓到的：
+  //   `/activity` 上那支 .mp4 是被 fetch 抓的（不是 <video src> 直接載），
+  //   而 fetch 走的是 connect-src。只放 media-src 的話影片不會播，
+  //   畫面上就是一格空的播放器——不會報錯，只有 console 有一行違規。
+  'connect-src': ["'self'", ...MEDIA],
   // 星空背景用 Worker；bundler 產的 worker 走 blob:
   'worker-src': ["'self'", 'blob:'],
   'manifest-src': ["'self'"],
