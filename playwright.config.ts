@@ -12,14 +12,26 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // ubuntu-latest 是 4 vCPU，worker 數對齊核心數。
+  // ubuntu-latest 是 4 vCPU。這裡**不**對齊核心數，用 2——原因是瀏覽器會崩。
   //
-  // ⚠ 本機用 `taskset -c 0-3` 綁 4 核模擬，量到 workers 2→4 是 43.3s→32.4s，
-  //   但**那個改善沒有轉移到 CI**（實測 57.0s → 58.1s，在雜訊範圍內）。
-  //   綁核心綁不掉記憶體頻寬與磁碟，runner 的單核也慢得多，2 個 worker 就已經吃滿。
-  //   留在 4 是因為它不比 2 差，而且六次跑下來零 retry；真正的瓶頸不在這裡——
-  //   是 smoke.spec.ts 那個沒設 timeout 的 networkidle（見該檔註解）。
-  workers: process.env.CI ? 4 : undefined,
+  // 症狀：`browser.newContext: Target page, context or browser has been closed`。
+  // 不是產品的 bug，是 chromium 行程整個死掉；CI 上被 retry 接住所以是綠的 flaky，
+  // 但它會蓋掉真正的失敗訊號。本機 `taskset -c 0-3` 綁 4 核模擬，每種設定跑
+  // 8 輪 × 137 條：
+  //
+  //     workers=4                    3/8 輪崩潰    137s/輪
+  //     workers=4 + --disable-gpu    2/8           136s   ← 沒用，別再試了
+  //     workers=3                    1/8           147s
+  //     workers=2                    0/8           176s
+  //
+  // 是單調斜坡不是閾值，跟 GPU 無關（`--disable-gpu` 那組證明了；而且 headless
+  // 的 UA 會被判成 bot，SpaceBackdropShell 直接 return null，three.js 根本沒載，
+  // 所以那個旗標連覆蓋率都沒省到——純粹無效）。
+  //
+  // ⚠ 本機那個 +28% 不要當成 CI 的成本：`taskset` 只限制 CPU，而 runner 真正吃滿的
+  //   是記憶體頻寬與磁碟。舊測（66 條時）在真 CI 上 workers 2 vs 4 是 57.0s vs 58.1s，
+  //   也就是**多開 worker 在 CI 上根本沒買到東西**。若之後 CI 時間明顯變長再回頭看。
+  workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
   timeout: 30_000,
   expect: { timeout: 10_000 },
