@@ -186,6 +186,14 @@ jobs:
       # 加一個旁路開關，這筆帳怎麼算都不划算。被擋掉的那條路徑本身有測（tests/api.rs）。
       - name: test + coverage (llvm-cov + nextest)
         run: cargo llvm-cov nextest --locked --fail-under-regions 82 --lcov --output-path lcov.info
+      # ⚠ cargo-llvm-cov 的 lcov 寫的是**絕對路徑**（`SF:/home/runner/work/…/backend/src/x.rs`）。
+      #   Codecov 會嘗試用路徑尾端去比對 repo 裡的檔案，比對不上時報告仍然「上傳成功」，
+      #   只是每個檔案都掛不到原始碼——網頁上看到的是一份空殼，而且沒有任何錯誤訊息。
+      #   在這裡先切成 repo 相對路徑，就不必依賴那層猜測。
+      #   `if: always()` 讓覆蓋率沒過門檻時也照樣正規化（那時候最需要看報告）。
+      - name: lcov 路徑改成 repo 相對
+        if: ${{ !cancelled() }}
+        run: sed -i "s|^SF:${GITHUB_WORKSPACE}/|SF:|" lcov.info
       # 上報到 Codecov。這裡只給「看得到趨勢與逐行熱區」，門檻仍然是上面那個
       # --fail-under-regions——外部服務掛掉不該擋住 merge，所以 fail_ci_if_error: false。
       #
