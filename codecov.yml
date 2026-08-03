@@ -1,0 +1,47 @@
+# Codecov 設定。
+#
+# 定位很明確：**這裡不是守門員**。真正擋 merge 的是 CI 裡的
+# `cargo llvm-cov nextest --fail-under-regions 78`，那條在 runner 上跑、
+# 不依賴外部服務。Codecov 給的是它給不了的東西——逐行熱區、PR 的增減量、
+# 以及「這次改動碰到的行有沒有被測到」。
+#
+# ⚠ 刻意不設 ignore。把 main.rs、bin/export_types.rs 這種本來就測不到的檔案
+#   排除掉會讓百分比好看一點，但也會讓 Codecov 的數字跟 `cargo llvm-cov` 對不起來，
+#   於是每次都要先想「這個數字是哪一套算的」。兩邊算同一件事才有比較的意義。
+
+coverage:
+  # 用 region 覆蓋率當基準的理由寫在 ci.yml：line coverage 會被排版影響
+  # （導入 rustfmt 時測試一個沒少，line 掉了 3pp，region 只動 0.01pp）。
+  # lcov 只帶得動 line/branch，所以這裡的數字會跟 CI 的門檻略有出入——
+  # 趨勢一致就夠了，絕對值以 CI 那條為準。
+  status:
+    project:
+      backend:
+        flags: [backend]
+        # auto = 跟自己的 base 比。訂死一個數字的話，每次補完測試都要回來改一次，
+        # 而沒改的那幾次它就變成一條假的下限。
+        target: auto
+        # 0.5pp 的餘裕：region/line 兩套算法本來就會有小數點的漂移，
+        # 貼著 0 訂等於每隔幾次就買一個假紅。
+        threshold: 0.5%
+    patch:
+      backend:
+        flags: [backend]
+        # 改動到的行要有八成被測到。這條比 project 有用得多：整體百分比可以
+        # 靠「不動的舊檔」撐著，patch 看的是這次真的新增了多少沒測到的路徑。
+        target: 80%
+        threshold: 0%
+
+flags:
+  backend:
+    paths:
+      - backend/src/
+    # 前端目前沒有上報覆蓋率，所以不需要 carryforward（那是給「這次 CI 沒跑到
+    # 某個 flag 就沿用上次結果」用的）。哪天前端也接上來再開。
+    carryforward: false
+
+comment:
+  layout: 'condensed_header, diff, flags, files'
+  # 沒有覆蓋率變化就不要留言。每個 PR 都貼一則「沒有變化」只會訓練人略過它。
+  require_changes: true
+  behavior: default

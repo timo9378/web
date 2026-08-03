@@ -7,6 +7,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![codecov](https://codecov.io/gh/timo9378/sora-to-ki/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/timo9378/sora-to-ki)
 
 Koimsurai 的個人網站原始碼。一個 full-stack blog + portfolio + 多平台 activity dashboard，從 2025 年 4 月持續開發到現在。
 

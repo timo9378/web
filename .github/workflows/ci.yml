@@ -79,6 +79,11 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # 提到 job 層是為了讓下面的上報步驟能在 `if:` 裡判斷「token 到底設了沒」——
+    # step 層的 env 在該 step 自己的 if: 裡讀不到。沒設 token 時整步跳過，
+    # 而不是紅一格：Codecov 是儀表板不是守門員，門檻仍在 --fail-under-regions。
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -170,7 +175,27 @@ jobs:
       # 剩下最大的一塊是 bahamut.rs（24%）——它的主體是 sync worker，要測得先把
       # anigamer client 抽成可注入，那是比寫測試本身更大的改動，不在這一輪。
       - name: test + coverage (llvm-cov + nextest)
-        run: cargo llvm-cov nextest --locked --fail-under-regions 78
+        run: cargo llvm-cov nextest --locked --fail-under-regions 78 --lcov --output-path lcov.info
+      # 上報到 Codecov。這裡只給「看得到趨勢與逐行熱區」，門檻仍然是上面那個
+      # --fail-under-regions——外部服務掛掉不該擋住 merge，所以 fail_ci_if_error: false。
+      #
+      # !cancelled() 而不是 success()：覆蓋率掉到門檻以下時上一步會紅，而那正是
+      # 最需要看報告的時候；只在成功時上報等於「壞掉時看不到資料」。
+      #
+      # ⚠ 沒有設 CODECOV_TOKEN 就整步跳過。這個 repo 是公開的，理論上 tokenless
+      #   也上傳得了，但 Codecov 對匿名上傳有速率限制、失敗時只回 429，
+      #   到時候會變成「有時有報告有時沒有」這種最難查的狀態。
+      - name: Codecov（覆蓋率上報）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: backend/lcov.info
+          # disable_search：不讓它自己去翻整個 repo。前端目前沒有產覆蓋率報告，
+          # 開著搜尋只會掃出一堆無關檔案然後靜默地上傳空資料。
+          disable_search: true
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |

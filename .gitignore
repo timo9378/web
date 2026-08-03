@@ -64,6 +64,9 @@ server/db/.bahamut-cookie.json
 backend/target/
 .env.backend
 
+# cargo-llvm-cov 的 lcov 報告（CI 產生後直接上報 Codecov，不入庫）
+lcov.info
+
 # rollup-plugin-visualizer 產物（舊 vite.config.js 遺留；勿再入庫）
 stats.html
 
