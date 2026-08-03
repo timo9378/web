@@ -42,5 +42,8 @@ overrides:
   # 真的有事時就沒人看。鎖壞了不會沒人知道——lhci 在 CI 每次都跑。
   tmp: '^0.2.6'
 
-patchedDependencies:
-  '@types/three@0.185.1': patches/@types__three@0.185.1.patch
+# patchedDependencies 已清空。原本這裡有一筆 '@types/three@0.185.1' —— 它把 Node.d.ts
+# 裡那組 20 層巢狀的 `TNodeType extends …` conditional type 攤平成 NodeExtras 查表，
+# 因為那個型別會讓 type-aware lint 吃掉大量記憶體。
+# 上游在 0.185.3 自己做了同一件事（產出的 Node.d.ts 與我們 patch 後的檔案 byte 相同），
+# 所以升版之後 patch 就是多餘的，留著只會在下次 @types/three 升版時變成一個假衝突。
