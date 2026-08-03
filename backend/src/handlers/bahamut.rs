@@ -586,4 +586,148 @@ mod sync_lock_tests {
         let missing = out["missing"].as_array().expect("missing 是陣列");
         assert_eq!(missing.len(), 7, "7 個必要 cookie 應該全部列出來");
     }
+
+    // ── JWT 到期告警 ───────────────────────────────────────────────────
+    //
+    // 這一段是整支檔案裡「壞了最貴」的：cookie 到期是**必然**會發生的（動畫瘋的
+    // BAHARUNE 有效期固定），而唯一的通知管道就是這裡發的那則 Discord 訊息。
+    // 它不發，症狀是觀看紀錄某天起就不再更新——而站上沒有任何地方會顯示異常，
+    // 通常是幾週後偶然點進「在看」才發現最新一集停在很久以前。
+    //
+    // 放在檔內而不是 tests/ 的理由：`check_bahamut_jwt_expiry` 是私有函式。
+    // 直接呼叫它可以完全避開 `history_all()`，也就不必碰任何外部網站。
+
+    /// 造一個 payload 帶 `exp` 的 BAHARUNE（簽章不驗，只解 payload）。
+    /// `secs` 為負數＝已過期。
+    fn baharune_expiring_in(secs: i64) -> String {
+        use base64::Engine as _;
+        let now = now_ms() / 1000;
+        let payload = json!({ "exp": now + secs }).to_string();
+        let b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload);
+        format!("eyJhbGciOiJIUzI1NiJ9.{b64}.sig")
+    }
+
+    fn cookies_with(baharune: &str) -> String {
+        format!("BAHAID=1; BAHAHASHID=h; BAHANICK=n; BAHALV=1; BAHAFLT=f; BAHAENUR=e; BAHARUNE={baharune}")
+    }
+
+    /// 架一台假的 Discord webhook，回 (server, 已設好的 state)。
+    async fn with_discord(baharune: &str) -> (wiremock::MockServer, AppState) {
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, ResponseTemplate};
+        let server = wiremock::MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/hook"))
+            .respond_with(ResponseTemplate::new(204))
+            .mount(&server)
+            .await;
+        // SAFETY: 同本模組其他測試——靠 COOKIE_ENV_LOCK 串行化（呼叫端持鎖）。
+        unsafe { std::env::set_var("DISCORD_WEBHOOK_URL", format!("{}/hook", server.uri())) };
+        let state = state_with_cookies(Some(&cookies_with(baharune))).await;
+        (server, state)
+    }
+
+    /// 假 webhook 收到的訊息內容（沒收到就是空陣列）。
+    async fn alerts(server: &wiremock::MockServer) -> Vec<String> {
+        server
+            .received_requests()
+            .await
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|r| serde_json::from_slice::<Value>(&r.body).ok())
+            .filter_map(|v| v.get("content").and_then(|c| c.as_str()).map(str::to_owned))
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn baharune_不是_jwt_時發告警並帶上實際的值() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        // "deleted" 是動畫瘋登出時真的會塞進來的值——不是假想案例
+        let (server, state) = with_discord("deleted").await;
+
+        check_bahamut_jwt_expiry(&state).await;
+
+        let msgs = alerts(&server).await;
+        assert_eq!(msgs.len(), 1, "BAHARUNE 不是 JWT 時應該發一則告警");
+        // 訊息裡要帶「實際看到什麼」。只說「cookie 有問題」的話，收到的人不知道
+        // 是被登出（deleted）還是擴充推錯了東西，處理方式完全不同。
+        assert!(msgs[0].contains("deleted"), "訊息沒帶上實際的值：{}", msgs[0]);
+        assert!(msgs[0].contains("不是有效 JWT"));
+    }
+
+    #[tokio::test]
+    async fn 已過期時發的是_已過期_那一則() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let (server, state) = with_discord(&baharune_expiring_in(-3600)).await;
+
+        check_bahamut_jwt_expiry(&state).await;
+
+        let msgs = alerts(&server).await;
+        assert_eq!(msgs.len(), 1);
+        // 「已過期」與「快到期」要分得開：前者是現在就壞了，後者還有時間慢慢處理
+        assert!(msgs[0].contains("已過期"), "{}", msgs[0]);
+        assert!(!msgs[0].contains("剩"), "已經過期了不該說還剩幾天：{}", msgs[0]);
+    }
+
+    #[tokio::test]
+    async fn 三天內到期時發的是倒數那一則() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        // 門檻是 3 天；抓 2 天半，離門檻與離 0 都有距離
+        let (server, state) = with_discord(&baharune_expiring_in(2 * 86_400 + 43_200)).await;
+
+        check_bahamut_jwt_expiry(&state).await;
+
+        let msgs = alerts(&server).await;
+        assert_eq!(msgs.len(), 1);
+        assert!(msgs[0].contains("剩 2 天到期"), "{}", msgs[0]);
+    }
+
+    #[tokio::test]
+    async fn 還很久才到期時不吵人() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let (server, state) = with_discord(&baharune_expiring_in(30 * 86_400)).await;
+
+        check_bahamut_jwt_expiry(&state).await;
+
+        // 每次同步都發一則的話，這個頻道會變成沒有人在看的雜訊——
+        // 然後真的到期那天那則也一樣不會有人看到。
+        assert_eq!(alerts(&server).await.len(), 0, "還有 30 天不該告警");
+    }
+
+    #[tokio::test]
+    async fn 二十四小時內只發一則() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let (server, state) = with_discord("deleted").await;
+
+        // sync 預設每 6 小時跑一次，過期狀態會一直持續。沒有節流的話一天四則、
+        // 一週二十八則，全是同一件事。
+        for _ in 0..3 {
+            check_bahamut_jwt_expiry(&state).await;
+        }
+        assert_eq!(alerts(&server).await.len(), 1, "24 小時內重複呼叫只該發一則");
+
+        // 節流時間到了要能再發（否則第一則被漏看之後就再也不會提醒）
+        state
+            .bahamut
+            .last_jwt_alert_at
+            .store(now_ms() - 25 * 60 * 60 * 1000, std::sync::atomic::Ordering::Relaxed);
+        check_bahamut_jwt_expiry(&state).await;
+        assert_eq!(alerts(&server).await.len(), 2, "超過 24 小時應該可以再發一則");
+    }
+
+    #[tokio::test]
+    async fn 沒設_webhook_時安靜略過而不是報錯() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        // SAFETY: 同上，靠 COOKIE_ENV_LOCK 串行化。
+        unsafe { std::env::set_var("DISCORD_WEBHOOK_URL", "") };
+        let state = state_with_cookies(Some(&cookies_with("deleted"))).await;
+
+        // 沒設 webhook 是完全合法的部署方式（本機開發）。這條路徑若 panic 或
+        // 阻塞，整個 sync 會被一個「選配的通知功能」拖垮。
+        tokio::time::timeout(Duration::from_secs(5), check_bahamut_jwt_expiry(&state))
+            .await
+            .expect("沒設 webhook 不該卡住");
+        // SAFETY: 同上。
+        unsafe { std::env::remove_var("DISCORD_WEBHOOK_URL") };
+    }
 }
