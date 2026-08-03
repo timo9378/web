@@ -69,6 +69,37 @@ function rawPaths(): string[] {
   return [...found];
 }
 
+/**
+ * 後台路由（登入後才進得去），同樣從生成檔推導。
+ *
+ * 為什麼要有這一支：在它之前，e2e 對後台十四頁只驗過「未登入進不去」，
+ * 而其中**七頁連「登入後打得開」都沒被走過**（dashboard / categories / books /
+ * subscribers / notes / article-generator / users）。後台是站長每天在用的介面，
+ * 而「某頁一打開就白畫面」正是沒有人會發現的那種——直到剛好要用那頁。
+ *
+ * 一樣不手寫清單：新增後台頁會自動被掃到。
+ */
+const ADMIN_SKIP = [
+  { re: /^\/admin\/login$/, why: '只是舊書籤的轉址頁，沒有內容可驗' },
+];
+
+/** 後台的參數化路由 → 種子資料裡真的存在的 id。 */
+const ADMIN_PARAM_FIXTURES: Record<string, string> = {
+  '/admin/posts/edit/$id': '/admin/posts/edit/1',
+};
+
+export function discoverAdminRoutes(): RouteCase[] {
+  const paths = new Set<string>();
+  for (const raw of rawPaths()) {
+    if (!raw.startsWith('/admin')) continue;
+    if (ADMIN_SKIP.some((s) => s.re.test(raw))) continue;
+    const p = raw.length > 1 && raw.endsWith('/') ? raw.slice(0, -1) : raw;
+    const resolved = p.includes('$') ? ADMIN_PARAM_FIXTURES[p] : p;
+    if (resolved) paths.add(resolved);
+  }
+  return [...paths].sort((a, b) => a.localeCompare(b)).map((path) => ({ path }));
+}
+
 export function discoverRoutes(): RouteCase[] {
   // 去重要在正規化**之後**：生成檔裡目錄型路由會同時出現 '/blog' 與 '/blog/'，
   // 兩者會收斂成同一條，直接用原字串去重會留下重複的測試名稱。

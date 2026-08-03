@@ -20,7 +20,7 @@ function Unsubscribe() {
   const token = search.token;
   // token 驗證讀取改由 TanStack Query（consume 生成 SubscriberByToken）；
   // 退訂 POST 仍是 mutation，用 action 狀態驅動 confirm→pending→done。
-  const { data: subscriber, isLoading, isError, error: qError } = useQuery({
+  const { data: subscriber, isLoading, isError } = useQuery({
     ...subscriberByTokenQueryOptions(token ?? ''),
     enabled: !!token,
   });
@@ -38,12 +38,21 @@ function Unsubscribe() {
   else if (subscriber) phase = subscriber.status === 'unsubscribed' ? PHASE.done : PHASE.confirm;
   else phase = PHASE.loading;
 
+  // 查詢失敗一律用本地化訊息。
+  //
+  // 原本是「有 qError.message 就顯示它，否則才用 invalidLink」——但 newsletterData
+  // 的 queryFn 是 `throw new Error(data.error ?? '')`，而 /by-token 唯一的失敗是
+  // 404 `{"error":"invalid token"}`，所以 message 永遠有值、`invalidLink` 是死碼。
+  // 結果是讀者在中文頁面上看到一句英文 "invalid token"，而那句話對他毫無用處
+  // （他能做的只有「這個連結沒用了」）。e2e 撞出來的。
+  //
+  // 送出退訂的那條（actionError）維持原樣：那支的錯誤訊息是我們自己寫的中文。
   const error = !token
     ? t('unsubscribe.missingToken')
     : action === 'error'
       ? actionError
       : isError
-        ? (qError instanceof Error && qError.message ? qError.message : t('unsubscribe.invalidLink'))
+        ? t('unsubscribe.invalidLink')
         : '';
 
   const handleConfirm = async () => {

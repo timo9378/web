@@ -27,6 +27,15 @@ export const PUBLISHED_POSTS = 3;
  */
 export const E2E_POST_PREFIX = 'e2e-post-';
 
+/**
+ * 種子訂閱者的退訂 token。退訂信裡的連結長這樣：`/unsubscribe?token=…`。
+ *
+ * 寫死一個值是必要的：token 只有在真的訂閱時才生成，而 API **不會**把它回給
+ * 呼叫端（那正是它的意義——只有收到信的人才知道）。沒有這個常數，退訂頁就完全
+ * 測不了，也就是說「讀者點了退訂連結卻看到錯誤畫面」不會有任何東西擋得住。
+ */
+export const UNSUB_TOKEN = 'e2e-unsub-token-0123456789abcdef';
+
 /** 固定日期，讓「x 天前」這種相對時間在測試裡也穩定。 */
 const T = (daysAgo = 0) =>
   new Date(Date.UTC(2026, 0, 15, 3, 0, 0) - daysAgo * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
@@ -174,6 +183,15 @@ export function seed(dbPath) {
   // ── 投票 / 計數器 ──────────────────────────────────────────────
   run("INSERT INTO poll_votes (poll_id, option_key, count) VALUES ('demo', 'a', 3), ('demo', 'b', 1)");
   run("INSERT INTO site_counters (key, count) VALUES ('visits', 1234)");
+
+  // ── 電子報訂閱者 ────────────────────────────────────────────────
+  // 退訂頁（/unsubscribe?token=…）沒有這個就完全測不了：token 是真的訂閱時才生成的，
+  // 而 API 不會把它回給呼叫端（那正是它的意義）。固定值讓測試不必先讀 DB。
+  run(
+    `INSERT INTO newsletter_subscribers (email, name, status, unsubscribe_token)
+     VALUES ('reader@example.com', '訂閱的讀者', 'active', ?)`,
+    UNSUB_TOKEN,
+  );
 
   db.close();
 }
