@@ -104,3 +104,6 @@ docs/
 
 # JUnit XML（CI 產給 Codecov Test Analytics，本機跑測試也可能留下）
 junit-*.xml
+
+# monaco 的 min/vs（build 時由 vite plugin 從 node_modules 複製，約 15MB，不入庫）
+public/monaco/

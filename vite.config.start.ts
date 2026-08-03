@@ -1,8 +1,54 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import { nitro } from 'nitro/vite';
 import viteReact from '@vitejs/plugin-react';
 import path from 'node:path';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+
+/**
+ * 把 monaco 的 `min/vs` 複製進 `public/monaco/vs`，讓編輯器從**自己的網域**載入。
+ *
+ * 原本是走 `@monaco-editor/loader` 的預設值，也就是
+ * `https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs`。三個問題：
+ *
+ *   1. **版本對不上**。`package.json` 釘的是 `monaco-editor@0.53.0`（型別用），
+ *      CDN 送的卻是 0.55.1——型別檢查看到的 API 跟實際跑的差兩個 minor 版。
+ *      這種落差不會有編譯錯誤，只會在某個 API 改了行為時變成執行期的怪現象。
+ *   2. **第三方相依**。jsdelivr 掛掉或被擋（企業網路、某些地區）就打不開編輯器。
+ *   3. **擋住 CSP**。要收緊 `script-src` 就得把 jsdelivr 放進白名單，
+ *      等於為了一個後台功能在全站開一個外部來源。
+ *
+ * 為什麼複製整個 `min/vs`（約 15 MB）而不是挑需要的語言：monaco 是按需 lazy load 的，
+ * 挑漏一個語言的症狀是「某種程式碼區塊的語法高亮突然沒了」，而那不會報錯。
+ * 這些檔只在後台開編輯器時才會被抓，前台讀者一個 byte 都不會下載。
+ *
+ * 用 plugin 而不是 `prebuild` script：`pnpm dev` 也要有這些檔，而 dev 不跑 build script。
+ */
+function copyMonacoAssets(): Plugin {
+  return {
+    name: 'copy-monaco-vs',
+    // buildStart 在 build 與 dev server 啟動時都會跑
+    buildStart() {
+      const require = createRequire(import.meta.url);
+      // 用 resolve 而不是寫死 node_modules 路徑——pnpm 的實際位置在 .pnpm/ 底下
+      const pkgPath = require.resolve('monaco-editor/package.json');
+      const version = (JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as { version: string }).version;
+      const src = path.join(path.dirname(pkgPath), 'min/vs');
+      const destRoot = path.resolve(import.meta.dirname, 'public/monaco');
+      const stamp = path.join(destRoot, '.version');
+
+      // 版本沒變就跳過。整份複製約 15 MB，每次 dev 重啟都做一次是白等。
+      if (fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === version) return;
+
+      fs.rmSync(destRoot, { recursive: true, force: true });
+      fs.mkdirSync(destRoot, { recursive: true });
+      fs.cpSync(src, path.join(destRoot, 'vs'), { recursive: true });
+      fs.writeFileSync(stamp, version);
+      this.info(`monaco-editor@${version} → public/monaco/vs`);
+    },
+  };
+}
 
 // 不做 prerender,改走 ISR(見下方 routeRules)。理由是實測出來的,不是偏好:
 //   在 nitro/vite + TanStack Start 下,prerender 產出的 HTML 寫進 .output/public 後
@@ -66,6 +112,7 @@ export default defineConfig({
   // react-helmet-async 是 CJS,要 vite 轉譯才能在 SSR 用具名匯出(過渡 bridge,之後 SEOHead→head() 可移除)
   ssr: { noExternal: ['react-helmet-async'] },
   plugins: [
+    copyMonacoAssets(),
     tanstackStart(),
     viteReact(),
     nitro({

@@ -19,11 +19,11 @@
  * 讀內容也是讀 `.view-lines` 的 innerText（Monaco 是虛擬捲動，長文只會有可視範圍，
  * 所以測試用的內容都刻意保持短）。
  *
- * ⚠️ Monaco 是從 **jsdelivr CDN** 載入的（`@monaco-editor/loader` 的預設
- * `paths.vs = https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs`，
- * repo 裡沒有任何 `loader.config` 覆蓋它）。所以這個檔的每一條測試都依賴外網，
- * 而且實際跑的版本是 CDN 上的 0.55.1，不是 package.json 釘的 0.53.0（那份只當型別用）。
- * 實測載入 1.2s / 13 個請求。這件事本身值得修（自帶 monaco），但那是 build 設定的變更。
+ * Monaco 從**自己的網域**載（`/monaco/vs`）。這件事以前不是這樣：原本走
+ * `@monaco-editor/loader` 的預設 jsdelivr CDN，於是這個檔的每一條測試都依賴外網，
+ * 而且實際跑的是 CDN 上的 0.55.1、不是 package.json 釘的 0.53.0（那份只當型別用）。
+ * 改法見 `vite.config.start.ts` 的 `copyMonacoAssets` 與元件裡的 `loader.config`；
+ * 底下有一條測試專門守住「不准再退回外部來源」。
  *
  * ## 為什麼標題都帶 `e2e-post-` 前綴而且用完要刪
  *
@@ -40,7 +40,7 @@ import { E2E_POST_PREFIX } from './seed.mjs';
 const titleInput = (p: Page) => p.getByPlaceholder('輸入文章標題...');
 const viewLines = (p: Page) => p.locator('.monaco-editor .view-lines').first();
 
-/** 進編輯器並等 Monaco 真的掛好（CDN 載入，比其他後台頁慢）。 */
+/** 進編輯器並等 Monaco 真的掛好（它是 lazy chunk，比其他後台頁慢）。 */
 async function gotoEditor(page: Page, path = '/admin/posts/create') {
   await gotoAdminUntil(page, path, (p) => p.locator('.monaco-editor').first());
   await expect(titleInput(page)).toBeVisible();
@@ -346,5 +346,41 @@ test.describe('文章編輯器', () => {
     await gotoEditor(page, editUrl);
     await expect.poll(() => contentText(page), { message: '改動要真的存進去' })
       .toBe('改過的內容。');
+  });
+
+  /**
+   * Monaco 必須從自己的網域載，一個外部請求都不准有。
+   *
+   * 這條守的是一個**退回去不會有任何症狀**的改動：把 `loader.config` 拿掉、
+   * 或是 `copyMonacoAssets` 那個 plugin 沒被掛上，編輯器照樣會打開——
+   * 因為 `@monaco-editor/loader` 的預設值就是 jsdelivr。差別只在
+   * 「編輯器活著是因為第三方 CDN 還活著」，以及跑的版本不是 package.json 釘的那個。
+   *
+   * 順帶也擋住「哪天有人在後台加了個吃外部資源的東西」——CSP 收緊之前，
+   * 這是唯一會講話的地方。
+   */
+  test('編輯器完全自帶，不打任何外部網域', async ({ page, baseURL }) => {
+    const origin = new URL(String(baseURL)).origin;
+    const external: string[] = [];
+    page.on('request', (r) => {
+      const u = r.url();
+      // data:/blob: 是頁面自己產的，不算外部來源
+      if (u.startsWith('data:') || u.startsWith('blob:')) return;
+      if (!u.startsWith(origin)) external.push(u);
+    });
+
+    await gotoEditor(page);
+    // 打個字確保編輯器不只是掛好、而是真的能用（語言相關的 chunk 也會在這時載）
+    await typeContent(page, '確認可用。');
+    await expect.poll(() => contentText(page)).toContain('確認可用。');
+
+    expect(external, `編輯器載了外部資源：\n  ${external.join('\n  ')}`).toEqual([]);
+
+    // 反面：確認它真的有去抓 /monaco/vs（沒抓代表根本沒用到 Monaco，
+    // 上面那個「零外部請求」就變成一條恆真的假斷言）
+    const monacoRequests = await page.evaluate(() =>
+      performance.getEntriesByType('resource').filter((e) => e.name.includes('/monaco/vs/')).length,
+    );
+    expect(monacoRequests, '沒有任何 /monaco/vs 的請求——loader 可能沒指到自架路徑').toBeGreaterThan(0);
   });
 });

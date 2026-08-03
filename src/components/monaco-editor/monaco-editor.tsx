@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
 import type { editor, IDisposable } from 'monaco-editor';
 import type * as Monaco from 'monaco-editor';
 import { MonacoToolbar } from './monaco-toolbar';
@@ -13,6 +13,19 @@ import { getActiveSnippets } from './monaco-snippets';
 import './monaco-glass.css';
 
 const VIM_MODE_KEY = 'koimsurai_vim_mode';
+
+// monaco 從**自己的網域**載，不走 jsdelivr。
+//
+// `@monaco-editor/loader` 的預設是 `https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs`，
+// 而 package.json 釘的是 0.53.0（型別用）——型別檢查看到的 API 跟實際跑的差兩個 minor 版，
+// 不會有編譯錯誤，只會在某個 API 改了行為時變成執行期的怪現象。指到自己的檔之後
+// 兩邊必然同版（檔案就是從 node_modules 複製過去的，見 vite.config.start.ts 的 copyMonacoAssets）。
+//
+// 順帶解掉另外兩件事：編輯器不再依賴第三方 CDN 活著，以及之後收緊 CSP 時
+// 不必為了一個後台功能在全站的 script-src 開一個外部來源。
+//
+// ⚠ 必須在 `<Editor>` 掛載之前呼叫，所以放在模組層而不是元件裡。
+loader.config({ paths: { vs: '/monaco/vs' } });
 
 /** @monaco-editor/react 的 loader 會把 monaco 掛到 window；用型別安全方式取用全域 monaco */
 function getMonaco(): typeof Monaco | undefined {
