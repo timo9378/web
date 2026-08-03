@@ -23,7 +23,7 @@
  *   BASE_URL=https://example.com pnpm check:headers
  */
 
-export {}; // 這個檔沒有 import，加這行才算 module，頂層 await 才合法
+import { CSP_POLICY } from './csp.mjs';
 
 interface Rule {
   /** 要打的路徑 */
@@ -49,9 +49,19 @@ const BASELINE: Record<string, string | undefined> = {
 /** 靜態檔那兩條 location 額外要有 CSP——原因見 nginx 設定裡的註解（SVG 直接開啟會執行 script）。 */
 const STATIC_FILE = { ...BASELINE, 'content-security-policy': "default-src 'none'" };
 
+/**
+ * HTML 頁面額外要有 CSP（只加在 nginx 的 `location /`，不在 /assets/ 或 /api/）。
+ *
+ * ⚠ 值直接跟 `scripts/csp.mjs` 逐字比對，因為 nginx 那份是**手抄**的（nginx 讀不到 JS）。
+ *   抄漏一個網域的症狀是某類圖片變破圖，抄錯一條 directive 則可能整個功能消失，
+ *   兩者都不會有錯誤訊息。這條斷言就是那份手抄的守門——e2e 驗的是「政策不擋自家東西」，
+ *   這裡驗的是「線上送出去的真的是那份政策」。
+ */
+const HTML_PAGE = { ...BASELINE, 'content-security-policy': CSP_POLICY };
+
 const RULES: Rule[] = [
-  { path: '/', label: '首頁（location /）', required: BASELINE },
-  { path: '/blog', label: '文章列表', required: BASELINE },
+  { path: '/', label: '首頁（location /）', required: HTML_PAGE },
+  { path: '/blog', label: '文章列表', required: HTML_PAGE },
   { path: '/api/health', label: '後端 API（location /api/）', required: BASELINE },
   {
     path: '/assets/../favicon.ico',

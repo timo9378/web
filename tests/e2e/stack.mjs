@@ -16,6 +16,7 @@ import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seed } from './seed.mjs';
+import { CSP_POLICY } from '../../scripts/csp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -94,7 +95,13 @@ function startProxy() {
     const upstream = http.request(
       { host: '127.0.0.1', port, path: req.url, method: req.method, headers: req.headers },
       (up) => {
-        res.writeHead(up.statusCode ?? 502, up.headers);
+        // CSP 在正式環境是 nginx `location /` 加的，而這一層代理存在的目的就是
+        // 模擬 nginx。加在這裡，165 條 e2e 就會替我們踩到違規——放 nginx 的話
+        // e2e 完全碰不到它，只能等部署後才發現某個功能被擋掉。
+        // 政策本身在 scripts/csp.mjs（單一來源，check-security-headers 也讀它）。
+        const headers = { ...up.headers };
+        if (!toBackend) headers['content-security-policy'] = CSP_POLICY;
+        res.writeHead(up.statusCode ?? 502, headers);
         up.pipe(res);
       },
     );

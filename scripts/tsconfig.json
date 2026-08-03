@@ -12,7 +12,11 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    // csp.mjs 必須是 .mjs 而不是 .ts：`tests/e2e/stack.mjs` 用純 node 跑（不經 tsx），
+    // 要能直接 import 它。allowJs 讓 TS 從實作推型別，比另外維護一份 .d.mts 好——
+    // 那份宣告漂移了不會有人發現。
+    "allowJs": true
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "**/*.mjs"]
 }
