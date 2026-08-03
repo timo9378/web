@@ -28,9 +28,13 @@ export default defineConfig({
   // 的 UA 會被判成 bot，SpaceBackdropShell 直接 return null，three.js 根本沒載，
   // 所以那個旗標連覆蓋率都沒省到——純粹無效）。
   //
-  // ⚠ 本機那個 +28% 不要當成 CI 的成本：`taskset` 只限制 CPU，而 runner 真正吃滿的
-  //   是記憶體頻寬與磁碟。舊測（66 條時）在真 CI 上 workers 2 vs 4 是 57.0s vs 58.1s，
-  //   也就是**多開 worker 在 CI 上根本沒買到東西**。若之後 CI 時間明顯變長再回頭看。
+  // 成本（真 CI 實測，不是本機推估）：E2E job 從 workers=4 的 289~323s（六輪，均 ~301s）
+  // 變成 workers=2 的 338s，約 +12%。本機那個 +28% 沒有全額轉移——`taskset` 只限制 CPU，
+  // runner 吃滿的是記憶體頻寬與磁碟，所以幅度小一半。
+  //
+  // ⚠ 不要拿「66 條測試時 workers 2 vs 4 是 57.0s vs 58.1s、毫無差別」來推翻這個決定：
+  //   那筆舊數據在 137 條之後就不成立了（我照著它預測「CI 上不會變慢」，結果錯了）。
+  //   換句話說這 +12% 是真的要付的；付它是因為「會蓋掉真實失敗訊號的 flaky」比 37 秒貴。
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
   timeout: 30_000,
