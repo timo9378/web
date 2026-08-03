@@ -28,6 +28,9 @@ jobs:
   frontend:
     name: Frontend · tsc + oxlint + vitest + build
     runs-on: ubuntu-latest
+    # 提到 job 層才能在步驟的 `if:` 裡判斷 token 設了沒（step 層的 env 讀不到自己）
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -67,8 +70,21 @@ jobs:
       # 這裡刻意不是用 ignore 把它們藏起來——藏起來就沒有人會回來清。
       - name: knip（未使用的檔案與相依）
         run: pnpm exec knip --no-progress --include files,dependencies,unlisted,unresolved,binaries
+      # JUnit 的產出由 vitest.config.ts 依 CI 環境決定，不在這裡改寫指令——
+      # `pnpm test` 是 CLAUDE.md 裡列的門檻指令，讓它跟本機跑的是同一條。
       - name: vitest
         run: pnpm test
+      # 測試結果送 Codecov Test Analytics（不是覆蓋率——那邊看的是每一條測試的
+      # 歷史失敗率與 flaky）。!cancelled() 而不是 always()：測試紅的時候才最需要
+      # 這份資料，只在成功時上傳等於「壞掉時看不到」。
+      - name: Test Analytics（frontend）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          files: junit-frontend.xml
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       # 真正的建置驗證——tsc/lint 過不代表 Nitro/Vite build 不會炸
       - name: build (vite + nitro)
         run: pnpm build
@@ -184,8 +200,10 @@ jobs:
       # 而 wiremock 只綁得到 127.0.0.1（正好在 SSRF 黑名單裡）。要測就得在
       # net_guard 開一個「可停用」的開關——為了一個覆蓋率數字，在 SSRF 防護上
       # 加一個旁路開關，這筆帳怎麼算都不划算。被擋掉的那條路徑本身有測（tests/api.rs）。
+      # --profile ci 只多做一件事：把 JUnit XML 寫到 target/nextest/ci/junit.xml
+      # （設定見 .config/nextest.toml），給下面的 Test Analytics 用。本機不受影響。
       - name: test + coverage (llvm-cov + nextest)
-        run: cargo llvm-cov nextest --locked --fail-under-regions 82 --lcov --output-path lcov.info
+        run: cargo llvm-cov nextest --locked --profile ci --fail-under-regions 82 --lcov --output-path lcov.info
       # ⚠ cargo-llvm-cov 的 lcov 寫的是**絕對路徑**（`SF:/home/runner/work/…/backend/src/x.rs`）。
       #   Codecov 會嘗試用路徑尾端去比對 repo 裡的檔案，比對不上時報告仍然「上傳成功」，
       #   只是每個檔案都掛不到原始碼——網頁上看到的是一份空殼，而且沒有任何錯誤訊息。
@@ -214,6 +232,15 @@ jobs:
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+      # 測試結果（跟上面的覆蓋率是兩回事）。target/ 在 workspace root，不是 backend/ 底下。
+      - name: Test Analytics（backend）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          files: target/nextest/ci/junit.xml
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       # 契約守門：Rust struct 改了但沒重跑 export_types → 生成型別與 committed 不一致 → 擋下
       - name: specta types up-to-date
         run: |
@@ -234,6 +261,8 @@ jobs:
   e2e:
     name: E2E · 全站煙霧 + API 契約 + a11y
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -283,6 +312,18 @@ jobs:
           fi
       - name: playwright
         run: pnpm e2e
+      # ⚠ 這一個是整組裡最有價值的：e2e 是唯一會 flaky 的那批（瀏覽器在併發下崩潰、
+      #   hydration 競賽），而定位它們過去靠的是手動重跑幾十輪。Codecov 會自己累積
+      #   每一條測試的失敗率並標出 flaky——playwright 的 retry 讓「失敗後重試成功」
+      #   仍然算綠，那種訊號在 CI log 上只是一行 flaky 標記，跑完就沒了。
+      - name: Test Analytics（e2e）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          files: junit-e2e.xml
+          flags: e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
         if: failure()
         with:

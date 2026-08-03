@@ -1,0 +1,17 @@
+# cargo-nextest 設定。位置必須在 **workspace root**（根目錄的 Cargo.toml 是
+# `[workspace] members = ["backend"]`），放進 backend/ 底下 nextest 讀不到。
+#
+# 只為了一件事存在：讓 CI 產得出 JUnit XML，好把測試結果送進 Codecov Test Analytics。
+# 那邊給的是「每一條測試的歷史失敗率」與「自動標記 flaky」——也就是這個 repo 上一次
+# 花了好幾輪手動重跑才定位出來的那類問題（e2e 的瀏覽器崩潰，8 輪 × 137 條跑了四種設定
+# 才確定是併發度）。有這份資料的話，那種事第一次出現就會被標出來。
+#
+# 本機不受影響：預設 profile 沒有 junit 區段，只有 `--profile ci` 才寫檔。
+
+[profile.ci.junit]
+# 相對於 target/nextest/ci/
+path = "junit.xml"
+# 把測試「輸出」也收進 XML。失敗時 Codecov 的介面上直接看得到 panic 訊息，
+# 不必回頭翻 CI log——而 CI log 只留 90 天，Test Analytics 的歷史更長。
+store-success-output = false
+store-failure-output = true

@@ -36,7 +36,12 @@ export default defineConfig({
   //   那筆舊數據在 137 條之後就不成立了（我照著它預測「CI 上不會變慢」，結果錯了）。
   //   換句話說這 +12% 是真的要付的；付它是因為「會蓋掉真實失敗訊號的 flaky」比 37 秒貴。
   workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI ? [['github'], ['list']] : [['list']],
+  // CI 多一份 JUnit：送進 Codecov Test Analytics，換到「每一條測試的歷史失敗率」
+  // 與自動的 flaky 標記。這正是上面那段註解裡的問題——當時是手動跑 8 輪 × 137 條
+  // 試了四種設定才定位出瀏覽器崩潰跟併發度有關；有這份資料的話第一次就會被標出來。
+  reporter: process.env.CI
+    ? [['github'], ['list'], ['junit', { outputFile: 'junit-e2e.xml' }]]
+    : [['list']],
   timeout: 30_000,
   expect: { timeout: 10_000 },
   use: {

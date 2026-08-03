@@ -8,5 +8,10 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'node',
+    // CI 多產一份 JUnit 給 Codecov Test Analytics（每條測試的歷史失敗率 / flaky）。
+    // 寫在這裡而不是在 workflow 裡改寫指令：`pnpm test` 是 CLAUDE.md 列的門檻指令，
+    // 兩邊跑的必須是同一條，不然「本機綠 CI 紅」會多一個說不清的來源。
+    reporters: process.env.CI ? ['default', 'junit'] : ['default'],
+    outputFile: { junit: './junit-frontend.xml' },
   },
 });

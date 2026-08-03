@@ -101,3 +101,6 @@ docs/
 
 # Lighthouse CI 的報告輸出（每次 lhci autorun 重產）
 .lighthouseci/
+
+# JUnit XML（CI 產給 Codecov Test Analytics，本機跑測試也可能留下）
+junit-*.xml
