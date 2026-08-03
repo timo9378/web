@@ -369,12 +369,27 @@ test.describe('文章編輯器', () => {
       if (!u.startsWith(origin)) external.push(u);
     });
 
+    // ⚠ 這一段是補上去的，而且是被實際的失敗逼出來的。
+    //   這條測試第一版只驗「沒有外部請求」，於是自架第一次上 CI 就漏掉了真正的問題：
+    //   當時把版本從 CDN 在跑的 0.55.1 換成 package.json 釘的 0.53.0，monaco 的
+    //   `language/css/monaco.contribution` 在初始化時丟出
+    //   `TypeError: Property description must be an object: undefined`。
+    //   所有請求都是 2xx、編輯器外框也畫得出來，所以「零外部請求」照樣綠——
+    //   抓到它的是 admin-smoke 那條檢查 console error 的測試。
+    //   自架的完整定義是「換了來源之後**行為不變**」，不只是「沒對外連線」。
+    const pageErrors: string[] = [];
+    page.on('pageerror', (e) => pageErrors.push(e.message));
+    page.on('console', (m) => {
+      if (m.type() === 'error') pageErrors.push(m.text());
+    });
+
     await gotoEditor(page);
     // 打個字確保編輯器不只是掛好、而是真的能用（語言相關的 chunk 也會在這時載）
     await typeContent(page, '確認可用。');
     await expect.poll(() => contentText(page)).toContain('確認可用。');
 
     expect(external, `編輯器載了外部資源：\n  ${external.join('\n  ')}`).toEqual([]);
+    expect(pageErrors, `編輯器載入時噴錯：\n  ${pageErrors.join('\n  ')}`).toEqual([]);
 
     // 反面：確認它真的有去抓 /monaco/vs（沒抓代表根本沒用到 Monaco，
     // 上面那個「零外部請求」就變成一條恆真的假斷言）

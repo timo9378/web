@@ -12,9 +12,16 @@ import { createRequire } from 'node:module';
  * 原本是走 `@monaco-editor/loader` 的預設值，也就是
  * `https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs`。三個問題：
  *
- *   1. **版本對不上**。`package.json` 釘的是 `monaco-editor@0.53.0`（型別用），
+ *   1. **版本對不上**。`package.json` 原本釘的是 `monaco-editor@0.53.0`（型別用），
  *      CDN 送的卻是 0.55.1——型別檢查看到的 API 跟實際跑的差兩個 minor 版。
  *      這種落差不會有編譯錯誤，只會在某個 API 改了行為時變成執行期的怪現象。
+ *
+ *      ⚠ 自架時**必須把版本對齊成「線上原本在跑的那個」**（0.55.1），而不是
+ *        package.json 當時釘的 0.53.0。第一版就是搞錯這件事：改成送 0.53.0 之後
+ *        monaco 的 `language/css/monaco.contribution` 在初始化時丟
+ *        `TypeError: Property description must be an object: undefined`，
+ *        所有請求都 2xx、編輯器外框也畫得出來，只有 console 裡有那一行。
+ *        自架要換的是**來源**，不是版本——換版本是另一件事，要另外驗。
  *   2. **第三方相依**。jsdelivr 掛掉或被擋（企業網路、某些地區）就打不開編輯器。
  *   3. **擋住 CSP**。要收緊 `script-src` 就得把 jsdelivr 放進白名單，
  *      等於為了一個後台功能在全站開一個外部來源。
