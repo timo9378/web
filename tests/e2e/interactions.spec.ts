@@ -196,6 +196,14 @@ test.describe('emoji 反應', () => {
   test('重新整理之後，自己按過的反應還記得', async ({ page }) => {
     await page.goto('/blog/1');
     const btn = page.locator('.reaction-btn').first();
+    await expect(btn).toBeVisible();
+
+    // ⚠ 這一行不能省。SSR 出來的按鈕在 React 接上 handler **之前**就可以點了，
+    // 點下去只是沒有任何反應——`waitForResponse` 於是空等到逾時。
+    // CI 上實測過：run #223 這條 flaky，錯誤是「waitForResponse: Test timeout of 30000ms」。
+    // `settledCount` 輪詢到「畫面數字 == API 數字」，而那個數字是 client 抓回來的，
+    // 等於間接確認 hydration 完成。上面那條測試一開始就有這道守衛，這條漏了。
+    await settledCount(page, (await btn.locator('.reaction-emoji').innerText()).trim());
 
     const posted = page.waitForResponse(
       (r) => r.url().includes('/reactions') && r.request().method() === 'POST',

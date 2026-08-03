@@ -178,12 +178,19 @@ test('捲在文章深處重新整理，scroll restoration 不該造成位移', a
     .poll(
       async () => {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), target);
-        await page.waitForTimeout(100);
-        return page.evaluate(() => Math.round(window.scrollY));
+        // ⚠ 讀**兩次**取小值。只讀一次的版本會抓到「router 把位置打回 0 之前」的那一瞬間：
+        // poll 通過了，但下一行重新讀就是 0（實測整套平行跑時真的發生，訊息是
+        // 「捲動沒有生效 Received: 0」，而 poll 自己是綠的）。
+        // 要的不是「曾經到過」而是「停在那裡」，所以兩次都得到位才算數。
+        await page.waitForTimeout(150);
+        const first = await page.evaluate(() => Math.round(window.scrollY));
+        await page.waitForTimeout(250);
+        const second = await page.evaluate(() => Math.round(window.scrollY));
+        return Math.min(first, second);
       },
       {
         message: '捲動一直沒到位——router 的 scrollRestoration 可能還在把位置打回去',
-        timeout: 10_000,
+        timeout: 15_000,
       },
     )
     .toBeGreaterThan(target * 0.9);

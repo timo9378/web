@@ -13,7 +13,7 @@ import { DatabaseSync } from 'node:sqlite';
  * （id=4 就是為了 CLS 測試加的），而寫死的那一版每加一篇就會讓一個不相干的
  * API 契約測試變紅，讀的人還得回頭猜「這個 2 是哪來的」。
  */
-export const PUBLISHED_POSTS = 3;
+export const PUBLISHED_POSTS = 5;
 
 /**
  * 測試自己建立的文章一律用這個前綴命名。
@@ -111,6 +111,36 @@ export function seed(dbPath) {
     longArticle(),
     '這篇存在的唯一理由是讓 CLS 測試有夠長的頁面可以捲',
     T(2),
+  );
+  // 第 5、6 篇存在的理由是**文章頁的互動**——前四篇都是純文字，
+  // 程式碼複製鈕、圖片燈箱、MDX 區塊在它們身上一個都碰不到。
+  //
+  // 日期給得很舊（T(10)/T(11)）是刻意的：它們只在自己的網址被打開，
+  // 排在清單最後就不會動到別的測試對「第一張卡是哪篇」的假設。
+  run(
+    `INSERT INTO posts (id, title, content, excerpt, category, status, author, created_at, allow_comments)
+     VALUES (5, ?, ?, ?, '技術', 'published', 'Koimsurai', ?, 1)`,
+    '有程式碼與圖片的文章',
+    // 圖片指向站上真的存在的資產——隨便編一個路徑會讓 smoke 的「不該有 404」紅掉
+    '# 互動元素\n\n```rust\nfn main() {\n    println!("hello");\n}\n```\n\n' +
+      '![一張測試圖片](/og-default-v2.png)\n',
+    '有程式碼區塊與圖片',
+    T(10),
+  );
+  // MDX 路徑：`format='mdx'` 會讓 src/blogList.ts 在 server 端編譯成 React 元件。
+  //
+  // ⚠ 編譯失敗時它**靜默退回 markdown**（見 blogList.ts 的 catch），讀者看到的是
+  // 一行裸的 `<Poll ... />` 文字，而 API 仍然回 200。所以這篇的價值不只是「測投票」，
+  // 是釘住「MDX 真的有被編譯」——那條降級沒有任何東西會告訴你它發生了。
+  run(
+    `INSERT INTO posts (id, title, content, excerpt, category, status, author, created_at, format, allow_comments)
+     VALUES (6, ?, ?, ?, '技術', 'published', 'Koimsurai', ?, 'mdx', 1)`,
+    'MDX 區塊測試文',
+    '# MDX\n\n<Poll id="demo" question="你偏好哪一種渲染?" ' +
+      'options={[{key:"a",label:"單次 SSR"},{key:"b",label:"CSR"}]} />\n\n' +
+      '一段普通內文。\n',
+    'MDX 區塊',
+    T(11),
   );
   run('INSERT INTO post_tags (post_id, tag_id) VALUES (1, 1), (1, 2), (2, 3)');
   run("INSERT INTO post_reactions (post_id, emoji, count) VALUES (1, '👍', 5)");
