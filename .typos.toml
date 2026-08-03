@@ -12,6 +12,12 @@ auther = "auther"
 # three.js 的材質屬性名（THREE.MeshStandardMaterial.metalness）
 metalness = "metalness"
 
+# hast-util-to-jsx-runtime 的實際 API 名（`createEvaluater` / `Evaluater` 介面）。
+# 上游就是這樣拼的，改成 evaluator 會找不到那個選項——註解也得跟著用同一個拼法，
+# 否則讀的人對不上程式碼。
+evaluater = "evaluater"
+Evaluater = "Evaluater"
+
 # 品牌名
 Shure = "Shure"   # 麥克風廠牌（Shure MV7+）
 shure = "shure"   # 同上，出現在檔名 shure-mv7-plus.png

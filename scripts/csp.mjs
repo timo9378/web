@@ -78,7 +78,7 @@ const DIRECTIVES = {
   // 點擊劫持。與既有的 X-Frame-Options: SAMEORIGIN 同義，但 frame-ancestors 才是現行標準
   'frame-ancestors': ["'self'"],
 
-  // ── 暫時寬鬆的三條（理由見檔頭）──
+  // ── 暫時寬鬆的兩條（理由見檔頭）──
   //
   // 'unsafe-inline'：SSR 的 hydration payload 等 inline script，見檔頭。
   //
@@ -86,13 +86,13 @@ const DIRECTIVES = {
   //   （assets/wasm-*.js，608 KB 的 base64 內嵌 wasm），沒有它程式碼區塊不會高亮。
   //   這條是**窄的**——只允許編譯 wasm，不允許 JS 的 eval。它會一直留著。
   //
-  // ⚠ 'unsafe-eval'：**暫時的**。MDX 在瀏覽器編譯（BlogPost / PostEditor 預覽）
-  //   會呼叫 eval。拿掉它實測會壞：`MDX 文章的自訂區塊有被編譯成元件` 與
-  //   `投票會寫進後端` 兩條 e2e 直接紅，前台看到的是裸標籤。
-  //   移除的做法已經想好（把編譯結果改成 dynamic-import 的 ESM module，不走 eval），
-  //   那件事做完就把這一條刪掉——而 'wasm-unsafe-eval' 分開列正是為了那一天：
-  //   刪掉 'unsafe-eval' 之後 shiki 仍然能動。
-  'script-src': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'"],
+  // ✅ `'unsafe-eval'` 已經拿掉了。它原本是給 MDX 用的：server 編譯成 JS 字串、
+  //    前端 `runSync`（底層 `new Function`）執行成元件。現在改成 server 產序列化的
+  //    hast 樹、前端用 `hast-util-to-jsx-runtime` 走訪，沒有任何字串轉程式碼。
+  //    代價是 MDX 只能「叫元件、餵資料」——界線由 `@koimsurai/mdx-core` 的
+  //    `literalValue` 執行，並在發布前由 `validate_mdx` 與 `check:mdx` 擋下。
+  //    ⚠ 要加回去之前請先確認是誰在 eval：那多半代表有東西在執行期編譯字串。
+  'script-src': ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'"],
   // React 的 inline style 屬性每頁 26~81 個，拿掉 'unsafe-inline' 等於整站樣式崩掉。
   // 風險等級遠低於 script-src。
   'style-src': ["'self'", "'unsafe-inline'"],

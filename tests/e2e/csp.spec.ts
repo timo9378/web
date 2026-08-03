@@ -26,6 +26,21 @@ interface Violation {
   source: string;
 }
 
+/**
+ * 已知且無害的違規：**Zod 的 eval 能力探測**。
+ *
+ * `zod/v4/core/util.js` 的 `allowsEval()` 會在 try/catch 裡跑一次 `new Function('')`，
+ * 用來決定要不要編譯「快一點的驗證器」。CSP 擋下來之後它走直譯路徑——功能完全正常，
+ * 只是留下一筆違規回報。後台的表單（react-hook-form + zod resolver）會觸發它。
+ *
+ * 為什麼不乾脆放行 `'unsafe-eval'`：那等於為了一個「探測失敗也沒差」的東西，
+ * 把整站最值錢的一條 CSP 打開。這裡改成明確列為例外——**其餘任何 eval 仍然會紅**，
+ * 而列出來也讓下一個人知道這筆不是漏掉沒處理。
+ */
+function isKnownHarmless(v: Violation): boolean {
+  return v.directive === 'script-src' && v.blocked === 'eval' && /\/assets\/PostEditor-/.test(v.source);
+}
+
 /** 在任何內容載入前掛上監聽——違規多半發生在第一批資源，晚掛就漏了。 */
 async function watchViolations(page: Page): Promise<() => Promise<Violation[]>> {
   await page.addInitScript(() => {
@@ -86,12 +101,12 @@ test.describe('CSP', () => {
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("frame-ancestors 'self'");
-    // ⚠ 'unsafe-eval' 目前是**刻意留著**的（MDX 在瀏覽器編譯會用到，理由見 csp.mjs）。
-    //   這裡把它釘成「必須存在」而不是「不該存在」，用意是：等哪天 MDX 改成
-    //   dynamic-import 之後，這條會紅，提醒把政策裡的 'unsafe-eval' 一起刪掉。
-    //   沒有這個提醒的話，臨時措施會安靜地變成永久措施。
-    expect(csp, "MDX 改掉之後記得把 'unsafe-eval' 從 csp.mjs 刪掉").toContain("'unsafe-eval'");
-    // wasm 那條是窄的、會一直留著（shiki 的 oniguruma），跟上面那條分開列
+    // ⚠ `'unsafe-eval'` 已經拿掉（MDX 不再用 runSync）。這條釘住「不准回來」——
+    //   它一旦回來就代表有東西在執行期編譯字串，那是要先問清楚是誰、能不能換掉的事。
+    //   注意不能寫成 `not.toContain('unsafe-eval')`：那會連 'wasm-unsafe-eval'
+    //   一起誤判（後者是子字串），而 wasm 那條是刻意留著的。
+    expect(csp, "script-src 不該有 'unsafe-eval'").not.toContain("'unsafe-eval'");
+    // wasm 那條是窄的、會一直留著（shiki 的 oniguruma 正則引擎）
     expect(csp).toContain("'wasm-unsafe-eval'");
   });
 
@@ -118,7 +133,12 @@ test.describe('CSP', () => {
     await page.locator('.monaco-editor .view-lines').first().click();
     await page.keyboard.type('# 標題\n\n```rust\nfn main() {}\n```\n');
     await page.waitForTimeout(2500);
-    const v = await read();
+    const all = await read();
+    const v = all.filter((x) => !isKnownHarmless(x));
     expect(v, v.length ? report('/admin/posts/create', v) : '').toEqual([]);
+
+    // 反面：Zod 那筆**應該**還在。哪天它不見了，代表要嘛 zod 換了做法、
+    // 要嘛政策被放寬了——兩種都值得回來看一眼，而不是靜靜地變成綠燈。
+    expect(all.length - v.length, 'Zod 的 eval 探測不見了，回頭確認是為什麼').toBe(1);
   });
 });

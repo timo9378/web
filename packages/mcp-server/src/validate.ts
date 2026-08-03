@@ -133,23 +133,38 @@ function staticChecks(raw: string, format: string): Finding[] {
   return out;
 }
 
-/** 真的跑一次 MDX 編譯（與前台同一組 plugin）→ 抓出會導致靜默退回 markdown 的語法錯。 */
+/**
+ * 真的跑一次前台會跑的那條管線 → 抓出會導致靜默退回 markdown 的問題。
+ *
+ * ⚠ 這裡以前自己抄了一份 compile 選項。現在改成呼叫 `@koimsurai/mdx-core`——
+ *   那支是前台渲染、`check:mdx`、以及這裡共用的**唯一一份**實作。抄兩份的下場是
+ *   「這裡過了但線上不過」，而那種檢查比沒有還糟（原話出自 mdx-compile-core 的檔頭）。
+ *
+ * 它現在還多擋一類東西：**前端不執行任何運算式**（改用序列化的 hast 樹渲染，
+ * 不再有 eval）。所以屬性值只能是字面值，也不能有 import/export 或展開屬性。
+ * 這類問題以前寫得出來也跑得動，現在會在這裡就被指出來。
+ */
 async function compileCheck(content: string): Promise<Finding[]> {
   try {
-    const { compile } = await import('@mdx-js/mdx');
-    const remarkGfm = (await import('remark-gfm')).default;
-    const { remarkAlert } = await import('remark-github-blockquote-alert');
-    await compile(content, {
-      outputFormat: 'function-body',
-      development: false,
-      remarkPlugins: [remarkGfm, remarkAlert],
-    });
+    const { compileMdxToHastJson } = await import('@koimsurai/mdx-core');
+    await compileMdxToHastJson(content, new Set(BLOCK_NAMES));
     return [];
   } catch (e) {
-    const err = e as { message?: string; line?: number; reason?: string; column?: number };
+    const err = e as { name?: string; message?: string; line?: number; reason?: string };
+    const line = typeof err.line === 'number' ? err.line : undefined;
+    // 「語法編不過」與「編得過但前端渲染不了」是兩種不同的問題，修法也不同
+    if (err.name === 'MdxUnsupportedError') {
+      return [{
+        severity: 'error',
+        line,
+        message: `MDX 用了前端不支援的構造：${err.message}`,
+        fix: '前端是用序列化的樹渲染的（沒有 eval），所以文章裡不能有運算式。'
+          + '要算的東西請做成元件（元件那一側沒有任何限制），或把結果直接寫出來。',
+      }];
+    }
     return [{
       severity: 'error',
-      line: typeof err.line === 'number' ? err.line : undefined,
+      line,
       message: `MDX 編譯失敗：${err.reason ?? err.message ?? String(e)}`,
       fix: '前台遇到這個會靜默退回 markdown（讀者會看到裸露的標籤原始碼）。常見原因：正文裡的 < 或 { 沒包成 `inline code`、標籤沒閉合。',
     }];

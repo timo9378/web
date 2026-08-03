@@ -1,0 +1,17 @@
+{
+  "name": "@koimsurai/mdx-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MDX 編譯與可渲染性檢查的唯一一份實作（前端、check:mdx、MCP validate 共用）",
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "remark-gfm": "^4.0.1",
+    "remark-github-blockquote-alert": "^2.1.0"
+  }
+}
