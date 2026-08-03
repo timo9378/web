@@ -101,6 +101,72 @@ test.describe('語言切換', () => {
   });
 });
 
+/**
+ * 首頁 `/` 依 `Accept-Language` 在 **server 端** 302 到對應語系（src/routes/index.tsx）。
+ *
+ * 這條路徑決定的是「第一次來的人看到什麼」，而它從來沒有任何測試守著。三個容易壞的點：
+ *
+ *   · 導錯或不導 —— 日本讀者打開首頁看到中文，而他不會知道有 /ja 可以去
+ *   · cookie 沒有優先於瀏覽器設定 —— 使用者明明選過語言，下次回來又被打回去
+ *   · **對爬蟲也導** —— 這個最貴：Google 從 `/` 被 302 到 `/en`，等於宣告首頁的
+ *     正規版本是英文的，各語系的 hreflang 索引整組錯掉。而站上完全看不出異狀。
+ *
+ * ⚠ 這一組每個 test 都要自己的 context（Accept-Language 是 context 級的），
+ *   所以用 test.use() 開獨立的 describe，不能塞進上面那組。
+ */
+test.describe('首頁的語言自動導向', () => {
+  for (const [locale, expected] of [
+    ['ja-JP', '/ja'],
+    ['ko-KR', '/ko'],
+    ['en-US', '/en'],
+  ] as const) {
+    test.describe(`${locale} 的瀏覽器`, () => {
+      test.use({ locale });
+      test(`打開首頁會被送到 ${expected}`, async ({ page }) => {
+        await page.goto('/');
+        await expect(page).toHaveURL(new RegExp(`${expected}$`), { timeout: 15_000 });
+        await expect(page.locator('html')).toHaveAttribute('lang', expected.slice(1));
+      });
+    });
+  }
+
+  test.describe('zh-TW 的瀏覽器', () => {
+    test.use({ locale: 'zh-TW' });
+    test('留在沒有前綴的首頁', async ({ page }) => {
+      await page.goto('/');
+      // 預設語系不該多一層 /zh-tw 前綴——多了的話正規網址就變成兩個
+      await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
+      await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
+    });
+  });
+
+  test.describe('選過語言的人', () => {
+    test.use({ locale: 'en-US' });
+    test('cookie 優先於瀏覽器的 Accept-Language', async ({ page, context, baseURL }) => {
+      // 使用者在語言選單選過日文 → 之後即使瀏覽器仍宣稱 en-US，也該回到日文
+      expect(baseURL, 'playwright.config.ts 應該有設 baseURL').toBeTruthy();
+      await context.addCookies([{ name: 'koim_locale', value: 'ja', url: String(baseURL) }]);
+      await page.goto('/');
+      await expect(page, 'cookie 沒有蓋過 Accept-Language').toHaveURL(/\/ja$/, { timeout: 15_000 });
+    });
+  });
+
+  test.describe('爬蟲', () => {
+    test.use({
+      locale: 'en-US',
+      userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    });
+    test('不導向，停在預設語系的首頁', async ({ page }) => {
+      await page.goto('/');
+      await expect(
+        page,
+        '爬蟲被 302 走的話，首頁的正規版本就會變成別的語系，hreflang 整組錯掉',
+      ).toHaveURL(/\/$/, { timeout: 15_000 });
+      await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
+    });
+  });
+});
+
 test.describe('文章篩選', () => {
   const SEARCH = '.blog-search-input';
   // ⚠ 必須是 `.note-card`，不能用 `main a[href^="/blog/"]`——側邊欄的「精選」與

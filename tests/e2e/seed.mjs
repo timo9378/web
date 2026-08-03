@@ -187,21 +187,66 @@ export function seed(dbPath) {
      VALUES ('9780987654321', '在讀的書', '另一位作者', 'reading', ?)`,
     T(5),
   );
+  // 下面兩本是給 bookshelf.spec.ts 的篩選／排序用的。少了它們那些測試會「綠得沒有意義」：
+  // 兩本書的時候，狀態篩選剩一本、排序反轉只有兩個元素，任何實作都會過。
+  // 這裡刻意讓四本書涵蓋三種 reading_status、有評分與沒評分、以及 ASCII 與中日文標題
+  // （localeCompare 對這兩類的處理不同，排序若改成 `<` 比較就會露餡）。
+  run(
+    `INSERT INTO books (isbn, title, authors, reading_status, rating, date_added)
+     VALUES ('9784000000000', 'Zero to One', 'Peter Thiel', 'read', 3, ?)`,
+    T(20),
+  );
+  run(
+    `INSERT INTO books (isbn, title, authors, reading_status, date_added)
+     VALUES ('9784111111111', '海邊的卡夫卡', '村上春樹', 'to-read', ?)`,
+    T(1),
+  );
 
   // ── 在看什麼 ───────────────────────────────────────────────────
-  run(
-    `INSERT INTO anime_history (anime_sn, video_sn, title, cover_url, episode, last_watched_at)
-     VALUES (1001, 2001, '測試動畫', NULL, '[01]', ?)`,
-    T(4),
-  );
-  run(
-    `INSERT INTO film_history (title, watched_date, rating, source, release_year, genres)
-     VALUES ('測試電影', '2026-01-10', 8, 'trakt', 2024, '劇情, 科幻')`,
-  );
-  run(
-    `INSERT INTO tv_history (series_name, episode_label, watched_date, source)
-     VALUES ('測試影集', 'S01E01', '2026-01-12', 'trakt')`,
-  );
+  // 每個分頁至少三筆，理由同上：片庫的搜尋與排序在只有一筆的時候測不出東西。
+  for (const [sn, title, ep, days] of [
+    [1001, '測試動畫', '[01]', 4],
+    [1002, '另一部動畫', '[12]', 9],
+    [1003, 'Angel Beats', '[03]', 2],
+  ]) {
+    run(
+      `INSERT INTO anime_history (anime_sn, video_sn, title, cover_url, episode, last_watched_at)
+       VALUES (?, ?, ?, NULL, ?, ?)`,
+      sn,
+      sn + 1000,
+      title,
+      ep,
+      T(days),
+    );
+  }
+  for (const [title, date, rating, year, genres] of [
+    ['測試電影', '2026-01-10', 8, 2024, '劇情, 科幻'],
+    ['另一部電影', '2025-11-02', 6, 2019, '喜劇'],
+    ['Arrival', '2026-02-14', 9, 2016, '劇情, 科幻'],
+  ]) {
+    run(
+      `INSERT INTO film_history (title, watched_date, rating, source, release_year, genres)
+       VALUES (?, ?, ?, 'simkl', ?, ?)`,
+      title,
+      date,
+      rating,
+      year,
+      genres,
+    );
+  }
+  for (const [series, ep, date] of [
+    ['測試影集', 'S01E01', '2026-01-12'],
+    ['另一部影集', 'S02E05', '2025-12-20'],
+    ['Severance', 'S01E09', '2026-02-01'],
+  ]) {
+    run(
+      `INSERT INTO tv_history (series_name, episode_label, watched_date, source)
+       VALUES (?, ?, ?, 'simkl')`,
+      series,
+      ep,
+      date,
+    );
+  }
   // favorites 的標題/海報是打 TMDb 即時補的；E2E 沒有 token → 會退成 "#<tmdbId>"，
   // 那條 fallback 路徑本身也值得被走到一次
   run(
