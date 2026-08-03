@@ -361,6 +361,18 @@ function PhotoGallery() {
           columnGutter={16}
           rowGutter={16}
           overscanBy={2}
+          // ⚠ 一定要指定 role。masonic 預設 role="grid"，而它給子項的是 role="gridcell"
+          //   （見 use-masonry：list→listitem、grid→gridcell），中間**不產** role="row"。
+          //   gridcell 依規格必須被 row 包住，所以預設值出來的是一個結構壞掉的 grid：
+          //   讀屏軟體會找不到列、整個瀑布流變成無法瀏覽的一團。Lighthouse 的
+          //   aria-required-children / aria-required-parent 兩條都會紅（/photos 0.90）。
+          //   相簿本來就是清單語意，改成 list 之後子項變 listitem，不需要中間層。
+          //
+          //   prefer-tag-over-role 會建議改用 <ul>。masonic 支援 `as`/`itemAs`，
+          //   但換成 ul/li 會帶進清單的預設 padding 與項目符號，得再寫一組 CSS 去消——
+          //   為了一個「寫法偏好」的規則動版面不划算，而無障礙的結果一模一樣。
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
+          role="list"
         />
       </div>
 

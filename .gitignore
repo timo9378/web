@@ -98,3 +98,6 @@ blob-report/
 #    它們也不會再被推上去，除非有人改動它們。真要讓它們從 repo 消失得跑
 #    `git rm --cached -r docs/`，那會讓它們從 GitHub 上不見——所以沒有自動做。
 docs/
+
+# Lighthouse CI 的報告輸出（每次 lhci autorun 重產）
+.lighthouseci/

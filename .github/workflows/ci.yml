@@ -292,6 +292,63 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Lighthouse：可及性／SEO 的分數、資源預算、以及幾條「一定是 bug」的稽核。
+  #
+  # ⚠ 它**抓不到**這個站最嚴重的那類問題。實地量到 0.52 的 CLS，Lighthouse 在同一頁
+  #   量到的是 0（開了節流也還是 0）——因為它永遠冷啟動、無 history、單頁直接載入，
+  #   而那個位移只在「捲在文章深處按 F5」時出現。那條路徑由 tests/e2e/cls.spec.ts 守。
+  #   這裡守的是變異小、退步了又真的會痛的東西：a11y/SEO 規則、以及 JS 位元組預算。
+  #   門檻與每一條的理由都寫在 lighthouserc.cjs。
+  #
+  # 拆成獨立 job 而不是併進 e2e：兩者都要 `pnpm build` + `cargo build`（各約 60~90s），
+  # 併起來會把 e2e 這條關鍵路徑再拉長三分鐘；分開跑則是平行的，總時間不變。
+  lighthouse:
+    name: Lighthouse · a11y / SEO / 資源預算
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: .
+          prefix-key: v1-rust
+          # 跟 e2e / api-fuzz 同一把：三個 job 都只跑 `cargo build --bin`，產物一樣
+          shared-key: workspace
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      # 明確裝一份 Chrome 而不是賭 runner 映像自帶。ubuntu-latest 目前確實有，
+      # 但那是映像的實作細節，哪天拿掉就會變成「lighthouse 突然找不到瀏覽器」。
+      - uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2.1.2
+        id: chrome
+        with:
+          chrome-version: stable
+      - run: pnpm install --frozen-lockfile
+      - name: 建置前後端
+        run: |
+          set -euo pipefail
+          cargo build --locked --bin koimsurai-web-backend
+          pnpm build
+      # lhci 自己會用 startServerCommand 起 e2e stack（設定見 lighthouserc.cjs）。
+      # CHROME_PATH 指向上一步裝的那顆，不讓 chrome-launcher 自己去猜。
+      - name: lhci autorun
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: pnpm exec lhci autorun --config=lighthouserc.cjs
+      # 失敗時把完整的 LHR 收起來。斷言訊息只講「哪一條、差多少」，
+      # 要知道是哪個資源變大了得看報告本身。
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
+        if: failure()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
+
   # 已發布文章的 MDX 編譯守門。
   #
   # 為什麼需要：MDX 編譯失敗在前台是**靜默退回 markdown**（讀者看到裸標籤），而
