@@ -286,14 +286,23 @@ jobs:
           # 只有 main 存（理由同 backend job 那段：PR 讀得到 base 的快取，自己存是浪費額度）
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: pnpm install --frozen-lockfile
-      # 瀏覽器本體進快取。key 綁 playwright 版本——升版就是新的 key，不會拿到舊 binary。
-      # 命中時下面那行仍然會跑，但 playwright 偵測到 binary 已存在就只做 `--with-deps`
-      # 的 apt 那段（系統函式庫沒辦法用 actions/cache 還原，那是裝進 / 的）。
+      # ⚠ key 一定要綁 **playwright 的版本**，不能綁整個 lockfile 的雜湊。
+      #   原本寫的是 `hashFiles('pnpm-lock.yaml')`，而註解卻寫「綁 playwright 版本」——
+      #   兩者差很多：lockfile 每動一次（包含每一個 Dependabot PR、每一次無關的
+      #   套件升級）key 就變，chromium 整包重下載。實測代價是這一步從 33s 變成 259s，
+      #   而且完全看不出原因——job 仍然是綠的，只是慢了四分鐘。
+      #   （抓到它是因為升了 monaco 的版本之後 E2E job 從 375s 跳到 622s。）
+      - name: 取 playwright 版本
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      # 瀏覽器本體進快取。命中時下面那行仍然會跑，但 playwright 偵測到 binary 已存在
+      # 就只做 `--with-deps` 的 apt 那段（系統函式庫沒辦法用 actions/cache 還原，
+      # 那是裝進 / 的）。
       - name: playwright 瀏覽器快取
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       # 三件事互相獨立，卻本來排成序列（17s + 19s + 12s = 48s）。
       # chromium 那步是 apt（IO-bound），兩個建置是 CPU-bound，重疊起來剛好互補。
       # 只裝 chromium：三家瀏覽器各裝一次要 3 分鐘，而這裡測的是資料流不是渲染差異。
