@@ -50,13 +50,19 @@ module.exports = {
         // 這些頁面有 Service Worker 與 localStorage 狀態，不清乾淨的話第二次跑
         // 量到的是快取命中，數字會莫名其妙變好
         disableStorageReset: false,
-        chromeFlags: [
-          '--no-sandbox',
-          '--disable-dev-shm-usage',
-          // 無頭環境沒有 GPU，走 SwiftShader 軟體渲染。少了這個旗標
-          // Chromium 151 會直接拒絕初始化 WebGL 並在 log 裡吐一整片警告。
-          '--enable-unsafe-swiftshader',
-        ],
+        // ⚠ 必須是**空白分隔的單一字串**，不能寫成陣列。
+        //   lhci 內部是 `chromeFlagsAsString = chromeFlags || ''` 然後直接 `+=`
+        //   接上 `--headless=new`（collect/node-runner.js）——傳陣列的話會被
+        //   字串串接成 `"--no-sandbox,--disable-dev-shm-usage,…"`，Chrome 看到的是
+        //   一個逗號連起來的無效旗標，於是整組等同沒設。
+        //
+        //   這個錯在本機看不出來：開發機允許 unprivileged user namespace，沙箱起得來，
+        //   所以少了 --no-sandbox 也照跑。GitHub runner 不允許，Chrome 直接
+        //   `FATAL: No usable sandbox` 然後 abort，錯誤訊息是 "Unable to connect to Chrome"，
+        //   完全指不到旗標格式這個原因。
+        //
+        //   `--headless=new` 由 lhci 自己補，這裡不要重複加。
+        chromeFlags: '--no-sandbox --disable-dev-shm-usage --enable-unsafe-swiftshader',
         // PWA 類別在 Lighthouse 12 已經移除，剩下四類全要
         onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
       },
