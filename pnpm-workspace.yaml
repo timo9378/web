@@ -35,6 +35,12 @@ overrides:
   'brace-expansion@>=2.0.0 <2.1.2': '^2.1.2'
   '@hono/node-server': '^2.0.5'
   sharp: '^0.35.0'
+  # @lhci/cli 透過 inquirer → external-editor 拉進 tmp@0.0.33 與 tmp@0.1.0，
+  # 兩者都有 Dependabot 警示（高：prefix/postfix 未消毒造成路徑穿越；
+  # 低：dir 參數吃符號連結）。實際使用面只在 CI 建暫存目錄、輸入不是外部可控，
+  # 所以不急；但留著就是安全頁上兩筆永遠不會處理的紅字，而雜訊一多，
+  # 真的有事時就沒人看。鎖壞了不會沒人知道——lhci 在 CI 每次都跑。
+  tmp: '^0.2.6'
 
 patchedDependencies:
   '@types/three@0.185.1': patches/@types__three@0.185.1.patch
