@@ -158,5 +158,3 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
     </>
   );
 }
-
-export default LinkHoverPreview;

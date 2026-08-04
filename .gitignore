@@ -51,6 +51,9 @@ PHOTO_BUILDER_GUIDE.md
 PHOTO_GALLERY_REFACTOR.md
 IMPLEMENTATION_SUMMARY.md
 docs/BLOG_ROADMAP.md
+# 給寫文 agent 的題材清單，每次重產。放在根目錄且未被忽略時，`git add -A` 會把它
+# 掃進不相干的 commit——實際發生過一次。
+test2.md
 .env.docker
 server/db/db.sqlite
 server/db/db.sqlite-shm

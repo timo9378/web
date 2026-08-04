@@ -62,14 +62,13 @@ jobs:
       # --max-warnings 0：這三個目錄目前乾淨，直接鎖死，不留讓它從 0 無聲長大的空間。
       - name: oxlint (scripts + server + packages)
         run: pnpm exec oxlint scripts server packages --max-warnings 0
-      # 未使用的檔案／相依。設定見 .config/knip.json。
+      # 未使用的檔案／匯出／相依。設定見 .config/knip.json。
       #
-      # ⚠️ 只 gate files + dependencies 這幾類，因為它們現在是零；exports 類還有
-      # 24 個未使用匯出 + 11 個未使用型別沒清。那是另一批工作（要逐個判斷是「該刪」
-      # 還是「刻意留的公開介面」），清完再把 --include 拿掉。
-      # 這裡刻意不是用 ignore 把它們藏起來——藏起來就沒有人會回來清。
-      - name: knip（未使用的檔案與相依）
-        run: pnpm exec knip --config .config/knip.json --no-progress --include files,dependencies,unlisted,unresolved,binaries
+      # 原本只 gate files + dependencies，因為 exports 類還有 27 個未使用匯出 +
+      # 11 個未使用型別沒清。那批已經清完（多數不是「刪掉」而是「拿掉 export」——
+      # 它們在自己檔案裡還有用，只是不該對外），所以 --include 拿掉，全類別鎖死。
+      - name: knip（未使用的檔案、匯出與相依）
+        run: pnpm exec knip --config .config/knip.json --no-progress
       # JUnit 的產出由 vitest.config.ts 依 CI 環境決定，不在這裡改寫指令——
       # `pnpm test` 是 CLAUDE.md 裡列的門檻指令，讓它跟本機跑的是同一條。
       - name: vitest

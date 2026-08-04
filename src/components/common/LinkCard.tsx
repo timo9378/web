@@ -125,7 +125,7 @@ const getLinkMeta = (url: string): LinkMeta | null => {
 /* ══════════════════════════
    InternalLinkCard — fetch and show preview
    ══════════════════════════ */
-export const InternalLinkCard = ({ id }: { id: string }) => {
+const InternalLinkCard = ({ id }: { id: string }) => {
   // 卡片只需 title / created_at / category —— 這些 recentPosts 清單就有，而文章 loader 已把該
   // 清單預取進快取 → SSR 首幀就是真卡片（不必為每個連結各打一次 post detail）。
   // 清單裡找不到（例如連到 top-100 之外）才退回骨架，且骨架保留高度 → 換上時不位移。
@@ -157,7 +157,7 @@ export const InternalLinkCard = ({ id }: { id: string }) => {
 /* ══════════════════════════
    ThoughtPreviewCard — 引用一則碎念/思考
    ══════════════════════════ */
-export const ThoughtPreviewCard = ({ id }: { id: string }) => {
+const ThoughtPreviewCard = ({ id }: { id: string }) => {
   // 碎念引用卡：reuse thoughtDetailQueryOptions → 與 ThinkingDetail 共用快取。
   const { data: th } = useQuery(thoughtDetailQueryOptions(id));
 

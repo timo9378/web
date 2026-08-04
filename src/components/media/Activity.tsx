@@ -28,9 +28,10 @@ import type {
   GithubContributionsResponse,
 } from '@koimsurai/api-types';
 
-export type { SteamGame, SteamPlayer, WakatimeStat, GithubEvent, GithubRepo };
+// 只再匯出真的有外部消費者的那個；其餘幾個是本檔自己在用，掛出去沒有人接。
+export type { GithubEvent };
 export type SteamProfile = SteamProfileResponse;
-export type GithubUser = GithubUserResponse;
+type GithubUser = GithubUserResponse;
 export type GithubContributions = GithubContributionsResponse;
 
 export interface ServerStatus { status: string; responseTime: number; lastCheck: Date }

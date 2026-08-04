@@ -36,6 +36,5 @@ export const postSchema = z.object({
   summary_ko: z.string().optional(),
 });
 
-export type PostFormData = z.infer<typeof postSchema>;
 // 表單值用的是 schema 的「輸入」型別（含 .default() 的欄位在輸入端為選填）
 export type PostFormInput = z.input<typeof postSchema>;

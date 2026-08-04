@@ -21,7 +21,7 @@ interface SeoEntry {
   description?: string;
 }
 
-export const PAGE_SEO: Record<string, SeoEntry> = {
+const PAGE_SEO: Record<string, SeoEntry> = {
   // 首頁（basePath = ''）：title 留 null → 站台預設名（宙と木 · Koimsurai），描述用 hero 標語。
   // 原本首頁 head() 只出 links → SSR 完全沒有 og/description（Hero 的 <SEOHead> 是 helmet、爬蟲看不到）。
   '': { descKey: 'hero.description' },

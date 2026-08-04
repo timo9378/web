@@ -9,8 +9,3 @@ export function prefetchPostChunk(): Promise<unknown> | null {
   chunkPromise = import('@/components/blog/BlogPost').catch(() => { chunkPromise = null; });
   return chunkPromise;
 }
-
-// 舊名保留為 alias（呼叫端漸進換名），只做 chunk 預抓。
-export function prefetchPost(_id?: string | number, _lang?: string) {
-  void prefetchPostChunk();
-}

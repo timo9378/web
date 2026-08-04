@@ -130,7 +130,7 @@ const sidebarItems: SidebarItem[] = [
   { id: 'users', icon: Users, label: '用戶管理', path: '/admin/users', ownerOnly: true },
 ];
 
-export const AdminLayout = () => {
+const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { pathname } = useLocation();

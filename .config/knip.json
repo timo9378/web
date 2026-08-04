@@ -13,11 +13,8 @@
         "src/components/ui/**",
         "src/components/animate-ui/**"
       ],
-      "project": ["src/**/*.{ts,tsx}", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"],
-      "ignore": ["src/routeTree.gen.ts", "src/hooks/use-is-in-view.ts"]
-    },
-    "packages/api-types": { "entry": ["index.ts"] },
-    "packages/mcp-server": { "entry": ["src/index.ts"] }
+      "project": ["src/**/*.{ts,tsx}", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+    }
   },
   "ignoreDependencies": [
     "@koimsurai/api-types",

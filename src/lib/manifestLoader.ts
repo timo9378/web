@@ -7,8 +7,8 @@
 import type { PhotosManifest } from '@koimsurai/api-types';
 import type { PhotoManifest } from '@/types/photo';
 
-// 舊名保留給既有 import；形狀改吃後端生成的（backend handlers::gallery::PhotosManifest）
-export type PhotosManifestData = PhotosManifest;
+// 舊名，只剩本檔在用；形狀吃後端生成的（backend handlers::gallery::PhotosManifest）
+type PhotosManifestData = PhotosManifest;
 
 /**
  * 從 public/photos-manifest.json 載入照片資料
@@ -113,11 +113,4 @@ const EMPTY_EXIF = {
   MeteringMode: null,
 } as const;
 
-/**
- * 取得圖片格式
- */
-export function getImageFormat(url: string): string {
-  const ext = url.split('.').pop()?.toLowerCase() ?? '';
-  return ext.toUpperCase();
-}
 

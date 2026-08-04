@@ -5,9 +5,9 @@
 // 變成「寫完當場知道」。
 import { BLOCK_NAMES } from './blocks.js';
 
-export type Severity = 'error' | 'warning' | 'hint';
+type Severity = 'error' | 'warning' | 'hint';
 
-export interface Finding {
+interface Finding {
   severity: Severity;
   /** 1-based 行號（拿不到就省略） */
   line?: number;

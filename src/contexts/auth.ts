@@ -5,7 +5,7 @@ import type { AuthProvidersResponse } from '@koimsurai/api-types';
 // 元件與非元件混在同一模組會讓 Vite Fast Refresh 對整支檔案退回整頁重載
 // （react-refresh only-export-components）。
 
-export type UserRole = 'OWNER' | 'ADMIN' | 'USER';
+type UserRole = 'OWNER' | 'ADMIN' | 'USER';
 
 export interface User {
   id: string;

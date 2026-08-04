@@ -88,7 +88,7 @@ export function pickLocaleFromAcceptLanguage(header: string | undefined | null):
 
 // bot 偵測搬到 lib/bot.ts（純函式、零相依，Web Vitals 上報也要用）。消費端直接從那裡 import。
 
-export const SITE_URL = 'https://koimsurai.com';
+const SITE_URL = 'https://koimsurai.com';
 
 /** 某 locale 下、某邏輯路徑(無前綴,如 '' 或 'blog/39')的絕對 URL。 */
 export function localeUrl(locale: Locale, basePath = ''): string {

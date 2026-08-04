@@ -43,11 +43,6 @@ export function isWebGLAvailable(): boolean {
   return cached;
 }
 
-/** 偵測到的 GPU renderer 字串（要先呼叫過 isWebGLAvailable）。給 ?debug=perf 顯示用。 */
-export function getGpuRenderer(): string {
-  return rendererName;
-}
-
 /**
  * 「這台機器沒有可用的 GPU 合成」→ 該走最省的降級模式。
  *

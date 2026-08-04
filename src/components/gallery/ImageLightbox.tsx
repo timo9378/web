@@ -298,5 +298,3 @@ function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
     document.body
   );
 }
-
-export default ImageLightbox;

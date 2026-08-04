@@ -21,7 +21,7 @@ const proxiedCover = (url?: string): string =>
 interface RGB { r: number; g: number; b: number }
 
 /** `GET /api/books` 的單本，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
-export type Book = BookRow;
+type Book = BookRow;
 
 export interface BookStats {
   total_books: number;

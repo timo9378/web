@@ -17,7 +17,7 @@ interface DashboardStats {
   commentsThisWeek?: number;
 }
 
-export const AdminDashboard = () => {
+const AdminDashboard = () => {
   // 儀表板改由 TanStack Query 讀：最近文章（limit=5）+ 站台統計（非 specta 動態端點）。
   const { data: postsData, isPending: lp } = useQuery(adminPostsQueryOptions('limit=5'));
   const { data: statsData, isPending: ls } = useQuery(adminStatsQueryOptions);

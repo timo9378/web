@@ -7,8 +7,6 @@
 //
 // 這個檔留著只為了讓前端側的入口名字不變，內容就是轉呼叫。
 
-export { assertRenderable, MdxUnsupportedError, mdxToHast } from '@koimsurai/mdx-core';
-
 import { compileMdxToHastJson } from '@koimsurai/mdx-core';
 
 /**

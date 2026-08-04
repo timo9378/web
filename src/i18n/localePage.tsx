@@ -61,18 +61,6 @@ export function localePageClientPrefixed(basePath: string, factory: () => Promis
   return localePagePrefixed(basePath, clientOnlyComp(factory));
 }
 
-// 動態 /$locale/.../$param 頁:只做 locale 前綴守門(zh-TW/不合法 → notFound),
-// 不發 hreflang(動態路徑沒有有意義的逐語系 alternate;由元件內 SEOHead 處理 title/desc)。
-export function localeGuardedPage(Comp: ComponentType) {
-  return {
-    loader: ({ params }: { params: { locale: string } }) => {
-      const locale = localeFromPrefix(params.locale);
-      if (!locale || locale === 'zh-TW') throw notFound();
-    },
-    component: localeWrap(Comp),
-  };
-}
-
 /** 帶前綴 /$locale/... 頁的 route options。 */
 export function localePagePrefixed(basePath: string, Comp: ComponentType) {
   return {

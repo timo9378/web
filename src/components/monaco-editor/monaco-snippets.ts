@@ -19,7 +19,7 @@ export interface Snippet {
   body: string;
 }
 
-export const BUILTIN_SNIPPETS: Snippet[] = [
+const BUILTIN_SNIPPETS: Snippet[] = [
   { label: '/note', detail: 'GitHub Callout: Note', body: '> [!NOTE]\n> $0' },
   { label: '/tip', detail: 'GitHub Callout: Tip', body: '> [!TIP]\n> $0' },
   { label: '/important', detail: 'GitHub Callout: Important', body: '> [!IMPORTANT]\n> $0' },
