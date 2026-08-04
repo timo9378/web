@@ -210,7 +210,9 @@ mod tests {
         assert_eq!(d.public_key, "abc123");
         assert_eq!(d.origin, "http://glitchtip:8000");
         assert_eq!(d.project_id, "2");
-        assert_eq!(d.envelope_url(), "http://glitchtip:8000/api/2/envelope/");
+        // ⚠️ sentry_key 一定要在查詢字串裡：轉發時沒有帶 X-Sentry-Auth 標頭（見 envelope 的
+        // 送出處），認證完全靠這個參數。少了它 GlitchTip 會回 401 而事件只是安靜地不見。
+        assert_eq!(d.envelope_url(), "http://glitchtip:8000/api/2/envelope/?sentry_key=abc123");
         assert!(d.security_url().starts_with("http://glitchtip:8000/api/2/security/?sentry_key=abc123"));
 
         // 沒有 port 時不要留下一個空的 ":"

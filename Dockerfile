@@ -85,6 +85,15 @@ RUN --mount=type=secret,id=sentry_token \
 #      GlitchTip 已經有了自己那份，production 映像不需要留。
 RUN find .output/public/assets -name '*.map' -delete
 
+# 4) 讓 nitro 的靜態資產清單追上前面兩步。
+#    ⚠️ 這步不是可有可無的收尾——少了它整站是白畫面。
+#    清單在第 48 行的 build 就定稿了，記著每支資產的 size；nitro 供應時 content-length
+#    照清單走而不是 stat，所以 inject 把 JS 加長 358 bytes 之後，每一支都會被切掉尾巴：
+#      Uncaught SyntaxError: Unexpected end of input (at index-XXXX.js:…)
+#    而容器裡的檔案是完好的——切斷發生在供應階段，exec 進去看檔案完全看不出問題。
+#    順帶把上一步刪掉的 .map 條目移除，那些路徑才會回 404 而不是 500。
+RUN node scripts/sync-nitro-asset-manifest.mjs
+
 # Stage 2: Production server
 FROM node:26.5.0-bookworm-slim
 WORKDIR /app
