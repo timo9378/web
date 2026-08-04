@@ -67,8 +67,10 @@ jobs:
       # 沒有等價的型別感知檢查。
       #
       # ⚠️ 刻意不加 --error-on-warnings：目前有 190 個 !important 與 21 個
-      # descending-specificity 沒清。它們會出現在 CI 輸出裡但不擋——跟 knip 當初
+      # noDescendingSpecificity 沒清。它們會出現在 CI 輸出裡但不擋——跟 knip 當初
       # 的處理一樣，藏起來就沒有人會回來清。這一步擋的是「格式漂移」與 error 類。
+      # （noDescendingSpecificity 守的是可讀性不是正確性：高特異性的規則寫在前面
+      #  照樣會贏，行為是對的。細節見 CLAUDE.md。）
       - name: biome（CSS 格式與 lint）
         run: pnpm lint:css
       # 未使用的檔案／匯出／相依。設定見 .config/knip.json。

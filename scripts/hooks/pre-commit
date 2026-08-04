@@ -27,9 +27,10 @@ fi
 
 if echo "$staged" | grep -qE '\.css$'; then
   echo "▶ biome（CSS）"
-  # 跟 CI 那道一字不差（pnpm lint:css）。不帶 --error-on-warnings：存量的
-  # !important 與 descending-specificity 還沒清，擋的是格式漂移與 error 類。
-  pnpm lint:css || fail=1
+  # 規則集與 CI 那道相同；--reporter=summary 只影響印不印，不影響判定——
+  # 存量的 211 個 warning 每次 commit 展開就是兩百行，理由同上面 oxlint 的 --quiet。
+  # 不帶 --error-on-warnings：擋的是格式漂移與 error 類。
+  pnpm exec biome check --config-path=.config/biome.json --reporter=summary . || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then
