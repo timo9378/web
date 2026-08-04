@@ -187,8 +187,8 @@ importers:
         specifier: ^0.4.4
         version: 0.4.4(monaco-editor@0.55.1)
       pangu:
-        specifier: ^7.2.1
-        version: 7.2.1
+        specifier: ^9.1.0
+        version: 9.1.0
       react:
         specifier: ^19.2.1
         version: 19.2.1
@@ -5949,9 +5949,9 @@ packages:
   pako@2.0.3:
     resolution: {integrity: sha512-WjR1hOeg+kki3ZIOjaf4b5WVcay1jaliKSYiEaB1XzwhMQZJxRdQRv0V31EKBYlxb4T7SK3hjfc/jxyU64BoSw==}
 
-  pangu@7.2.1:
-    resolution: {integrity: sha512-HEWJHmYcJhGz5wGebMaKblzu709wUjzsnJzwdjaowAKQzHIHQDmWGpCbWWPx19Exnv/RaQ3UhUg4LkttWZsbCw==}
-    engines: {node: '>=18.0.0'}
+  pangu@9.1.0:
+    resolution: {integrity: sha512-71wG2k5rxjxuzT7Jmhsust7un8l6uq1hUpvvtCnX3cYVyyeaPUcFG2S8//aB3l6jPPJHvOmwRtZ/UDHITLNUJg==}
+    engines: {node: '>=20.0.0'}
     hasBin: true
 
   parallax-controller@1.7.1:
@@ -13507,7 +13507,7 @@ snapshots:
 
   pako@2.0.3: {}
 
-  pangu@7.2.1: {}
+  pangu@9.1.0: {}
 
   parallax-controller@1.7.1:
     dependencies:
