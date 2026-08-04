@@ -18,7 +18,7 @@ serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 sqlx = { version = "0.9", features = ["sqlite", "runtime-tokio", "tls-none", "macros"] }
 tower = { version = "0.5", features = ["util"] }
 # set-header：API 回應掛 X-Robots-Tag: noindex（見 router.rs 的說明）
-tower-http = { version = "0.6", features = ["trace", "cors", "set-header"] }
+tower-http = { version = "0.7", features = ["trace", "cors", "set-header"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
