@@ -1,6 +1,13 @@
 volumes:
   backend-db-data: # DB 檔的 docker volume（backend-rs + db-backup 共用）
 
+networks:
+  # 錯誤上報用（見 ~/Server/glitchtip/）。刻意走內網而不是公網 DSN：
+  # 公網那條要繞出去經 nginx 再回來，而 nginx 掛掉正是最需要收到錯誤的時候。
+  # 建立方式：docker network create observability
+  observability:
+    external: true
+
 # 啟用 Docker BuildKit 的 Bake 功能以提升建置效能
 # 在您的 shell 環境中設定此變數: export COMPOSE_BAKE=true (Linux/macOS) 或 $env:COMPOSE_BAKE="true" (Windows PowerShell)
 
@@ -79,6 +86,10 @@ services:
       - ./.env.backend
     ports:
       - "127.0.0.1:3002:3002"
+    networks:
+      # observability = 連得到 glitchtip 容器（SENTRY_DSN 指的是 http://glitchtip:8000）
+      - default
+      - observability
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3002/api/health" ]

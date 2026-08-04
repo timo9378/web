@@ -246,5 +246,19 @@ pub fn build_router(state: AppState) -> Router {
         // 文章內容變更後通知前端清 ISR 快取（fire-and-forget；未設 env 則不啟用）
         .layer(axum::middleware::from_fn(revalidate::notify_on_post_write))
         .layer(TraceLayer::new_for_http())
+        // ── 錯誤追蹤（自架 GlitchTip）──────────────────────────────────
+        // 兩層都要，缺一不可：
+        //   NewSentryLayer  每個請求開一個獨立 Hub。沒有它的話，並發請求會共用同一個
+        //                   scope，A 請求的麵包屑會出現在 B 請求的 issue 裡。
+        //   SentryHttpLayer 把請求資訊掛進事件。`enable_transaction()` 沒開——
+        //                   那是 APM，這裡 traces_sample_rate = 0。
+        //
+        // ⚠️ 順序：NewSentryLayer 要在外層（先開 Hub，裡面的東西才寫得進去）。
+        //   axum 的 layer 是**由下往上**包，所以寫在後面的是外層。
+        //
+        // SENTRY_DSN 沒設時 sentry 是 no-op，這兩層留著也沒有成本，
+        // 所以不做條件式組裝——那會讓 build_router 的回傳型別變複雜。
+        .layer(sentry_tower::SentryHttpLayer::new())
+        .layer(sentry_tower::NewSentryLayer::new_from_top())
         .with_state(state)
 }

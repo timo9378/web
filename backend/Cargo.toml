@@ -41,6 +41,21 @@ parking_lot = "0.12"
 base64 = "0.22"
 # 自家 bahamut SDK（https://crates.io/crates/anigamer；本地開發要改 SDK 時可暫換 path dep）
 anigamer = "0.1.1"   # 0.1.1 起有 ClientOptions::base_urls，sync worker 才測得到
+# 錯誤追蹤 → 自架 GlitchTip（Sentry SDK 相容）。SENTRY_DSN 沒設就整個關閉。
+#
+# default-features = false：預設會拉 native-tls（openssl），而這個專案全線走 rustls
+#   （reqwest、anigamer 都是）。混用會多編一份 openssl，Docker 映像也得多裝系統套件。
+# reqwest + rustls：傳輸層沿用已有的堆疊。
+# backtrace / contexts / panic：panic 自動上報 + 帶 OS/runtime 資訊。
+sentry = { version = "0.49", default-features = false, features = [
+    "reqwest", "rustls", "backtrace", "contexts", "panic",
+] }
+# tracing 事件 → Sentry。掛在既有的 registry 上，handler 一行都不用改。
+sentry-tracing = "0.49"
+# 每個請求一個 Hub + 把請求資訊掛進事件。
+# axum-matched-path：issue 依「路由樣板」聚合而不是依實際網址——
+#   沒有它的話 /api/posts/1 和 /api/posts/2 會變成兩個不同的 issue。
+sentry-tower = { version = "0.49", features = ["http", "axum-matched-path"] }
 # opencc 簡繁轉換（純 Rust、內建 OpenCC 字典，免 libopencc C 依賴）。
 # Tw2s 對 opencc-js {from:'tw',to:'cn'} 實測 byte-identical（33 真實欄位 + 20 對抗案例全過）。
 ferrous-opencc = "0.4"

@@ -22,17 +22,70 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[unsafe(export_name = "_rjem_malloc_conf")]
 pub static malloc_conf: &[u8] = b"background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:1000\0";
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv().ok();
+/// Sentry（自架 GlitchTip）初始化。回傳的 guard 要活到程式結束——提早 drop 會讓
+/// 尚未送出的事件被丟掉，而那不會有任何錯誤訊息。
+///
+/// `SENTRY_DSN` 沒設或是空字串 → 回 None，整個功能關閉（本機開發的預設狀態）。
+///
+/// ⚠️ 刻意在 tokio runtime **之前**呼叫：sentry 的傳輸層自己起一條背景執行緒，
+///   官方文件明說要在 runtime 啟動前初始化。
+fn init_sentry() -> Option<sentry::ClientInitGuard> {
+    let dsn = env::var("SENTRY_DSN").ok().filter(|s| !s.is_empty())?;
 
+    // ⚠️ 0.49 起 `ClientOptions` 是 #[non_exhaustive]，不能寫成結構體字面值
+    //   （連 `..Default::default()` 也不行，那是 E0639）。只能逐欄位指派，
+    //   所以下面那個 clippy lint 要放行。
+    #[allow(clippy::field_reassign_with_default)]
+    let mut opts = sentry::ClientOptions::default();
+    opts.release = sentry::release_name!();
+    // 沒設就是 "production"（正式部署唯一會跑到這裡的環境）
+    opts.environment = Some(env::var("SENTRY_ENVIRONMENT").unwrap_or_else(|_| "production".into()).into());
+    // 不送 IP／cookie／header 之類的個資。本站的立場是不外送讀者行為，
+    // 即使收件端是自己的機器也維持一致——那樣萬一哪天改指到 SaaS 也不會突然外洩。
+    opts.send_default_pii = false;
+    // ⚠️ 只要錯誤，不要 APM——traces 是流量大戶而這裡用不到（效能已經有 web_vitals
+    //   表在收實地資料）。`TracesSamplingStrategy::Disabled` 本來就是預設值，
+    //   這裡寫出來是為了讓「刻意不開」這件事在程式碼裡看得見。
+    opts.traces_sampling_strategy = sentry::TracesSamplingStrategy::Disabled;
+
+    Some(sentry::init((dsn, opts)))
+}
+
+fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv().ok();
+    let _sentry = init_sentry();
+    tokio::runtime::Builder::new_multi_thread().enable_all().build()?.block_on(run())
+}
+
+async fn run() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "info,koimsurai_web_backend=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
+        // tracing 的 ERROR 事件 → Sentry。event_filter 決定哪些層級要送：
+        // ERROR 成為 issue、WARN 只當麵包屑（不然 log 一吵 issue 列表就沒法看了）。
+        .with(sentry_tracing::layer().event_filter(|md| match *md.level() {
+            tracing::Level::ERROR => sentry_tracing::EventFilter::Event,
+            tracing::Level::WARN => sentry_tracing::EventFilter::Breadcrumb,
+            _ => sentry_tracing::EventFilter::Ignore,
+        }))
         .init();
+
+    // 開機自檢：`SENTRY_SMOKE_TEST=1` 時送一則測試錯誤，然後照常啟動。
+    //
+    // 存在的理由是這條管線**壞掉時完全沒有症狀**——DSN 打錯、容器不在同一個網路、
+    // GlitchTip 的 migration 沒跑，三種情況下伺服器都照常服務，你只會以為「最近沒出錯」。
+    // 裝好時要驗一次，之後每次升級 GlitchTip 或改動網路設定時再驗一次。
+    //
+    // 驗完把環境變數拿掉，不然每次重啟都會多一則假錯誤。
+    if env::var("SENTRY_SMOKE_TEST").is_ok_and(|v| v == "1") {
+        tracing::error!(
+            smoke_test = true,
+            "SENTRY_SMOKE_TEST：這是刻意送出的測試錯誤，看得到就代表上報管線是通的"
+        );
+    }
 
     // sqlite：WAL 讓讀寫可重疊；busy_timeout 避免 SQLITE_BUSY；
     // create_if_missing 讓全新部署由 migrations 從零建出 DB。
