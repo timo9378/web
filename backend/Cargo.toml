@@ -38,7 +38,7 @@ rand = "0.8"
 # in-process cache 的鎖（短臨界區、無 poison；不跨 await 持有）
 parking_lot = "0.12"
 # /posts/legacy 的 Basic auth 解碼
-base64 = "0.22"
+base64 = "0.23"
 # 自家 bahamut SDK（https://crates.io/crates/anigamer；本地開發要改 SDK 時可暫換 path dep）
 anigamer = "0.1.1"   # 0.1.1 起有 ClientOptions::base_urls，sync worker 才測得到
 # 錯誤追蹤 → 自架 GlitchTip（Sentry SDK 相容）。SENTRY_DSN 沒設就整個關閉。
