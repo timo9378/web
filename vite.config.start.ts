@@ -170,13 +170,15 @@ export default defineConfig({
   build: {
     // 'hidden' = 產生 .map 檔，但**不在 bundle 結尾寫 sourceMappingURL**。
     //
-    // 為什麼不是 true：那會讓瀏覽器 devtools 自動去抓 .map，等於把幾 MB 的原始碼
-    // 掛在正式站上供人下載。原始碼本來就開源，但流量與「無意間變成 CDN」是另一回事。
+    // 為什麼不是 true：那會在 bundle 結尾寫 sourceMappingURL，瀏覽器 devtools 會自動
+    // 去抓——等於主動把原始碼推給每個開 devtools 的人。
     // 為什麼不是 false：那 GlitchTip 上的 stack trace 全是 minify 過的
     // （`t.f is not a function` 這種），幾乎讀不出東西——等於白裝。
     //
-    // 產出的 .map 由 scripts/upload-sourcemaps.sh 上傳到 GlitchTip 之後，
-    // 它會在伺服器端做符號還原，不需要瀏覽器拿得到。
+    // ⚠️ 'hidden' **只拿掉那行註解，不會阻止 .map 被供應**。實測過：
+    //   /assets/AdminDashboard-*.js.map 直接 200，整站原始碼可下載。
+    //   真正把它擋掉的是 Dockerfile 最後那步 `find ... -delete`（上傳完就刪），
+    //   加上 nginx 的 `location ~ \.map$ { return 404; }`。
     sourcemap: 'hidden',
   },
   resolve: {

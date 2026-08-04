@@ -149,23 +149,26 @@ cd .. && cargo audit    # 目前有 3 個既有的 allowed warnings（unmaintain
 ## 部署
 
 ```bash
-./scripts/deploy.sh            # 前後端都重建
-./scripts/deploy.sh frontend   # 只動前端時
-./scripts/deploy.sh backend    # 只動後端
+docker compose up -d --build            # 前後端都重建
+docker compose up -d --build frontend   # 只動前端時
 ```
 
 使用者已授權助手直接執行部署，不需要每次徵詢。
 
-⚠️ **不要直接下 `docker compose up -d --build`**。那樣 `VITE_RELEASE` 會是空的，
-而且不會上傳 source map —— GlitchTip 上的前端 stack trace 就全是 minify 過的
-（`t.f is not a function`、行號指向某個 40 萬字元的單行），等於錯誤追蹤白裝。
+⚠️ **`VITE_RELEASE` 沒帶的話 SDK 不會帶版本標記**（功能仍正常，只是 GlitchTip 上的
+issue 歸不到某次部署）。要帶就 `VITE_RELEASE=$(git rev-parse --short HEAD) docker compose …`。
 
-腳本管的是**順序**：commit → build（release 烤進 bundle）→ up -d → 上傳 source map。
-第 2 與第 4 步的 release 對不上時，GlitchTip 找不到對應的 map，而**不會有任何錯誤訊息**。
-寫這支腳本的當天就踩過一次（build 用 commit 前的 SHA、上傳用 commit 後的）。
+source map 是**在 build 裡**處理掉的（見 Dockerfile）：烙 debug id → 上傳到 GlitchTip →
+從映像刪掉 `.map`。三件事都綁在建置裡，所以不存在「忘記傳」或「順序錯」的問題。
+token 走 BuildKit secret（`.env.sourcemaps.token`，未提交）。
 
-source map 刻意**不放 CI**：CI 建的產物不是部署的那份（CI 上沒有 VITE_RELEASE 與
-VITE_SENTRY_DSN，bundle 內容不同 → 檔名 hash 不同 → 對不上）。
+⚠️ **GlitchTip 掛著時 build 會失敗**，這是刻意的：靜靜跳過上傳等於錯誤追蹤白裝，
+而那不會有人發現。真的要在它掛掉時部署，把 `.env.sourcemaps.token` 清空即可（會改走
+「跳過」分支）。
+
+⚠️ vite 的 `sourcemap: 'hidden'` **只拿掉 sourceMappingURL 註解，不會阻止 .map 被供應**。
+實測過 `/assets/*.js.map` 直接 200。所以 Dockerfile 那步 `find ... -delete` 是必要的，
+不是清潔癖。
 
 ⚠️ 資產檔名帶 content hash，重新部署後舊 hash 會 404。目前 CDN 沒有快取 HTML 所以無妨；
 **若哪天讓 CDN 快取 HTML，部署後必須清 CDN 快取**（等新容器 healthy 之後才清）。

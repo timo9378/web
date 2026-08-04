@@ -40,16 +40,50 @@ COPY . .
 ENV VITE_API_URL=/api
 
 # 錯誤上報用的（假）DSN 與版本標記。兩個都是 build 時就會烤進 bundle 的。
-#
-# ⚠️ VITE_RELEASE **必須跟 scripts/upload-sourcemaps.sh 的 RELEASE 一致**，
-#   否則 GlitchTip 找不到對應的 source map——症狀是 stack trace 依然是 minify 的，
-#   而且不會有任何錯誤訊息。兩邊都預設用 git 短 SHA。
-#   compose 沒帶 build arg 時 VITE_RELEASE 會是空的（SDK 就不帶 release）。
+# compose 沒帶 build arg 時會是空的（SDK 就不帶 release、也不啟用上報）。
 ARG VITE_SENTRY_DSN=
 ARG VITE_RELEASE=
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 ENV VITE_RELEASE=$VITE_RELEASE
 RUN pnpm run build
+
+# ── source map：烙 debug id → 上傳 → 從映像裡刪掉 ──────────────────────────
+#
+# 為什麼要在這裡做，而不是部署後另外跑一支腳本：那支腳本要記得下、要記得先 commit
+# 再 build 再上傳，而順序錯了的症狀是「stack trace 依然 minify，且沒有任何錯誤訊息」。
+# 綁在 build 裡就沒有順序可言——產物與上傳必然是同一份。
+#
+# 用 @sentry/cli 而不是 @glitchtip/cli：前者已是既有 devDependency 且實測可用，
+# GlitchTip 的 find_source_files 本來就優先比對 debug_id，兩者相容。要換成
+# glitchtip-cli 的話這裡改指令名即可。
+
+# 1) inject：在每支 JS 與它的 .map 裡烙一個 UUID。純本機操作，不碰網路。
+#    有了它，比對不再依賴檔名或 release 名稱——那是先前最容易錯的一環。
+RUN pnpm exec sentry-cli sourcemaps inject .output/public/assets
+
+# 2) upload。token 走 BuildKit secret 而不是 ARG——ARG 會留在映像歷史裡。
+#    位址用**公開網址**：build 容器不在 observability 網路上，連不到 glitchtip:8000。
+#    ⚠️ 沒帶 secret 時整步跳過（例如 CI 只想驗 build 過不過）。有帶就必須成功——
+#      刻意讓它會擋下部署，因為靜靜跳過等於錯誤追蹤白裝，而那不會有人發現。
+ARG SENTRY_URL=https://glitchtip.koimsurai.com
+ARG SENTRY_ORG=koimsurai
+ARG SENTRY_PROJECT=koimsurai-frontend
+RUN --mount=type=secret,id=sentry_token \
+    if [ -s /run/secrets/sentry_token ]; then \
+      SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_token)" \
+      SENTRY_URL="$SENTRY_URL" SENTRY_ORG="$SENTRY_ORG" SENTRY_PROJECT="$SENTRY_PROJECT" \
+      pnpm exec sentry-cli sourcemaps upload .output/public/assets \
+        --release "${VITE_RELEASE:-unknown}" --url-prefix '~/assets'; \
+    else \
+      echo "⚠️  沒有 sentry_token secret，跳過 source map 上傳"; \
+    fi
+
+# 3) 刪掉 .map。
+#    ⚠️ 這步是必要的，而且原因跟直覺相反：vite 的 `sourcemap: 'hidden'` **只拿掉
+#      bundle 結尾的 sourceMappingURL 註解，不會阻止檔案被供應**。實測過——
+#      /assets/AdminDashboard-*.js.map 直接 200，整站原始碼可下載。
+#      GlitchTip 已經有了自己那份，production 映像不需要留。
+RUN find .output/public/assets -name '*.map' -delete
 
 # Stage 2: Production server
 FROM node:26.5.0-bookworm-slim

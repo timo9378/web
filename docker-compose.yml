@@ -1,3 +1,9 @@
+secrets:
+  # source map 上傳用的 GlitchTip API token（scope 只有 project:read /
+  # project:releases / org:read）。未提交，權限 600。
+  sentry_token:
+    file: ./.env.sourcemaps.token
+
 volumes:
   backend-db-data: # DB 檔的 docker volume（backend-rs + db-backup 共用）
 
@@ -18,10 +24,13 @@ services:
       dockerfile: Dockerfile
       args:
         # 錯誤上報。DSN 裡那把 key 是假的（真的在 .env.backend，後端轉發時換上）。
-        # VITE_RELEASE 要跟 scripts/upload-sourcemaps.sh 的 RELEASE 一致，
-        # 否則 source map 對不上——而那個失敗是靜默的。
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
         - VITE_RELEASE=${VITE_RELEASE:-}
+      secrets:
+        # source map 上傳用。走 secret 而不是 ARG——ARG 會留在映像歷史裡。
+        # 檔案不存在時 compose 會報錯，所以 .env.sourcemaps 是必要的
+        #（沒有它就等於不打算做錯誤追蹤，那應該是個明確的決定而不是意外）。
+        - sentry_token
     container_name: personal-website-frontend # 指定容器名稱
     environment:
       - TZ=Asia/Taipei
