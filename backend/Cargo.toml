@@ -18,7 +18,7 @@ serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 sqlx = { version = "0.9", features = ["sqlite", "runtime-tokio", "tls-none", "macros"] }
 tower = { version = "0.5", features = ["util"] }
 # set-header：API 回應掛 X-Robots-Tag: noindex（見 router.rs 的說明）
-tower-http = { version = "0.6", features = ["trace", "cors", "set-header"] }
+tower-http = { version = "0.7", features = ["trace", "cors", "set-header"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
@@ -34,11 +34,11 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 # unfurl（og meta 抽取）用，複製 Express 的 regex
 regex = "1"
 # newsletter unsubscribe token（crypto.randomBytes(16).hex 等價）
-rand = "0.8"
+rand = "0.10"
 # in-process cache 的鎖（短臨界區、無 poison；不跨 await 持有）
 parking_lot = "0.12"
 # /posts/legacy 的 Basic auth 解碼
-base64 = "0.22"
+base64 = "0.23"
 # 自家 bahamut SDK（https://crates.io/crates/anigamer；本地開發要改 SDK 時可暫換 path dep）
 anigamer = "0.1.1"   # 0.1.1 起有 ClientOptions::base_urls，sync worker 才測得到
 # 錯誤追蹤 → 自架 GlitchTip（Sentry SDK 相容）。SENTRY_DSN 沒設就整個關閉。
@@ -81,7 +81,7 @@ utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 
 # jemalloc（tikv fork）：長跑 server 降 RSS/碎片化。MSVC 不支援 → target cfg 排除。
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.6"
+tikv-jemallocator = "0.7"
 
 [dev-dependencies]
 # 整合測試（tests/api.rs）：tower oneshot 打 build_router + 收 body

@@ -12,7 +12,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use base64::Engine;
-use rand::Rng;
+// rand 0.10：random_range 之類的高階方法在 RngExt 上（Rng 只剩 next_u32/fill_bytes 那層）
+use rand::RngExt;
 use serde_json::json;
 
 use crate::{auth::require_admin, state::AppState};
@@ -210,7 +211,8 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
         .extension()
         .map(|e| format!(".{}", e.to_string_lossy()))
         .unwrap_or_default();
-    let rand_part: u64 = rand::thread_rng().gen_range(0..=1_000_000_000);
+    // rand 0.9 起 thread_rng() → rng()、gen_range() → random_range()（舊名在 0.10 已移除）
+    let rand_part: u64 = rand::rng().random_range(0..=1_000_000_000);
     let filename = format!("{now_ms}-{rand_part}{ext}");
     let dir = uploads_base().join(year).join(month);
     if let Err(e) = tokio::fs::create_dir_all(&dir).await {

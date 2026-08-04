@@ -4,7 +4,9 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use rand::RngCore;
+// rand 0.10 把 trait 重切了：原本的 RngCore 改名為 Rng（fill_bytes 在這裡），
+// 而原本 Rng 上的高階方法搬到 RngExt（見 upload.rs）。
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::FromRow;
@@ -44,7 +46,8 @@ pub struct SubscriberByToken {
 /// `crypto.randomBytes(16).toString('hex')` 等價：32 hex 字元。
 fn gen_unsub_token() -> String {
     let mut b = [0u8; 16];
-    rand::thread_rng().fill_bytes(&mut b);
+    // rand 0.9 起 thread_rng() 改名 rng()（舊名在 0.10 已移除）
+    rand::rng().fill_bytes(&mut b);
     b.iter().map(|x| format!("{x:02x}")).collect()
 }
 
