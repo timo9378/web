@@ -269,31 +269,49 @@ pub async fn link_preview(
     let client = reqwest::Client::builder()
         .timeout(FETCH_TIMEOUT)
         .redirect(reqwest::redirect::Policy::limited(3))
-        .user_agent("Mozilla/5.0 (compatible; koimsurai-linkpreview/1.0; +https://koimsurai.com)")
         .build()
         .map_err(AppError::Upstream)?;
 
-    let fetched = async {
-        let resp = client.get(&url).send().await.ok()?;
-        // 解析後的 peer IP 再擋一次（DNS rebinding / 域名指向私網）
-        if let Some(addr) = resp.remote_addr()
-            && is_blocked_ip(&addr.ip())
-        {
-            return None;
+    let fetch_with = |ua: &'static str| {
+        let client = client.clone();
+        let url = url.clone();
+        async move {
+            let resp = client.get(&url).header(reqwest::header::USER_AGENT, ua).send().await.ok()?;
+            // 解析後的 peer IP 再擋一次（DNS rebinding / 域名指向私網）
+            if let Some(addr) = resp.remote_addr()
+                && is_blocked_ip(&addr.ip())
+            {
+                return None;
+            }
+            if !resp.status().is_success() {
+                return None;
+            }
+            let ct =
+                resp.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("");
+            if !ct.contains("text/html") && !ct.contains("application/xhtml") {
+                return None;
+            }
+            let bytes = resp.bytes().await.ok()?;
+            let slice = &bytes[..bytes.len().min(MAX_BODY_BYTES)];
+            Some(String::from_utf8_lossy(slice).to_string())
         }
-        if !resp.status().is_success() {
-            return None;
-        }
-        let ct =
-            resp.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("");
-        if !ct.contains("text/html") && !ct.contains("application/xhtml") {
-            return None;
-        }
-        let bytes = resp.bytes().await.ok()?;
-        let slice = &bytes[..bytes.len().min(MAX_BODY_BYTES)];
-        Some(String::from_utf8_lossy(slice).to_string())
-    }
-    .await;
+    };
+
+    // 先用**誠實的** UA（表明自己是誰、附聯絡網址）。這是對站方有禮貌的做法，
+    // 而且多數站接受。
+    //
+    // ⚠️ 但有一批站對非瀏覽器 UA 直接擋——實測 zed.dev 回 **404**（同一個網址用
+    //   瀏覽器 UA 是 200）。那種情況下 title/description/image 全是 None，
+    //   前台只剩一張空的降級卡，看起來就是「這個站的預覽壞了」。
+    //   所以失敗時退回瀏覽器 UA 再試一次。這是 link unfurler 的常規做法
+    //   （Slack/Discord 同樣行為），抓的也只是讀者自己 hover 的那個公開頁面。
+    const HONEST_UA: &str = "Mozilla/5.0 (compatible; koimsurai-linkpreview/1.0; +https://koimsurai.com)";
+    const BROWSER_UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+                              (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    let fetched = match fetch_with(HONEST_UA).await {
+        Some(html) => Some(html),
+        None => fetch_with(BROWSER_UA).await,
+    };
 
     let mut out = LinkPreviewResponse {
         site_name: Some(host.clone()),
