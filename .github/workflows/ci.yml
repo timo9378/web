@@ -646,6 +646,12 @@ jobs:
           tags: local/web-backend:ci
           cache-from: type=registry,ref=${{ env.CACHE_BE }}
           cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0},mode=max,image-manifest=true,oci-mediatypes=true', env.CACHE_BE) || '' }}
+          # runtime 那一層做 `apt-get upgrade`，而快取鍵只看 Dockerfile 的字面、不看
+          # 「apt 現在有什麼版本」——指令沒改就直接重用舊層，upgrade 等於凍結在建那層
+          # 的當天。實際發生過：libssh-4 卡在 0.11.2（0.11.5 早就發了），trivy 一次報
+          # 6 個 HIGH，而 Dockerfile 看起來完全沒問題，很難聯想到是快取。
+          # 只對這個 stage 關快取：貴的 cargo-chef 層照吃，這層每次重跑約 10 秒。
+          no-cache-filters: runtime
 
       # runtime image 裡 Debian / npm 那些套件的 CVE，在這之前**完全沒有東西在看**
       # ——cargo audit 只管 Cargo.lock，pnpm 那邊只管 package.json，兩者都看不到

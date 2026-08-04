@@ -66,7 +66,8 @@ RUN cargo build --release -p koimsurai-web-backend \
 # ⚠ 必須跟 builder 的 rust:1.97-slim 同一個 Debian 版本（現在是 trixie / glibc 2.41）。
 # 上游 rust image 換 base 後這裡沒跟上，binary 會在啟動時死在
 # `libc.so.6: version 'GLIBC_2.39' not found`——編得起來、跑不起來。
-FROM debian:trixie-slim
+# 這一段有名字（runtime）是為了讓 CI 能對「只有它」關掉快取，見下面那段註解。
+FROM debian:trixie-slim AS runtime
 # fonts-noto-cjk：OG 圖 SVG 光柵化字型；ca-certificates：對外 HTTPS；curl：healthcheck
 # ffmpeg：上傳影片正規化（把 tkhd 旋轉矩陣烘進畫素，見 handlers/upload.rs）。
 # 用 -no-install-recommends 只帶必要相依，image 約多 100 MB。
@@ -74,6 +75,13 @@ FROM debian:trixie-slim
 # `upgrade` 是為了吃到 base image 快照之後才發的安全更新：debian:trixie-slim 目前帶的
 # libexpat1 是 2.7.1-2，而 2.8.2-1~deb13u1 已經修掉 5 個 HIGH（trivy --ignore-unfixed 掃到的）。
 # 沒有這行的話，那 5 筆會一直掛在報告上，而它們其實一個 apt 就解決得掉。
+#
+# ⚠️ 但光有這行不夠，而且失效的方式很隱蔽：這一層的快取鍵只看 Dockerfile 的字面，
+# 不看「apt 現在有什麼版本」。指令沒改 → BuildKit 直接重用幾週前建好的那層 →
+# `upgrade` 等於凍結在當時。實際發生過：libssh-4 卡在 0.11.2，而 0.11.5 早就出了，
+# trivy 一次報 6 個 HIGH，但 Dockerfile 看起來完全沒問題。
+# 解法在 ci.yml 的 `no-cache-filters: runtime`——貴的 cargo 層照樣吃快取，
+# 只有這層每次重跑（約 10 秒），所以每次建置都拿當下的安全更新。
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     fonts-noto-cjk ca-certificates curl tzdata ffmpeg \
     && rm -rf /var/lib/apt/lists/*
