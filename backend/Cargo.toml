@@ -81,7 +81,7 @@ utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 
 # jemalloc（tikv fork）：長跑 server 降 RSS/碎片化。MSVC 不支援 → target cfg 排除。
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.6"
+tikv-jemallocator = "0.7"
 
 [dev-dependencies]
 # 整合測試（tests/api.rs）：tower oneshot 打 build_router + 收 body
