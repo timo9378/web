@@ -426,6 +426,36 @@ html.no-gpu .post-content-wrapper::before {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   .fs-active —— 有元素進入全螢幕時掛在 <html> 上（SpaceBackdropShell 監聽 fullscreenchange）。
+
+   這不是效能潔癖，是在修一個實際的 bug：文章頁的影片在全螢幕下連續 seek，第 8~15 次
+   就會把媒體管線卡死——`seeking` 送出去、`seeked` 永遠不回來、readyState 掉到 1、
+   解碼格數 +0、`paused` 仍是 false，連 `load()` 都救不回來，只有退出全螢幕才恢復。
+
+   換全螢幕元素（外層 div / <video> 自己 / <html>）、換編碼、換解析度、關控制列的
+   backdrop-filter、整支讀進 Blob 播、改用裸 DOM 播——全部照卡。唯一有效的變因是
+   「把頁面動畫停掉」：同一台機器、同一個 profile、同一次載入，有動畫時第 10 次卡死，
+   停掉後 40/40 全過。Chrome/Brave 撐得住、Edge 撐不住，但壓力是我們給的。
+
+   全螢幕時這些層被 top layer 完全蓋住、一個像素都看不到，所以直接 display:none。
+   ⚠️ 不碰 StarfieldGpu 那張 canvas：它的 resize 讀 clientWidth，藏掉會變 0 傳進 worker。
+      它的迴圈由 StarfieldGpu 自己在 fullscreenchange 時停掉（跟分頁隱藏走同一條路）。
+   ⚠️ `fullscreenchange` 只由 Fullscreen API 觸發——F11 的瀏覽器全螢幕不會掛上這個 class，
+      一般閱讀完全不受影響。
+   ═══════════════════════════════════════════════════════════════════ */
+html.fs-active .css-starfield,
+html.fs-active .nebula-bg,
+html.fs-active .nebula-dust,
+html.fs-active .nebula-dim-overlay,
+html.fs-active .foreground-stars-container,
+html.fs-active .comet,
+html.fs-active .shooting-star,
+html.fs-active .ufo,
+html.fs-active .cursor-trail-canvas {
+  display: none !important;
+}
+
 /* 只給輔助技術讀的文字。
    用在「頁面在視覺上不需要標題、但結構上必須有 h1」的情況——/activity 是儀表板式
    排版，第一個元素是狀態列，整頁一個 h1 都沒有（axe: page-has-heading-one）。

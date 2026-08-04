@@ -49,6 +49,16 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
+    // 該不該跑：分頁被隱藏時停（原本就有），有元素進入全螢幕時也停。
+    //
+    // 後者是在修一個實際的 bug：全螢幕影片連續 seek 到第 8~15 次會把媒體管線卡死
+    // （`seeked` 永不回來、readyState 掉到 1、解碼格數 +0，只有退出全螢幕才恢復），
+    // 而唯一有效的變因就是把頁面動畫停掉——停掉後同樣的測試 40/40 全過。
+    // 詳細的排除過程寫在 SpaceBackdropShell 的註解裡。
+    //
+    // 全螢幕時這張 canvas 被 top layer 完全蓋住，停掉不影響任何看得到的東西。
+    const shouldRun = () => !document.hidden && document.fullscreenElement === null;
+
     if (canOffscreen) {
       // ── worker 主路徑 ──
       // ⚠️ 這裡必須是字面相對路徑：vite 靠靜態分析 `new URL(…, import.meta.url)` 才認得出
@@ -75,12 +85,14 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       };
       worker.addEventListener('message', onMsg);
       const onResize = () => worker.postMessage({ type: 'resize', width: canvas.clientWidth, height: canvas.clientHeight });
-      const onVis = () => worker.postMessage({ type: 'running', value: !document.hidden });
+      const onVis = () => worker.postMessage({ type: 'running', value: shouldRun() });
       window.addEventListener('resize', onResize);
       document.addEventListener('visibilitychange', onVis);
+      document.addEventListener('fullscreenchange', onVis);
       return () => {
         window.removeEventListener('resize', onResize);
         document.removeEventListener('visibilitychange', onVis);
+        document.removeEventListener('fullscreenchange', onVis);
         // terminate() 已經讓 worker 連同監聽器一起消失，但明寫出來才對稱、也不必讓
         // 讀者去推敲 addEventListener 的對應在哪。
         worker.removeEventListener('message', onMsg);
@@ -110,13 +122,15 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       }
     });
     const onResize = () => runnerHandle?.setSize(canvas.clientWidth, canvas.clientHeight);
-    const onVis = () => runnerHandle?.setRunning(!document.hidden);
+    const onVis = () => runnerHandle?.setRunning(shouldRun());
     window.addEventListener('resize', onResize);
     document.addEventListener('visibilitychange', onVis);
+    document.addEventListener('fullscreenchange', onVis);
     return () => {
       disposed = true;
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVis);
+      document.removeEventListener('fullscreenchange', onVis);
       runnerHandle?.dispose();
     };
   }, []);

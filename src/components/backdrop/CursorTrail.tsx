@@ -91,14 +91,36 @@ const CursorTrail = () => {
       canvas.height = window.innerHeight;
     };
 
+    // 有元素進入全螢幕就把迴圈停掉（退出時再接回去）。
+    //
+    // 這張是**全視窗**的 2D canvas，滑鼠一動就每幀重畫——而「點影片的時間軸」正好一直在
+    // 動滑鼠。實測它與其他背景特效一起，會讓全螢幕影片連續 seek 到第 8~15 次時把媒體管線
+    // 卡死（`seeked` 永不回來、只有退出全螢幕才恢復）；停掉動畫後同樣的測試 40/40 全過。
+    // 排除過程見 SpaceBackdropShell 的註解。
+    //
+    // 全螢幕時 top layer 把它完全蓋住，本來就一個像素都看不到。粒子一併清空，
+    // 免得退出全螢幕時殘留一串跟現在滑鼠位置無關的舊尾巴。
+    const onFullscreen = () => {
+      cancelAnimationFrame(animationFrameIdRef.current);
+      if (document.fullscreenElement !== null) {
+        particlesRef.current = [];
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      animationFrameIdRef.current = requestAnimationFrame(animateParticles);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', onFullscreen);
     animationFrameIdRef.current = requestAnimationFrame(animateParticles);
 
     // 清理函數
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', onFullscreen);
       cancelAnimationFrame(animationFrameIdRef.current);
     };
   }, [handleMouseMove, animateParticles]);

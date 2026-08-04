@@ -44,6 +44,39 @@ export default function SpaceBackdropShell() {
     return () => document.documentElement.classList.remove('no-gpu');
   }, [softwareGpu]);
 
+  // 有元素進入全螢幕時，整包背景卸載。
+  //
+  // 這不是效能潔癖，是修一個真的 bug：文章頁的影片在全螢幕下連續 seek，第 8~15 次就會把
+  // 媒體管線卡死——`seeking` 發出去、`seeked` 永遠不回來、readyState 掉到 1、解碼格數 +0、
+  // `paused` 仍是 false，而且 `load()` 都救不回來，只有退出全螢幕才恢復。
+  //
+  // 逐項排除後（換全螢幕元素、換編碼、換解析度、關控制列毛玻璃、Blob 播、裸 DOM 播都照卡），
+  // 唯一有效的變因是「把頁面動畫停掉」：同一台機器、同一個 profile、同一次載入，
+  // 有動畫時第 10 次卡死，停掉動畫後 40/40 全過。搶 GPU 的是這幾層——StarfieldGpu 的
+  // WebGPU/WebGL context、CursorTrail 那張全視窗 2D canvas（滑鼠一動就每幀重畫，而
+  // 「點時間軸」正好一直在動滑鼠）、外加流星/UFO 那些 infinite 動畫。
+  //
+  // Chrome/Brave 撐得住、Edge 撐不住，但壓力是我們給的，所以這是我們該修的。
+  // 全螢幕時這些特效本來就被 top layer 蓋住、一個像素都看不到，卸載純賺。
+  //
+  // ⚠️ `fullscreenchange` 只由 Fullscreen API 觸發，F11 的瀏覽器全螢幕**不會**進到這裡
+  //   —— 一般閱讀（含 F11 全螢幕閱讀）的背景完全不受影響。
+  //
+  // 用 class 而不是卸載元件：卸載就得重掛，WebGPU context 重建是另一個會壞的地方，
+  // 而且退出全螢幕時會看到星空重新淡入。掛 class 只是讓它們停下來，元件狀態原封不動。
+  // 兩個 JS 迴圈（StarfieldGpu 的 worker、CursorTrail 的 rAF）各自也讀這個狀態暫停，
+  // 因為 `display:none` 擋得住合成、擋不住它們繼續送 GPU 指令。
+  useEffect(() => {
+    const onFs = () => {
+      document.documentElement.classList.toggle('fs-active', document.fullscreenElement !== null);
+    };
+    document.addEventListener('fullscreenchange', onFs);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFs);
+      document.documentElement.classList.remove('fs-active');
+    };
+  }, []);
+
   const introCompleted = (() => {
     try { return sessionStorage.getItem('introCompleted') === 'true'; } catch { return false; }
   })();
