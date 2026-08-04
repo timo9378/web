@@ -333,7 +333,7 @@ jobs:
           flags: e2e
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6
         if: failure()
         with:
           name: playwright-report
@@ -392,7 +392,7 @@ jobs:
         run: pnpm exec lhci autorun --config=.config/lighthouserc.cjs
       # 失敗時把完整的 LHR 收起來。斷言訊息只講「哪一條、差多少」，
       # 要知道是哪個資源變大了得看報告本身。
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6
         if: failure()
         with:
           name: lighthouse-report
@@ -529,7 +529,7 @@ jobs:
             --include-path-regex '^/api/admin/(tags|categories|blacklist|keyword-filters)' \
             -H "Authorization: Bearer $TOKEN" \
             -w 4 --report-junit-path st-admin.xml
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6
         if: failure()
         with:
           name: schemathesis-report
