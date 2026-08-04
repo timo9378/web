@@ -18,6 +18,10 @@ metalness = "metalness"
 evaluater = "evaluater"
 Evaluater = "Evaluater"
 
+# HTMLMediaElement 的事件名（`seeking` 之後配對的那一個）。它是 W3C 定的識別字，
+# 不是 sought 的錯拼；註解在講「`seeked` 沒有回來」時只能用這個字。
+seeked = "seeked"
+
 # 品牌名
 Shure = "Shure"   # 麥克風廠牌（Shure MV7+）
 shure = "shure"   # 同上，出現在檔名 shure-mv7-plus.png
