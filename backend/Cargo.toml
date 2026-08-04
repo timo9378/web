@@ -34,7 +34,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 # unfurl（og meta 抽取）用，複製 Express 的 regex
 regex = "1"
 # newsletter unsubscribe token（crypto.randomBytes(16).hex 等價）
-rand = "0.8"
+rand = "0.10"
 # in-process cache 的鎖（短臨界區、無 poison；不跨 await 持有）
 parking_lot = "0.12"
 # /posts/legacy 的 Basic auth 解碼
