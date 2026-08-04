@@ -476,7 +476,7 @@ jobs:
           shared-key: workspace
           # 只有 main 存（理由同上）
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v6
       - name: build backend
         run: cargo build --locked --bin koimsurai-web-backend
       # stack.mjs 會等前端的 .output 存在；這裡只要後端，所以直接起 binary
