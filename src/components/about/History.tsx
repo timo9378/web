@@ -106,7 +106,7 @@ const MILESTONE_TEXTS = {
     'Blog style unified + Zen editor mode + drag-drop upload + slash commands + View Transitions',
     'Major design redo — Shiki + PWA + Series + Reactions + koim global button system + Steam animated avatar',
     'Cleared 33 Dependabot alerts (vite / axios / xmldom / dompurify / lodash / serialize-javascript ...)',
-    'Thumbhash blur placeholders + Vim mode in editor + custom snippets + reading time',
+    'Thumbhash blur-sm placeholders + Vim mode in editor + custom snippets + reading time',
     'Home page redo + wormhole intro + full Newsletter subscription stack (Resend)',
     'Added About-site / History / Messages pages + Portfolio GitHub repos + site-wide MiSans font + Hero / Footer / Mega menu visual refresh',
     'Site-wide i18n landed — 5 locales + browser auto-detect + every personal section translated + per-locale font swap via :lang()',

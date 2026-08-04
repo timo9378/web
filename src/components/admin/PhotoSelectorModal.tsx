@@ -87,7 +87,7 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4"
                 onClick={handleBackdropClick}
             >
                 <motion.div
@@ -134,7 +134,7 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                 placeholder="搜尋照片標題、描述或標籤..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-accent/30 border border-border/40 text-foreground/90 pl-9 pr-4 py-2 text-sm rounded-lg focus:outline-none focus:border-border/60 transition-colors placeholder:text-muted-foreground/50"
+                                className="w-full bg-accent/30 border border-border/40 text-foreground/90 pl-9 pr-4 py-2 text-sm rounded-lg focus:outline-hidden focus:border-border/60 transition-colors placeholder:text-muted-foreground/50"
                                 // 同上：modal 打開就是為了搜尋照片，焦點直接進搜尋框
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
@@ -164,7 +164,7 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                             type="button"
                                             key={photo.id}
                                             onClick={() => onSelect(photo)}
-                                            className="w-full text-left group relative aspect-[4/3] rounded-lg overflow-hidden cursor-pointer border border-border/30 hover:border-border/60 transition-all duration-300 bg-accent/20"
+                                            className="w-full text-left group relative aspect-4/3 rounded-lg overflow-hidden cursor-pointer border border-border/30 hover:border-border/60 transition-all duration-300 bg-accent/20"
                                         >
                                             {/* Image */}
                                             <img
@@ -176,14 +176,14 @@ const PhotoSelectorModal = ({ isOpen, onClose, onSelect }: PhotoSelectorModalPro
                                             />
 
                                             {/* Overlay */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 transform translate-y-2 group-hover:translate-y-0">
+                                            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 transform translate-y-2 group-hover:translate-y-0">
                                                 <p className="text-white text-xs font-medium truncate leading-tight">{photo.title}</p>
                                                 {dateStr && (
                                                     <p className="text-white/60 text-[10px] mt-1 font-mono tracking-wide">{dateStr}</p>
                                                 )}
                                                 <div className="mt-1.5 flex flex-wrap gap-1">
                                                     {photo.tags?.slice(0, 2).map(tag => (
-                                                        <span key={tag} className="text-[9px] bg-white/15 px-1.5 py-0.5 rounded text-white/80 backdrop-blur-sm">
+                                                        <span key={tag} className="text-[9px] bg-white/15 px-1.5 py-0.5 rounded text-white/80 backdrop-blur-xs">
                                                             #{tag}
                                                         </span>
                                                     ))}

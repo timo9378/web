@@ -1,17 +1,103 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* 全站文字選取（取代瀏覽器原生）— 柔和薰衣草，呼應整站色 */
-::selection {
-  background: rgba(216, 180, 254, 0.30);
-  color: #fff;
-  text-shadow: none;
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
 }
-::-moz-selection {
-  background: rgba(216, 180, 254, 0.30);
-  color: #fff;
-  text-shadow: none;
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer utilities {
+  /* 全站文字選取（取代瀏覽器原生）— 柔和薰衣草，呼應整站色 */
+  ::selection {
+    background: rgba(216, 180, 254, 0.3);
+    color: #fff;
+    text-shadow: none;
+  }
+  ::-moz-selection {
+    background: rgba(216, 180, 254, 0.3);
+    color: #fff;
+    text-shadow: none;
+  }
 }
 
 @layer base {
@@ -23,26 +109,26 @@
     --card-foreground: 213 31% 91%;
     --popover: 224 71% 4%;
     --popover-foreground: 213 31% 91%;
-    
+
     /* 柔和的藍灰色主色調 - 取代強烈的紫色 */
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
-    
+
     --secondary: 222 47% 11%;
     --secondary-foreground: 213 31% 91%;
     --muted: 223 47% 11%;
     --muted-foreground: 215.4 16.3% 56.9%;
     --accent: 216 34% 17%;
     --accent-foreground: 213 31% 91%;
-    
+
     /* 柔和的警告色 */
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    
+
     --border: 216 34% 17%;
     --input: 216 34% 17%;
     --ring: 217 91% 60%;
-    
+
     /* 更大的圓角 - 更現代 */
     --radius: 0.75rem;
 
@@ -94,7 +180,10 @@
     background-color: var(--clr-button);
     color: var(--clr-button-text);
     cursor: pointer;
-    transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
+    transition:
+      background-color 0.25s,
+      border-color 0.25s,
+      box-shadow 0.25s;
   }
   button:hover,
   button:focus {
@@ -107,18 +196,20 @@
     outline-offset: 2px;
   }
   button:focus:not(:focus-visible) {
-      outline: none;
+    outline: none;
   }
 }
 
 :root {
   /* CJK 字體棧 — 預設繁中：MiSans 主體 + 思源黑體 TC 局部疊（C 方案）+ 系統 fallback
      :lang(...) 規則會在 ja / ko / zh-CN 時覆寫成各自的 CJK 字體偏好 */
-  --cjk-font: 'MiSans', 'Source Han Sans TC', 'Noto Sans TC', 'PingFang TC', 'Hiragino Sans TC', 'Microsoft JhengHei', sans-serif;
+  --cjk-font:
+    "MiSans", "Source Han Sans TC", "Noto Sans TC", "PingFang TC", "Hiragino Sans TC", "Microsoft JhengHei", sans-serif;
 
   /* Latin 字體：TASA Orbiter 為首（自家開源 SDK 同理，台灣太空中心字體，跟站名 / 主題一脈相承）
      Latin 字元走 TASA，CJK 字元自動 fallback 到 --cjk-font 鏈 */
-  font-family: 'TASA Orbiter Variable', var(--cjk-font), -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
+  font-family:
+    "TASA Orbiter Variable", var(--cjk-font), -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -145,18 +236,26 @@
  * 驗證 id 格式後原樣寫進 attribute，不認識任何字體。 */
 :root {
   --blog-font-misans: MiSans, system-ui, -apple-system, sans-serif;
-  --blog-font-lxgw: 'LXGW WenKai TC', 'LXGW WenKai', cursive;
-  --blog-font-noto-serif: 'Noto Serif SC', 'Noto Serif TC', Georgia, serif;
-  --blog-font-source-han: 'Noto Sans SC', 'Noto Sans TC', 'Source Han Sans SC', sans-serif;
+  --blog-font-lxgw: "LXGW WenKai TC", "LXGW WenKai", cursive;
+  --blog-font-noto-serif: "Noto Serif SC", "Noto Serif TC", Georgia, serif;
+  --blog-font-source-han: "Noto Sans SC", "Noto Sans TC", "Source Han Sans SC", sans-serif;
 
   /* 沒有偏好時的預設（對齊 FONT_OPTIONS 的原始預設 'noto-serif'） */
   --blog-font: var(--blog-font-noto-serif);
 }
 
-html[data-blog-font='misans'] { --blog-font: var(--blog-font-misans); }
-html[data-blog-font='lxgw'] { --blog-font: var(--blog-font-lxgw); }
-html[data-blog-font='noto-serif'] { --blog-font: var(--blog-font-noto-serif); }
-html[data-blog-font='source-han'] { --blog-font: var(--blog-font-source-han); }
+html[data-blog-font="misans"] {
+  --blog-font: var(--blog-font-misans);
+}
+html[data-blog-font="lxgw"] {
+  --blog-font: var(--blog-font-lxgw);
+}
+html[data-blog-font="noto-serif"] {
+  --blog-font: var(--blog-font-noto-serif);
+}
+html[data-blog-font="source-han"] {
+  --blog-font: var(--blog-font-source-han);
+}
 
 html {
   overflow-y: scroll;
@@ -166,7 +265,9 @@ html {
      站內需要平滑的地方（TOC 點擊、回到頂部）都在 JS 明寫 behavior:'smooth'，不受影響。 */
 }
 
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -175,7 +276,9 @@ html, body, #root {
   background-color: transparent;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: inherit;
 }
 
@@ -213,7 +316,12 @@ body {
   background-color: transparent;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--clr-headline);
   margin-top: 1.5em;
   margin-bottom: 0.5em;
@@ -239,8 +347,12 @@ body.intro-animation-active {
 /* 首訪桌面首頁:intro 是 client-only(SSR 不知道會不會播),內容卻已 SSR → 會「先閃首頁再跑 intro」。
    __root 的 pre-paint inline script 符合條件時加 html.intro-pending → 先藏內容;
    SpaceBackdropShell 在 intro pre-reveal 時移除(內容在 bloom 下淡入)。inline script 內另有安全 timeout 兜底。 */
-.main-content-container { transition: opacity 0.45s ease; }
-html.intro-pending .main-content-container { opacity: 0; }
+.main-content-container {
+  transition: opacity 0.45s ease;
+}
+html.intro-pending .main-content-container {
+  opacity: 0;
+}
 
 /* ═══════════════════════════════════════════════════
    Home section shared tokens — aligned with Activity /
@@ -253,7 +365,7 @@ html.intro-pending .main-content-container { opacity: 0; }
    一層極淡的靜態噪點 + 邊緣壓暗補上底片質地與景深。
    z-index 49/50：蓋過內容（1~5），低於 header / modal（999+）。 */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   z-index: 49;
@@ -262,7 +374,7 @@ body::before {
 }
 
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -290,7 +402,7 @@ body::after {
 
 /* eyebrow 前的紫色 accent 短線 — 增加 wayfinding 與精緻度 */
 .home-section-eyebrow::before {
-  content: '';
+  content: "";
   width: 18px;
   height: 1px;
   align-self: center;
@@ -337,13 +449,19 @@ body::after {
 }
 
 @media (max-width: 640px) {
-  .home-section { padding: 64px 20px; }
-  .home-section-eyebrow { margin-bottom: 1.75rem; }
+  .home-section {
+    padding: 64px 20px;
+  }
+  .home-section-eyebrow {
+    margin-bottom: 1.75rem;
+  }
 }
 
 /* Reduce motion for users who prefer it — saves GPU/battery */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -356,15 +474,17 @@ body::after {
    Phase 3 切語系時 React 會改 html lang → CSS 自動套對應字體
 ─────────────────────────────────────────────────────────────── */
 :lang(zh-CN) {
-  --cjk-font: 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'MiSans', sans-serif;
+  --cjk-font: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "MiSans", sans-serif;
 }
 
 :lang(ja) {
-  --cjk-font: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', 'Source Han Sans JP', 'Noto Sans JP', sans-serif;
+  --cjk-font:
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Source Han Sans JP", "Noto Sans JP",
+    sans-serif;
 }
 
 :lang(ko) {
-  --cjk-font: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Source Han Sans KR', 'Noto Sans KR', sans-serif;
+  --cjk-font: "Apple SD Gothic Neo", "Malgun Gothic", "Source Han Sans KR", "Noto Sans KR", sans-serif;
 }
 
 :lang(en) {
@@ -378,7 +498,7 @@ body::after {
 ─────────────────────────────────────────────────────────────── */
 .brand-wordmark,
 .tasa-display {
-  font-family: 'TASA Explorer Variable', 'TASA Orbiter Variable', var(--cjk-font), sans-serif;
+  font-family: "TASA Explorer Variable", "TASA Orbiter Variable", var(--cjk-font), sans-serif;
   letter-spacing: 0.01em;
 }
 
@@ -399,7 +519,7 @@ html.no-gpu *::after {
 }
 /* 只停「無限循環」的裝飾動畫；一次性的進場動畫留著（跑完就結束，不會持續耗 CPU），
    loading spinner 也留著（使用者需要知道還在載）。 */
-html.no-gpu *:not([class*='spinner']):not([class*='loading']):not([class*='skeleton']) {
+html.no-gpu *:not([class*="spinner"]):not([class*="loading"]):not([class*="skeleton"]) {
   animation-iteration-count: 1 !important;
 }
 /* 每一個 will-change 都是一張獨立合成層。有 GPU 時這是最佳化，沒 GPU 時全部改由 CPU
@@ -408,10 +528,10 @@ html.no-gpu * {
   will-change: auto !important;
 }
 /* 裝飾性模糊在 CPU 上一樣貴（光暈、朦朧球體之類），只留在需要遮蔽內容的地方 */
-html.no-gpu [class*='glow'],
-html.no-gpu [class*='blur'],
-html.no-gpu [class*='aurora'],
-html.no-gpu [class*='nebula'] {
+html.no-gpu [class*="glow"],
+html.no-gpu [class*="blur"],
+html.no-gpu [class*="aurora"],
+html.no-gpu [class*="nebula"] {
   filter: none !important;
 }
 /* 玻璃卡片沒了模糊會變太透 → 補一點不透明度，維持可讀性 */
@@ -420,8 +540,8 @@ html.no-gpu .post-content-wrapper::before {
 }
 @media (prefers-reduced-motion: no-preference) {
   html.no-gpu .comet,
-  html.no-gpu [class*='comet'],
-  html.no-gpu [class*='shooting-star'] {
+  html.no-gpu [class*="comet"],
+  html.no-gpu [class*="shooting-star"] {
     display: none !important;
   }
 }

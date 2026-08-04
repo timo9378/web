@@ -114,7 +114,7 @@ CSS 跟同名元件放在一起。**跨資料夾的 import 一律走 `@/` alias*
 
 改完結構後除了 tsc，一定要跑 `pnpm test` 與 `pnpm build`——上面兩類只有它們抓得到。
 
-⚠️ 設定檔集中在 **`.config/`**（nextest、knip、lighthouserc、schemathesis、builder）。
+⚠️ 設定檔集中在 **`.config/`**（nextest、knip、lighthouserc、schemathesis、builder、biome）。
 不要另開一個 `config/`——`.config/` 早就在了（cargo-nextest 指定的位置），兩個並存只是更亂。
 每一個都要靠 CI 明確帶參數才讀得到，改路徑時 `.github/workflows/ci.yml` 要一起改：
 
@@ -122,6 +122,7 @@ CSS 跟同名元件放在一起。**跨資料夾的 import 一律走 `@/` alias*
 pnpm exec knip --config .config/knip.json …
 pnpm exec lhci autorun --config=.config/lighthouserc.cjs
 uvx schemathesis --config-file .config/schemathesis.toml run …   # 頂層選項，在 run 之前
+biome check --config-path=.config/biome.json .                   # 已包成 pnpm lint:css
 ```
 
 `builder.config.js` 刻意不放 `scripts/builder/`——那裡有 `scripts/builder/**/*.js` 的 gitignore。
@@ -130,6 +131,47 @@ uvx schemathesis --config-file .config/schemathesis.toml run …   # 頂層選�
 沒有 `--config`，搬了要把裡面每條路徑改成 `../…` 還得在旁邊放 tsconfig）、`vitest.config.ts`
 與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）、`tailwind.config.js` 與
 `postcss.config.js`（Tailwind 還是 v3，升 v4 才能 CSS-first 免掉這兩個）。
+
+## CSS
+
+Tailwind 是 **v4**，設定在 `src/index.css` 的 `@theme` 裡，**沒有 tailwind.config.js
+也沒有 postcss.config.js**（v4 自己處理 `@import` 與 vendor prefix，走 `@tailwindcss/vite`）。
+要加自訂色／間距就寫進 `@theme`，不要試圖找設定檔。
+
+⚠️ **不要再為了蓋過全域樣式而堆特異性或加 `!important`。** v4 用的是**原生 cascade
+layer**：`index.css` 的 `@layer base`（含那條全站 `button { 紫底 }` 與 hover 光暈）
+是分層的，而所有元件 CSS 是未分層的——**未分層恆勝過分層，跟特異性無關**。
+
+這件事在 v3 時代不成立：當時 `@layer base` 只是 Tailwind 的指令、輸出的是普通 CSS，
+所以那條 `button` 規則（特異性 0,1,1）真的會蓋掉元件的 `.foo-btn`（0,1,0）。於是
+七個檔案各自寫了高特異性的繞過碼並留下註解解釋——**那些註解描述的是已經消失的問題**，
+不要拿它們當範例照抄。真的遇到蓋不過去的情況，先確認你的規則有沒有被包進某個 layer。
+
+### CSS 的 formatter 與 linter 是 Biome，不是 oxlint
+
+```bash
+pnpm lint:css      # 檢查（CI 跑的是這一條）
+pnpm format:css    # 自動修格式
+```
+
+**Biome 在這個專案只管 CSS。** JS/TS 是 oxlint 的地盤——兩個 linter 管同一批檔案只會
+產生互相矛盾的意見，而且 Biome 沒有等價的型別感知檢查，換過去是降級。設定裡
+`javascript` 與 `json` 的 formatter 都明確關掉了。
+
+⚠️ `.config/biome.json` 需要 `"root": false`：Biome 看到設定檔不在專案根就當它是
+巢狀設定，少了這行會報 "Found a nested root configuration"。
+另外 v4 的 `@plugin` / `@custom-variant` 要開 `css.parser.tailwindDirectives`，
+否則會被當成語法錯誤。
+
+⚠️ **CI 刻意不加 `--error-on-warnings`**：目前有 190 個 `!important` 與 21 個
+`noDescendingSpecificity` 沒清。它們會出現在 CI 輸出但不擋——跟 knip 當初的處理一樣，
+用 ignore 藏起來就沒有人會回來清。這道門檻擋的是格式漂移與 error 類。
+
+`noDescendingSpecificity` **不是**在抓「覆蓋失效」——高特異性的規則不管寫在前面還是
+後面都會贏，行為是對的。它守的是**可讀性**：覆蓋用的選擇器應該寫在被覆蓋者之後，
+否則讀的人要同時在腦中跑「原始碼順序」與「特異性」兩套機制。實測 11 筆的兩邊確實
+設到同一批屬性（例如 `.club-icon-wrap` 的 base 寫在 `.open` 狀態之後），但那是排版
+問題不是 bug。要清的話是把 base 規則搬到狀態變體前面，純搬移、零行為變化。
 
 ## CI 門檻（跟這些指令一字不差，不要自己改寫）
 
@@ -142,6 +184,7 @@ pnpm typecheck:server
 pnpm typecheck:scripts
 pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 0
 pnpm exec oxlint scripts server packages --max-warnings 0
+pnpm lint:css      # biome，只管 CSS
 pnpm test          # vitest
 pnpm build         # vite + nitro
 ```

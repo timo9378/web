@@ -141,7 +141,9 @@
   }
 }
 
-.zg-detail-panel::-webkit-scrollbar { width: 4px; }
+.zg-detail-panel::-webkit-scrollbar {
+  width: 4px;
+}
 .zg-detail-panel::-webkit-scrollbar-thumb {
   background: rgba(127, 90, 240, 0.25);
   border-radius: 2px;

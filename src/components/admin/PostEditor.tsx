@@ -87,7 +87,7 @@ function TagSearchInput({ tags, selectedTags, onChange }: { tags: TagOption[]; s
         className="bg-accent/30 border-border/50 text-foreground/80 text-xs h-8 placeholder:text-muted-foreground/40"
       />
       {tagSearch && filteredTags.length > 0 && (
-        <div className="absolute left-0 right-0 mt-1.5 max-h-28 overflow-y-auto rounded-lg border border-border/40 bg-popover/95 backdrop-blur-sm p-1 z-50">
+        <div className="absolute left-0 right-0 mt-1.5 max-h-28 overflow-y-auto rounded-lg border border-border/40 bg-popover/95 backdrop-blur-xs p-1 z-50">
           {filteredTags.map((tag) => (
             <button
               key={tag.value}
@@ -101,7 +101,7 @@ function TagSearchInput({ tags, selectedTags, onChange }: { tags: TagOption[]; s
         </div>
       )}
       {tagSearch && filteredTags.length === 0 && (
-        <div className="absolute left-0 right-0 mt-1.5 rounded-lg border border-border/40 bg-popover/95 backdrop-blur-sm p-3 z-50">
+        <div className="absolute left-0 right-0 mt-1.5 rounded-lg border border-border/40 bg-popover/95 backdrop-blur-xs p-3 z-50">
           <p className="text-center text-xs text-muted-foreground/60">沒有找到相關標籤</p>
         </div>
       )}
@@ -807,7 +807,7 @@ export default function PostEditor() {
                       >
                         {t.label}
                         {isSource && (
-                          <span className="ml-1 rounded bg-violet-500/20 px-1 py-[1px] text-[9px] text-violet-300">原文</span>
+                          <span className="ml-1 rounded bg-violet-500/20 px-1 py-px text-[9px] text-violet-300">原文</span>
                         )}
                         {!isSource && hasContent && (
                           <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -842,7 +842,7 @@ export default function PostEditor() {
                   value={titleValue}
                   onChange={(e) => form.setValue(titleName, e.target.value, { shouldDirty: true })}
                   placeholder="輸入文章標題..."
-                  className="w-full bg-transparent text-foreground/90 text-lg font-medium mb-5 pb-3 border-b border-border/30 outline-none focus:border-border transition-colors"
+                  className="w-full bg-transparent text-foreground/90 text-lg font-medium mb-5 pb-3 border-b border-border/30 outline-hidden focus:border-border transition-colors"
                 />
 
                 {/* Content (per-locale) - 玻璃擬態編輯器 */}
@@ -1015,7 +1015,7 @@ export default function PostEditor() {
                             <input
                               {...field}
                               placeholder="如：Rust 學習筆記"
-                              className="h-8 w-full rounded-md bg-accent/30 px-2 text-sm outline-none focus:bg-accent/50 transition-colors"
+                              className="h-8 w-full rounded-md bg-accent/30 px-2 text-sm outline-hidden focus:bg-accent/50 transition-colors"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1033,7 +1033,7 @@ export default function PostEditor() {
                               type="number"
                               {...field}
                               placeholder="例：1"
-                              className="h-8 w-full rounded-md bg-accent/30 px-2 text-sm outline-none focus:bg-accent/50 transition-colors"
+                              className="h-8 w-full rounded-md bg-accent/30 px-2 text-sm outline-hidden focus:bg-accent/50 transition-colors"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1277,7 +1277,7 @@ export default function PostEditor() {
                         onChange={(e) => form.setValue(summaryName, e.target.value, { shouldDirty: true })}
                         placeholder="文章摘要（點擊右上角 AI 生成或手動輸入）..."
                         rows={4}
-                        className="w-full bg-accent/30 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground/90 placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:border-border/60 transition-colors mt-1"
+                        className="w-full bg-accent/30 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground/90 placeholder:text-muted-foreground/50 resize-none focus:outline-hidden focus:border-border/60 transition-colors mt-1"
                       />
                     </div>
                   </div>

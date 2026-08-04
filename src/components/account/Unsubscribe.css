@@ -53,7 +53,7 @@
   background: rgba(127, 90, 240, 0.1);
   border: 1px solid rgba(127, 90, 240, 0.22);
   border-radius: 6px;
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
   color: rgba(199, 184, 255, 0.95);
   margin: 0 2px;
@@ -90,7 +90,11 @@
   cursor: pointer;
   outline: none;
   border: 1px solid transparent;
-  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
 }
 
 .unsubscribe-btn--danger {

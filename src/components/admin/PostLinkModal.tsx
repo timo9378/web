@@ -60,7 +60,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[10000] flex items-start justify-center pt-[12vh] bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-10000 flex items-start justify-center pt-[12vh] bg-black/60 backdrop-blur-xs"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -86,7 +86,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
                 if (e.key === 'Escape') onClose();
                 if (e.key === 'Enter' && filtered[0]) onSelect(filtered[0]);
               }}
-              className="flex-1 bg-transparent outline-none text-zinc-100 placeholder-zinc-500 text-sm"
+              className="flex-1 bg-transparent outline-hidden text-zinc-100 placeholder-zinc-500 text-sm"
             />
             <button
               type="button"

@@ -19,12 +19,20 @@
 }
 
 /* ── Links ── */
-.admin-layout a { transition: color 0.2s ease; }
-.admin-layout a:hover { color: #e4e4e7; }
+.admin-layout a {
+  transition: color 0.2s ease;
+}
+.admin-layout a:hover {
+  color: #e4e4e7;
+}
 
 /* ── Icons ── */
-.admin-layout svg { transition: all 0.2s ease; }
-.admin-layout button:hover svg { transform: scale(1.05); }
+.admin-layout svg {
+  transition: all 0.2s ease;
+}
+.admin-layout button:hover svg {
+  transform: scale(1.05);
+}
 
 /* ── Table Rows ── */
 .admin-layout tbody tr[data-state="selected"] {
@@ -64,7 +72,9 @@
 }
 
 /* ── Spinner ── */
-.admin-layout [class*="animate-spin"] { color: #e4e4e7; }
+.admin-layout [class*="animate-spin"] {
+  color: #e4e4e7;
+}
 
 /* ── Tabs ── */
 .admin-layout [role="tab"][data-state="active"] {
@@ -83,7 +93,9 @@
 }
 
 /* ── Pagination ── */
-.admin-layout [class*="pagination"] button { border-radius: 10px; }
+.admin-layout [class*="pagination"] button {
+  border-radius: 10px;
+}
 .admin-layout [class*="pagination"] button[data-active="true"] {
   background: rgba(39, 39, 42, 0.4);
   border-color: #e4e4e7;

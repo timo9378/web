@@ -183,7 +183,9 @@
   background-position: 0 100%;
   background-repeat: no-repeat;
   padding-bottom: 1px;
-  transition: color 0.2s ease, background-size 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-size 0.2s ease;
   cursor: pointer;
 }
 .meta-category-link:hover {
@@ -212,7 +214,9 @@
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
   z-index: 50;
 }
 .meta-tip:hover::after,
@@ -239,7 +243,9 @@
   font-family: inherit;
   cursor: pointer;
   border-radius: 6px;
-  transition: color 0.18s ease, background 0.18s ease;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
 }
 .lang-trigger:hover,
 .lang-trigger[aria-expanded="true"] {
@@ -256,13 +262,19 @@
   font-weight: 500;
 }
 .lang-caret {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
   font-size: 0.7rem;
   opacity: 0.55;
   margin-left: 1px;
 }
-.lang-trigger:hover .lang-caret { opacity: 0.9; }
-.lang-caret.open { transform: rotate(180deg); }
+.lang-trigger:hover .lang-caret {
+  opacity: 0.9;
+}
+.lang-caret.open {
+  transform: rotate(180deg);
+}
 
 /* 下拉選單：玻璃卡 + 漸層描邊 */
 .lang-menu {
@@ -286,8 +298,14 @@
   transform-origin: top left;
 }
 @keyframes koimMenuPop {
-  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .lang-item {
@@ -304,7 +322,9 @@
   padding: 9px 12px;
   border-radius: 9px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
   position: relative;
 }
 .lang-item:hover {
@@ -319,7 +339,7 @@
 }
 /* active 左側細線提示 — 2px 單色淡紫，不再三色漸層 */
 .lang-item.active::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 9px;
@@ -338,7 +358,7 @@
 }
 .lang-badge {
   font-size: 0.66rem;
-  font-family: 'JetBrains Mono', 'Courier New', var(--cjk-font), monospace;
+  font-family: "JetBrains Mono", "Courier New", var(--cjk-font), monospace;
   letter-spacing: 0.04em;
   padding: 2px 7px;
   border-radius: 9999px;
@@ -508,7 +528,7 @@
 }
 
 .posts-nav-current-item::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 15%;
@@ -553,13 +573,19 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   text-decoration: none;
   color: rgba(255, 255, 255, 0.82);
-  transition: border-color 0.3s, background 0.3s, transform 0.3s, box-shadow 0.3s;
+  transition:
+    border-color 0.3s,
+    background 0.3s,
+    transform 0.3s,
+    box-shadow 0.3s;
   min-height: 72px;
 }
 .prev-next-card:hover {
   border-color: rgba(127, 90, 240, 0.35);
   background: rgba(127, 90, 240, 0.05);
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.08), 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 0 20px rgba(127, 90, 240, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
 .prev-next-next {
@@ -588,7 +614,9 @@
   display: block;
 }
 @media (max-width: 640px) {
-  .prev-next-nav { grid-template-columns: 1fr; }
+  .prev-next-nav {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Emoji 反應列：清爽、無背景、置中 ── */
@@ -613,7 +641,11 @@
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.92rem;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 .reaction-btn:hover {
   background: rgba(127, 90, 240, 0.13);
@@ -750,7 +782,9 @@ a.series-nav-title:hover {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(127, 90, 240, 0.2);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(127, 90, 240, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(127, 90, 240, 0.08);
   z-index: 9999;
   animation: tooltip-in 0.2s ease;
   pointer-events: auto;
@@ -812,7 +846,7 @@ a.series-nav-title:hover {
    於是 <Annot> 站長註卡片一超出這張卡就被切掉（連 position:fixed 也逃不掉，filter 會變成它的
    containing block）。改放在「不含卡片」的偽元素上 → wrapper 本身無 filter，卡片能正常溢出。 */
 .post-content-wrapper::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -910,7 +944,9 @@ a.series-nav-title:hover {
   color: rgba(255, 255, 255, 0.4);
   font-size: 0.78rem;
   line-height: 1.45;
-  transition: color 0.2s ease, transform 0.28s cubic-bezier(0.34, 1.25, 0.5, 1);
+  transition:
+    color 0.2s ease,
+    transform 0.28s cubic-bezier(0.34, 1.25, 0.5, 1);
   transform-origin: left center;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1042,10 +1078,7 @@ a.series-nav-title:hover {
   position: relative;
   margin: -2.5rem -2.5rem 2rem -2.5rem;
   padding: 2rem 2.5rem 2.5rem;
-  background: linear-gradient(180deg,
-      rgba(127, 90, 240, 0.08) 0%,
-      rgba(127, 90, 240, 0.03) 60%,
-      transparent 100%);
+  background: linear-gradient(180deg, rgba(127, 90, 240, 0.08) 0%, rgba(127, 90, 240, 0.03) 60%, transparent 100%);
   border-radius: 16px 16px 0 0;
   border-bottom: none;
   overflow: hidden;
@@ -1095,7 +1128,7 @@ a.series-nav-title:hover {
 /* ═══════════════════════
    Drop Cap — first letter of article
    ═══════════════════════ */
-.post-content.drop-cap-first>p:first-of-type::first-letter {
+.post-content.drop-cap-first > p:first-of-type::first-letter {
   float: left;
   font-size: 3.8em;
   line-height: 0.8;
@@ -1200,8 +1233,13 @@ a.series-nav-title:hover {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(127, 90, 240, 0.18);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(127, 90, 240, 0.18);
   z-index: 30;
 }
 .post-content sup a[data-fn-content]:hover::after,
@@ -1225,15 +1263,23 @@ a.series-nav-title:hover {
   animation: blogFadeIn 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes blogFadeOut {
-  to { opacity: 0; }
+  to {
+    opacity: 0;
+  }
 }
 @keyframes blogFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
-  ::view-transition-new(root) { animation: none; }
+  ::view-transition-new(root) {
+    animation: none;
+  }
 }
 
 /* ═══════════════════════
@@ -1273,11 +1319,26 @@ a.series-nav-title:hover {
   margin-bottom: 0;
 }
 
-.post-content .markdown-alert-note     { --alert-accent: #7dd3fc; --alert-bg: rgba(125, 211, 252, 0.06); }
-.post-content .markdown-alert-tip      { --alert-accent: #86efac; --alert-bg: rgba(134, 239, 172, 0.06); }
-.post-content .markdown-alert-important{ --alert-accent: #c4b5fd; --alert-bg: rgba(196, 181, 253, 0.08); }
-.post-content .markdown-alert-warning  { --alert-accent: #fcd34d; --alert-bg: rgba(252, 211, 77, 0.07); }
-.post-content .markdown-alert-caution  { --alert-accent: #fca5a5; --alert-bg: rgba(252, 165, 165, 0.07); }
+.post-content .markdown-alert-note {
+  --alert-accent: #7dd3fc;
+  --alert-bg: rgba(125, 211, 252, 0.06);
+}
+.post-content .markdown-alert-tip {
+  --alert-accent: #86efac;
+  --alert-bg: rgba(134, 239, 172, 0.06);
+}
+.post-content .markdown-alert-important {
+  --alert-accent: #c4b5fd;
+  --alert-bg: rgba(196, 181, 253, 0.08);
+}
+.post-content .markdown-alert-warning {
+  --alert-accent: #fcd34d;
+  --alert-bg: rgba(252, 211, 77, 0.07);
+}
+.post-content .markdown-alert-caution {
+  --alert-accent: #fca5a5;
+  --alert-bg: rgba(252, 165, 165, 0.07);
+}
 
 .post-content h2 {
   font-size: 1.5rem;
@@ -1370,7 +1431,7 @@ a.series-nav-title:hover {
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
   font-size: 0.9em;
-  font-family: 'Fira Code', 'JetBrains Mono', var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
 }
 
 .post-content img {
@@ -1392,7 +1453,9 @@ a.series-nav-title:hover {
 
 .blog-image-clickable {
   cursor: zoom-in;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   border-radius: 12px;
   max-width: 100%;
 }
@@ -1423,7 +1486,9 @@ a.series-nav-title:hover {
   max-width: 95%;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .blog-image-exif--visible {
@@ -1547,8 +1612,9 @@ a.series-nav-title:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
   opacity: 0;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
@@ -1591,7 +1657,10 @@ a.series-nav-title:hover {
   border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .mm-menu-trigger:hover {
@@ -1656,8 +1725,14 @@ a.series-nav-title:hover {
 }
 
 @keyframes mmDropIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .mm-menu-label {
@@ -1720,7 +1795,10 @@ a.series-nav-title:hover {
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s,
+    border-color 0.2s;
   box-shadow: none;
 }
 
@@ -1966,7 +2044,10 @@ a.series-nav-title:hover {
   border-radius: 6px;
   font-size: 0.72rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 /* 蓋掉全域 button:hover 的紫底＋光暈（specificity 0,2,0 > 0,1,1） */
@@ -1999,7 +2080,7 @@ a.series-nav-title:hover {
 /* 左側提示符（取代紅黃綠燈）：綠色 ❯_ ，乾淨的終端機味 */
 .terminal-glyph {
   color: #4ade80;
-  font-family: 'Fira Code', 'JetBrains Mono', var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: -0.05em;
@@ -2008,7 +2089,7 @@ a.series-nav-title:hover {
   font-size: 0.72rem;
   letter-spacing: 0.03em;
   color: rgba(255, 255, 255, 0.42);
-  font-family: 'Fira Code', 'JetBrains Mono', var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
 }
 .terminal-block .copy-button {
   margin-left: auto;
@@ -2027,7 +2108,7 @@ a.series-nav-title:hover {
   background: transparent !important;
   font-size: 0.88rem;
   line-height: 1.75;
-  font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, var(--cjk-font), monospace !important;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace !important;
   width: max-content;
   min-width: 100%;
   box-sizing: border-box;
@@ -2046,7 +2127,7 @@ a.series-nav-title:hover {
   white-space: pre;
   font-size: 0.88rem;
   line-height: 1.75;
-  font-family: 'Fira Code', 'JetBrains Mono', var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
 }
 .terminal-block ::-webkit-scrollbar {
   height: 7px;
@@ -2064,22 +2145,24 @@ a.series-nav-title:hover {
 }
 .terminal-prompt-sym {
   color: #4ade80;
-  font-family: 'Fira Code', 'JetBrains Mono', var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
   font-size: 0.88rem;
   font-weight: 700;
 }
 .terminal-cursor {
   display: inline-block;
-  width: 0.40rem;
+  width: 0.4rem;
   height: 1rem;
   background: rgba(255, 255, 255, 0.78);
   animation: terminal-blink 1.05s steps(1) infinite;
 }
 @keyframes terminal-blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  50.01%, 100% {
+  50.01%,
+  100% {
     opacity: 0;
   }
 }
@@ -2105,7 +2188,7 @@ a.series-nav-title:hover {
   background: transparent !important;
   font-size: 0.9rem;
   line-height: 1.7;
-  font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, var(--cjk-font), monospace !important;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace !important;
   width: max-content;
   min-width: 100%;
   box-sizing: border-box;
@@ -2137,7 +2220,7 @@ a.series-nav-title:hover {
   white-space: pre;
   font-size: 0.9rem;
   line-height: 1.7;
-  font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, var(--cjk-font), monospace;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
   animation: shikiPulse 1.4s ease-in-out infinite;
 }
 .code-surface-body .shiki-fallback code {
@@ -2147,11 +2230,19 @@ a.series-nav-title:hover {
   font-family: inherit !important;
 }
 @keyframes shikiPulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.85; }
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .code-surface-body .shiki-fallback { animation: none; opacity: 0.7; }
+  .code-surface-body .shiki-fallback {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 /* ── 長碼收合：超過門檻先夾住高度，底部漸層淡出 + 「展開程式碼(共N行)」條 ── */
@@ -2181,7 +2272,9 @@ a.series-nav-title:hover {
   font-size: 0.76rem;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
 /* 蓋掉全域 button{紫底}＋button:hover{紫底+光暈}（specificity 0,2,0 > 0,1,1） */
 .code-surface-toggle:hover,
@@ -2198,7 +2291,7 @@ a.series-nav-title:hover {
   opacity: 0.7;
 }
 .code-surface-body--collapsed .code-surface-toggle::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -2228,7 +2321,7 @@ a.series-nav-title:hover {
   margin: 0.5rem 0;
 }
 
-.link-card-with-text>p {
+.link-card-with-text > p {
   margin-bottom: 0.4rem;
   font-size: 0.95rem;
   color: var(--post-text);
@@ -2415,8 +2508,7 @@ a.series-nav-title:hover {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.7);
   background:
-    linear-gradient(135deg, rgba(127, 90, 240, 0.12) 0%, rgba(220, 50, 120, 0.08) 100%),
-    rgba(20, 18, 38, 0.55);
+    linear-gradient(135deg, rgba(127, 90, 240, 0.12) 0%, rgba(220, 50, 120, 0.08) 100%), rgba(20, 18, 38, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
@@ -2432,21 +2524,28 @@ a.series-nav-title:hover {
     transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .float-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(224, 195, 252, 0.55), rgba(127, 90, 240, 0.45) 45%, rgba(220, 50, 120, 0.35));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(224, 195, 252, 0.55),
+    rgba(127, 90, 240, 0.45) 45%,
+    rgba(220, 50, 120, 0.35)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 .float-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(120% 90% at 50% 120%, rgba(127, 90, 240, 0.35), transparent 60%);
@@ -2455,7 +2554,10 @@ a.series-nav-title:hover {
   pointer-events: none;
 }
 .float-btn > svg,
-.float-btn > span { position: relative; z-index: 2; }
+.float-btn > span {
+  position: relative;
+  z-index: 2;
+}
 .float-btn span {
   font-size: 0.55rem;
   line-height: 1;
@@ -2469,15 +2571,18 @@ a.series-nav-title:hover {
     0 6px 20px rgba(127, 90, 240, 0.3),
     0 0 28px rgba(220, 50, 120, 0.12);
 }
-.float-btn:hover::before { opacity: 1; }
-.float-btn:hover::after { opacity: 1; }
+.float-btn:hover::before {
+  opacity: 1;
+}
+.float-btn:hover::after {
+  opacity: 1;
+}
 
 /* 紅色喜歡狀態 — 維持紅色情感色但用 koim 質感 */
 .float-btn.active {
   color: #ffb3bd;
   background:
-    linear-gradient(135deg, rgba(255, 71, 87, 0.28) 0%, rgba(220, 50, 120, 0.18) 100%),
-    rgba(20, 18, 38, 0.55);
+    linear-gradient(135deg, rgba(255, 71, 87, 0.28) 0%, rgba(220, 50, 120, 0.18) 100%), rgba(20, 18, 38, 0.55);
   border-color: transparent;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
@@ -2492,8 +2597,7 @@ a.series-nav-title:hover {
 .float-btn.shared {
   color: #b3e8c8;
   background:
-    linear-gradient(135deg, rgba(44, 182, 125, 0.25) 0%, rgba(64, 200, 144, 0.15) 100%),
-    rgba(20, 18, 38, 0.55);
+    linear-gradient(135deg, rgba(44, 182, 125, 0.25) 0%, rgba(64, 200, 144, 0.15) 100%), rgba(20, 18, 38, 0.55);
   border-color: transparent;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
@@ -2537,14 +2641,18 @@ a.series-nav-title:hover {
   font-size: 0.85rem;
   cursor: pointer;
   border-radius: 8px;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
   white-space: nowrap;
 }
 .share-menu button:hover {
   background: linear-gradient(135deg, rgba(127, 90, 240, 0.18), rgba(220, 50, 120, 0.1));
   color: #fff;
 }
-.share-menu button svg { color: #c4b5fd; }
+.share-menu button svg {
+  color: #c4b5fd;
+}
 
 /* ═══════════════════════
    Subscribe Modal
@@ -2673,7 +2781,7 @@ a.series-nav-title:hover {
   background: rgba(127, 90, 240, 0.12);
   border: 1px solid rgba(127, 90, 240, 0.25);
   border-radius: 6px;
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
   color: rgba(199, 184, 255, 0.95);
   margin: 0 2px;
@@ -2988,8 +3096,12 @@ a.series-nav-title:hover {
 }
 /* ── SSR fallback 的 skeleton 載入（BlogPostPage 側欄/目錄用；FullBlogPost 載入後替換）── */
 @keyframes bp-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 .bp-skel {
   border-radius: 4px;
@@ -3012,8 +3124,12 @@ a.series-nav-title:hover {
    framer-motion —— 換文章時的 exit 動畫（AnimatePresence）才不會被 CSS 的最終狀態卡住。
    prefers-reduced-motion 由 index.css 的全域覆寫自動處理。 */
 @keyframes post-enter {
-  from { transform: translateY(26px); }
-  to   { transform: translateY(0); }
+  from {
+    transform: translateY(26px);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .post-header {
@@ -3031,12 +3147,24 @@ a.series-nav-title:hover {
    只有「新露出的列」是新節點、只有它們重播（= 逐行塞入），舊列不動。
    非 LCP 元素 → 用 opacity 安全。backwards：delay 期間先隱藏、輪到才進場。 */
 @keyframes side-in-r {
-  from { opacity: 0; transform: translateX(14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 @keyframes side-in-l {
-  from { opacity: 0; transform: translateX(-14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 .toc-nav .toc-item {
   animation: side-in-r 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
@@ -3055,7 +3183,9 @@ a.series-nav-title:hover {
   cursor: default;
   pointer-events: none;
 }
-.link-card-skeleton .link-card-body { width: 100%; }
+.link-card-skeleton .link-card-body {
+  width: 100%;
+}
 
 /* ── AI 翻譯提示 banner（非原文語系文章頂部）── */
 .ai-translation-notice {
@@ -3072,8 +3202,14 @@ a.series-nav-title:hover {
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.5;
 }
-.ai-translation-icon { font-size: 1rem; flex: 0 0 auto; }
-.ai-translation-text { flex: 1 1 auto; min-width: 12rem; }
+.ai-translation-icon {
+  font-size: 1rem;
+  flex: 0 0 auto;
+}
+.ai-translation-text {
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
 .ai-translation-original {
   flex: 0 0 auto;
   color: rgba(252, 211, 77, 0.9);
@@ -3083,7 +3219,9 @@ a.series-nav-title:hover {
   border-bottom: 1px solid transparent;
   transition: border-color 0.15s ease;
 }
-.ai-translation-original:hover { border-bottom-color: rgba(252, 211, 77, 0.6); }
+.ai-translation-original:hover {
+  border-bottom-color: rgba(252, 211, 77, 0.6);
+}
 
 /* ── Mermaid 工具列動作鈕（縮放/置中/複製/下載）── */
 .mm-toolbar-actions {
@@ -3106,7 +3244,9 @@ a.series-nav-title:hover {
   outline: none;
   color: rgba(255, 255, 255, 0.72);
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
 .mm-action-btn:hover,
 .mm-action-btn:focus,
@@ -3117,8 +3257,14 @@ a.series-nav-title:hover {
   border-color: transparent;
   outline: none;
 }
-.mm-action-btn--dl { padding: 0.4rem 0.5rem; }
-.mm-action-ext { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.02em; }
+.mm-action-btn--dl {
+  padding: 0.4rem 0.5rem;
+}
+.mm-action-ext {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 
 /* 圖片的放大按鈕外殼：只提供焦點與鍵盤語意，外觀完全交給裡面的 <img>
    （見 ImageLightbox — 原本 onClick 掛在 img 上，鍵盤根本按不到）。 */

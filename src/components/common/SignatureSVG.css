@@ -1,183 +1,179 @@
 .signature-svg-container {
-    width: 30%;
-    height: auto;
+  width: 30%;
+  height: auto;
 }
 
 .signature-svg-container svg {
-    width: 100%;
-    height: auto;
+  width: 100%;
+  height: auto;
 }
 
 /* --- 共用設定 --- */
 .signature-path {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 5;
-    fill: none;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+  fill: none;
 }
 
 .signature-dot {
-    opacity: 0;
+  opacity: 0;
 }
 
 /* 設定總循環時間為 7 秒 (infinite 代表無限循環)
    ease-in-out 讓每一筆畫的起承轉合都有手寫的加減速感
 */
 .path-k {
-    animation: anim-k 7s ease-in-out infinite;
+  animation: anim-k 7s ease-in-out infinite;
 }
 
 .path-word {
-    animation: anim-word 7s ease-in-out infinite;
+  animation: anim-word 7s ease-in-out infinite;
 }
 
 .path-underline {
-    animation: anim-underline 7s ease-in-out infinite;
+  animation: anim-underline 7s ease-in-out infinite;
 }
 
 .path-dot-1 {
-    animation: anim-dot1 7s ease-in-out infinite;
-    transform-origin: 283px 78px;
+  animation: anim-dot1 7s ease-in-out infinite;
+  transform-origin: 283px 78px;
 }
 
 .path-dot-2 {
-    animation: anim-dot2 7s ease-in-out infinite;
-    transform-origin: 997px 76px;
+  animation: anim-dot2 7s ease-in-out infinite;
+  transform-origin: 997px 76px;
 }
 
 /* --- 時間軸魔法 (0% 到 100% 完美控制進場與退場) --- */
 
 /* 第一筆畫 K：最先寫，最後收 */
 @keyframes anim-k {
-    0% {
-        stroke-dashoffset: 100;
-    }
+  0% {
+    stroke-dashoffset: 100;
+  }
 
-    10% {
-        stroke-dashoffset: 0;
-    }
+  10% {
+    stroke-dashoffset: 0;
+  }
 
-    90% {
-        stroke-dashoffset: 0;
-    }
+  90% {
+    stroke-dashoffset: 0;
+  }
 
-    97% {
-        stroke-dashoffset: 100;
-    }
+  97% {
+    stroke-dashoffset: 100;
+  }
 
-    100% {
-        stroke-dashoffset: 100;
-    }
+  100% {
+    stroke-dashoffset: 100;
+  }
 }
 
 /* 第二筆畫 單字：接在 K 之後，倒數第二個收 */
 @keyframes anim-word {
+  0%,
+  10% {
+    stroke-dashoffset: 100;
+  }
 
-    0%,
-    10% {
-        stroke-dashoffset: 100;
-    }
+  35% {
+    stroke-dashoffset: 0;
+  }
 
-    35% {
-        stroke-dashoffset: 0;
-    }
+  75% {
+    stroke-dashoffset: 0;
+  }
 
-    75% {
-        stroke-dashoffset: 0;
-    }
+  90% {
+    stroke-dashoffset: 100;
+  }
 
-    90% {
-        stroke-dashoffset: 100;
-    }
-
-    100% {
-        stroke-dashoffset: 100;
-    }
+  100% {
+    stroke-dashoffset: 100;
+  }
 }
 
 /* 第一個點 (左) */
 @keyframes anim-dot1 {
+  0%,
+  25% {
+    opacity: 0;
+    transform: scale(0);
+  }
 
-    0%,
-    25% {
-        opacity: 0;
-        transform: scale(0);
-    }
+  28% {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-    28% {
-        opacity: 1;
-        transform: scale(1);
-    }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-    75% {
-        opacity: 1;
-        transform: scale(1);
-    }
+  78% {
+    opacity: 0;
+    transform: scale(0);
+  }
 
-    78% {
-        opacity: 0;
-        transform: scale(0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: scale(0);
-    }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
 }
 
 /* 第二個點 (右) */
 @keyframes anim-dot2 {
+  0%,
+  35% {
+    opacity: 0;
+    transform: scale(0);
+  }
 
-    0%,
-    35% {
-        opacity: 0;
-        transform: scale(0);
-    }
+  38% {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-    38% {
-        opacity: 1;
-        transform: scale(1);
-    }
+  73% {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-    73% {
-        opacity: 1;
-        transform: scale(1);
-    }
+  76% {
+    opacity: 0;
+    transform: scale(0);
+  }
 
-    76% {
-        opacity: 0;
-        transform: scale(0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: scale(0);
-    }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
 }
 
 /* 底線：最後畫，最先收 */
 @keyframes anim-underline {
+  0%,
+  38% {
+    stroke-dashoffset: 100;
+  }
 
-    0%,
-    38% {
-        stroke-dashoffset: 100;
-    }
+  45% {
+    stroke-dashoffset: 0;
+  }
 
-    45% {
-        stroke-dashoffset: 0;
-    }
+  70% {
+    stroke-dashoffset: 0;
+  }
 
-    70% {
-        stroke-dashoffset: 0;
-    }
+  75% {
+    stroke-dashoffset: 100;
+  }
 
-    75% {
-        stroke-dashoffset: 100;
-    }
-
-    100% {
-        stroke-dashoffset: 100;
-    }
+  100% {
+    stroke-dashoffset: 100;
+  }
 }

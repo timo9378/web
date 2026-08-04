@@ -26,7 +26,9 @@
 }
 
 /* ── header ── */
-.wl-header { margin-bottom: 2.5rem; }
+.wl-header {
+  margin-bottom: 2.5rem;
+}
 
 .wl-back {
   display: inline-block;
@@ -35,9 +37,14 @@
   text-decoration: none;
   border-bottom: 1px dashed transparent;
   margin-bottom: 18px;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
-.wl-back:hover { color: rgba(216, 180, 254, 1); border-bottom-color: rgba(216, 180, 254, 0.5); }
+.wl-back:hover {
+  color: rgba(216, 180, 254, 1);
+  border-bottom-color: rgba(216, 180, 254, 0.5);
+}
 
 .wl-title {
   font-size: clamp(2rem, 3.5vw, 2.6rem);
@@ -77,14 +84,20 @@
   transition: color 0.2s ease;
 }
 
-.wl-tab + .wl-tab { margin-left: 22px; }
+.wl-tab + .wl-tab {
+  margin-left: 22px;
+}
 
-.wl-tab:hover { color: rgba(244, 244, 245, 0.88); }
+.wl-tab:hover {
+  color: rgba(244, 244, 245, 0.88);
+}
 
-.wl-tab.active { color: rgba(244, 244, 245, 1); }
+.wl-tab.active {
+  color: rgba(244, 244, 245, 1);
+}
 
 .wl-tab.active::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -100,7 +113,9 @@
   transition: color 0.2s ease;
 }
 
-.wl-tab.active .wl-tab-count { color: rgba(216, 180, 254, 0.75); }
+.wl-tab.active .wl-tab-count {
+  color: rgba(216, 180, 254, 0.75);
+}
 
 /* ── controls ── */
 .wl-controls {
@@ -121,7 +136,9 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   color: rgba(229, 229, 245, 0.5);
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .wl-search:focus-within {
@@ -140,10 +157,14 @@
   outline: none;
 }
 
-.wl-search input::placeholder { color: rgba(229, 229, 245, 0.4); }
+.wl-search input::placeholder {
+  color: rgba(229, 229, 245, 0.4);
+}
 
 /* custom sort popup（自製，不用 native <select>）*/
-.wl-sort { position: relative; }
+.wl-sort {
+  position: relative;
+}
 
 .wl-sort-trigger {
   display: inline-flex;
@@ -157,12 +178,16 @@
   font-size: 0.92rem;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
   min-width: 140px;
   justify-content: space-between;
 }
 
-.wl-sort-trigger:hover, .wl-sort-trigger[aria-expanded="true"] {
+.wl-sort-trigger:hover,
+.wl-sort-trigger[aria-expanded="true"] {
   border-color: rgba(216, 180, 254, 0.4);
   background: rgba(216, 180, 254, 0.06);
   color: rgba(244, 244, 245, 1);
@@ -173,7 +198,9 @@
   opacity: 0.6;
   transition: transform 0.2s ease;
 }
-.wl-sort-chev.is-open { transform: rotate(180deg); }
+.wl-sort-chev.is-open {
+  transform: rotate(180deg);
+}
 
 .wl-sort-menu {
   position: absolute;
@@ -192,7 +219,9 @@
   transform-origin: top right;
 }
 
-.wl-sort-menu li { margin: 0; }
+.wl-sort-menu li {
+  margin: 0;
+}
 
 .wl-sort-item {
   display: block;
@@ -205,7 +234,9 @@
   color: rgba(229, 229, 245, 0.75);
   cursor: pointer;
   border-radius: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .wl-sort-item:hover {
@@ -232,7 +263,9 @@
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.wl-card:hover { transform: translateY(-4px); }
+.wl-card:hover {
+  transform: translateY(-4px);
+}
 
 .wl-card-poster {
   position: relative;
@@ -265,7 +298,9 @@
   opacity: 0.4;
 }
 
-.wl-card-meta { padding: 0 2px; }
+.wl-card-meta {
+  padding: 0 2px;
+}
 
 .wl-card-title {
   font-size: 0.88rem;
@@ -302,13 +337,27 @@
   padding: 4rem 0;
 }
 
-.wl-info--err { color: rgba(255, 180, 180, 0.65); }
+.wl-info--err {
+  color: rgba(255, 180, 180, 0.65);
+}
 
 /* ── RWD ── */
 @media (max-width: 720px) {
-  .wl-page { padding: 100px 16px 90px; }
-  .wl-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; }
-  .wl-card-title { font-size: 0.82rem; }
-  .wl-card-sub { font-size: 0.72rem; }
-  .wl-tab { padding: 10px 12px; font-size: 0.9rem; }
+  .wl-page {
+    padding: 100px 16px 90px;
+  }
+  .wl-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+  }
+  .wl-card-title {
+    font-size: 0.82rem;
+  }
+  .wl-card-sub {
+    font-size: 0.72rem;
+  }
+  .wl-tab {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
 }

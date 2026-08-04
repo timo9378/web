@@ -98,7 +98,10 @@
     bottom: 20px;
     right: 20px;
   }
-  .back-to-top-icon svg { width: 18px; height: 18px; }
+  .back-to-top-icon svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

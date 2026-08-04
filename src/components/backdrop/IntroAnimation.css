@@ -18,8 +18,7 @@
   display: block;
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(ellipse at center, #050620 0%, #02020a 70%);
+  background: radial-gradient(ellipse at center, #050620 0%, #02020a 70%);
   z-index: 9999;
   cursor: pointer;
   overflow: hidden;
@@ -32,8 +31,7 @@
 .intro-stage:hover,
 .intro-stage:focus,
 .intro-stage:focus-visible {
-  background:
-    radial-gradient(ellipse at center, #050620 0%, #02020a 70%);
+  background: radial-gradient(ellipse at center, #050620 0%, #02020a 70%);
   border-color: transparent;
   box-shadow: none;
 }
@@ -60,9 +58,18 @@
 }
 
 @keyframes intro-canvas-entry {
-  0%   { opacity: 0; transform: scale(0.94); }
-  9%   { opacity: 1; transform: scale(0.96); }
-  100% { opacity: 1; transform: scale(1.10); }
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 /* Climax flash — peaks right when canvas hard-clears (2200ms),
@@ -91,9 +98,18 @@
 }
 
 @keyframes intro-flash {
-  0%   { opacity: 0;   transform: scale(0.3); }
-  37%  { opacity: 1;   transform: scale(1.6); }
-  100% { opacity: 0;   transform: scale(3.4); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  37% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.4);
+  }
 }
 
 .intro-skip-hint {
@@ -101,7 +117,7 @@
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: ui-monospace, 'SF Mono', Menlo, 'Roboto Mono', monospace;
+  font-family: ui-monospace, "SF Mono", Menlo, "Roboto Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -112,7 +128,9 @@
 }
 
 @keyframes intro-hint-in {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

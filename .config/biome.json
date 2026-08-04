@@ -1,0 +1,59 @@
+{
+  "$schema": "../node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "includes": [
+      "**/*.css",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/.output/**",
+      "!**/.nitro/**",
+      "!**/public/**",
+      "!**/target/**",
+      "!**/mutants.out*/**",
+      "!**/.lighthouseci/**",
+      "!**/src/components/ui/**",
+      "!**/src/components/animate-ui/**"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "enabled": true
+  },
+  "javascript": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "quoteStyle": "double"
+    },
+    "linter": {
+      "enabled": true
+    },
+    "parser": {
+      "cssModules": false,
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "enabled": false
+  },
+  "root": false
+}

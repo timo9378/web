@@ -62,6 +62,17 @@ jobs:
       # --max-warnings 0：這三個目錄目前乾淨，直接鎖死，不留讓它從 0 無聲長大的空間。
       - name: oxlint (scripts + server + packages)
         run: pnpm exec oxlint scripts server packages --max-warnings 0
+      # CSS 的格式與 lint（設定見 .config/biome.json）。Biome 在這裡**只管 CSS**——
+      # JS/TS 是 oxlint 的地盤，兩個 linter 管同一批檔案只會互相矛盾，而且 Biome
+      # 沒有等價的型別感知檢查。
+      #
+      # ⚠️ 刻意不加 --error-on-warnings：目前有 190 個 !important 與 21 個
+      # noDescendingSpecificity 沒清。它們會出現在 CI 輸出裡但不擋——跟 knip 當初
+      # 的處理一樣，藏起來就沒有人會回來清。這一步擋的是「格式漂移」與 error 類。
+      # （noDescendingSpecificity 守的是可讀性不是正確性：高特異性的規則寫在前面
+      #  照樣會贏，行為是對的。細節見 CLAUDE.md。）
+      - name: biome（CSS 格式與 lint）
+        run: pnpm lint:css
       # 未使用的檔案／匯出／相依。設定見 .config/knip.json。
       #
       # 原本只 gate files + dependencies，因為 exports 類還有 27 個未使用匯出 +

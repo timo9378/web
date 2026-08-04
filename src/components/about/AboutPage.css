@@ -17,5 +17,7 @@
 }
 
 @media (max-width: 640px) {
-  .about-page { padding-top: 48px; }
+  .about-page {
+    padding-top: 48px;
+  }
 }

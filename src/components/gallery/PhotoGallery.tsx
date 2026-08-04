@@ -94,14 +94,14 @@ const PhotoItem = memo(({ data, width, locale, onPhotoClick }: {
         )}
 
         {/* 懸停信息層 */}
-        <div className="photo-info-overlay absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="photo-info-overlay absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <p className="photo-date text-2xl font-bold">{displayDate}</p>
             <p className="photo-year text-lg opacity-80">{displayYear}</p>
             {shownTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {shownTags.slice(0, 5).map((tag) => (
-                  <span key={tag} className="px-2 py-1 text-xs bg-white/20 rounded-full backdrop-blur-sm">
+                  <span key={tag} className="px-2 py-1 text-xs bg-white/20 rounded-full backdrop-blur-xs">
                     #{tag}
                   </span>
                 ))}

@@ -41,7 +41,9 @@
   outline: none;
   color: rgba(255, 255, 255, 0.72);
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
 .ctx-nav-btn:hover,
 .ctx-nav-btn:focus,
@@ -69,7 +71,9 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
 /* 蓋掉全域 button{紫底}＋button:hover{紫底+光暈} */
 .ctx-item:hover,

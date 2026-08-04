@@ -126,13 +126,11 @@
 
 /* Spotlight effect */
 .nav-list::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 50%),
-      rgba(127, 90, 240, 0.06),
-      transparent 40%);
+  background: radial-gradient(500px circle at var(--mx, 50%) var(--my, 50%), rgba(127, 90, 240, 0.06), transparent 40%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -157,7 +155,9 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: color 0.25s ease, background 0.25s ease;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease;
   white-space: nowrap;
   z-index: 1;
 }
@@ -230,7 +230,7 @@
 
 /* Arrow */
 .dropdown-menu::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -6px;
   left: 50%;
@@ -260,7 +260,7 @@
   transform: translateX(4px);
 }
 
-.dropdown-item+.dropdown-item {
+.dropdown-item + .dropdown-item {
   margin-top: 2px;
 }
 
@@ -349,7 +349,9 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
   padding: 0;
   box-shadow: none;
 }
@@ -424,7 +426,9 @@
   border: none;
   border-radius: 0;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   text-align: left;
   box-shadow: none;
 }

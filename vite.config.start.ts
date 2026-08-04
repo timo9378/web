@@ -2,6 +2,10 @@ import { defineConfig, type Plugin } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import { nitro } from 'nitro/vite';
 import viteReact from '@vitejs/plugin-react';
+// Tailwind v4 走專屬的 vite plugin 而不是 PostCSS 外掛：官方在 vite 專案推薦這條，
+// 而且它讓整個 postcss.config.js 可以消失（v4 自己處理 @import 與 vendor prefix，
+// postcss-import 與 autoprefixer 都不需要了）。
+import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -198,6 +202,7 @@ export default defineConfig({
   plugins: [
     copyMonacoAssets(),
     copyExcalidrawFonts(),
+    tailwindcss(),
     tanstackStart(),
     viteReact(),
     nitro({

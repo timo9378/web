@@ -27,17 +27,13 @@
    alpha 從 0 慢慢爬到 0.28，**剛好接上** footer 主體開頭。
    ::before 結尾 == footer 主體開頭 = 0.28，所以兩段拼起來是一條連續漸層 */
 .app-footer::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -160px;
   left: 0;
   right: 0;
   height: 160px;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 9, 24, 0) 0%,
-    rgba(10, 9, 24, 0.28) 100%
-  );
+  background: linear-gradient(180deg, rgba(10, 9, 24, 0) 0%, rgba(10, 9, 24, 0.28) 100%);
   pointer-events: none;
 }
 
@@ -132,8 +128,15 @@
   animation: footer-pulse 2s ease-in-out infinite;
 }
 @keyframes footer-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); opacity: 1; }
-  50% { box-shadow: 0 0 14px rgba(34, 197, 94, 0.9); opacity: 0.7; }
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.9);
+    opacity: 0.7;
+  }
 }
 
 /* ── 導覽欄 ── */
@@ -156,7 +159,9 @@
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
-  transition: color 0.18s ease, transform 0.18s ease;
+  transition:
+    color 0.18s ease,
+    transform 0.18s ease;
   width: fit-content;
 }
 .app-footer-link:hover {

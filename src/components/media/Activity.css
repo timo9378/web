@@ -39,47 +39,73 @@
 }
 
 .activity-nebula-1 {
-  width: 660px; height: 660px;
-  top: -8%; left: -12%;
-  background: radial-gradient(circle, rgba(127,90,240,0.5) 0%, rgba(180,60,200,0.25) 40%, transparent 70%);
+  width: 660px;
+  height: 660px;
+  top: -8%;
+  left: -12%;
+  background: radial-gradient(circle, rgba(127, 90, 240, 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
   animation: a-neb1 30s ease-in-out infinite;
 }
 .activity-nebula-2 {
-  width: 520px; height: 520px;
-  bottom: -6%; right: -8%;
-  background: radial-gradient(circle, rgba(200,50,140,0.4) 0%, rgba(140,30,170,0.2) 45%, transparent 70%);
+  width: 520px;
+  height: 520px;
+  bottom: -6%;
+  right: -8%;
+  background: radial-gradient(circle, rgba(200, 50, 140, 0.4) 0%, rgba(140, 30, 170, 0.2) 45%, transparent 70%);
   animation: a-neb2 36s ease-in-out infinite;
 }
 .activity-nebula-3 {
-  width: 380px; height: 380px;
-  top: 45%; left: 55%;
-  background: radial-gradient(circle, rgba(56,178,172,0.25) 0%, rgba(44,182,125,0.1) 50%, transparent 70%);
+  width: 380px;
+  height: 380px;
+  top: 45%;
+  left: 55%;
+  background: radial-gradient(circle, rgba(56, 178, 172, 0.25) 0%, rgba(44, 182, 125, 0.1) 50%, transparent 70%);
   animation: a-neb3 24s ease-in-out infinite;
 }
 .activity-nebula-dust {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.10) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.06) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.08) 0%, transparent 100%),
-    radial-gradient(1px 1px at 75% 50%, rgba(255,255,255,0.05) 0%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 18% 85%, rgba(127,90,240,0.10) 0%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 90% 12%, rgba(200,50,140,0.07) 0%, transparent 100%);
+    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 65%, rgba(255, 255, 255, 0.06) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.08) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 18% 85%, rgba(127, 90, 240, 0.1) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 90% 12%, rgba(200, 50, 140, 0.07) 0%, transparent 100%);
 }
 
 @keyframes a-neb1 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(50px,30px) scale(1.08); }
-  66% { transform: translate(-25px,-20px) scale(0.95); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(50px, 30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-25px, -20px) scale(0.95);
+  }
 }
 @keyframes a-neb2 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  40% { transform: translate(-40px,-30px) scale(1.1); }
-  70% { transform: translate(25px,20px) scale(0.93); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(-40px, -30px) scale(1.1);
+  }
+  70% {
+    transform: translate(25px, 20px) scale(0.93);
+  }
 }
 @keyframes a-neb3 {
-  0%,100% { transform: translate(0,0) scale(1); }
-  50% { transform: translate(30px,-25px) scale(1.06); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, -25px) scale(1.06);
+  }
 }
 
 /* Loader 樣式集中在 KoimLoader.css */
@@ -96,7 +122,6 @@
   gap: 64px;
 }
 
-
 /* ═══════════════════════════════════════════════════
    1. STATUS BAR — 小型頂部狀態列，不佔視覺權重
    ═══════════════════════════════════════════════════ */
@@ -105,11 +130,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 40px;
-  background: rgba(255,255,255,0.02);
+  background: rgba(255, 255, 255, 0.02);
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -122,31 +147,41 @@
 }
 
 .status-dot-inline {
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.status-dot-inline.online { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-.status-dot-inline.offline { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-.status-dot-inline.error { background: #fbbf24; }
-.status-dot-inline.checking { background: #94a3b8; }
+.status-dot-inline.online {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+.status-dot-inline.offline {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+.status-dot-inline.error {
+  background: #fbbf24;
+}
+.status-dot-inline.checking {
+  background: #94a3b8;
+}
 
 .status-bar-text {
   font-weight: 600;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.3px;
 }
 
 .status-bar-meta {
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .status-bar-time {
-  font-family: 'Courier New', monospace;
-  color: rgba(255,255,255,0.55);
+  font-family: "Courier New", monospace;
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 500;
 }
-
 
 /* ═══════════════════════════════════════════════════
    2. HERO NUMBERS — 裸字排版，大數字 + 小標籤
@@ -181,7 +216,7 @@
 
 .hero-label {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   font-weight: 500;
@@ -190,10 +225,9 @@
 .hero-divider {
   width: 1px;
   height: 40px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
-
 
 /* ═══════════════════════════════════════════════════
    3a. STEAM PROFILE CARD — Steam hover-card 風格
@@ -206,14 +240,19 @@
   text-decoration: none;
   isolation: isolate;
   min-height: 140px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(20, 18, 38, 0.55);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.3s ease;
 }
 .steam-profile-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127,90,240,0.5);
-  box-shadow: 0 16px 50px rgba(127,90,240,0.22), 0 0 0 1px rgba(127,90,240,0.25) inset;
+  border-color: rgba(127, 90, 240, 0.5);
+  box-shadow:
+    0 16px 50px rgba(127, 90, 240, 0.22),
+    0 0 0 1px rgba(127, 90, 240, 0.25) inset;
 }
 
 .steam-profile-bg {
@@ -231,8 +270,8 @@
   z-index: 1;
   /* 從左下深→右上漸亮，讓 nameplate 整體變柔和但仍可見動畫 */
   background:
-    linear-gradient(135deg, rgba(6,5,14,0.78) 0%, rgba(6,5,14,0.32) 55%, rgba(6,5,14,0.55) 100%),
-    linear-gradient(to top, rgba(6,5,14,0.5) 0%, rgba(6,5,14,0) 60%);
+    linear-gradient(135deg, rgba(6, 5, 14, 0.78) 0%, rgba(6, 5, 14, 0.32) 55%, rgba(6, 5, 14, 0.55) 100%),
+    linear-gradient(to top, rgba(6, 5, 14, 0.5) 0%, rgba(6, 5, 14, 0) 60%);
 }
 
 .steam-profile-content {
@@ -254,11 +293,11 @@
 }
 /* 沒框時：用一個柔和的紫光暈當底邊，避免直接出現一個生硬的圓 */
 .steam-profile-avatar-wrap::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(127,90,240,0.25), rgba(220,50,120,0.18));
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.25), rgba(220, 50, 120, 0.18));
   filter: blur(12px);
   opacity: 0.7;
   z-index: 0;
@@ -267,15 +306,19 @@
 /* 頭像：方形（圓角 8px）填滿框中央透明區，與 Steam 動畫頭像對齊 */
 .steam-profile-avatar {
   position: absolute;
-  top: 14px; left: 14px;
-  width: 88px; height: 88px;
+  top: 14px;
+  left: 14px;
+  width: 88px;
+  height: 88px;
   border-radius: 8px;
   object-fit: cover;
   z-index: 1;
 }
 /* 沒有頭像框時，給頭像本身一道極淡的內陰影界線而不是粗白邊 */
 .steam-profile-avatar-wrap:not(:has(.steam-profile-avatar-frame)) .steam-profile-avatar {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 6px 20px rgba(0,0,0,0.45);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 6px 20px rgba(0, 0, 0, 0.45);
 }
 /* 頭像框：放在最上層覆蓋頭像邊緣，PNG 中央透明 */
 .steam-profile-avatar-frame {
@@ -318,7 +361,9 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 0 1px rgba(255, 138, 76, 0.45), 0 0 14px rgba(255, 138, 76, 0.32);
+  box-shadow:
+    0 0 0 1px rgba(255, 138, 76, 0.45),
+    0 0 14px rgba(255, 138, 76, 0.32);
   text-shadow: none;
 }
 .steam-profile-status {
@@ -335,10 +380,22 @@
   background: #74c0fc;
   box-shadow: 0 0 8px rgba(116, 192, 252, 0.7);
 }
-.steam-profile-card.is-online .steam-profile-dot { background: #57cbde; box-shadow: 0 0 8px rgba(87, 203, 222, 0.7); }
-.steam-profile-card.is-in-game .steam-profile-dot { background: #90ba3c; box-shadow: 0 0 10px rgba(144, 186, 60, 0.85); }
-.steam-profile-card.is-offline .steam-profile-dot { background: #6c757d; box-shadow: none; }
-.steam-profile-divider { color: rgba(255,255,255,0.4); margin: 0 2px; }
+.steam-profile-card.is-online .steam-profile-dot {
+  background: #57cbde;
+  box-shadow: 0 0 8px rgba(87, 203, 222, 0.7);
+}
+.steam-profile-card.is-in-game .steam-profile-dot {
+  background: #90ba3c;
+  box-shadow: 0 0 10px rgba(144, 186, 60, 0.85);
+}
+.steam-profile-card.is-offline .steam-profile-dot {
+  background: #6c757d;
+  box-shadow: none;
+}
+.steam-profile-divider {
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 2px;
+}
 
 .steam-profile-featured {
   display: inline-flex;
@@ -382,9 +439,20 @@
     justify-self: stretch;
     justify-content: center;
   }
-  .steam-profile-name { font-size: 1.3rem; }
-  .steam-profile-avatar-wrap { width: 92px; height: 92px; }
-  .steam-profile-avatar { top: 11px; left: 11px; width: 70px; height: 70px; border-radius: 6px; }
+  .steam-profile-name {
+    font-size: 1.3rem;
+  }
+  .steam-profile-avatar-wrap {
+    width: 92px;
+    height: 92px;
+  }
+  .steam-profile-avatar {
+    top: 11px;
+    left: 11px;
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -403,7 +471,7 @@
 }
 .steam-recent-count {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   font-variant-numeric: tabular-nums;
 }
 
@@ -418,12 +486,21 @@
   padding: 4px 4px 12px;
   margin: -4px -4px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127,90,240,0.4) transparent;
+  scrollbar-color: rgba(127, 90, 240, 0.4) transparent;
 }
-.steam-recent-scroll::-webkit-scrollbar { height: 6px; }
-.steam-recent-scroll::-webkit-scrollbar-track { background: transparent; }
-.steam-recent-scroll::-webkit-scrollbar-thumb { background: rgba(127,90,240,0.35); border-radius: 3px; }
-.steam-recent-scroll::-webkit-scrollbar-thumb:hover { background: rgba(127,90,240,0.55); }
+.steam-recent-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.steam-recent-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.steam-recent-scroll::-webkit-scrollbar-thumb {
+  background: rgba(127, 90, 240, 0.35);
+  border-radius: 3px;
+}
+.steam-recent-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(127, 90, 240, 0.55);
+}
 
 .steam-recent-card {
   position: relative;
@@ -434,21 +511,26 @@
   overflow: hidden;
   text-decoration: none;
   isolation: isolate;
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.3s ease;
 }
 .steam-recent-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127,90,240,0.45);
-  box-shadow: 0 10px 28px rgba(127,90,240,0.2);
+  border-color: rgba(127, 90, 240, 0.45);
+  box-shadow: 0 10px 28px rgba(127, 90, 240, 0.2);
 }
 .steam-recent-card.is-featured {
   grid-row: span 1;
-  border-color: rgba(127,90,240,0.25);
+  border-color: rgba(127, 90, 240, 0.25);
 }
 .steam-recent-card.is-current {
   border-color: rgba(144, 186, 60, 0.55);
-  box-shadow: 0 0 0 1px rgba(144, 186, 60, 0.3), 0 0 18px rgba(144, 186, 60, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(144, 186, 60, 0.3),
+    0 0 18px rgba(144, 186, 60, 0.18);
 }
 .steam-recent-cover {
   position: absolute;
@@ -472,21 +554,21 @@
   transform: scale(1.05);
 }
 .steam-recent-cover.is-fallback::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1.5px 1.5px at 18% 30%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 72% 22%, rgba(255,255,255,0.35) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 88% 70%, rgba(199,184,255,0.4) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 30% 78%, rgba(255,255,255,0.3) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 56% 50%, rgba(199,184,255,0.45) 0%, transparent 100%);
+    radial-gradient(1.5px 1.5px at 18% 30%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 22%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 88% 70%, rgba(199, 184, 255, 0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 78%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 56% 50%, rgba(199, 184, 255, 0.45) 0%, transparent 100%);
 }
 .steam-recent-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to top, rgba(6,5,14,0.92) 0%, rgba(6,5,14,0.55) 45%, rgba(6,5,14,0.05) 100%);
+  background: linear-gradient(to top, rgba(6, 5, 14, 0.92) 0%, rgba(6, 5, 14, 0.55) 45%, rgba(6, 5, 14, 0.05) 100%);
 }
 .steam-recent-info {
   position: absolute;
@@ -509,12 +591,14 @@
 }
 .steam-recent-stats {
   font-size: 0.74rem;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
 }
-.steam-recent-divider { color: rgba(255,255,255,0.3); }
+.steam-recent-divider {
+  color: rgba(255, 255, 255, 0.3);
+}
 
 .steam-recent-pulse {
   position: absolute;
@@ -532,13 +616,19 @@
   animation: steamPulse 2s ease-in-out infinite;
 }
 @keyframes steamPulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(144, 186, 60, 0.55); }
-  50% { box-shadow: 0 0 20px rgba(144, 186, 60, 0.85); }
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(144, 186, 60, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(144, 186, 60, 0.85);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .steam-recent-pulse { animation: none; }
+  .steam-recent-pulse {
+    animation: none;
+  }
 }
-
 
 /* ═══════════════════════════════════════════════════
    4. CODE PULSE — 左右分割，左大字右長條圖
@@ -548,7 +638,7 @@
   gap: 3rem;
   align-items: flex-start;
   padding: 2.5rem 0;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .code-pulse-left {
@@ -570,7 +660,7 @@
 
 .code-pulse-sub {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .code-pulse-right {
@@ -598,18 +688,18 @@
 
 .lang-bar-name {
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .lang-bar-time {
-  color: rgba(255,255,255,0.35);
-  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: "Courier New", monospace;
   font-size: 0.75rem;
 }
 
 .lang-bar-track {
   height: 6px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -618,7 +708,6 @@
   height: 100%;
   border-radius: 3px;
 }
-
 
 /* ═══════════════════════════════════════════════════
    5. HEATMAP — 獨立區塊，微妙背景
@@ -640,17 +729,20 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 0.85rem;
   font-weight: 500;
   transition: color 0.2s;
 }
-.heatmap-profile:hover { color: #c4b5fd; }
+.heatmap-profile:hover {
+  color: #c4b5fd;
+}
 
 .heatmap-avatar {
-  width: 26px; height: 26px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 1px solid rgba(127,90,240,0.25);
+  border: 1px solid rgba(127, 90, 240, 0.25);
 }
 
 .heatmap-total {
@@ -671,7 +763,7 @@
 
 .heatmap-total-label {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .refresh-icon-btn {
@@ -681,12 +773,16 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  background: rgba(127,90,240,0.1);
-  border: 1px solid rgba(127,90,240,0.35);
+  background: rgba(127, 90, 240, 0.1);
+  border: 1px solid rgba(127, 90, 240, 0.35);
   border-radius: 50%;
   cursor: pointer;
-  color: rgba(196,181,253,0.9);
-  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.4s;
+  color: rgba(196, 181, 253, 0.9);
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.4s;
   flex-shrink: 0;
   margin-left: 0.5rem;
 }
@@ -697,8 +793,8 @@
 }
 .refresh-icon-btn:hover {
   color: #fffffe;
-  background: rgba(127,90,240,0.18);
-  border-color: rgba(127,90,240,0.45);
+  background: rgba(127, 90, 240, 0.18);
+  border-color: rgba(127, 90, 240, 0.45);
   transform: rotate(180deg);
 }
 .refresh-icon-btn.spinning {
@@ -713,9 +809,9 @@
 .year-btn {
   padding: 4px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -723,12 +819,12 @@
   letter-spacing: 0.3px;
 }
 .year-btn:hover {
-  border-color: rgba(127,90,240,0.3);
-  color: rgba(255,255,255,0.65);
+  border-color: rgba(127, 90, 240, 0.3);
+  color: rgba(255, 255, 255, 0.65);
 }
 .year-btn.active {
-  background: rgba(127,90,240,0.15);
-  border-color: rgba(127,90,240,0.4);
+  background: rgba(127, 90, 240, 0.15);
+  border-color: rgba(127, 90, 240, 0.4);
   color: #c4b5fd;
 }
 
@@ -739,15 +835,19 @@
   padding: 2.5rem 1.2rem 0;
   margin: 0 -1.2rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127,90,240,0.25) transparent;
-  transition: opacity 0.3s ease, filter 0.3s ease;
+  scrollbar-color: rgba(127, 90, 240, 0.25) transparent;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 /* 刷新中：熱度圖淡出並失焦，loader 從上方淡入 */
 .heatmap-grid-wrapper.is-refreshing > .heatmap-grid {
   opacity: 0.25;
   filter: blur(2px) saturate(0.5);
   pointer-events: none;
-  transition: opacity 0.35s ease, filter 0.35s ease;
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease;
 }
 .heatmap-refresh-overlay {
   position: absolute;
@@ -770,9 +870,21 @@
   justify-content: center;
   animation: koimLoaderBreath 2.4s ease-in-out infinite;
 }
-.heatmap-refresh-overlay .koim-loader-core { width: 14px; height: 14px; }
-.heatmap-refresh-overlay .koim-loader-orbit-2 { inset: 9px; }
-@keyframes koimFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.heatmap-refresh-overlay .koim-loader-core {
+  width: 14px;
+  height: 14px;
+}
+.heatmap-refresh-overlay .koim-loader-orbit-2 {
+  inset: 9px;
+}
+@keyframes koimFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 .heatmap-grid {
   display: flex;
@@ -787,27 +899,43 @@
 }
 
 .heatmap-day {
-  width: 12px; height: 12px;
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
   cursor: pointer;
   transition: transform 0.15s;
   position: relative;
 }
-.heatmap-day:hover { transform: scale(1.4); }
+.heatmap-day:hover {
+  transform: scale(1.4);
+}
 
-.heatmap-day.level--1 { background: transparent; pointer-events: none; }
-.heatmap-day.level-0 { background: rgba(255,255,255,0.04); }
-.heatmap-day.level-1 { background: rgba(127,90,240,0.2); }
-.heatmap-day.level-2 { background: rgba(127,90,240,0.4); }
-.heatmap-day.level-3 { background: rgba(127,90,240,0.6); }
-.heatmap-day.level-4 { background: rgba(200,50,140,0.65); }
+.heatmap-day.level--1 {
+  background: transparent;
+  pointer-events: none;
+}
+.heatmap-day.level-0 {
+  background: rgba(255, 255, 255, 0.04);
+}
+.heatmap-day.level-1 {
+  background: rgba(127, 90, 240, 0.2);
+}
+.heatmap-day.level-2 {
+  background: rgba(127, 90, 240, 0.4);
+}
+.heatmap-day.level-3 {
+  background: rgba(127, 90, 240, 0.6);
+}
+.heatmap-day.level-4 {
+  background: rgba(200, 50, 140, 0.65);
+}
 
 .day-tooltip {
   position: absolute;
   bottom: 120%;
   left: 50%;
   transform: translateX(-50%) scale(0);
-  background: rgba(6,5,14,0.95);
+  background: rgba(6, 5, 14, 0.95);
   color: #fff;
   padding: 4px 8px;
   border-radius: 6px;
@@ -817,15 +945,16 @@
   z-index: 100;
   opacity: 0;
   transition: all 0.12s;
-  border: 1px solid rgba(127,90,240,0.25);
+  border: 1px solid rgba(127, 90, 240, 0.25);
 }
 .day-tooltip::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 100%; left: 50%;
+  top: 100%;
+  left: 50%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: rgba(6,5,14,0.95);
+  border-top-color: rgba(6, 5, 14, 0.95);
 }
 .heatmap-day:hover .day-tooltip {
   transform: translateX(-50%) scale(1);
@@ -833,7 +962,7 @@
 }
 .tooltip-date {
   font-size: 0.6rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   margin-top: 1px;
 }
 
@@ -844,22 +973,32 @@
   gap: 0.4rem;
   margin-top: 0.75rem;
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
 }
 .legend-squares {
   display: flex;
   gap: 2px;
 }
 .legend-square {
-  width: 10px; height: 10px;
+  width: 10px;
+  height: 10px;
   border-radius: 2px;
 }
-.legend-square.level-0 { background: rgba(255,255,255,0.04); }
-.legend-square.level-1 { background: rgba(127,90,240,0.2); }
-.legend-square.level-2 { background: rgba(127,90,240,0.4); }
-.legend-square.level-3 { background: rgba(127,90,240,0.6); }
-.legend-square.level-4 { background: rgba(200,50,140,0.65); }
-
+.legend-square.level-0 {
+  background: rgba(255, 255, 255, 0.04);
+}
+.legend-square.level-1 {
+  background: rgba(127, 90, 240, 0.2);
+}
+.legend-square.level-2 {
+  background: rgba(127, 90, 240, 0.4);
+}
+.legend-square.level-3 {
+  background: rgba(127, 90, 240, 0.6);
+}
+.legend-square.level-4 {
+  background: rgba(200, 50, 140, 0.65);
+}
 
 /* ═══════════════════════════════════════════════════
    6. COMMITS — 事件分組，每個 push 展開 commit 訊息
@@ -875,9 +1014,11 @@
 
 .commit-event {
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
-.commit-event:last-child { border-bottom: none; }
+.commit-event:last-child {
+  border-bottom: none;
+}
 
 .commit-event-header {
   display: flex;
@@ -887,7 +1028,8 @@
 }
 
 .commit-dot {
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #7f5af0;
   flex-shrink: 0;
@@ -896,12 +1038,12 @@
 .commit-repo {
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .commit-when {
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255, 255, 255, 0.25);
   white-space: nowrap;
   margin-left: auto;
   flex-shrink: 0;
@@ -925,22 +1067,22 @@
   transition: background 0.15s;
 }
 .commit-msg-row:hover {
-  background: rgba(127,90,240,0.06);
+  background: rgba(127, 90, 240, 0.06);
 }
 
 .commit-sha {
   font-size: 0.72rem;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   color: #7f5af0;
   flex-shrink: 0;
-  background: rgba(127,90,240,0.08);
+  background: rgba(127, 90, 240, 0.08);
   padding: 1px 6px;
   border-radius: 4px;
 }
 
 .commit-msg {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -949,10 +1091,9 @@
 
 .commit-more {
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255, 255, 255, 0.25);
   padding-left: 0.25rem;
 }
-
 
 /* ═══════════════════════════════════════════════════
    7. PROJECTS — 水平長條圖，無 card 包裝
@@ -982,28 +1123,27 @@
 
 .project-row-name {
   font-weight: 500;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .project-row-time {
-  color: rgba(255,255,255,0.3);
-  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: "Courier New", monospace;
   font-size: 0.75rem;
 }
 
 .project-row-track {
   height: 5px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .project-row-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(127,90,240,0.6), rgba(200,50,140,0.5));
+  background: linear-gradient(90deg, rgba(127, 90, 240, 0.6), rgba(200, 50, 140, 0.5));
   border-radius: 3px;
 }
-
 
 /* ═══════════════════════════════════════════════════
    SECTION LABEL — 統一的小型 label，所有段落共用
@@ -1018,12 +1158,11 @@
   display: block;
   font-size: 0.68rem;
   letter-spacing: 2.5px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 1rem;
 }
-
 
 /* ═══════════════════════════════════════════════════
    8. GAME GALLERY — 自動跑馬燈
@@ -1045,7 +1184,7 @@
 
 .game-gallery-count {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .game-marquee-wrapper {
@@ -1065,8 +1204,12 @@
 }
 
 @keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .game-gallery-item {
@@ -1081,7 +1224,7 @@
 
 .game-gallery-item img {
   width: 100%;
-  aspect-ratio: 460/215;
+  aspect-ratio: 460 / 215;
   object-fit: cover;
   display: block;
   transition: transform 0.3s;
@@ -1093,7 +1236,7 @@
 .game-gallery-info {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(6,5,14,0.9) 0%, transparent 55%);
+  background: linear-gradient(to top, rgba(6, 5, 14, 0.9) 0%, transparent 55%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -1104,13 +1247,14 @@
   color: #fffffe;
   font-weight: 500;
 }
-.game-gallery-item:hover .game-gallery-info { opacity: 1; }
+.game-gallery-item:hover .game-gallery-info {
+  opacity: 1;
+}
 
 .game-gallery-time {
   font-size: 0.65rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
 }
-
 
 /* ═══════════════════════════════════════════════════
    9. REPOS — 簡潔行列
@@ -1130,13 +1274,17 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   text-decoration: none;
   color: inherit;
   transition: opacity 0.2s;
 }
-.repo-row:last-child { border-bottom: none; }
-.repo-row:hover { opacity: 0.8; }
+.repo-row:last-child {
+  border-bottom: none;
+}
+.repo-row:hover {
+  opacity: 0.8;
+}
 
 .repo-row-left {
   min-width: 0;
@@ -1146,13 +1294,13 @@
 .repo-row-left h4 {
   font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 0.15rem;
 }
 
 .repo-row-left p {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1164,7 +1312,7 @@
   gap: 0.75rem;
   flex-shrink: 0;
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .repo-lang {
@@ -1174,10 +1322,10 @@
 }
 
 .lang-dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
-
 
 /* ═══════════════════════════════════════════════════
    共用 Utility
@@ -1185,10 +1333,9 @@
 .no-data-small {
   text-align: center;
   padding: 2rem 1rem;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 0.85rem;
 }
-
 
 /* ═══════════════════════════════════════════════════
    Responsive
@@ -1238,9 +1385,18 @@
     gap: 0.4rem;
   }
 
-  .activity-nebula-1 { width: 400px; height: 400px; }
-  .activity-nebula-2 { width: 320px; height: 320px; }
-  .activity-nebula-3 { width: 240px; height: 240px; }
+  .activity-nebula-1 {
+    width: 400px;
+    height: 400px;
+  }
+  .activity-nebula-2 {
+    width: 320px;
+    height: 320px;
+  }
+  .activity-nebula-3 {
+    width: 240px;
+    height: 240px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1262,14 +1418,23 @@
     display: none;
   }
 
-  .steam-profile-name { font-size: 1.2rem; }
-  .steam-recent-card { height: 110px; }
+  .steam-profile-name {
+    font-size: 1.2rem;
+  }
+  .steam-recent-card {
+    height: 110px;
+  }
 
   .heatmap-day {
-    width: 10px; height: 10px;
+    width: 10px;
+    height: 10px;
   }
-  .heatmap-week { gap: 2px; }
-  .heatmap-grid { gap: 2px; }
+  .heatmap-week {
+    gap: 2px;
+  }
+  .heatmap-grid {
+    gap: 2px;
+  }
 
   .game-gallery-item {
     width: 140px;
@@ -1281,21 +1446,39 @@
 }
 
 /* ── Commit 牆載入骨架（github 最慢 → 佔位避免版面跳動 + 瞬間彈出）── */
-.commit-skeleton { pointer-events: none; }
+.commit-skeleton {
+  pointer-events: none;
+}
 .commit-skeleton .sk-box {
   display: inline-block;
   height: 0.85em;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
   background-size: 200% 100%;
   animation: activity-sk-shimmer 1.4s ease-in-out infinite;
 }
-.commit-skeleton .commit-repo { width: 110px; }
-.commit-skeleton .commit-when { width: 56px; }
-.commit-skeleton .sk-line { display: block; height: 1em; margin: 5px 0; }
-.commit-skeleton .sk-line:nth-child(1) { width: 78%; }
-.commit-skeleton .sk-line:nth-child(2) { width: 54%; }
+.commit-skeleton .commit-repo {
+  width: 110px;
+}
+.commit-skeleton .commit-when {
+  width: 56px;
+}
+.commit-skeleton .sk-line {
+  display: block;
+  height: 1em;
+  margin: 5px 0;
+}
+.commit-skeleton .sk-line:nth-child(1) {
+  width: 78%;
+}
+.commit-skeleton .sk-line:nth-child(2) {
+  width: 54%;
+}
 @keyframes activity-sk-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

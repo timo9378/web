@@ -6,7 +6,7 @@
 }
 
 .journey-v2 .jt-timeline::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 156px;
   top: 26px;
@@ -28,7 +28,9 @@
   position: relative;
 }
 
-.jt-entry:last-child { padding-bottom: 0; }
+.jt-entry:last-child {
+  padding-bottom: 0;
+}
 
 .jt-rail {
   position: relative;
@@ -119,7 +121,9 @@
 }
 
 @media (max-width: 720px) {
-  .journey-v2 .jt-timeline::before { display: none; }
+  .journey-v2 .jt-timeline::before {
+    display: none;
+  }
   .jt-entry {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -128,5 +132,7 @@
     padding-top: 0;
     text-align: left;
   }
-  .jt-rail-dot { display: none; }
+  .jt-rail-dot {
+    display: none;
+  }
 }

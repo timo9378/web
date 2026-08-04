@@ -1,5 +1,6 @@
 /* 清空預設樣式 - overflow 由 index.css 統一處理 */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -23,9 +24,7 @@ html, body {
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   cursor: pointer;
-  background:
-    linear-gradient(135deg, rgba(127, 90, 240, 0.16) 0%, rgba(220, 50, 120, 0.10) 100%),
-    rgba(20, 18, 38, 0.5);
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.16) 0%, rgba(220, 50, 120, 0.1) 100%), rgba(20, 18, 38, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
@@ -42,15 +41,22 @@ html, body {
 }
 /* 漸層邊框：靜態淡，hover 才浮現 */
 .koim-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(224, 195, 252, 0.55), rgba(127, 90, 240, 0.45) 45%, rgba(220, 50, 120, 0.35));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(224, 195, 252, 0.55),
+    rgba(127, 90, 240, 0.45) 45%,
+    rgba(220, 50, 120, 0.35)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -58,7 +64,7 @@ html, body {
 }
 /* 底部光暈：hover 從下方升起 */
 .koim-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(120% 80% at 50% 120%, rgba(127, 90, 240, 0.32), transparent 60%);
@@ -67,7 +73,10 @@ html, body {
   pointer-events: none;
   z-index: 0;
 }
-.koim-btn > * { position: relative; z-index: 2; }
+.koim-btn > * {
+  position: relative;
+  z-index: 2;
+}
 .koim-btn:hover {
   color: #fff;
   transform: translateY(-1px);
@@ -77,9 +86,16 @@ html, body {
     0 8px 24px rgba(127, 90, 240, 0.22),
     0 0 32px rgba(220, 50, 120, 0.1);
 }
-.koim-btn:hover::before { opacity: 1; }
-.koim-btn:hover::after { opacity: 1; }
-.koim-btn:active { transform: translateY(0); transition-duration: 0.1s; }
+.koim-btn:hover::before {
+  opacity: 1;
+}
+.koim-btn:hover::after {
+  opacity: 1;
+}
+.koim-btn:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
 .koim-btn:focus-visible {
   outline: none;
   box-shadow:
@@ -97,7 +113,9 @@ html, body {
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 8px 26px rgba(127, 90, 240, 0.32);
 }
-.koim-btn--primary::before { display: none; }
+.koim-btn--primary::before {
+  display: none;
+}
 .koim-btn--primary:hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
@@ -118,8 +136,16 @@ html, body {
   box-shadow: 0 4px 14px rgba(127, 90, 240, 0.1);
 }
 
-.koim-btn--sm { padding: 0.45rem 0.95rem; font-size: 0.8rem; border-radius: 9px; }
-.koim-btn--lg { padding: 0.95rem 1.7rem; font-size: 0.95rem; border-radius: 14px; }
+.koim-btn--sm {
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8rem;
+  border-radius: 9px;
+}
+.koim-btn--lg {
+  padding: 0.95rem 1.7rem;
+  font-size: 0.95rem;
+  border-radius: 14px;
+}
 
 /* icon — 圓形純圖示按鈕（hover 才出現紫光暈 + 漸層描邊） */
 .koim-btn--icon {
@@ -128,24 +154,35 @@ html, body {
   padding: 0;
   border-radius: 50%;
 }
-.koim-btn--icon.koim-btn--sm { width: 32px; height: 32px; }
-.koim-btn--icon.koim-btn--lg { width: 46px; height: 46px; }
+.koim-btn--icon.koim-btn--sm {
+  width: 32px;
+  height: 32px;
+}
+.koim-btn--icon.koim-btn--lg {
+  width: 46px;
+  height: 46px;
+}
 .koim-btn--icon svg,
-.koim-btn--icon img { width: 1em; height: 1em; }
+.koim-btn--icon img {
+  width: 1em;
+  height: 1em;
+}
 
 /* active — 處於選中狀態（用於 tab / 年份篩選 / 反應已點等） */
 .koim-btn.is-active {
   color: #fff;
   border-color: transparent;
-  background:
-    linear-gradient(135deg, rgba(127, 90, 240, 0.5) 0%, rgba(220, 50, 120, 0.35) 100%),
-    rgba(20, 18, 38, 0.6);
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.5) 0%, rgba(220, 50, 120, 0.35) 100%), rgba(20, 18, 38, 0.6);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     0 6px 20px rgba(127, 90, 240, 0.28);
 }
-.koim-btn.is-active::before { opacity: 1; }
-.koim-btn.is-active::after { opacity: 0.6; }
+.koim-btn.is-active::before {
+  opacity: 1;
+}
+.koim-btn.is-active::after {
+  opacity: 0.6;
+}
 .koim-btn:disabled,
 .koim-btn[aria-disabled="true"] {
   opacity: 0.45;
@@ -161,8 +198,12 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .koim-btn,
   .koim-btn::before,
-  .koim-btn::after { transition: none; }
-  .koim-btn:hover { transform: none; }
+  .koim-btn::after {
+    transition: none;
+  }
+  .koim-btn:hover {
+    transform: none;
+  }
 }
 
 /* 確保 App 容器有背景色，否則星星看不見 */
@@ -172,16 +213,17 @@ html, body {
   background-color: #000010; /* 深藍黑色背景 */
   /* 將塵埃帶加回背景 */
   background-image:
-    /* 塵埃帶 (使用之前檔案中的值) */
-    linear-gradient(135deg, /* 對角線方向 */
+/* 塵埃帶 (使用之前檔案中的值) */
+    linear-gradient(
+      135deg /* 對角線方向 */,
       transparent 35%,
-      rgba(76, 76, 170, 0.253) 45%, /* 之前調整過的透明度 */
+      rgba(76, 76, 170, 0.253) 45% /* 之前調整過的透明度 */,
       rgba(60, 60, 175, 0.356) 55%,
       transparent 65%
     ),
     /* 現有的星雲效果 */
     radial-gradient(ellipse at 70% 30%, rgba(100, 80, 150, 0.15) 0%, transparent 70%), /* 深紫 */
-    radial-gradient(ellipse at 30% 70%, rgba(200, 80, 120, 0.1) 0%, transparent 60%),  /* 暗粉 */
+    radial-gradient(ellipse at 30% 70%, rgba(200, 80, 120, 0.1) 0%, transparent 60%), /* 暗粉 */
     radial-gradient(ellipse at 50% 50%, rgba(80, 150, 180, 0.12) 0%, transparent 80%), /* 薄藍綠 */
     linear-gradient(to bottom right, rgba(50, 30, 80, 0.1) 0%, transparent 100%); /* 對角線漸層 */
   background-blend-mode: screen; /* 使用 screen 混合模式 */

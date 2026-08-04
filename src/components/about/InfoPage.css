@@ -81,7 +81,9 @@
   color: rgba(216, 180, 254, 0.95);
   text-decoration: none;
   border-bottom: 1px dashed rgba(216, 180, 254, 0.35);
-  transition: border-color 0.18s ease, color 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 .info-page-content a:hover {
   color: rgba(244, 244, 245, 1);
@@ -92,7 +94,7 @@
   padding: 2px 6px;
   background: rgba(127, 90, 240, 0.16);
   border-radius: 4px;
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
   color: rgba(216, 180, 254, 1);
 }
@@ -115,7 +117,7 @@
   line-height: 1.7;
 }
 .info-page-timeline-date {
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.85rem;
   color: rgba(229, 229, 245, 0.45);
   letter-spacing: 0.02em;
@@ -173,7 +175,9 @@
   flex-direction: column;
   gap: 4px;
   text-decoration: none;
-  transition: transform 0.2s ease, color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
   /* 蓋掉 info-page-content 對 a 加的 dashed underline */
   border-bottom: none !important;
 }
@@ -219,7 +223,10 @@
   border-radius: 12px;
   text-decoration: none !important;
   border-bottom: none !important;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 .friend-card:hover {
   background: rgba(127, 90, 240, 0.08);
@@ -230,7 +237,9 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.friend-card-info { min-width: 0; }
+.friend-card-info {
+  min-width: 0;
+}
 .friend-card-name {
   color: rgba(244, 244, 245, 0.95);
   font-size: 0.95rem;
@@ -323,14 +332,18 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 .friends-modal-close:hover {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.95);
 }
 
-.friends-modal-form { padding: 18px 22px 22px; }
+.friends-modal-form {
+  padding: 18px 22px 22px;
+}
 .friends-modal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -362,7 +375,9 @@
   color: rgba(244, 244, 245, 0.95);
   font-size: 0.88rem;
   font-family: inherit;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 .friends-modal-field input:focus {
   outline: none;
@@ -387,7 +402,10 @@
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
 }
 .friends-modal-submit:hover {
   background: linear-gradient(135deg, rgba(127, 90, 240, 0.95), rgba(127, 90, 240, 0.7));
@@ -422,7 +440,9 @@
 
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 1024px) {
-  .info-page-header { max-width: 100%; }
+  .info-page-header {
+    max-width: 100%;
+  }
 }
 @media (max-width: 600px) {
   .info-page {

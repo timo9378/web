@@ -9,7 +9,7 @@
 
 /* ── Section Divider ── */
 .comments-block::before {
-  content: '';
+  content: "";
   display: block;
   width: 48px;
   height: 2px;
@@ -76,9 +76,9 @@
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: none;
@@ -86,16 +86,16 @@
 
 .mode-btn:hover,
 .mode-btn:focus {
-  border-color: rgba(127,90,240,0.3);
-  color: rgba(255,255,255,0.7);
+  border-color: rgba(127, 90, 240, 0.3);
+  color: rgba(255, 255, 255, 0.7);
   background: transparent;
   box-shadow: none;
 }
 
 .mode-btn.active {
-  border-color: rgba(127,90,240,0.4);
+  border-color: rgba(127, 90, 240, 0.4);
   color: #c4b5fd;
-  background: rgba(127,90,240,0.08);
+  background: rgba(127, 90, 240, 0.08);
 }
 
 .mode-avatar {
@@ -187,7 +187,7 @@
 
 .login-label {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .login-providers {
@@ -202,9 +202,9 @@
   gap: 8px;
   padding: 10px 24px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
   font-size: 0.88rem;
   transition: all 0.25s ease;
@@ -217,9 +217,9 @@
 
 .provider-btn:hover,
 .provider-btn:focus {
-  border-color: rgba(127,90,240,0.5);
+  border-color: rgba(127, 90, 240, 0.5);
   color: #c4b5fd;
-  background: rgba(127,90,240,0.08);
+  background: rgba(127, 90, 240, 0.08);
   box-shadow: none;
 }
 
@@ -328,7 +328,7 @@
 .captcha-q {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.3);
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: "SF Mono", "Fira Code", monospace;
 }
 
 .captcha-input {
@@ -363,7 +363,9 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -390,7 +392,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Error / Success ── */
@@ -563,7 +567,9 @@
   color: rgba(255, 255, 255, 0.25);
   font-size: 0.75rem;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s;
 }
 
 .action-btn:hover {

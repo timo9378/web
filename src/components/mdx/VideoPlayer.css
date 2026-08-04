@@ -39,8 +39,18 @@
   max-width: 100%;
   width: auto;
 }
-.vp--fullscreen { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
-.vp--fullscreen .vp-video { max-height: 100vh; max-width: 100vw; }
+.vp--fullscreen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+.vp--fullscreen .vp-video {
+  max-height: 100vh;
+  max-width: 100vw;
+}
 
 /* 未播放時的大播放鍵 */
 .vp-bigplay {
@@ -64,7 +74,9 @@
   font-size: 1.05rem;
   cursor: pointer;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-  transition: background 0.16s ease, transform 0.16s ease;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
 }
 .vp-bigplay:hover,
 .vp-bigplay:focus,
@@ -75,7 +87,10 @@
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
   outline: none;
 }
-.vp-bigplay:focus:not(:focus-visible) { background: rgba(18, 14, 30, 0.7); transform: translate(-50%, -50%); }
+.vp-bigplay:focus:not(:focus-visible) {
+  background: rgba(18, 14, 30, 0.7);
+  transform: translate(-50%, -50%);
+}
 
 /* 控制列：浮在影片底部的玻璃藥丸；播放中滑鼠離開會淡出 */
 .vp-bar {
@@ -96,10 +111,16 @@
   line-height: 1;
   opacity: 0;
   transform: translateY(4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
   pointer-events: none;
 }
-.vp-bar--show { opacity: 1; transform: none; pointer-events: auto; }
+.vp-bar--show {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
 
 .vp-btn {
   display: inline-flex;
@@ -118,7 +139,9 @@
   font-size: 0.8rem;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
 /* ⚠ 下載鍵是 <a>（要 href + download 屬性才觸發下載），而影片是嵌在文章內容裡的，
    所以會吃到 BlogPost.css 的 `.post-content a { border-bottom: 1px solid rgba(127,90,240,.3) }`
@@ -141,8 +164,14 @@
   box-shadow: none;
   outline: none;
 }
-.vp-btn:focus:not(:focus-visible) { background: transparent; color: rgba(255, 255, 255, 0.82); }
-.vp-btn:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.5); outline-offset: -1px; }
+.vp-btn:focus:not(:focus-visible) {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+}
+.vp-btn:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -1px;
+}
 /* 下載鍵是 <a>：全站 `a { color: var(--clr-button) }` 跟 `a:hover,a:focus { text-shadow: … }`
    會讓它變紫色還發光，跟旁邊的 <button> 不同調。明寫成跟其他鍵一樣。 */
 a.vp-btn,
@@ -154,7 +183,9 @@ a.vp-btn:active {
   text-decoration: none;
 }
 a.vp-btn:hover,
-a.vp-btn:focus-visible { color: #fff; }
+a.vp-btn:focus-visible {
+  color: #fff;
+}
 
 /* 進度條 */
 .vp-progress {
@@ -174,8 +205,13 @@ a.vp-btn:focus-visible { color: #fff; }
   height: 3px;
   border-radius: 999px;
 }
-.vp-progress-track { right: 0; background: rgba(255, 255, 255, 0.22); }
-.vp-progress-fill { background: #c4b5fd; }
+.vp-progress-track {
+  right: 0;
+  background: rgba(255, 255, 255, 0.22);
+}
+.vp-progress-fill {
+  background: #c4b5fd;
+}
 .vp-progress-knob {
   position: absolute;
   width: 9px;
@@ -188,8 +224,12 @@ a.vp-btn:focus-visible { color: #fff; }
   transition: opacity 0.14s ease;
 }
 .vp-progress:hover .vp-progress-knob,
-.vp-progress:focus-visible .vp-progress-knob { opacity: 1; }
-.vp-progress:focus-visible .vp-progress-track { background: rgba(196, 181, 253, 0.5); }
+.vp-progress:focus-visible .vp-progress-knob {
+  opacity: 1;
+}
+.vp-progress:focus-visible .vp-progress-track {
+  background: rgba(196, 181, 253, 0.5);
+}
 
 .vp-time {
   flex: 0 0 auto;
@@ -199,7 +239,9 @@ a.vp-btn:focus-visible { color: #fff; }
   white-space: nowrap;
 }
 @media (max-width: 480px) {
-  .vp-time { display: none; }
+  .vp-time {
+    display: none;
+  }
 }
 
 /* ?debug=video 的診斷輸出 */

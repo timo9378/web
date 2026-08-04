@@ -68,5 +68,7 @@
     grid-template-columns: 1fr;
     gap: 32px;
   }
-  .about-facts { position: static; }
+  .about-facts {
+    position: static;
+  }
 }
