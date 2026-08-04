@@ -131,7 +131,18 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
               ) : (
                 /* 降級卡：沒有 og:image 時用 favicon + 站名撐版面，高度與圖片卡一致 */
                 <div className="lhp-fallback">
-                  {data?.favicon && <img className="lhp-favicon" src={proxied(data.favicon)} alt="" loading="lazy" />}
+                  {/* ⚠ favicon 可能根本不存在（站方沒宣告時後端只能猜 /favicon.ico，
+                      而很多站沒有那支檔）。抓不到時把 <img> 自己藏起來——不處理的話
+                      降級卡上會掛一個瀏覽器預設的破圖示，比沒有圖還難看。 */}
+                  {data?.favicon && (
+                    <img
+                      className="lhp-favicon"
+                      src={proxied(data.favicon)}
+                      alt=""
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
                   <span className="lhp-site">{data?.site_name ?? new URL(href, 'https://koimsurai.com').hostname}</span>
                 </div>
               )}

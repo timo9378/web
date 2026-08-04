@@ -66,7 +66,8 @@ pub struct LinkPreviewResponse {
     pub image: Option<String>,
     /// 站名（og:site_name），沒有則退回 host
     pub site_name: Option<String>,
-    /// favicon（固定用 /favicon.ico 的絕對路徑，降級卡用）
+    /// favicon 的絕對網址（降級卡用）。優先取站方 `<link rel="icon">` 宣告的那支，
+    /// 沒宣告才退回猜 `/favicon.ico`——後者很多站根本沒有（見 `link_icon_href`）。
     pub favicon: Option<String>,
 }
 
@@ -124,6 +125,29 @@ fn decode_entities(s: &str) -> String {
 /// 顯示用文字的長度上限。只給標題／摘要／站名——**不要用在網址上**。
 fn clamp_text(s: String) -> String {
     s.chars().take(400).collect()
+}
+
+/// `<link rel="…icon…" href="…">` 的 href。
+///
+/// 為什麼需要：預設的 `https://{host}/favicon.ico` 是**猜**的，而很多站沒有那支檔——
+/// 實測 zed.dev 回 500，它宣告的是 `/favicon_black_16.png`。猜錯的後果是降級卡上
+/// 掛一個破圖示（沒有 og:image 的站才會走到降級卡，所以特別顯眼）。
+///
+/// `rel` 的寫法很雜（`icon`／`shortcut icon`／`apple-touch-icon`／大小寫混用），
+/// 所以用「含 icon 這個字」來認，跟 `meta_content` 一樣走輕量掃描不引入 DOM parser。
+/// 取**第一個**符合的：站方通常把主要的那支寫在前面。
+fn link_icon_href(html: &str) -> Option<String> {
+    let re = regex::Regex::new(
+        r#"(?is)<link[^>]+rel\s*=\s*["'][^"']*icon[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']"#,
+    )
+    .ok()?;
+    // 屬性順序也可能相反（href 在 rel 前面）
+    let re2 = regex::Regex::new(
+        r#"(?is)<link[^>]+href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["'][^"']*icon[^"']*["']"#,
+    )
+    .ok()?;
+    let pick = |c: regex::Captures<'_>| c.get(1).map(|m| decode_entities(m.as_str().trim()));
+    re.captures(html).and_then(pick).or_else(|| re2.captures(html).and_then(pick)).filter(|s| !s.is_empty())
 }
 
 /// 相對路徑 → 絕對 URL（og:image 常給相對路徑）
@@ -287,6 +311,12 @@ pub async fn link_preview(
             .and_then(|img| absolutize(&url, &img));
         if let Some(sn) = meta_content(&html, &["og:site_name"]) {
             out.site_name = Some(clamp_text(sn));
+        }
+        // 站方自己宣告的 icon 優先於猜的 /favicon.ico——很多站根本沒有那支檔。
+        // 實測 zed.dev/favicon.ico 是 500，它宣告的是 /favicon_black_16.png，
+        // 於是沒有 og:image 的降級卡上就掛著一個破圖示。
+        if let Some(icon) = link_icon_href(&html).and_then(|href| absolutize(&url, &href)) {
+            out.favicon = Some(icon);
         }
 
         // 寫回快取（UPSERT；失敗不影響回應）

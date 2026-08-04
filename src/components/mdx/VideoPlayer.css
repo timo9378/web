@@ -120,6 +120,14 @@
   text-decoration: none;
   transition: background 0.14s ease, color 0.14s ease;
 }
+/* ⚠ 下載鍵是 <a>（要 href + download 屬性才觸發下載），而影片是嵌在文章內容裡的，
+   所以會吃到 BlogPost.css 的 `.post-content a { border-bottom: 1px solid rgba(127,90,240,.3) }`
+   —— 圖示底下多一條紫線。`border: 0` 擋不住，那條規則的特異性 (0,1,1) 比 .vp-btn (0,1,0) 高。
+   這裡用 `.vp .vp-btn`（0,2,0）壓過去；同一組控制鍵裡只有這一個是 <a>，其餘是 <button>，
+   全部一起寫才不會日後某個改成連結時又冒出來。 */
+.vp .vp-btn {
+  border-bottom: none;
+}
 /* ⚠ index.css 有全站的 `button:hover, button:focus { background:#6a4acf; box-shadow:… }`，
    特異性 (0,1,1) 壓得過單純的 .vp-btn (0,1,0)——不明寫 :focus / :active 的話，按過的鍵會留下
    一塊紫色底＋紫光。這裡把三個狀態一次蓋掉，只留 focus-visible 的細框給鍵盤使用者。 */

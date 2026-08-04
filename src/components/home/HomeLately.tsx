@@ -52,7 +52,16 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
     else byMonth.set(m, [p]);
   }
   const clusters = [...byMonth.entries()].map(([month, posts]) => ({ month, posts })).sort((a, b) => a.month - b.month);
+  /** 月份刻度（下方那排 1..12）的位置＝該月中點。這條不能夾，不然未來的月份會全擠在一起。 */
   const monthPct = (m: number) => ((m + 0.5) / 12) * 100;
+  /**
+   * 星球的位置。基準同樣是月中，但**當月要夾在「今天」以內**。
+   *
+   * ⚠ 星球畫在月中（8 月＝62.5%）而「今天」畫的是實際日期（8/4≈58.9%），兩套刻度
+   *   混在一起的結果是：最新那顆星球跑到「今天」右邊，看起來像有還沒發生的文章。
+   *   夾住之後，進行中的那個月停在今天的位置，已經過完的月份照舊落在月中刻度上。
+   */
+  const clusterPct = (m: number) => Math.min(monthPct(m), nowPct);
   const monthName = (m: number) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'long' });
 
   return (
@@ -78,7 +87,7 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
             <div
               key={month}
               className={open ? 'orbit-month orbit-month--open' : 'orbit-month'}
-              style={{ left: `${monthPct(month)}%` }}
+              style={{ left: `${clusterPct(month)}%` }}
               onMouseEnter={() => openNow(month)}
               onMouseLeave={closeSoon}
               onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpenMonth(null); }}
