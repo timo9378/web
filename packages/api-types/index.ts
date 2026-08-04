@@ -562,7 +562,10 @@ export type LinkPreviewResponse = {
 	image: string | null,
 	/**  站名（og:site_name），沒有則退回 host */
 	site_name: string | null,
-	/**  favicon（固定用 /favicon.ico 的絕對路徑，降級卡用） */
+	/**
+	 *  favicon 的絕對網址（降級卡用）。優先取站方 `<link rel="icon">` 宣告的那支，
+	 *  沒宣告才退回猜 `/favicon.ico`——後者很多站根本沒有（見 `link_icon_href`）。
+	 */
 	favicon: string | null,
 };
 
