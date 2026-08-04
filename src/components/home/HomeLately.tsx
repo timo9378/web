@@ -23,14 +23,6 @@ function timeAgo(iso: string, t: TFunction) {
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-/** 年度軌跡：把日期轉成 0~100% 位置 */
-function yearPct(iso: string) {
-  const d = new Date(String(iso).replace(' ', 'T'));
-  const start = new Date(d.getFullYear(), 0, 1);
-  const end = new Date(d.getFullYear() + 1, 0, 1);
-  return ((d.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100;
-}
-
 /** 年度軌跡：依「月份」分組。每月一個群組節點（大小 ∝ 篇數、點擊區 ≥24px → 過 a11y target-size），
  *  hover / 點擊 / focus 冒出當月文章標題清單（可點）。取代舊「每篇一個 7px 點」的做法。 */
 function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t: TFunction; locale: string }) {
@@ -41,7 +33,12 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
   const closeSoon = () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); closeTimerRef.current = setTimeout(() => setOpenMonth(null), 160); };
 
   // 「今」的位置只算一次（new Date() 不能在 render 期直接呼叫 → 放 state initializer）。
-  const [nowPct] = useState(() => yearPct(new Date().toISOString()));
+  const [now] = useState(() => new Date());
+  const year = now.getFullYear();
+  const yearStart = new Date(year, 0, 1).getTime();
+  const yearSpan = new Date(year + 1, 0, 1).getTime() - yearStart;
+  /** 一年之中的位置（0~100%）。用實際毫秒算，所以各月的寬度是真的（2 月窄、8 月寬）。 */
+  const pct = (ms: number) => ((ms - yearStart) / yearSpan) * 100;
 
   // 依月份（0-11）分組，只留有文章的月份；每篇連結仍可點（在清單裡）。
   const byMonth = new Map<number, DigestTimeline[]>();
@@ -52,16 +49,26 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
     else byMonth.set(m, [p]);
   }
   const clusters = [...byMonth.entries()].map(([month, posts]) => ({ month, posts })).sort((a, b) => a.month - b.month);
-  /** 月份刻度（下方那排 1..12）的位置＝該月中點。這條不能夾，不然未來的月份會全擠在一起。 */
-  const monthPct = (m: number) => ((m + 0.5) / 12) * 100;
+  /** 月份分界（每月 1 號）。m 可以給 12＝隔年 1/1＝100%。 */
+  const monthStartPct = (m: number) => pct(new Date(year, m, 1).getTime());
+  /** 月份標籤（下方那排 1..12）＝該月正中間。 */
+  const monthPct = (m: number) => (monthStartPct(m) + monthStartPct(m + 1)) / 2;
   /**
-   * 星球的位置。基準同樣是月中，但**當月要夾在「今天」以內**。
+   * 星球一律放**該月正中間**，跟下方標籤對齊——這張圖是「每月一顆」，星球代表的是
+   * 整個月而不是某一天，所以進行中的月份也照樣放月中（就當成當月）。
    *
-   * ⚠ 星球畫在月中（8 月＝62.5%）而「今天」畫的是實際日期（8/4≈58.9%），兩套刻度
-   *   混在一起的結果是：最新那顆星球跑到「今天」右邊，看起來像有還沒發生的文章。
-   *   夾住之後，進行中的那個月停在今天的位置，已經過完的月份照舊落在月中刻度上。
+   * 「今天」那顆北極星則放在**當月與下個月之間的空檔**（見下方 nowMarkPct），
+   * 於是它永遠在最新那顆星球右邊、又剛好落在兩顆星球中間，同高度也不會互相蓋住。
+   *
+   * ⚠ 試過另外兩種都不行，別再走回去：
+   *   1. 星球放月中 + 北極星放實際日期 → 月初時北極星在當月星球左邊，看起來像有還沒發生的文章。
+   *   2. 星球放該月貼文的平均日期 → 日期最準，但相鄰月份的貼文只差幾天時兩顆會黏在一起
+   *      （實際發生過：七月底與八月初的星球疊住），疏密不均、也對不上標籤。
    */
-  const clusterPct = (m: number) => Math.min(monthPct(m), nowPct);
+  const clusterPct = (m: number) => monthPct(m);
+  /** 北極星＝當月與下個月的正中間（12 月時取到年底）。 */
+  const nowMonth = now.getMonth();
+  const nowMarkPct = (monthPct(nowMonth) + (nowMonth === 11 ? 100 : monthPct(nowMonth + 1))) / 2;
   const monthName = (m: number) => new Date(2000, m, 1).toLocaleDateString(locale, { month: 'long' });
 
   return (
@@ -69,6 +76,11 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
       <h2 className="lately-h">{t('home.lately.orbitTitle')}</h2>
       <div className="orbit-track">
         <div className="orbit-line" />
+        {/* 月份分界的細刻線（只畫 2~12 月的月初，頭尾不畫）。標籤在月正中，光看標籤
+            分不出「8/4」該落在哪一段——有分界線才讀得出「今天」已經進入八月。 */}
+        {Array.from({ length: 11 }, (_, i) => (
+          <span key={`e${i + 1}`} className="orbit-month-edge" style={{ left: `${monthStartPct(i + 1)}%` }} aria-hidden />
+        ))}
         {Array.from({ length: 12 }, (_, m) => (
           <span key={`m${m}`} className="orbit-month-tick" style={{ left: `${monthPct(m)}%` }}>{m + 1}</span>
         ))}
@@ -123,7 +135,11 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
             </div>
           );
         })}
-        <span className="orbit-now" style={{ left: `${nowPct}%` }} data-title={t('home.lately.today')} />
+        {/* 北極星畫在「當月星球」與「下個月」的正中間，不是今天的實際日期。
+            實際日期跟當月星球本來就只差幾天，在一年的尺度上只有幾個像素 → 同高度必然疊住。
+            放進兩個月的空檔之後，它永遠在最新那顆星球的右邊、兩側都留白，
+            不需要靠高低錯開就不會互相蓋住。刻意的取捨，別改回 nowPct。 */}
+        <span className="orbit-now" style={{ left: `${nowMarkPct}%` }} data-title={t('home.lately.today')} />
       </div>
       <div className="orbit-stat">
         {t('home.lately.orbitStat', { count: timeline.length })}

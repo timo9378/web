@@ -145,8 +145,11 @@
 /* ── 年度軌跡 ── */
 .lately-orbit { margin-top: 72px; }
 
+/* 軌道線的 y 由這個變數決定；星球、月份刻度、「今天」都以它為基準，
+   要挪整條軌道只改這一個值（以前是四個地方各寫死一個數字）。 */
 .orbit-track {
   position: relative;
+  --orbit-line-y: 20px;
   height: 64px;
   margin: 8px 6px 0;
 }
@@ -155,7 +158,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 20px;
+  top: var(--orbit-line-y);
   height: 1px;
   background: linear-gradient(90deg,
     rgba(255, 255, 255, 0.04),
@@ -165,9 +168,20 @@
 }
 
 /* 月份標籤（12 個，取代舊 4 季） */
+/* 月份分界（每月 1 號）的細刻線，從軌道線往下一小截。 */
+.orbit-month-edge {
+  position: absolute;
+  top: var(--orbit-line-y);
+  width: 1px;
+  height: 7px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.11);
+  pointer-events: none;
+}
+
 .orbit-month-tick {
   position: absolute;
-  top: 40px;
+  top: calc(var(--orbit-line-y) + 20px);
   transform: translateX(-50%);
   font-size: 0.6rem;
   color: rgba(255, 255, 255, 0.2);
@@ -178,7 +192,7 @@
 /* 月份群組：點擊區 ≥24px（過 a11y target-size），內含大小 ∝ 篇數的視覺點 */
 .orbit-month {
   position: absolute;
-  top: 20px;
+  top: var(--orbit-line-y);
   transform: translate(-50%, -50%);
 }
 .orbit-month-btn {
@@ -347,9 +361,11 @@
    ⚠ 星芒不能用 ::before/::after 畫——::after 已經被下方的 hover tooltip
    （content: attr(data-title)）佔走，兩份規則會合併成一個灰色圓角方塊。
    所以整顆星改用「三層背景漸層」在元素本身畫：水平星芒 + 垂直星芒 + 亮核。 */
+/* 跟星球同高度（都在軌道線上）。不會互相蓋住是靠**位置**解決的——它畫在當月與下個月的
+   空檔中間，兩側都留白（見 HomeLately.tsx 的 nowMarkPct），不需要再靠高低錯開。 */
 .orbit-now {
   position: absolute;
-  top: 20px;
+  top: var(--orbit-line-y);
   width: 30px;
   height: 20px;
   transform: translate(-50%, -50%);
