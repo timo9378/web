@@ -112,6 +112,24 @@ const DIRECTIVES = {
   // 星空背景用 Worker；bundler 產的 worker 走 blob:
   'worker-src': ["'self'", 'blob:'],
   'manifest-src': ["'self'"],
+
+  // 違規回報 → 自家端點，由後端轉發到自架的 GlitchTip
+  // （backend/src/handlers/report_tunnel.rs）。
+  //
+  // 這是收緊上面那條 `'unsafe-inline'` 的**前提**：現在只能靠 165 條 e2e 掃過的路徑
+  // 推測會弄壞什麼，而掃不到的（某個只有特定文章才載入的元件、某個罕見的 OAuth
+  // 頭像網域）要等到真的有讀者踩到才會知道——而 CSP 擋東西時前台是靜默的。
+  // 有了這條，真實流量會直接告訴你「哪條 directive 擋掉了什麼、發生幾次」。
+  //
+  // ⚠️ 為什麼是同源路徑而不是 GlitchTip 的網址：`report-uri` 不受 `connect-src`
+  //   管（它是 CSP 自己的通道），但指到外部網域會讓「讀者的瀏覽器直接連第三方」
+  //   這件事重新出現——即使那個第三方是自己的機器。走 /api 的話這條路徑跟站上
+  //   其他請求沒有區別。
+  //
+  // ⚠️ `report-uri` 已被標記為 deprecated、`report-to` 是後繼者，但後者需要
+  //   `Reporting-Endpoints` 標頭且各家支援度仍不一致。目前主流瀏覽器都還吃
+  //   `report-uri`，等 `report-to` 普及了再換。
+  'report-uri': ['/api/csp-report'],
 };
 
 /** 送進 header 的字串（單行，directive 之間用 `; ` 分隔）。 */

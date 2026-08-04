@@ -104,6 +104,24 @@ const ISR_ROUTE_RULES = {
 };
 
 export default defineConfig({
+  // Sentry 的 tree-shaking 旗標。這些是 SDK 內部拿來包住整段功能的常數，
+  // 在 build 時替換成 false，那幾塊就會被搖掉。
+  //
+  // ⚠️ 但這幾個旗標只是**次要**的那一半。真正決定大小的是 import 的寫法：
+  //   `const Sentry = await import('@sentry/browser')` 這種 namespace import 會讓
+  //   bundler 不敢搖掉任何 export（理論上可以動態存取），整包 Replay(rrweb) +
+  //   Feedback + browserTracing 都留著 → 135 KB gz。改成 `const { init } = await
+  //   import(...)` 之後是 26 KB gz。見 src/lib/errorReporting.ts。
+  //
+  // ⚠️ 這幾個常數要**存在**才行（不然 SDK 裡的 `typeof __SENTRY_DEBUG__` 會炸），
+  //   所以是 define 成 false 而不是刪掉。
+  define: {
+    __SENTRY_DEBUG__: 'false',
+    __SENTRY_TRACING__: 'false',
+    __RRWEB_EXCLUDE_CANVAS__: 'true',
+    __RRWEB_EXCLUDE_IFRAME__: 'true',
+    __RRWEB_EXCLUDE_SHADOW_DOM__: 'true',
+  },
   resolve: {
     alias: [
       { find: '@', replacement: path.resolve(import.meta.dirname, './src') },

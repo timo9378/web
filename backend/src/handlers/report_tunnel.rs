@@ -64,8 +64,11 @@ impl Dsn {
         Some(Self { public_key, origin, project_id })
     }
 
+    /// ⚠️ `?sentry_key=` **不能省**。轉發時我們不帶 `X-Sentry-Auth`，而 GlitchTip
+    ///   找不到任何認證就回 `403 {"detail": "Denied"}`——而且那是「送出成功」的一次
+    ///   HTTP 請求，沒有檢查狀態碼的話完全看不出來。
     fn envelope_url(&self) -> String {
-        format!("{}/api/{}/envelope/", self.origin, self.project_id)
+        format!("{}/api/{}/envelope/?sentry_key={}", self.origin, self.project_id, self.public_key)
     }
 
     fn security_url(&self) -> String {
@@ -73,9 +76,28 @@ impl Dsn {
     }
 }
 
-/// 前端專案的 DSN（`SENTRY_FRONTEND_DSN`）。沒設 → 兩個端點都直接回 202 不做事。
+/// 前端專案的**真** DSN（`SENTRY_FRONTEND_DSN`）。只有後端知道。
+/// 沒設 → 兩個端點都直接回 202 不做事。
 fn frontend_dsn() -> Option<Dsn> {
     Dsn::parse(&std::env::var("SENTRY_FRONTEND_DSN").ok()?)
+}
+
+/// 前端 bundle 裡那把 key（`SENTRY_TUNNEL_PUBLIC_KEY`）。
+///
+/// 為什麼要有兩把：Sentry SDK 在 `tunnel` 模式下**仍然需要一個 DSN**，它會把 dsn
+/// 塞進 envelope 的 header——也就是說那把 key 一定會出現在 bundle 裡。實測 GlitchTip
+/// 只認網址上的 `?sentry_key=`，**不驗** envelope 裡的 dsn 欄位，所以前端可以拿一把
+/// 隨便產的假 key，由這裡在轉發時換成真的。
+///
+/// 換來的是：bundle 裡那把 key 只對「這個有速率限制的端點」有效，直接拿去打
+/// GlitchTip 的 ingest 是無效的。也讓這把公開 key 可以單獨輪替，不必動 GlitchTip。
+///
+/// 沒設就退回用真 key 比對（等於不做這層區隔，功能照常）。
+fn expected_public_key(real: &Dsn) -> String {
+    std::env::var("SENTRY_TUNNEL_PUBLIC_KEY")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| real.public_key.clone())
 }
 
 /// 兩邊等長才逐位元組比，避免用比較耗時洩漏 key 的前綴。
@@ -139,10 +161,10 @@ pub async fn tunnel(State(state): State<AppState>, headers: HeaderMap, body: Byt
         return StatusCode::ACCEPTED;
     };
     let claimed = header.get("dsn").and_then(|v| v.as_str()).unwrap_or_default();
-    // 只認自己那一把 key。不驗的話這裡就變成一個對外開放的 Sentry 轉發器，
+    // 只認自己那一把公開 key。不驗的話這裡就變成一個對外開放的 Sentry 轉發器，
     // 任何人都能拿它往**別人的**專案送東西（被當成濫用來源的那種）。
     match Dsn::parse(claimed) {
-        Some(d) if key_matches(&d.public_key, &dsn.public_key) => {}
+        Some(d) if key_matches(&d.public_key, &expected_public_key(&dsn)) => {}
         _ => {
             tracing::warn!("envelope 的 DSN 不符，丟棄");
             return StatusCode::ACCEPTED;

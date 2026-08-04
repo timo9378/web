@@ -20,6 +20,16 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
     void import('../lib/reportWebVitals').then((m) => m.initWebVitals());
   }, []);
 
+  // 錯誤上報 → 自架 GlitchTip。同樣動態載入（@sentry/react 不進關鍵 bundle）。
+  //
+  // ⚠️ 掛在 AppShell 而不是更早的位置，代價是**它初始化之前的錯誤抓不到**
+  //   （hydration 之前、以及 AppShell 自己 render 失敗的情況）。
+  //   要抓那些就得進 SSR 產的 inline script，而那跟 CSP 的 'unsafe-inline' 綁在一起，
+  //   等收緊那條時再一起處理。目前的取捨是：不為了少數幾類錯誤把 SDK 提到關鍵路徑上。
+  useEffect(() => {
+    void import('../lib/errorReporting').then((m) => m.initErrorReporting());
+  }, []);
+
   // 文章內頁（BlogPost）是重 lazy chunk（BlogPost.css + shiki + mermaid）。頁面 idle 後
   // 先暖起來——否則首次點進文章會先閃一下 BlogPostPage 極簡 fallback（純 sans-serif 無樣式）
   // 才換成完整版。暖過後 Suspense 立即解析、fallback 不再出現。import 路徑與路由的 lazy
