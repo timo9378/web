@@ -97,7 +97,7 @@
     "remark-github-blockquote-alert": "^2.1.0",
     "shiki": "^4.0.2",
     "sonner": "^1.7.1",
-    "swiper": "^12.1.2",
+    "swiper": "^14.0.7",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.185.1",
