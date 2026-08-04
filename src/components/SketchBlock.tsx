@@ -46,6 +46,17 @@ export default function SketchBlock({ chart = '', title }: SketchBlockProps) {
 
     void (async () => {
       try {
+        // ⚠️ 一定要在 import excalidraw **之前**設。它在模組初始化時就會讀這個值決定
+        //   字體的 base URL，設晚了就已經指向 esm.sh 了。
+        //
+        //   不設的話它抓 https://esm.sh/@excalidraw/excalidraw@<ver>/dist/prod/fonts/…，
+        //   被 CSP 的 font-src 擋掉——而擋掉是**靜默的**：圖照樣畫出來，只是文字退回
+        //   系統字型。這件事是 CSP report 上線後幾分鐘自己回報的，在那之前沒人發現。
+        //
+        //   字體由 vite.config.start.ts 的 copyExcalidrawFonts() 複製到 public/excalidraw/fonts。
+        //   base 對應的是套件的 dist/prod/（字體在其下的 ./fonts/）。
+        (window as unknown as { EXCALIDRAW_ASSET_PATH: string }).EXCALIDRAW_ASSET_PATH = '/excalidraw/';
+
         const [m2eMod, excalMod] = await Promise.all([
           import('@excalidraw/mermaid-to-excalidraw'),
           import('@excalidraw/excalidraw'),

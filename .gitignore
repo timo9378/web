@@ -107,4 +107,6 @@ junit-*.xml
 
 # monaco 的 min/vs（build 時由 vite plugin 從 node_modules 複製，約 15MB，不入庫）
 public/monaco/
+# excalidraw 的字體（build 時由 vite plugin 從 node_modules 複製，約 14MB，不入庫）
+public/excalidraw/
 .env.sourcemaps

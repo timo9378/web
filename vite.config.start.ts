@@ -57,6 +57,51 @@ function copyMonacoAssets(): Plugin {
   };
 }
 
+/**
+ * Excalidraw 的字體自架。
+ *
+ * 為什麼需要：它預設從 `https://esm.sh/@excalidraw/excalidraw@<ver>/dist/prod/` 抓字體，
+ * 而 CSP 的 `font-src 'self' data:` 會擋掉——**而且擋掉時前台是靜默的**，圖照樣畫出來，
+ * 只是文字退回系統字型。這件事是 CSP report 上線後幾分鐘內自己回報的
+ * （`Blocked 'font' from 'esm.sh'`，來源 /blog/crowdsec-replacing-fail2ban），
+ * 在那之前沒有任何人會發現。
+ *
+ * ⚠️ SketchBlock 的 `skipInliningFonts: true` **不能解決這件事**。那個選項只擋
+ *   「把字體內嵌進匯出的 SVG」，渲染／量測時該抓的還是會抓。
+ *
+ * 路徑對應：base 是 dist/prod/，字體在它底下的 ./fonts/ →
+ * 設 EXCALIDRAW_ASSET_PATH='/excalidraw/' 就要 public/excalidraw/fonts/。
+ */
+function copyExcalidrawFonts(): Plugin {
+  return {
+    name: 'copy-excalidraw-fonts',
+    buildStart() {
+      const require = createRequire(import.meta.url);
+      // ⚠️ 不能用 require.resolve('@excalidraw/excalidraw/package.json')——它的 exports
+      //   沒有開放 ./package.json（ERR_PACKAGE_PATH_NOT_EXPORTED）。從主入口反推。
+      const entry = require.resolve('@excalidraw/excalidraw');
+      const pkgRoot = entry.slice(0, entry.indexOf(`${path.sep}dist${path.sep}`));
+      const version = (
+        JSON.parse(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8')) as { version: string }
+      ).version;
+      const src = path.join(pkgRoot, 'dist/prod/fonts');
+      const destRoot = path.resolve(import.meta.dirname, 'public/excalidraw');
+      const stamp = path.join(destRoot, '.version');
+
+      if (fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8') === version) return;
+
+      fs.rmSync(destRoot, { recursive: true, force: true });
+      fs.mkdirSync(destRoot, { recursive: true });
+      // 14 MB，其中 13 MB 是 Xiaolai（CJK 手寫體，234 個 woff2 子集）。
+      // 不砍它：子集是按 unicode-range 需要才下載，佔磁碟不佔頻寬，
+      // 而砍掉的後果是圖裡的中文變成豆腐——同樣是靜默的。
+      fs.cpSync(src, path.join(destRoot, 'fonts'), { recursive: true });
+      fs.writeFileSync(stamp, version);
+      this.info(`@excalidraw/excalidraw@${version} fonts → public/excalidraw/fonts`);
+    },
+  };
+}
+
 // 不做 prerender,改走 ISR(見下方 routeRules)。理由是實測出來的,不是偏好:
 //   在 nitro/vite + TanStack Start 下,prerender 產出的 HTML 寫進 .output/public 後
 //   *不會被 nitro 註冊成靜態資產* —— /assets/*.css 與 /favicon.ico 都 200,唯獨
@@ -150,6 +195,7 @@ export default defineConfig({
   ssr: { noExternal: ['react-helmet-async'] },
   plugins: [
     copyMonacoAssets(),
+    copyExcalidrawFonts(),
     tanstackStart(),
     viteReact(),
     nitro({
