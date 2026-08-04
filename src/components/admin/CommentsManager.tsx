@@ -406,7 +406,7 @@ export default function CommentsManager() {
               「{replyDialog.comment?.content.substring(0, 100)}...」
             </div>
             <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="輸入回覆內容..."
-              className="w-full min-h-[100px] rounded-lg border border-border/40 bg-transparent p-3 text-sm text-foreground/90 resize-none outline-none focus:border-purple-500/40" />
+              className="w-full min-h-[100px] rounded-lg border border-border/40 bg-transparent p-3 text-sm text-foreground/90 resize-none outline-hidden focus:border-purple-500/40" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplyDialog({ open: false, comment: null })}>取消</Button>
@@ -423,7 +423,7 @@ export default function CommentsManager() {
             <DialogDescription>修改留言內容，修改後讀者端將看到更新後的版本。</DialogDescription>
           </DialogHeader>
           <textarea value={editText} onChange={e => setEditText(e.target.value)}
-            className="w-full min-h-[120px] rounded-lg border border-border/40 bg-transparent p-3 text-sm text-foreground/90 resize-none outline-none focus:border-blue-500/40" />
+            className="w-full min-h-[120px] rounded-lg border border-border/40 bg-transparent p-3 text-sm text-foreground/90 resize-none outline-hidden focus:border-blue-500/40" />
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialog({ open: false, comment: null })}>取消</Button>
             <Button onClick={() => { void handleEdit(); }}>儲存修改</Button>

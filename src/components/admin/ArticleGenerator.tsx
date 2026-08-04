@@ -598,7 +598,7 @@ export default function ArticleGenerator() {
                             onChange={(e) => setConversationText(e.target.value)}
                             placeholder="在這裡貼上你與 AI 的對話、筆記、或任何原始素材..."
                             rows={10}
-                            className="w-full bg-transparent text-foreground/80 text-sm leading-relaxed p-4 resize-none outline-none placeholder:text-muted-foreground/40 font-mono"
+                            className="w-full bg-transparent text-foreground/80 text-sm leading-relaxed p-4 resize-none outline-hidden placeholder:text-muted-foreground/40 font-mono"
                         />
                         <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/20">
                             <span className="text-[11px] text-muted-foreground/40">

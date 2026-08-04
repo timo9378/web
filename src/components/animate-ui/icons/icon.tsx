@@ -415,7 +415,7 @@ function AnimateIcon({
 }
 
 const pathClassName =
-  "[&_[stroke-dasharray='1px_1px']]:![stroke-dasharray:1px_0px]";
+  "**:[[stroke-dasharray='1px_1px']]:[stroke-dasharray:1px_0px]!";
 
 type IconWrapperProps = IconProps & {
   icon: React.ComponentType<IconComponentProps>;

@@ -88,7 +88,7 @@ const ABOUT_SITE_BY_LANG = {
     a2_tail: '.',
     q3: '3. About the photo wall and AI usage?',
     a3: 'The photo gallery uses a Masonry layout, with EXIF extracted via automation scripts. I later added an AI CLIP Tagger for tag suggestions, and on upload each image gets a',
-    a3_mid: 'as a blur placeholder. I lean on AI tools for these tedious automation flows. More details in this post:',
+    a3_mid: 'as a blur-sm placeholder. I lean on AI tools for these tedious automation flows. More details in this post:',
     q4: '4. Any easter eggs hidden here?',
     a4: 'Nope. No easter eggs implemented — what you see is what you get.',
     q5: '5. Who is this site for?',

@@ -484,7 +484,7 @@ export default function BooksManager() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="書籍簡介..."
                     rows={3}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring resize-none"
                   />
                 </div>
 
@@ -495,7 +495,7 @@ export default function BooksManager() {
                       id="reading_status"
                       value={formData.reading_status}
                       onChange={(e) => setFormData({ ...formData, reading_status: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="to-read">想讀</option>
                       <option value="reading">閱讀中</option>
@@ -525,7 +525,7 @@ export default function BooksManager() {
                     onChange={(e) => setFormData({ ...formData, personal_notes: e.target.value })}
                     placeholder="分享您的閱讀心得和筆記..."
                     rows={4}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring resize-none"
                   />
                 </div>
                 </div>
