@@ -149,11 +149,23 @@ cd .. && cargo audit    # 目前有 3 個既有的 allowed warnings（unmaintain
 ## 部署
 
 ```bash
-docker compose up -d --build            # 前後端都重建
-docker compose up -d --build frontend   # 只動前端時
+./scripts/deploy.sh            # 前後端都重建
+./scripts/deploy.sh frontend   # 只動前端時
+./scripts/deploy.sh backend    # 只動後端
 ```
 
 使用者已授權助手直接執行部署，不需要每次徵詢。
+
+⚠️ **不要直接下 `docker compose up -d --build`**。那樣 `VITE_RELEASE` 會是空的，
+而且不會上傳 source map —— GlitchTip 上的前端 stack trace 就全是 minify 過的
+（`t.f is not a function`、行號指向某個 40 萬字元的單行），等於錯誤追蹤白裝。
+
+腳本管的是**順序**：commit → build（release 烤進 bundle）→ up -d → 上傳 source map。
+第 2 與第 4 步的 release 對不上時，GlitchTip 找不到對應的 map，而**不會有任何錯誤訊息**。
+寫這支腳本的當天就踩過一次（build 用 commit 前的 SHA、上傳用 commit 後的）。
+
+source map 刻意**不放 CI**：CI 建的產物不是部署的那份（CI 上沒有 VITE_RELEASE 與
+VITE_SENTRY_DSN，bundle 內容不同 → 檔名 hash 不同 → 對不上）。
 
 ⚠️ 資產檔名帶 content hash，重新部署後舊 hash 會 404。目前 CDN 沒有快取 HTML 所以無妨；
 **若哪天讓 CDN 快取 HTML，部署後必須清 CDN 快取**（等新容器 healthy 之後才清）。
