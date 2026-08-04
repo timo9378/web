@@ -131,6 +131,21 @@ uvx schemathesis --config-file .config/schemathesis.toml run …   # 頂層選�
 與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）、`tailwind.config.js` 與
 `postcss.config.js`（Tailwind 還是 v3，升 v4 才能 CSS-first 免掉這兩個）。
 
+## CSS
+
+Tailwind 是 **v4**，設定在 `src/index.css` 的 `@theme` 裡，**沒有 tailwind.config.js
+也沒有 postcss.config.js**（v4 自己處理 `@import` 與 vendor prefix，走 `@tailwindcss/vite`）。
+要加自訂色／間距就寫進 `@theme`，不要試圖找設定檔。
+
+⚠️ **不要再為了蓋過全域樣式而堆特異性或加 `!important`。** v4 用的是**原生 cascade
+layer**：`index.css` 的 `@layer base`（含那條全站 `button { 紫底 }` 與 hover 光暈）
+是分層的，而所有元件 CSS 是未分層的——**未分層恆勝過分層，跟特異性無關**。
+
+這件事在 v3 時代不成立：當時 `@layer base` 只是 Tailwind 的指令、輸出的是普通 CSS，
+所以那條 `button` 規則（特異性 0,1,1）真的會蓋掉元件的 `.foo-btn`（0,1,0）。於是
+七個檔案各自寫了高特異性的繞過碼並留下註解解釋——**那些註解描述的是已經消失的問題**，
+不要拿它們當範例照抄。真的遇到蓋不過去的情況，先確認你的規則有沒有被包進某個 layer。
+
 ## CI 門檻（跟這些指令一字不差，不要自己改寫）
 
 前端：
