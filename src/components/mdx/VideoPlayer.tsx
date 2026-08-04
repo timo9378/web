@@ -64,17 +64,34 @@ export default function VideoPlayer(
     setTime(v.currentTime);
   }, []);
 
-  // 拖曳進度條：pointer 事件掛到 window，滑出控制列也能繼續拖
+  // 拖曳進度條：pointer 事件掛到 window，滑出控制列也能繼續拖。
+  //
+  // ⚠️ 只聽 `pointerup` 是不夠的，全螢幕時會卡死：影片佔滿整個螢幕，往後拖（往右）
+  //   很容易衝到螢幕右緣**在視窗外放開**，那一下 `pointerup` 永遠不會進來 →
+  //   `scrubbing` 一直是 true → 之後每次滑鼠移動都在 seek，播放器怎麼按都沒反應。
+  //   往前拖不會，因為左邊有播放鍵擋著、還沒到邊緣就放開了；視窗模式也不會，
+  //   因為滑鼠出了播放器仍在視窗內。離開全螢幕後隨便點一下就補到 pointerup，
+  //   所以症狀是「一離開全螢幕就好了」。
+  //
+  //   `pointercancel` 與 `lostpointercapture` 一起收：前者是系統中斷（例如切換
+  //   應用程式），後者是 capture 被搶走。三個都要，少一個就留下一種卡死的路徑。
   useEffect(() => {
     if (!scrubbing) return;
     const bar = wrapRef.current?.querySelector<HTMLElement>('.vp-progress');
     const move = (e: PointerEvent) => { if (bar) seekTo(e.clientX, bar); };
-    const up = () => setScrubbing(false);
+    const stop = () => setScrubbing(false);
     window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+    window.addEventListener('lostpointercapture', stop);
+    // 全螢幕切換時一律收工——拖到一半按 Esc 離開全螢幕也不該留著 scrubbing。
+    document.addEventListener('fullscreenchange', stop);
     return () => {
       window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      window.removeEventListener('lostpointercapture', stop);
+      document.removeEventListener('fullscreenchange', stop);
     };
   }, [scrubbing, seekTo]);
 
@@ -179,7 +196,15 @@ export default function VideoPlayer(
             aria-valuemin={0}
             aria-valuemax={Math.round(duration)}
             aria-valuenow={Math.round(time)}
-            onPointerDown={(e) => { setScrubbing(true); seekTo(e.clientX, e.currentTarget); }}
+            onPointerDown={(e) => {
+              // setPointerCapture：把這個指標「綁」到進度條上，滑鼠移出視窗（甚至
+              // 移出螢幕）之後仍然收得到 pointermove / pointerup。這是上面那段
+              // 全螢幕卡死的根治法——window 上的監聽只在指標還在視窗內時有效。
+              // 失敗（某些瀏覽器對特定指標型別會丟）也不影響，window 的監聽仍是後備。
+              try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 後備仍在 */ }
+              setScrubbing(true);
+              seekTo(e.clientX, e.currentTarget);
+            }}
             onKeyDown={(e) => {
               const v = videoRef.current;
               if (!v) return;
