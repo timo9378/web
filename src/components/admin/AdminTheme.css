@@ -41,8 +41,7 @@
   background:
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(39, 39, 42, 0.35) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 80% 50%, rgba(39, 39, 42, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(39, 39, 42, 0.1) 0%, transparent 50%),
-    #09090b;
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(39, 39, 42, 0.1) 0%, transparent 50%), #09090b;
 }
 
 /* Star particles */
@@ -55,7 +54,7 @@
 
 .stars::before,
 .stars::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image:
@@ -116,7 +115,7 @@
 }
 
 /* ── Glass Header ── */
-:is(.admin-layout, .admin-mode)>div>header {
+:is(.admin-layout, .admin-mode) > div > header {
   background: rgba(9, 9, 11, 0.65) !important;
   backdrop-filter: saturate(180%) blur(20px) !important;
   -webkit-backdrop-filter: saturate(180%) blur(20px) !important;

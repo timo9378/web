@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 極簡 pre-commit（C4）：擋自己手滑——只跑 CI 裡最快、最常爆的那幾項。
-# 條件觸發：動到前端 ts/tsx 才跑 tsc+oxlint；動到後端 rs 才跑 clippy。
+# 條件觸發：動到前端 ts/tsx 才跑 tsc+oxlint；動到 css 才跑 biome；動到後端 rs 才跑 clippy。
 # 跳過（趕時間/WIP commit）：git commit --no-verify
 set -euo pipefail
 
@@ -23,6 +23,13 @@ if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   # 實測 3.16s / 1.2GB，而同一個 hook 裡的 tsc 本來就要 7.9s / 1.1GB，不差這 1.4s。
   # --quiet 只影響印不印，不影響 --max-warnings 計數（免得每次 commit 噴兩百行）。
   pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 0 || fail=1
+fi
+
+if echo "$staged" | grep -qE '\.css$'; then
+  echo "▶ biome（CSS）"
+  # 跟 CI 那道一字不差（pnpm lint:css）。不帶 --error-on-warnings：存量的
+  # !important 與 descending-specificity 還沒清，擋的是格式漂移與 error 類。
+  pnpm lint:css || fail=1
 fi
 
 if echo "$staged" | grep -qE '^backend/.*\.rs$'; then

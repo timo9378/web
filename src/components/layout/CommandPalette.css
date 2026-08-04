@@ -13,8 +13,12 @@
 }
 
 @keyframes cmdk-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .cmdk-wrap {
@@ -22,14 +26,22 @@
   background: rgba(14, 12, 26, 0.92);
   border: 1px solid rgba(127, 90, 240, 0.22);
   border-radius: 14px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 0 24px rgba(127, 90, 240, 0.12);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 0 24px rgba(127, 90, 240, 0.12);
   overflow: hidden;
   animation: cmdk-pop 0.2s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 
 @keyframes cmdk-pop {
-  from { transform: translateY(-8px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .cmdk-input-row {
@@ -73,8 +85,13 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(127, 90, 240, 0.3) transparent;
 }
-.cmdk-list::-webkit-scrollbar { width: 6px; }
-.cmdk-list::-webkit-scrollbar-thumb { background: rgba(127, 90, 240, 0.25); border-radius: 3px; }
+.cmdk-list::-webkit-scrollbar {
+  width: 6px;
+}
+.cmdk-list::-webkit-scrollbar-thumb {
+  background: rgba(127, 90, 240, 0.25);
+  border-radius: 3px;
+}
 
 .cmdk-wrap [cmdk-group-heading] {
   font-size: 10px;
@@ -94,7 +111,9 @@
   color: rgba(255, 255, 255, 0.82);
   font-size: 13.5px;
   cursor: pointer;
-  transition: background-color 0.12s, color 0.12s;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
 }
 .cmdk-wrap [cmdk-item][data-selected="true"] {
   background: rgba(127, 90, 240, 0.14);
@@ -141,6 +160,10 @@
 }
 
 @media (max-width: 640px) {
-  .cmdk-backdrop { padding-top: 8vh; }
-  .cmdk-list { max-height: 60vh; }
+  .cmdk-backdrop {
+    padding-top: 8vh;
+  }
+  .cmdk-list {
+    max-height: 60vh;
+  }
 }

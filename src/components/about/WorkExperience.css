@@ -9,7 +9,7 @@
    x 對齊 rail dot 中心：rail 欄 140px + gap 32px，dot 在 right:-22px（中心 ≈ 156.5px）
    → 線放 156px 讓點串在線上 */
 .work-v2 .work-timeline::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 156px;
   top: 26px; /* 從第一個點的中心起跑，不要冒出點上方 */
@@ -31,7 +31,9 @@
   position: relative;
 }
 
-.work-entry:last-child { padding-bottom: 0; }
+.work-entry:last-child {
+  padding-bottom: 0;
+}
 
 .work-rail {
   position: relative;
@@ -135,7 +137,7 @@
 }
 
 .work-bullets li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0.7em;
@@ -145,10 +147,14 @@
   background: rgba(127, 90, 240, 0.65);
 }
 
-.work-bullets-flat li { font-size: 0.9rem; }
+.work-bullets-flat li {
+  font-size: 0.9rem;
+}
 
 @media (max-width: 720px) {
-  .work-v2 .work-timeline::before { display: none; }
+  .work-v2 .work-timeline::before {
+    display: none;
+  }
   .work-entry {
     grid-template-columns: 1fr;
     gap: 12px;

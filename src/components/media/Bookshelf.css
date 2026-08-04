@@ -77,20 +77,39 @@
 }
 
 @keyframes bs-neb1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(35px, 25px) scale(1.06); }
-  66% { transform: translate(-18px, -12px) scale(0.96); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(35px, 25px) scale(1.06);
+  }
+  66% {
+    transform: translate(-18px, -12px) scale(0.96);
+  }
 }
 
 @keyframes bs-neb2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  40% { transform: translate(-30px, -20px) scale(1.08); }
-  75% { transform: translate(15px, 10px) scale(0.93); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(-30px, -20px) scale(1.08);
+  }
+  75% {
+    transform: translate(15px, 10px) scale(0.93);
+  }
 }
 
 @keyframes bs-neb3 {
-  0%, 100% { transform: translate(-50%, 0) scale(1); }
-  50% { transform: translate(-50%, 12px) scale(1.1); }
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  50% {
+    transform: translate(-50%, 12px) scale(1.1);
+  }
 }
 
 /* ── Content Wrapper ── */
@@ -173,7 +192,7 @@
 }
 
 .stats-strip-item + .stats-strip-item::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 20%;
@@ -400,12 +419,14 @@
 
 /* Ambient cover glow — driven by CSS custom property --cover-r/g/b */
 .book-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -30%;
-  background: radial-gradient(circle at 50% 40%,
+  background: radial-gradient(
+    circle at 50% 40%,
     rgba(var(--cover-r, 127), var(--cover-g, 90), var(--cover-b, 240), 0.2) 0%,
-    transparent 60%);
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -427,7 +448,7 @@
 .book-cover-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 2/3;
+  aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 0.75rem;
@@ -572,8 +593,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ══════════════════════════════════════
@@ -654,7 +679,7 @@
 
 .modal-cover-placeholder {
   width: 100%;
-  aspect-ratio: 2/3;
+  aspect-ratio: 2 / 3;
   display: flex;
   align-items: center;
   justify-content: center;

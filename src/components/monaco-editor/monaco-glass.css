@@ -5,7 +5,7 @@
   background: rgba(24, 24, 27, 0.6) !important;
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.75rem;
-  box-shadow: 
+  box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
@@ -138,7 +138,7 @@
   text-overflow: ellipsis;
 }
 .monaco-vim-status:empty::before {
-  content: '-- 一般模式 (Esc) --';
+  content: "-- 一般模式 (Esc) --";
   color: #71717a;
   opacity: 0.6;
 }

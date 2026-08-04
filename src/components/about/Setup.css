@@ -16,7 +16,7 @@
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  background: 
+  background:
     radial-gradient(ellipse at 50% 50%, rgba(10, 5, 25, 0.8) 0%, #050508 70%),
     radial-gradient(ellipse at 20% 80%, rgba(15, 5, 30, 0.4) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(5, 10, 25, 0.3) 0%, transparent 50%);
@@ -24,13 +24,13 @@
 
 /* 微塵粒子 */
 .setup-deep-space-bg::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 200%;
   height: 200%;
-  background-image: 
+  background-image:
     radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 100%),
     radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
     radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.12) 0%, transparent 100%),
@@ -42,9 +42,15 @@
 }
 
 @keyframes dust-drift {
-  0% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-15px) translateX(10px); }
-  100% { transform: translateY(0) translateX(0); }
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-15px) translateX(10px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
+  }
 }
 
 /* === 黑洞背景 === */
@@ -84,8 +90,13 @@
 }
 
 @keyframes core-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.08); }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
 }
 
 .setup-blackhole-ring {
@@ -155,13 +166,24 @@
 }
 
 @keyframes ring-rotate {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.15); }
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
 }
 
 /* === 主內容區 === */
@@ -407,7 +429,7 @@
 }
 
 .setup-base-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;

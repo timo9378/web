@@ -9,7 +9,10 @@
 .club-row {
   position: relative;
   overflow: hidden;
-  transition: border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+  transition:
+    border-color 220ms ease,
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .club-row:hover {
@@ -70,7 +73,10 @@
   place-items: center;
   font-size: 1.1rem;
   color: rgba(199, 184, 255, 0.95);
-  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
 }
 
 /* 名稱 + 職位 chip 同一行（期間移到右側欄） */
@@ -125,7 +131,9 @@
   color: rgba(199, 184, 255, 0.6);
 }
 
-.club-caret.open { transform: rotate(180deg); }
+.club-caret.open {
+  transform: rotate(180deg);
+}
 
 /* 展開動畫：grid-template-rows 0fr→1fr（純 CSS，比 JS 量測 height:auto 順）
    內層 min-height:0 + overflow:hidden 是 0fr 收合的必要條件 */
@@ -151,7 +159,9 @@
   transform: rotateX(-85deg);
   transform-origin: 50% 0;
   opacity: 0;
-  transition: transform 100ms ease, opacity 80ms ease;
+  transition:
+    transform 100ms ease,
+    opacity 80ms ease;
 }
 
 .club-activities-wrap.open .club-activity-item {
@@ -163,15 +173,33 @@
 }
 
 /* 依序攤平 — 一折接一折（最多 10 項） */
-.club-activities-wrap.open .club-activity-item:nth-child(1) { transition-delay: 60ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(2) { transition-delay: 110ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(3) { transition-delay: 160ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(4) { transition-delay: 210ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(5) { transition-delay: 260ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(6) { transition-delay: 310ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(7) { transition-delay: 360ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(8) { transition-delay: 410ms; }
-.club-activities-wrap.open .club-activity-item:nth-child(n+9) { transition-delay: 460ms; }
+.club-activities-wrap.open .club-activity-item:nth-child(1) {
+  transition-delay: 60ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(2) {
+  transition-delay: 110ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(3) {
+  transition-delay: 160ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(4) {
+  transition-delay: 210ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(5) {
+  transition-delay: 260ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(6) {
+  transition-delay: 310ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(7) {
+  transition-delay: 360ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(8) {
+  transition-delay: 410ms;
+}
+.club-activities-wrap.open .club-activity-item:nth-child(n + 9) {
+  transition-delay: 460ms;
+}
 
 /* 展開：hairline 分隔 + 桌面雙欄活動格（吉他社 8 項不再拖成長串） */
 .club-activities-list {
@@ -195,7 +223,7 @@
 }
 
 .club-activity-item::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0.7em;

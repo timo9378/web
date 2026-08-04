@@ -19,7 +19,9 @@
   letter-spacing: 0.02em;
 }
 
-.lately-h-more { font-weight: 500; }
+.lately-h-more {
+  font-weight: 500;
+}
 
 .lately-more {
   font-size: 0.8rem;
@@ -28,7 +30,9 @@
   transition: color 0.25s ease;
 }
 
-.lately-more:hover { color: #d8b4fe; }
+.lately-more:hover {
+  color: #d8b4fe;
+}
 
 .lately-empty {
   font-size: 0.85rem;
@@ -56,7 +60,9 @@
   transition: background 0.25s ease;
 }
 
-.lately-post:hover { background: rgba(255, 255, 255, 0.04); }
+.lately-post:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
 
 .lately-post-no {
   font-size: 0.72rem;
@@ -82,7 +88,9 @@
   transition: color 0.25s ease;
 }
 
-.lately-post:hover .lately-post-title { color: #fff; }
+.lately-post:hover .lately-post-title {
+  color: #fff;
+}
 
 .lately-post-meta {
   font-size: 0.74rem;
@@ -123,7 +131,9 @@
 }
 
 .lately-murmur:hover,
-.lately-echo:hover { background: rgba(255, 255, 255, 0.04); }
+.lately-echo:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
 
 .lately-murmur-text,
 .lately-echo-text {
@@ -143,7 +153,9 @@
 }
 
 /* ── 年度軌跡 ── */
-.lately-orbit { margin-top: 72px; }
+.lately-orbit {
+  margin-top: 72px;
+}
 
 /* 軌道線的 y 由這個變數決定；星球、月份刻度、「今天」都以它為基準，
    要挪整條軌道只改這一個值（以前是四個地方各寫死一個數字）。 */
@@ -160,11 +172,13 @@
   right: 0;
   top: var(--orbit-line-y);
   height: 1px;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     rgba(255, 255, 255, 0.04),
     rgba(255, 255, 255, 0.16) 12%,
     rgba(255, 255, 255, 0.16) 88%,
-    rgba(255, 255, 255, 0.04));
+    rgba(255, 255, 255, 0.04)
+  );
 }
 
 /* 月份標籤（12 個，取代舊 4 季） */
@@ -208,7 +222,9 @@
   outline: none;
   cursor: pointer;
 }
-.orbit-month-btn:hover, .orbit-month-btn:focus, .orbit-month-btn:focus-visible {
+.orbit-month-btn:hover,
+.orbit-month-btn:focus,
+.orbit-month-btn:focus-visible {
   background: transparent;
   box-shadow: none;
   outline: none;
@@ -218,20 +234,23 @@
 .orbit-month-dot {
   position: relative;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 28%,
-      hsl(var(--planet-hue, 260) 100% 92%) 0%,
-      hsl(var(--planet-hue, 260) 85% 78%) 26%,
-      hsl(var(--planet-hue, 260) 70% 60%) 58%,
-      hsl(var(--planet-hue, 260) 60% 34%) 100%);
+  background: radial-gradient(
+    circle at 32% 28%,
+    hsl(var(--planet-hue, 260) 100% 92%) 0%,
+    hsl(var(--planet-hue, 260) 85% 78%) 26%,
+    hsl(var(--planet-hue, 260) 70% 60%) 58%,
+    hsl(var(--planet-hue, 260) 60% 34%) 100%
+  );
   box-shadow:
     0 0 9px hsl(var(--planet-hue, 260) 80% 65% / 0.55),
     inset -1.5px -1.5px 3px hsl(var(--planet-hue, 260) 60% 18% / 0.65);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease;
 }
 /* 土星環：::after 畫傾斜的細橢圓。 */
 .orbit-month-dot--ringed::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -246,23 +265,37 @@
 /* 氣態巨行星：兩道橫向雲帶（用重疊的線性漸層疊在球面上）。 */
 .orbit-month-dot--banded {
   background:
-    linear-gradient(180deg,
-      transparent 26%, hsl(var(--planet-hue, 260) 45% 30% / 0.55) 26%, hsl(var(--planet-hue, 260) 45% 30% / 0.55) 38%,
-      transparent 38%, transparent 58%,
-      hsl(var(--planet-hue, 260) 45% 26% / 0.45) 58%, hsl(var(--planet-hue, 260) 45% 26% / 0.45) 68%, transparent 68%),
-    radial-gradient(circle at 32% 28%,
+    linear-gradient(
+      180deg,
+      transparent 26%,
+      hsl(var(--planet-hue, 260) 45% 30% / 0.55) 26%,
+      hsl(var(--planet-hue, 260) 45% 30% / 0.55) 38%,
+      transparent 38%,
+      transparent 58%,
+      hsl(var(--planet-hue, 260) 45% 26% / 0.45) 58%,
+      hsl(var(--planet-hue, 260) 45% 26% / 0.45) 68%,
+      transparent 68%
+    ),
+    radial-gradient(
+      circle at 32% 28%,
       hsl(var(--planet-hue, 260) 100% 92%) 0%,
       hsl(var(--planet-hue, 260) 85% 78%) 26%,
       hsl(var(--planet-hue, 260) 70% 60%) 58%,
-      hsl(var(--planet-hue, 260) 60% 34%) 100%);
+      hsl(var(--planet-hue, 260) 60% 34%) 100%
+    );
 }
 /* 冰質小星：偏冷白、有顆小衛星。 */
 .orbit-month-dot--icy {
-  background: radial-gradient(circle at 34% 26%,
-    #ffffff 0%, hsl(var(--planet-hue, 260) 40% 88%) 30%, hsl(var(--planet-hue, 260) 35% 70%) 62%, hsl(var(--planet-hue, 260) 30% 42%) 100%);
+  background: radial-gradient(
+    circle at 34% 26%,
+    #ffffff 0%,
+    hsl(var(--planet-hue, 260) 40% 88%) 30%,
+    hsl(var(--planet-hue, 260) 35% 70%) 62%,
+    hsl(var(--planet-hue, 260) 30% 42%) 100%
+  );
 }
 .orbit-month-dot--icy::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -55%;
   top: 8%;
@@ -283,7 +316,9 @@
 }
 /* 尊重系統的減少動態設定 */
 @media (prefers-reduced-motion: reduce) {
-  .orbit-month-dot { transition: none; }
+  .orbit-month-dot {
+    transition: none;
+  }
 }
 
 /* hover / 點擊 / focus 冒出的當月文章清單 */
@@ -305,8 +340,14 @@
   animation: orbit-pop-in 0.16s ease;
 }
 @keyframes orbit-pop-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 .orbit-month-pop-head {
   font-size: 0.64rem;
@@ -315,7 +356,11 @@
   color: rgba(255, 255, 255, 0.4);
   padding: 2px 8px 6px;
 }
-.orbit-month-pop-list { list-style: none; margin: 0; padding: 0; }
+.orbit-month-pop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .orbit-month-link {
   display: block;
   padding: 7px 8px;
@@ -324,9 +369,14 @@
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.82);
   text-decoration: none;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
-.orbit-month-link:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.orbit-month-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
 
 /* 「今」marker 的 hover 浮出（data-title tooltip） */
 .orbit-now::after {
@@ -348,7 +398,9 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   z-index: 5;
 }
 
@@ -370,12 +422,9 @@
   height: 20px;
   transform: translate(-50%, -50%);
   background:
-    linear-gradient(90deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%)
-      center / 100% 1px no-repeat,
-    linear-gradient(180deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%)
-      center / 1px 100% no-repeat,
-    radial-gradient(circle, #ffffff 0%, #e9d5ff 30%, rgba(216, 180, 254, 0) 62%)
-      center / 9px 9px no-repeat;
+    linear-gradient(90deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%) center / 100% 1px no-repeat,
+    linear-gradient(180deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%) center / 1px 100% no-repeat,
+    radial-gradient(circle, #ffffff 0%, #e9d5ff 30%, rgba(216, 180, 254, 0) 62%) center / 9px 9px no-repeat;
   animation: orbit-now-pulse 3.4s ease-in-out infinite;
 }
 
@@ -398,8 +447,14 @@
   animation: orbit-pop-in 0.16s ease;
 }
 @keyframes orbit-pop-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 .orbit-month-pop-head {
   font-size: 0.64rem;
@@ -408,7 +463,11 @@
   color: rgba(255, 255, 255, 0.4);
   padding: 2px 8px 6px;
 }
-.orbit-month-pop-list { list-style: none; margin: 0; padding: 0; }
+.orbit-month-pop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .orbit-month-link {
   display: block;
   padding: 7px 8px;
@@ -417,17 +476,28 @@
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.82);
   text-decoration: none;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
 }
-.orbit-month-link:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-
+.orbit-month-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
 
 @keyframes orbit-now-pulse {
-  0%, 100% { filter: brightness(0.82) drop-shadow(0 0 3px rgba(233, 213, 255, 0.5)); }
-  50% { filter: brightness(1.4) drop-shadow(0 0 9px rgba(255, 255, 255, 0.9)); }
+  0%,
+  100% {
+    filter: brightness(0.82) drop-shadow(0 0 3px rgba(233, 213, 255, 0.5));
+  }
+  50% {
+    filter: brightness(1.4) drop-shadow(0 0 9px rgba(255, 255, 255, 0.9));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .orbit-now { animation: none; }
+  .orbit-now {
+    animation: none;
+  }
 }
 
 .orbit-stat {
@@ -437,7 +507,10 @@
   text-align: center;
 }
 
-.orbit-stat-dot { margin: 0 8px; color: rgba(255, 255, 255, 0.25); }
+.orbit-stat-dot {
+  margin: 0 8px;
+  color: rgba(255, 255, 255, 0.25);
+}
 
 /* ── 今日訊號（收尾，承接 #contact 錨點）── */
 .lately-signal {
@@ -450,7 +523,9 @@
   scroll-margin-top: 120px;
 }
 
-.signal-label { letter-spacing: 3.5px; }
+.signal-label {
+  letter-spacing: 3.5px;
+}
 
 .signal-quote {
   margin: 0;
@@ -487,8 +562,13 @@
 }
 
 @keyframes signal-dot-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .signal-mail {
@@ -497,7 +577,9 @@
   transition: color 0.25s ease;
 }
 
-.signal-mail:hover { color: #d8b4fe; }
+.signal-mail:hover {
+  color: #d8b4fe;
+}
 
 /* ── 響應式 ── */
 @media (max-width: 860px) {
@@ -506,10 +588,16 @@
     gap: 40px;
   }
 
-  .lately-orbit { margin-top: 56px; }
+  .lately-orbit {
+    margin-top: 56px;
+  }
 
   /* 手機上 tooltip 沒 hover，仍保留 aria-label 給輔助技術 */
-  .orbit-now::after { display: none; }
+  .orbit-now::after {
+    display: none;
+  }
 
-  .lately-signal { margin-top: 64px; }
+  .lately-signal {
+    margin-top: 64px;
+  }
 }

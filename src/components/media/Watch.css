@@ -65,7 +65,9 @@
   padding-right: 18px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
-.w-stat:last-of-type { border-right: none; }
+.w-stat:last-of-type {
+  border-right: none;
+}
 
 .w-stat-num {
   font-size: 1.42rem;
@@ -98,9 +100,22 @@
   letter-spacing: 0.14em;
   margin-bottom: 16px;
 }
-.w-eyebrow--live { color: #2cb67d; animation: w-live-pulse 2s ease-in-out infinite; }
-.w-eyebrow--last { color: rgba(229, 229, 245, 0.5); }
-@keyframes w-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.w-eyebrow--live {
+  color: #2cb67d;
+  animation: w-live-pulse 2s ease-in-out infinite;
+}
+.w-eyebrow--last {
+  color: rgba(229, 229, 245, 0.5);
+}
+@keyframes w-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
 
 /* 即時播放進度條（貼底） */
 .w-now-progress {
@@ -139,7 +154,9 @@
   text-decoration: none;
   color: inherit;
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
   /* 預先升成合成層 + 新 stacking context——否則 hover 時卡片(translateY)與海報(scale)
      各自 mid-transition 臨時升層互搶 z-order → 海報層閃爍 */
   will-change: transform;
@@ -161,17 +178,16 @@
   backface-visibility: hidden;
 }
 
-.w-now-banner:hover .w-now-banner-img { transform: scale(1.03); }
+.w-now-banner:hover .w-now-banner-img {
+  transform: scale(1.03);
+}
 
 /* 漸層 overlay 在底部、保證標題可讀 */
 .w-now-overlay {
   position: absolute;
   inset: auto 0 0 0;
   padding: 56px 36px 30px;
-  background: linear-gradient(180deg,
-    rgba(6, 5, 14, 0) 0%,
-    rgba(6, 5, 14, 0.55) 55%,
-    rgba(6, 5, 14, 0.92) 100%);
+  background: linear-gradient(180deg, rgba(6, 5, 14, 0) 0%, rgba(6, 5, 14, 0.55) 55%, rgba(6, 5, 14, 0.92) 100%);
 }
 
 .w-now-title {
@@ -203,7 +219,9 @@
   border-radius: 9999px;
   backdrop-filter: blur(8px);
   letter-spacing: 0.03em;
-  transition: background 0.25s ease, border-color 0.25s ease;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
 }
 
 .w-now-banner:hover .w-now-cta {
@@ -212,7 +230,9 @@
 }
 
 /* ── section 通用 ── */
-.w-section { margin-bottom: 5.5rem; }
+.w-section {
+  margin-bottom: 5.5rem;
+}
 
 .w-h2 {
   font-size: 1.5rem;
@@ -235,9 +255,15 @@
   gap: 16px;
   margin-bottom: 18px;
 }
-.w-h2-row .w-h2 { margin-bottom: 0; }
+.w-h2-row .w-h2 {
+  margin-bottom: 0;
+}
 
-.w-h2-actions { display: flex; align-items: center; gap: 14px; }
+.w-h2-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 /* 一鍵發碎念（ghost pill，蓋掉全域 button 實心樣式） */
 .w-share-btn {
   background: transparent;
@@ -249,22 +275,30 @@
   color: rgba(216, 180, 254, 0.85);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
-.w-share-btn:hover, .w-share-btn:focus {
+.w-share-btn:hover,
+.w-share-btn:focus {
   background: rgba(216, 180, 254, 0.12);
   border-color: rgba(216, 180, 254, 0.5);
   box-shadow: none;
   color: rgba(216, 180, 254, 1);
 }
-.w-share-btn:focus-visible { outline: none; }
+.w-share-btn:focus-visible {
+  outline: none;
+}
 
 .w-section-link {
   font-size: 0.86rem;
   color: rgba(216, 180, 254, 0.7);
   text-decoration: none;
   border-bottom: 1px dashed transparent;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
   white-space: nowrap;
 }
 .w-section-link:hover {
@@ -288,17 +322,20 @@
   border-radius: 16px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-              border-color 0.3s ease,
-              background 0.3s ease,
-              box-shadow 0.4s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.4s ease;
 }
 
 .w-fav:hover {
   transform: translateY(-6px);
   background: rgba(20, 16, 32, 0.7);
   border-color: rgba(216, 180, 254, 0.28);
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5), 0 0 28px rgba(127, 90, 240, 0.12);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(127, 90, 240, 0.12);
 }
 
 .w-fav-poster {
@@ -314,10 +351,15 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.5s ease, filter 0.4s ease;
+  transition:
+    transform 0.5s ease,
+    filter 0.4s ease;
 }
 
-.w-fav:hover .w-fav-poster img { transform: scale(1.05); filter: brightness(0.42); }
+.w-fav:hover .w-fav-poster img {
+  transform: scale(1.05);
+  filter: brightness(0.42);
+}
 
 /* hover 才浮現的碎念 */
 .w-fav-quote {
@@ -331,10 +373,15 @@
   color: rgba(244, 244, 245, 0.96);
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
 }
 
-.w-fav:hover .w-fav-quote { opacity: 1; transform: translateY(0); }
+.w-fav:hover .w-fav-quote {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 .w-fav-title {
   font-size: 0.92rem;
@@ -347,8 +394,16 @@
   overflow: hidden;
 }
 
-.w-fav-line { margin: 0; display: flex; align-items: center; gap: 8px; }
-.w-fav-year { font-size: 0.76rem; color: rgba(229, 229, 245, 0.4); }
+.w-fav-line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.w-fav-year {
+  font-size: 0.76rem;
+  color: rgba(229, 229, 245, 0.4);
+}
 
 /* ── 最近在看（清單 + 週分組）── */
 .w-recent-group {
@@ -359,8 +414,12 @@
   color: rgba(216, 180, 254, 0.7);
   margin: 28px 0 8px;
 }
-.w-recent-group:first-of-type { margin-top: 0; }
-.w-recent-group--dim { color: rgba(229, 229, 245, 0.32); }
+.w-recent-group:first-of-type {
+  margin-top: 0;
+}
+.w-recent-group--dim {
+  color: rgba(229, 229, 245, 0.32);
+}
 
 /* ── 最近在看（風格 D：純清單，日期 column + 縮圖 + 標題 + tag，無裝飾線）── */
 .w-recent {
@@ -372,7 +431,9 @@
 .w-recent-row {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-.w-recent-row:last-child { border-bottom: none; }
+.w-recent-row:last-child {
+  border-bottom: none;
+}
 
 /* 一列的內容容器：可點時是 <a>，否則 <div>。grid 在這層 */
 .w-recent-link {
@@ -385,8 +446,12 @@
   color: inherit;
   transition: transform 0.25s ease;
 }
-.w-recent-link.is-link { cursor: pointer; }
-.w-recent-link.is-link:hover { transform: translateX(4px); }
+.w-recent-link.is-link {
+  cursor: pointer;
+}
+.w-recent-link.is-link:hover {
+  transform: translateX(4px);
+}
 
 /* 日期 anchor — 同一天只第一筆顯示 */
 .w-recent-anchor {
@@ -420,7 +485,9 @@
   text-overflow: ellipsis;
   transition: color 0.2s ease;
 }
-.w-recent-link.is-link:hover .w-recent-title { color: rgba(216, 180, 254, 0.95); }
+.w-recent-link.is-link:hover .w-recent-title {
+  color: rgba(216, 180, 254, 0.95);
+}
 
 .w-recent-tags {
   display: inline-flex;
@@ -439,9 +506,15 @@
   border: 1px solid currentColor;
   opacity: 0.75;
 }
-.w-recent-badge--anime { color: rgba(216, 180, 254, 0.9); }
-.w-recent-badge--film  { color: rgba(255, 224, 158, 0.8); }
-.w-recent-badge--tv    { color: rgba(134, 239, 172, 0.82); }
+.w-recent-badge--anime {
+  color: rgba(216, 180, 254, 0.9);
+}
+.w-recent-badge--film {
+  color: rgba(255, 224, 158, 0.8);
+}
+.w-recent-badge--tv {
+  color: rgba(134, 239, 172, 0.82);
+}
 
 .w-recent-meta {
   font-size: 0.78rem;
@@ -465,24 +538,65 @@
 }
 
 /* ── stars ── */
-.w-stars { color: #f5c518; font-size: 0.84rem; letter-spacing: 1px; white-space: nowrap; }
-.w-stars-dim { color: rgba(255, 255, 255, 0.2); }
+.w-stars {
+  color: #f5c518;
+  font-size: 0.84rem;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.w-stars-dim {
+  color: rgba(255, 255, 255, 0.2);
+}
 
 /* ════════ RWD ════════ */
 @media (max-width: 720px) {
-  .w-page { padding: 100px 20px 90px; }
-  .w-header { margin-bottom: 3.5rem; }
-  .w-now, .w-section { margin-bottom: 4rem; }
-  .w-now-banner { border-radius: 14px; aspect-ratio: 4 / 3; }
-  .w-now-overlay { padding: 48px 20px 22px; }
-  .w-now-cta { top: 12px; right: 12px; padding: 8px 14px; font-size: 0.78rem; }
-  .w-recent-link { grid-template-columns: 42px 36px 1fr auto; gap: 12px; }
-  .w-recent-anchor { font-size: 0.76rem; }
-  .w-favs { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 18px; }
-  .w-stats { gap: 16px; }
-  .w-stat { padding-right: 12px; }
-  .w-stat-num { font-size: 1.2rem; }
-  .w-stats-year { margin-left: 0; width: 100%; }
+  .w-page {
+    padding: 100px 20px 90px;
+  }
+  .w-header {
+    margin-bottom: 3.5rem;
+  }
+  .w-now,
+  .w-section {
+    margin-bottom: 4rem;
+  }
+  .w-now-banner {
+    border-radius: 14px;
+    aspect-ratio: 4 / 3;
+  }
+  .w-now-overlay {
+    padding: 48px 20px 22px;
+  }
+  .w-now-cta {
+    top: 12px;
+    right: 12px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+  .w-recent-link {
+    grid-template-columns: 42px 36px 1fr auto;
+    gap: 12px;
+  }
+  .w-recent-anchor {
+    font-size: 0.76rem;
+  }
+  .w-favs {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 18px;
+  }
+  .w-stats {
+    gap: 16px;
+  }
+  .w-stat {
+    padding-right: 12px;
+  }
+  .w-stat-num {
+    font-size: 1.2rem;
+  }
+  .w-stats-year {
+    margin-left: 0;
+    width: 100%;
+  }
   /* 手機沒 hover：碎念常駐淡淡顯示 */
   .w-fav-quote {
     position: static;
@@ -492,5 +606,7 @@
     color: rgba(229, 229, 245, 0.55);
     font-size: 0.78rem;
   }
-  .w-fav:hover .w-fav-poster img { filter: none; }
+  .w-fav:hover .w-fav-poster img {
+    filter: none;
+  }
 }

@@ -31,7 +31,10 @@
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
   position: relative;
   white-space: nowrap;
 }
@@ -74,7 +77,9 @@
 .mega-menu-trigger-chev {
   font-size: 0.65rem;
   opacity: 0.55;
-  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+  transition:
+    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.2s ease;
 }
 .mega-menu-trigger-chev.is-open {
   transform: rotate(180deg);
@@ -109,7 +114,7 @@
 
 /* hover bridge — anchor 跟 trigger 中間的透明緩衝區，避免移動時 panel 消失 */
 .mega-menu-panel-anchor::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -12px;
   left: -20px;
@@ -158,7 +163,7 @@
   flex-direction: column;
   gap: 10px;
   grid-column: span var(--span, 1);
-  min-width: 0;     /* 允許收縮以套用 grid 欄寬，不被內容撐開 */
+  min-width: 0; /* 允許收縮以套用 grid 欄寬，不被內容撐開 */
   overflow: hidden; /* 內容超出 grid 欄寬時 clip，避免溢出 panel */
 }
 .mega-menu-column--accent {
@@ -193,7 +198,10 @@
   text-decoration: none;
   color: rgba(228, 228, 231, 0.85);
   font-size: 0.88rem;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 /* compact 變體：只有圖示 + 標題，無描述行 */
@@ -222,7 +230,9 @@
   color: rgba(167, 139, 250, 0.95);
   font-size: 0.85rem;
   /* 外框「不動」，只變色 */
-  transition: background 0.22s ease, color 0.22s ease;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease;
 }
 .mega-menu-link:hover .mega-menu-link-icon {
   background: rgba(127, 90, 240, 0.28);
@@ -259,8 +269,12 @@
   animation: icon-path-draw 0.82s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @keyframes icon-path-draw {
-  0% { stroke-dashoffset: 64; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 64;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* animate-ui icon variant — 由 motion 自己控制 path / circle 動畫，
@@ -386,7 +400,7 @@
   color: rgba(74, 222, 128, 0.85);
 }
 .mega-menu-profile-status::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -434,7 +448,10 @@
   justify-content: center;
   color: rgba(161, 161, 170, 0.7);
   background: rgba(255, 255, 255, 0.04);
-  transition: background 0.15s, color 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    transform 0.15s;
   text-decoration: none;
   font-size: 0.8rem;
 }
@@ -456,7 +473,9 @@
   color: rgba(212, 212, 216, 0.82);
   cursor: pointer;
   font-size: 0.85rem;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .mega-menu-category:hover,
 .mega-menu-category--active {
@@ -518,7 +537,9 @@
   font-size: 0.78rem;
   color: rgba(161, 161, 170, 0.7);
   text-decoration: none;
-  transition: color 0.15s, transform 0.15s;
+  transition:
+    color 0.15s,
+    transform 0.15s;
   align-self: flex-end;
 }
 .mega-menu-view-all:hover {
@@ -541,7 +562,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mega-menu-trigger, .mega-menu-link {
+  .mega-menu-trigger,
+  .mega-menu-link {
     transition: none !important;
   }
 }

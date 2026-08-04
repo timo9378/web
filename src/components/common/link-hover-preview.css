@@ -91,10 +91,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lhp-skel { animation: none; }
+  .lhp-skel {
+    animation: none;
+  }
 }
 
 /* 手機沒有 hover，直接不顯示（避免觸控誤觸） */
 @media (hover: none) {
-  .lhp-card { display: none; }
+  .lhp-card {
+    display: none;
+  }
 }

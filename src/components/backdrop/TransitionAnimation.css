@@ -12,7 +12,12 @@
   left: 0; /* 從左側開始 */
   width: 120px; /* 增加流星寬度 */
   height: 3px; /* 增加流星高度 */
-  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9) 80%, rgba(255, 255, 255, 0.95)); /* 調整漸變，讓亮部更長更亮 */
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.9) 80%,
+    rgba(255, 255, 255, 0.95)
+  ); /* 調整漸變，讓亮部更長更亮 */
   border-radius: 2px; /* 配合高度調整 */
   transform: rotate(-45deg); /* 傾斜角度 */
   transform-origin: left top; /* 旋轉基點 */

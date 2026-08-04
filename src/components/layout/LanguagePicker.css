@@ -19,7 +19,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .lang-picker-trigger:hover {
@@ -54,8 +57,14 @@
 }
 
 @keyframes lang-picker-fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .lang-picker-item {
@@ -72,7 +81,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
   text-align: left;
 }
 

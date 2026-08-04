@@ -82,7 +82,6 @@
 }
 
 @keyframes m-neb1 {
-
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -98,7 +97,6 @@
 }
 
 @keyframes m-neb2 {
-
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -114,7 +112,6 @@
 }
 
 @keyframes m-neb3 {
-
   0%,
   100% {
     transform: translate(-50%, 0) scale(1);
@@ -159,11 +156,13 @@
   height: 100%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #2a2a2a, #111);
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 20px rgba(127, 90, 240, 0.4),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .vinyl-disc::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -263,9 +262,11 @@
 .np-ambient-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 20% 50%,
-      rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.12) 0%,
-      transparent 60%);
+  background: radial-gradient(
+    ellipse at 20% 50%,
+    rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.12) 0%,
+    transparent 60%
+  );
   pointer-events: none;
   transition: background 1.5s ease;
 }
@@ -383,13 +384,12 @@
 }
 
 .np-dot.live {
-  background: #1DB954;
+  background: #1db954;
   box-shadow: 0 0 8px rgba(29, 185, 84, 0.6);
   animation: np-pulse 2s ease-in-out infinite;
 }
 
 @keyframes np-pulse {
-
   0%,
   100% {
     box-shadow: 0 0 4px rgba(29, 185, 84, 0.4);
@@ -454,7 +454,7 @@
   justify-content: space-between;
   font-size: 0.72rem;
   color: var(--text-tertiary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
 }
 
 .np-last-played {
@@ -473,7 +473,7 @@
   border-radius: 20px;
   border: 1px solid rgba(29, 185, 84, 0.3);
   background: rgba(29, 185, 84, 0.1);
-  color: #1DB954;
+  color: #1db954;
   font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
@@ -590,7 +590,7 @@
   font-size: 0.85rem;
   color: var(--text-tertiary);
   font-weight: 600;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   flex-shrink: 0;
 }
 
@@ -652,7 +652,7 @@
   text-align: right;
   font-size: 0.82rem;
   color: var(--text-tertiary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   flex-shrink: 0;
 }
 
@@ -713,7 +713,7 @@
   font-size: 0.62rem;
   color: var(--text-tertiary);
   text-align: right;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   flex-shrink: 0;
 }
 
@@ -749,7 +749,9 @@
 
 .galaxy-bubble:hover {
   border-color: var(--glass-hover-border);
-  box-shadow: 0 0 30px rgba(127, 90, 240, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 0 30px rgba(127, 90, 240, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.3);
   background: var(--glass-hover-bg);
 }
 
@@ -757,9 +759,7 @@
   position: absolute;
   inset: -20%;
   border-radius: 50%;
-  background: radial-gradient(circle,
-      rgba(127, 90, 240, 0.08) 0%,
-      transparent 70%);
+  background: radial-gradient(circle, rgba(127, 90, 240, 0.08) 0%, transparent 70%);
   pointer-events: none;
   transition: opacity 0.3s ease;
   opacity: 0.5;
@@ -794,7 +794,6 @@
 }
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);
@@ -899,7 +898,7 @@
 }
 
 .decade-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   font-size: 0.8rem;
   color: var(--text-tertiary);
   letter-spacing: 0.03em;
@@ -919,7 +918,7 @@
 }
 
 .decade-count {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   font-size: 0.85rem;
   color: var(--text-primary);
   text-align: right;
@@ -940,7 +939,9 @@
 
 .analytic-card:hover {
   border-color: var(--glass-hover-border);
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.08), 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 0 20px rgba(127, 90, 240, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.3);
   background: var(--glass-hover-bg);
 }
 
@@ -954,7 +955,7 @@
 .analytic-sublabel {
   font-size: 0.68rem;
   color: var(--text-tertiary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   letter-spacing: 0.05em;
   margin-bottom: 16px;
 }
@@ -994,7 +995,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
 }
 
 .gauge-percent {
@@ -1018,14 +1019,14 @@
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--text-primary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   line-height: 1;
 }
 
 .tempo-unit {
   font-size: 0.75rem;
   color: var(--text-tertiary);
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   font-weight: 600;
 }
 
@@ -1073,7 +1074,7 @@
   background: rgba(127, 90, 240, 0.15);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: "JetBrains Mono", "Courier New", monospace;
   color: var(--accent-light);
   font-size: 0.85rem;
 }
@@ -1093,7 +1094,6 @@
    Responsive
    ══════════════════════════════════════ */
 @media (max-width: 900px) {
-
   .tr-features-col,
   .tr-album-col,
   .track-row-header .tr-features-col,
