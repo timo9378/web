@@ -66,15 +66,13 @@ export default function VideoPlayer(
 
   // 拖曳進度條：pointer 事件掛到 window，滑出控制列也能繼續拖。
   //
-  // ⚠️ 只聽 `pointerup` 是不夠的，全螢幕時會卡死：影片佔滿整個螢幕，往後拖（往右）
-  //   很容易衝到螢幕右緣**在視窗外放開**，那一下 `pointerup` 永遠不會進來 →
-  //   `scrubbing` 一直是 true → 之後每次滑鼠移動都在 seek，播放器怎麼按都沒反應。
-  //   往前拖不會，因為左邊有播放鍵擋著、還沒到邊緣就放開了；視窗模式也不會，
-  //   因為滑鼠出了播放器仍在視窗內。離開全螢幕後隨便點一下就補到 pointerup，
-  //   所以症狀是「一離開全螢幕就好了」。
+  // 只聽 `pointerup` 會漏掉幾種收尾：滑鼠在視窗外放開、系統中斷（切換應用程式 →
+  // `pointercancel`）、capture 被搶走（`lostpointercapture`）。任何一種漏掉，
+  // `scrubbing` 就留在 true，之後每次滑鼠移動都在 seek。
   //
-  //   `pointercancel` 與 `lostpointercapture` 一起收：前者是系統中斷（例如切換
-  //   應用程式），後者是 capture 被搶走。三個都要，少一個就留下一種卡死的路徑。
+  // ⚠️ 這**不是**「全螢幕連點時間軸會卡死」的原因——那個症狀（點 2~3 次後怎麼點都卡、
+  //   暫停再播放無效、只有退出全螢幕才恢復）目前還沒找到根因，合成的 pointer 事件
+  //   重現不出來（五次 seek 全部正常）。這段只是把拖曳的收尾補齊。
   useEffect(() => {
     if (!scrubbing) return;
     const bar = wrapRef.current?.querySelector<HTMLElement>('.vp-progress');
@@ -197,9 +195,8 @@ export default function VideoPlayer(
             aria-valuemax={Math.round(duration)}
             aria-valuenow={Math.round(time)}
             onPointerDown={(e) => {
-              // setPointerCapture：把這個指標「綁」到進度條上，滑鼠移出視窗（甚至
-              // 移出螢幕）之後仍然收得到 pointermove / pointerup。這是上面那段
-              // 全螢幕卡死的根治法——window 上的監聽只在指標還在視窗內時有效。
+              // setPointerCapture：把這個指標「綁」到進度條上，滑鼠移出視窗之後仍然
+              // 收得到 pointermove / pointerup——拖曳互動的標準做法。
               // 失敗（某些瀏覽器對特定指標型別會丟）也不影響，window 的監聽仍是後備。
               try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 後備仍在 */ }
               setScrubbing(true);
