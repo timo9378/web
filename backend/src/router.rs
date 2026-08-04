@@ -32,6 +32,11 @@ pub fn build_router(state: AppState) -> Router {
         .route("/api/stats", get(handlers::stats::site_stats))
         // 前端 Core Web Vitals（B4）：beacon 寫入 + 聚合自看
         .route("/api/vitals", post(handlers::vitals::report_vital))
+        // 前端錯誤（Sentry SDK 的 tunnel 目的地）與 CSP 違規回報。
+        // 兩個都是公開無認證的——CSP report 是瀏覽器直接送的，帶不了任何標頭。
+        // 路徑刻意不含 sentry/envelope/store，那是廣告外掛通用規則在比對的字。
+        .route("/api/_report", post(handlers::report_tunnel::tunnel))
+        .route("/api/csp-report", post(handlers::report_tunnel::csp_report))
         .route("/api/vitals/stats", get(handlers::vitals::vitals_stats))
         .route("/api/link-preview", get(handlers::link_preview::link_preview))
         // thoughts：/rss 靜態路由（axum matchit 優先於 /{id}）
@@ -245,7 +250,15 @@ pub fn build_router(state: AppState) -> Router {
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
         // 文章內容變更後通知前端清 ISR 快取（fire-and-forget；未設 env 則不啟用）
         .layer(axum::middleware::from_fn(revalidate::notify_on_post_write))
-        .layer(TraceLayer::new_for_http())
+        // ⚠️ on_failure 降到 WARN 是刻意的。預設是 ERROR，而 ERROR 現在會變成 Sentry
+        //   issue（見 main.rs 的 event_filter）——於是每個 5xx 都產生**兩則**：
+        //   一則是 error.rs 的 `internal_error` 發的（帶檔名、行號、原始訊息，有用），
+        //   一則是這裡發的 "response failed"（culprit 空、metadata {}，零資訊）。
+        //   降成 WARN 之後它變成麵包屑，附在真正那則上說明「這次回應是 5xx」。
+        .layer(
+            TraceLayer::new_for_http()
+                .on_failure(tower_http::trace::DefaultOnFailure::new().level(tracing::Level::WARN)),
+        )
         // ── 錯誤追蹤（自架 GlitchTip）──────────────────────────────────
         // 兩層都要，缺一不可：
         //   NewSentryLayer  每個請求開一個獨立 Hub。沒有它的話，並發請求會共用同一個

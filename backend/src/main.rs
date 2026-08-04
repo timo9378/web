@@ -47,6 +47,10 @@ fn init_sentry() -> Option<sentry::ClientInitGuard> {
     //   表在收實地資料）。`TracesSamplingStrategy::Disabled` 本來就是預設值，
     //   這裡寫出來是為了讓「刻意不開」這件事在程式碼裡看得見。
     opts.traces_sampling_strategy = sentry::TracesSamplingStrategy::Disabled;
+    // 結構化日誌。要的不是「多一份 log」——docker logs 本來就有——而是**錯誤的前後文**：
+    // 點進一個 issue 能看到那次請求前後發生什麼，不必回頭去 grep 容器日誌對時間。
+    // 量的上限靠 GLITCHTIP_LOG_HOT_DAYS（預設 7 天後轉冷儲存）控制。
+    opts.enable_logs = true;
 
     Some(sentry::init((dsn, opts)))
 }
@@ -64,11 +68,22 @@ async fn run() -> anyhow::Result<()> {
                 .unwrap_or_else(|_| "info,koimsurai_web_backend=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
-        // tracing 的 ERROR 事件 → Sentry。event_filter 決定哪些層級要送：
-        // ERROR 成為 issue、WARN 只當麵包屑（不然 log 一吵 issue 列表就沒法看了）。
+        // tracing 事件 → Sentry。event_filter 決定每個層級走哪幾條路（可以用 | 疊）：
+        //   ERROR  → Event（成為 issue）+ Log
+        //   WARN   → Breadcrumb（附在下一個 issue 上）+ Log
+        //   INFO   → 只有 Log
+        //   DEBUG/TRACE → 丟掉。這兩級在正式環境是 request 級別的雜訊，
+        //                 全送的話 Postgres 會被灌爆而且沒有對應的價值。
+        //
+        // ⚠️ WARN 刻意**不**變成 Event。link_preview 抓不到、manage_tags 失敗這類
+        //   日常雜訊每天都有，變成 issue 的話列表會被淹掉——而列表一旦沒人看，
+        //   真的出事時也就沒人看。
         .with(sentry_tracing::layer().event_filter(|md| match *md.level() {
-            tracing::Level::ERROR => sentry_tracing::EventFilter::Event,
-            tracing::Level::WARN => sentry_tracing::EventFilter::Breadcrumb,
+            tracing::Level::ERROR => sentry_tracing::EventFilter::Event | sentry_tracing::EventFilter::Log,
+            tracing::Level::WARN => {
+                sentry_tracing::EventFilter::Breadcrumb | sentry_tracing::EventFilter::Log
+            }
+            tracing::Level::INFO => sentry_tracing::EventFilter::Log,
             _ => sentry_tracing::EventFilter::Ignore,
         }))
         .init();

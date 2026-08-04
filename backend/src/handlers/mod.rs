@@ -15,6 +15,7 @@ pub mod opencc;
 pub mod polls;
 pub mod posts;
 pub mod quote;
+pub mod report_tunnel;
 pub mod rss;
 pub mod series;
 pub mod simkl;

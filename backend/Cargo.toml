@@ -47,11 +47,12 @@ anigamer = "0.1.1"   # 0.1.1 起有 ClientOptions::base_urls，sync worker 才�
 #   （reqwest、anigamer 都是）。混用會多編一份 openssl，Docker 映像也得多裝系統套件。
 # reqwest + rustls：傳輸層沿用已有的堆疊。
 # backtrace / contexts / panic：panic 自動上報 + 帶 OS/runtime 資訊。
+# logs：結構化日誌（GlitchTip 的 enabledFeatures 有 'logs'）。錯誤旁邊看得到前後文。
 sentry = { version = "0.49", default-features = false, features = [
-    "reqwest", "rustls", "backtrace", "contexts", "panic",
+    "reqwest", "rustls", "backtrace", "contexts", "panic", "logs",
 ] }
 # tracing 事件 → Sentry。掛在既有的 registry 上，handler 一行都不用改。
-sentry-tracing = "0.49"
+sentry-tracing = { version = "0.49", features = ["logs"] }
 # 每個請求一個 Hub + 把請求資訊掛進事件。
 # axum-matched-path：issue 依「路由樣板」聚合而不是依實際網址——
 #   沒有它的話 /api/posts/1 和 /api/posts/2 會變成兩個不同的 issue。
