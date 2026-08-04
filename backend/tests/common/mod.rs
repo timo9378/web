@@ -37,6 +37,7 @@ pub async fn test_app_with_state() -> (Router, sqlx::SqlitePool, AppState) {
     let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await.unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
     seed(&pool).await;
+    let external = state::ExternalUrls::default();
     let state = AppState {
         pool: pool.clone(),
         http: reqwest::Client::new(),
@@ -44,8 +45,8 @@ pub async fn test_app_with_state() -> (Router, sqlx::SqlitePool, AppState) {
         spotify: Arc::new(state::SpotifyState::default()),
         steam: Arc::new(state::SteamState::default()),
         watch: Arc::new(state::WatchState::default()),
-        bahamut: handlers::bahamut::build_state("sqlite::memory:"),
-        external: Arc::new(state::ExternalUrls::default()),
+        bahamut: handlers::bahamut::build_state("sqlite::memory:", &external),
+        external: Arc::new(external),
     };
     (build_router(state.clone()), pool, state)
 }

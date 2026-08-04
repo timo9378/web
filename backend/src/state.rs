@@ -67,6 +67,16 @@ pub struct ExternalUrls {
     pub zenquotes: String,
     pub meigen: String,
     pub korean_advice: String,
+    /// 動畫瘋的兩個上游（handlers/bahamut.rs 的 sync worker）。
+    ///
+    /// 這兩個不是我們自己 fetch 的——是傳給 `anigamer` SDK 的 `ClientOptions::base_urls`。
+    /// SDK 0.1.0 把位址寫死在 `format!` 裡，於是 `sync_bahamut_history` 那 423 個 region
+    /// 完全測不到；0.1.1 才開了這個口，理由與這整個結構相同。
+    ///
+    /// ⚠ 分成 api 與 web 兩個是因為它們是兩個不同的服務：`api` 回 JSON（觀看歷史），
+    ///   `web` 回 HTML（封面圖的 og:image）。
+    pub bahamut_api: String,
+    pub bahamut_web: String,
 }
 
 impl Default for ExternalUrls {
@@ -84,6 +94,8 @@ impl Default for ExternalUrls {
             zenquotes: "https://zenquotes.io".into(),
             meigen: "https://meigen.doodlenote.net".into(),
             korean_advice: "https://korean-advice-open-api.vercel.app".into(),
+            bahamut_api: anigamer::DEFAULT_API_BASE.into(),
+            bahamut_web: anigamer::DEFAULT_WEB_BASE.into(),
         }
     }
 }
@@ -107,6 +119,8 @@ impl ExternalUrls {
             zenquotes: format!("{base}/zenquotes"),
             meigen: format!("{base}/meigen"),
             korean_advice: format!("{base}/korean-advice"),
+            bahamut_api: format!("{base}/bahamut-api"),
+            bahamut_web: format!("{base}/bahamut-web"),
         }
     }
 }
@@ -195,6 +209,17 @@ pub(crate) const TEST_SECRET: &str = "test-secret";
 /// 測試想要的狀態，於是測試在我的機器上綠、在 CI 上紅（或反過來）。
 #[cfg(test)]
 pub(crate) async fn test_state() -> AppState {
+    test_state_with(ExternalUrls::default()).await
+}
+
+/// 同上，但由呼叫端決定上游位址。
+///
+/// ⚠ 一定要在**建 state 的時候**就指過去，不能事後改 `state.external`：
+///   `BahamutState.client` 是 `Arc<AniGamer>`，base URL 在 `AniGamer::new` 之後就
+///   固定在裡面了。事後改那個欄位不會報錯，只會讓測試安靜地打到真的動畫瘋——
+///   而那在 CI 上甚至可能成功。
+#[cfg(test)]
+pub(crate) async fn test_state_with(external: ExternalUrls) -> AppState {
     use std::str::FromStr;
 
     let opts = sqlx::sqlite::SqliteConnectOptions::from_str("sqlite::memory:")
@@ -220,9 +245,8 @@ pub(crate) async fn test_state() -> AppState {
         spotify: Arc::new(SpotifyState::default()),
         steam: Arc::new(SteamState::default()),
         watch: Arc::new(WatchState::default()),
-        bahamut: crate::handlers::bahamut::build_state(&fake_db_url),
-        // 預設值＝正式位址。要打 mock 的測試自己覆蓋這個欄位（見 all_pointing_at）。
-        external: Arc::new(ExternalUrls::default()),
+        bahamut: crate::handlers::bahamut::build_state(&fake_db_url, &external),
+        external: Arc::new(external),
     }
 }
 

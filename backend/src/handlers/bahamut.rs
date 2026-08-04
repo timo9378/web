@@ -32,20 +32,26 @@ fn load_cookie(file: &PathBuf) -> CookieJar {
     anigamer::parse_cookie_string(std::env::var("BAHAMUT_COOKIE").ok().as_deref())
 }
 
-pub fn build_state(database_url: &str) -> Arc<BahamutState> {
+/// `urls` 只影響上游位址，預設值就是正式位址（見 `state::ExternalUrls`）。
+/// 傳整個 `ExternalUrls` 而不是兩個字串，是為了讓「新增一個上游」只動一個地方。
+pub fn build_state(database_url: &str, urls: &crate::state::ExternalUrls) -> Arc<BahamutState> {
     let cookie_file = cookie_file_path(database_url);
     let jar = load_cookie(&cookie_file);
     let cf = cookie_file.clone();
     // rotation 守門：BAHARUNE 不見或非 JWT（不含 '.'）→ 不寫（別把好檔掏空成空 jar）。
-    let client = AniGamer::new(ClientOptions::new(jar).on_cookies_rotated(Arc::new(move |jar| {
-        let ok = jar.get("BAHARUNE").map(|b| b.contains('.')).unwrap_or(false);
-        if ok && let Ok(json) = serde_json::to_string_pretty(jar) {
-            // callback 為同步簽名（crate 內 async 路徑呼叫）；3.5KB 寫檔亞毫秒，可接受
-            if let Err(e) = std::fs::write(&cf, json) {
-                tracing::error!("[Bahamut] persist cookie fail: {e}");
-            }
-        }
-    })));
+    let client = AniGamer::new(
+        ClientOptions::new(jar).base_urls(&urls.bahamut_api, &urls.bahamut_web).on_cookies_rotated(Arc::new(
+            move |jar| {
+                let ok = jar.get("BAHARUNE").map(|b| b.contains('.')).unwrap_or(false);
+                if ok && let Ok(json) = serde_json::to_string_pretty(jar) {
+                    // callback 為同步簽名（crate 內 async 路徑呼叫）；3.5KB 寫檔亞毫秒，可接受
+                    if let Err(e) = std::fs::write(&cf, json) {
+                        tracing::error!("[Bahamut] persist cookie fail: {e}");
+                    }
+                }
+            },
+        )),
+    );
     Arc::new(BahamutState {
         client: Arc::new(client),
         sync_lock: tokio::sync::Mutex::new(()),
@@ -535,6 +541,11 @@ mod sync_lock_tests {
                                 BAHAFLT=f; BAHAENUR=e; BAHARUNE=a.b.c";
 
     async fn state_with_cookies(cookie: Option<&str>) -> AppState {
+        state_with_cookies_at(cookie, None).await
+    }
+
+    /// 同上，但 `base` 有給時把兩個動畫瘋上游指過去（`ExternalUrls::all_pointing_at`）。
+    async fn state_with_cookies_at(cookie: Option<&str>, base: Option<&str>) -> AppState {
         // SAFETY: 靠 COOKIE_ENV_LOCK 串行化（呼叫端持鎖）；讀完馬上還原。
         unsafe {
             match cookie {
@@ -542,7 +553,11 @@ mod sync_lock_tests {
                 None => std::env::remove_var("BAHAMUT_COOKIE"),
             }
         }
-        let st = crate::state::test_state().await;
+        let urls = match base {
+            Some(b) => crate::state::ExternalUrls::all_pointing_at(b),
+            None => crate::state::ExternalUrls::default(),
+        };
+        let st = crate::state::test_state_with(urls).await;
         // SAFETY: 見上。
         unsafe { std::env::remove_var("BAHAMUT_COOKIE") };
         st
@@ -729,5 +744,288 @@ mod sync_lock_tests {
             .expect("沒設 webhook 不該卡住");
         // SAFETY: 同上。
         unsafe { std::env::remove_var("DISCORD_WEBHOOK_URL") };
+    }
+
+    // ── 同步本體 ───────────────────────────────────────────────────────
+    //
+    // 這一段一直測不到，因為 anigamer SDK 0.1.0 把上游位址寫死在 `format!` 裡，
+    // 任何 mock server 都攔不下來（連 reqwest 的 `.resolve()` 都不行——那兩個是
+    // https，TCP 導過去了但憑證對不上）。0.1.1 加了 `ClientOptions::base_urls`，
+    // 這裡才走得進來。
+    //
+    // 為什麼值得測：這支的失敗模式全部是**安靜的**。去重的 key 寫錯 → 觀看紀錄
+    // 重複；集數的正則錨點寫錯 → 每一集都叫同樣的名字；封面的 `NULLIF(...,'')`
+    // 拿掉 → 重跑一次就把所有封面洗成空字串。三者都不會有錯誤訊息，站上看起來
+    // 只是「資料怪怪的」。
+
+    use wiremock::matchers::{method as wm_method, path as wm_path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    /// 掛一頁歷史紀錄。`entries` 是 Bahamut 的原始格式（含 `history` 陣列時會被展開）。
+    async fn mount_history(server: &MockServer, entries: Value) {
+        Mock::given(wm_method("GET"))
+            .and(wm_path("/bahamut-api/anime/v3/history.php"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!({ "data": { "history": entries, "totalPage": 1 } })),
+            )
+            .mount(server)
+            .await;
+    }
+
+    /// 掛某個 sn 的 animeRef 頁（封面來自 og:image）。
+    async fn mount_cover(server: &MockServer, sn: i64, image: &str) {
+        Mock::given(wm_path("/bahamut-web/animeRef.php"))
+            .and(query_param("sn", sn.to_string()))
+            .respond_with(ResponseTemplate::new(200).set_body_string(format!(
+                r#"<html><head><meta property="og:image" content="{image}"></head></html>"#
+            )))
+            .mount(server)
+            .await;
+    }
+
+    async fn rows(state: &AppState) -> Vec<(i64, i64, String, Option<String>, Option<String>)> {
+        sqlx::query_as(
+            "SELECT anime_sn, video_sn, title, episode, cover_url FROM anime_history \
+             ORDER BY anime_sn, video_sn",
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap()
+    }
+
+    #[tokio::test]
+    async fn 同步會展開每集並抓封面() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // 一筆歷史 = 一部動畫，底下的 `history` 陣列才是各集。只存最外層那筆的話，
+        // 一部動畫永遠只會有一集紀錄——而畫面上看起來只是「進度沒更新」
+        mount_history(
+            &server,
+            json!([{
+                "animeSn": 100, "videoSn": 900, "title": "測試動畫",
+                "history": [
+                    { "videoSn": 901, "title": "測試動畫 [01]", "watchTime": "2026-01-01 10:00:00" },
+                    { "videoSn": 902, "title": "測試動畫 [02]", "watchTime": "2026-01-02 10:00:00" },
+                ],
+            }]),
+        )
+        .await;
+        mount_cover(&server, 100, "https://p2.bahamut.com.tw/100.jpg").await;
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+
+        assert_eq!(out["ok"], json!(true), "得到 {out}");
+        assert_eq!(out["totalEntries"], json!(2), "兩集都要進去");
+        assert_eq!(out["newEntries"], json!(2));
+        assert_eq!(out["coversFetched"], json!(1), "同一部只該抓一次封面");
+
+        let got = rows(&state).await;
+        assert_eq!(got.len(), 2);
+        // 集數是從標題結尾的 [..] 抓出來的。正則沒錨定行尾的話，片名裡的中括號
+        // 會被當成集數（例如「轉生史萊姆[劇場版] [01]」會抓到「劇場版」）
+        assert_eq!(got[0].3.as_deref(), Some("01"));
+        assert_eq!(got[1].3.as_deref(), Some("02"));
+        assert_eq!(got[0].4.as_deref(), Some("https://p2.bahamut.com.tw/100.jpg"));
+    }
+
+    #[tokio::test]
+    async fn 沒有_history_陣列時退回外層那一筆() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // 舊資料或單集動畫沒有 history 陣列。沒有這條退路的話那些紀錄會整個消失，
+        // 而回應的 totalEntries 會是 0——看起來像「同步成功但你沒看過東西」
+        mount_history(
+            &server,
+            json!([
+                { "animeSn": 200, "videoSn": 800, "title": "劇場版 [完]", "watchTime": "2026-02-01 10:00:00" },
+                { "animeSn": 201, "videoSn": 801, "title": "空陣列", "history": [] },
+            ]),
+        )
+        .await;
+        mount_cover(&server, 200, "https://p2.bahamut.com.tw/200.jpg").await;
+        mount_cover(&server, 201, "https://p2.bahamut.com.tw/201.jpg").await;
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+
+        assert_eq!(out["totalEntries"], json!(2), "兩筆都要用外層資料補上");
+        let got = rows(&state).await;
+        assert_eq!(got[0].1, 800);
+        assert_eq!(got[0].3.as_deref(), Some("完"));
+        assert_eq!(got[1].1, 801);
+    }
+
+    #[tokio::test]
+    async fn 重跑一次不會重複計新_也不會把封面洗掉() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        mount_history(
+            &server,
+            json!([{ "animeSn": 300, "videoSn": 700, "title": "重跑 [03]", "watchTime": "2026-03-01 10:00:00" }]),
+        )
+        .await;
+        mount_cover(&server, 300, "https://p2.bahamut.com.tw/300.jpg").await;
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let first = sync_bahamut_history(&state).await;
+        assert_eq!(first["newEntries"], json!(1));
+        assert_eq!(first["coversFetched"], json!(1));
+
+        let second = sync_bahamut_history(&state).await;
+        assert_eq!(second["totalEntries"], json!(1));
+        // newEntries 沒歸零的話，「這次同步抓到幾集新的」永遠等於總數
+        assert_eq!(second["newEntries"], json!(0), "第二次沒有新的");
+        // 已經有封面就不該再打 animeRef——那是一部動畫一次請求，抓過還抓等於
+        // 每 6 小時對動畫瘋發一輪沒必要的流量
+        assert_eq!(second["coversFetched"], json!(0), "已有封面就別再抓");
+
+        let got = rows(&state).await;
+        assert_eq!(got.len(), 1, "ON CONFLICT 應該是更新不是插入");
+        // upsert 的 cover_url 用 COALESCE(NULLIF(excluded.cover_url,''), 舊值)。
+        // 拿掉 NULLIF 的話，第二次同步（沒重抓封面 → 空字串）會把封面洗成空的
+        assert_eq!(got[0].4.as_deref(), Some("https://p2.bahamut.com.tw/300.jpg"));
+    }
+
+    #[tokio::test]
+    async fn 同一部動畫的多筆歷史只抓一次封面() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // unique 的去重若失效，一部有 24 集的動畫就會打 24 次 animeRef，
+        // 每次之間還 sleep 400ms——同步時間從幾秒變成十幾秒，而且沒人會發現
+        mount_history(
+            &server,
+            json!([
+                { "animeSn": 400, "videoSn": 601, "title": "同部 [01]" },
+                { "animeSn": 400, "videoSn": 602, "title": "同部 [02]" },
+                { "animeSn": 400, "videoSn": 603, "title": "同部 [03]" },
+            ]),
+        )
+        .await;
+        Mock::given(wm_path("/bahamut-web/animeRef.php"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(
+                r#"<html><head><meta property="og:image" content="https://p2.bahamut.com.tw/400.jpg"></head></html>"#,
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+        assert_eq!(out["totalEntries"], json!(3));
+        assert_eq!(out["coversFetched"], json!(1));
+        // expect(1) 在 server drop 時驗——真的只打了一次
+    }
+
+    #[tokio::test]
+    async fn 沒有_anime_sn_或_video_sn_的紀錄要跳過() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // sn 為 0 的列進了 DB 之後是刪不掉的髒資料（主鍵是 anime_sn+video_sn），
+        // 而且會在「在看」列表上顯示成一格無法點擊的空白卡
+        mount_history(
+            &server,
+            json!([
+                { "animeSn": 0, "videoSn": 500, "title": "沒有 animeSn" },
+                { "animeSn": 500, "videoSn": 0, "title": "沒有 videoSn" },
+                { "animeSn": 501, "title": "連 videoSn 欄位都沒有" },
+                { "animeSn": 502, "videoSn": 502, "title": "正常的 [01]" },
+            ]),
+        )
+        .await;
+        Mock::given(wm_path("/bahamut-web/animeRef.php"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("<html></html>"))
+            .mount(&server)
+            .await;
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+        assert_eq!(out["totalEntries"], json!(1), "只有最後那筆該進去");
+        let got = rows(&state).await;
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].0, 502);
+    }
+
+    #[tokio::test]
+    async fn 抓到零筆時判定為_session_失效並發告警() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // 動畫瘋的 session 失效不會回錯誤，是回 HTTP 200 + 空陣列。
+        // 不特別判這個的話，同步會「成功」地把 0 筆寫進去，然後每 6 小時再成功一次，
+        // 而沒有任何地方會顯示異常
+        mount_history(&server, json!([])).await;
+        Mock::given(wm_path("/discord"))
+            .respond_with(ResponseTemplate::new(204))
+            .expect(1)
+            .mount(&server)
+            .await;
+        // SAFETY: 靠 COOKIE_ENV_LOCK 串行化。
+        unsafe { std::env::set_var("DISCORD_WEBHOOK_URL", format!("{}/discord", server.uri())) };
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("DISCORD_WEBHOOK_URL") };
+        assert_eq!(out["ok"], json!(false));
+        assert_eq!(out["deadSession"], json!(true), "0 筆要當成 session 死掉，不是同步成功");
+        assert_eq!(out["totalEntries"], json!(0));
+    }
+
+    #[tokio::test]
+    async fn 上游回_no_login_時發告警並標記_deadsession() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // Bahamut 的錯誤是包在 HTTP 200 的信封裡（`{error:{status:"NO_LOGIN"}}`）。
+        // 只看狀態碼的話這會被當成成功
+        Mock::given(wm_path("/bahamut-api/anime/v3/history.php"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(
+                json!({ "error": { "code": 100, "status": "NO_LOGIN", "message": "請先登入" } }),
+            ))
+            .mount(&server)
+            .await;
+        Mock::given(wm_path("/discord"))
+            .respond_with(ResponseTemplate::new(204))
+            .expect(1)
+            .mount(&server)
+            .await;
+        // SAFETY: 靠 COOKIE_ENV_LOCK 串行化。
+        unsafe { std::env::set_var("DISCORD_WEBHOOK_URL", format!("{}/discord", server.uri())) };
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("DISCORD_WEBHOOK_URL") };
+        assert_eq!(out["deadSession"], json!(true));
+        assert!(out["error"].is_string(), "要把上游訊息帶回來，得到 {out}");
+    }
+
+    #[tokio::test]
+    async fn 一般的上游錯誤不發告警也不標_deadsession() {
+        let _env = COOKIE_ENV_LOCK.lock().await;
+        let server = MockServer::start().await;
+        // 500 是對方暫時掛了，不是 cookie 過期。混在一起的話每次動畫瘋維護
+        // 都會收到一則「請更新 cookie」——幾次之後那則通知就沒人看了
+        Mock::given(wm_path("/bahamut-api/anime/v3/history.php"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+        Mock::given(wm_path("/discord"))
+            .respond_with(ResponseTemplate::new(204))
+            .expect(0)
+            .mount(&server)
+            .await;
+        // SAFETY: 靠 COOKIE_ENV_LOCK 串行化。
+        unsafe { std::env::set_var("DISCORD_WEBHOOK_URL", format!("{}/discord", server.uri())) };
+
+        let state = state_with_cookies_at(Some(ALL_REQUIRED), Some(&server.uri())).await;
+        let out = sync_bahamut_history(&state).await;
+
+        // SAFETY: 見上。
+        unsafe { std::env::remove_var("DISCORD_WEBHOOK_URL") };
+        assert_eq!(out["ok"], json!(false));
+        assert!(out.get("deadSession").is_none(), "暫時性錯誤不該叫人去換 cookie：{out}");
     }
 }

@@ -57,6 +57,8 @@ async fn main() -> anyhow::Result<()> {
     // JWT_SECRET（HS256 驗章）。fail-fast：沒設就不啟動。
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
+    // 預設＝正式位址，編譯進去。這個欄位存在的理由見 state::ExternalUrls。
+    let external = state::ExternalUrls::default();
     let state = AppState {
         pool,
         http,
@@ -64,9 +66,8 @@ async fn main() -> anyhow::Result<()> {
         spotify: Arc::new(state::SpotifyState::default()),
         steam: Arc::new(state::SteamState::default()),
         watch: Arc::new(state::WatchState::default()),
-        bahamut: handlers::bahamut::build_state(&database_url),
-        // 預設＝正式位址，編譯進去。這個欄位存在的理由見 state::ExternalUrls。
-        external: std::sync::Arc::new(state::ExternalUrls::default()),
+        bahamut: handlers::bahamut::build_state(&database_url, &external),
+        external: std::sync::Arc::new(external),
     };
 
     // Simkl 歷史同步 worker（ENABLE_SIMKL_SYNC=1 才啟動；見 handlers/simkl.rs）。

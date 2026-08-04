@@ -40,7 +40,7 @@ parking_lot = "0.12"
 # /posts/legacy 的 Basic auth 解碼
 base64 = "0.22"
 # 自家 bahamut SDK（https://crates.io/crates/anigamer；本地開發要改 SDK 時可暫換 path dep）
-anigamer = "0.1"
+anigamer = "0.1.1"   # 0.1.1 起有 ClientOptions::base_urls，sync worker 才測得到
 # opencc 簡繁轉換（純 Rust、內建 OpenCC 字典，免 libopencc C 依賴）。
 # Tw2s 對 opencc-js {from:'tw',to:'cn'} 實測 byte-identical（33 真實欄位 + 20 對抗案例全過）。
 ferrous-opencc = "0.4"
