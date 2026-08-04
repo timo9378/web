@@ -38,6 +38,17 @@ COPY . .
 
 # client runtime 走相對 /api(經 nginx proxy 到 backend-rs)
 ENV VITE_API_URL=/api
+
+# 錯誤上報用的（假）DSN 與版本標記。兩個都是 build 時就會烤進 bundle 的。
+#
+# ⚠️ VITE_RELEASE **必須跟 scripts/upload-sourcemaps.sh 的 RELEASE 一致**，
+#   否則 GlitchTip 找不到對應的 source map——症狀是 stack trace 依然是 minify 的，
+#   而且不會有任何錯誤訊息。兩邊都預設用 git 短 SHA。
+#   compose 沒帶 build arg 時 VITE_RELEASE 會是空的（SDK 就不帶 release）。
+ARG VITE_SENTRY_DSN=
+ARG VITE_RELEASE=
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ENV VITE_RELEASE=$VITE_RELEASE
 RUN pnpm run build
 
 # Stage 2: Production server

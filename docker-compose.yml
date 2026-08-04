@@ -16,6 +16,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # 錯誤上報。DSN 裡那把 key 是假的（真的在 .env.backend，後端轉發時換上）。
+        # VITE_RELEASE 要跟 scripts/upload-sourcemaps.sh 的 RELEASE 一致，
+        # 否則 source map 對不上——而那個失敗是靜默的。
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
+        - VITE_RELEASE=${VITE_RELEASE:-}
     container_name: personal-website-frontend # 指定容器名稱
     environment:
       - TZ=Asia/Taipei

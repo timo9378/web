@@ -4,6 +4,9 @@ packages:
 # pnpm 11 預設封鎖 postinstall build script,需顯式核可。
 # esbuild:平台 binary 安裝;exifreader:套件的 prepare。兩者為既有相依,允許執行。
 allowBuilds:
+  # sentry-cli 的 postinstall 下載平台對應的 binary（source map 上傳用，見
+  # scripts/upload-sourcemaps.sh）。不核可的話 pnpm install 會直接失敗。
+  '@sentry/cli': true
   esbuild: true
   exifreader: true
 
