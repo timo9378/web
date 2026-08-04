@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { localePage } from '../../localePage';
-import Watch from '../../components/Watch';
-import { animeHistoryQueryOptions, filmsQueryOptions, seriesQueryOptions, watchStatsQueryOptions } from '../../watchData';
+import { localePage } from '@/i18n/localePage';
+import Watch from '@/components/media/Watch';
+import { animeHistoryQueryOptions, filmsQueryOptions, seriesQueryOptions, watchStatsQueryOptions } from '@/data/watchData';
 
 export const Route = createFileRoute('/watch/')({
   ...localePage('watch', Watch),

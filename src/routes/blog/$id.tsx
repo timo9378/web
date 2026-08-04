@@ -1,11 +1,11 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { postIdent } from '../../lib/postPath';
-import { buildAlternateLinks, toLocales } from '../../start-i18n';
-import { LocaleProvider } from '../../LocaleProvider';
+import { buildAlternateLinks, toLocales } from '@/i18n/start-i18n';
+import { LocaleProvider } from '@/i18n/LocaleProvider';
 import { DEFAULT_LOCALE } from '../../lib/locales';
-import FullBlogPost from '../../components/BlogPost';
-import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../blogList';
-import { articleJsonLd, articleMeta } from '../../seoMeta';
+import FullBlogPost from '@/components/blog/BlogPost';
+import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '@/data/blogList';
+import { articleJsonLd, articleMeta } from '@/seo/seoMeta';
 
 // 預設語言(zh-TW)文章頁:/blog/:id。
 // Tier-2：BlogPost 改為 SSR-safe，直接 eager import + 單次 SSR（不再 ClientOnly 蓋 BlogPostPage

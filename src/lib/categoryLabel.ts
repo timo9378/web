@@ -6,8 +6,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions, type CategoryInfo } from '../blogList';
-import { useLocale } from './useLocale';
+import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions, type CategoryInfo } from '@/data/blogList';
+import { useLocale } from '@/hooks/useLocale';
 
 /** locale → CategoryInfo 上的譯名欄位名。預設語系（zh-TW）與未知語系都用 name。 */
 function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {

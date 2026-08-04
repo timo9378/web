@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { localePage } from '../../localePage';
-import Thinking from '../../components/Thinking';
-import { thoughtsListQueryOptions } from '../../thinkingData';
+import { localePage } from '@/i18n/localePage';
+import Thinking from '@/components/blog/Thinking';
+import { thoughtsListQueryOptions } from '@/data/thinkingData';
 
 export const Route = createFileRoute('/thinking/')({
   ...localePage('thinking', Thinking),

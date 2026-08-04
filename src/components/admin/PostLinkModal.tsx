@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaSearch, FaFileAlt } from 'react-icons/fa';
-import { recentPostsQueryOptions } from '../../blogList';
+import { recentPostsQueryOptions } from '@/data/blogList';
 
 interface LinkablePost {
   id: number | string;

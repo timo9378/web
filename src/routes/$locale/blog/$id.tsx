@@ -1,10 +1,10 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { postIdent } from '../../../lib/postPath';
-import { buildAlternateLinks, localeFromPrefix, toLocales } from '../../../start-i18n';
-import { LocaleProvider } from '../../../LocaleProvider';
-import FullBlogPost from '../../../components/BlogPost';
-import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '../../../blogList';
-import { articleJsonLd, articleMeta } from '../../../seoMeta';
+import { buildAlternateLinks, localeFromPrefix, toLocales } from '@/i18n/start-i18n';
+import { LocaleProvider } from '@/i18n/LocaleProvider';
+import FullBlogPost from '@/components/blog/BlogPost';
+import { postDetailQueryOptions, recentPostsQueryOptions, blogCategoriesDetailQueryOptions } from '@/data/blogList';
+import { articleJsonLd, articleMeta } from '@/seo/seoMeta';
 
 // 帶前綴文章頁:/$locale/blog/:id(/en/blog/39 等)。loader 依 locale 抓翻譯版內容。
 // Tier-2：同 /blog/$id —— BlogPost 直接 SSR（不再 ClientOnly + BlogPostPage fallback），消除雙渲染。

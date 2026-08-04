@@ -1,8 +1,8 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { localePagePrefixed } from '../../../localePage';
-import Blog from '../../../components/Blog';
-import { blogCategoriesQueryOptions, blogTagsQueryOptions, postsListQueryOptions } from '../../../blogList';
-import { localeFromPrefix } from '../../../start-i18n';
+import { localePagePrefixed } from '@/i18n/localePage';
+import Blog from '@/components/blog/Blog';
+import { blogCategoriesQueryOptions, blogTagsQueryOptions, postsListQueryOptions } from '@/data/blogList';
+import { localeFromPrefix } from '@/i18n/start-i18n';
 
 export const Route = createFileRoute('/$locale/blog/')({
   ...localePagePrefixed('blog', Blog),

@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LocaleLink } from '../../locale-link';
-import { useLocale } from '../../lib/useLocale';
+import { LocaleLink } from '@/i18n/locale-link';
+import { useLocale } from '@/hooks/useLocale';
 import { useTranslation } from 'react-i18next';
-import { blogCategoriesQueryOptions, recentPostsQueryOptions } from '../../blogList';
+import { blogCategoriesQueryOptions, recentPostsQueryOptions } from '@/data/blogList';
 import type { PostListItem } from '@koimsurai/api-types';
 import { MegaMenuPanel, MegaMenuColumn } from './MegaMenu';
 import { postPath } from '../../lib/postPath';

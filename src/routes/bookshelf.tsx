@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { localePage } from '../localePage';
-import { booksQueryOptions, bookStatsQueryOptions } from '../bookshelfData';
-import Bookshelf from '../components/Bookshelf';
+import { localePage } from '@/i18n/localePage';
+import { booksQueryOptions, bookStatsQueryOptions } from '@/data/bookshelfData';
+import Bookshelf from '@/components/media/Bookshelf';
 
 export const Route = createFileRoute('/bookshelf')({
   ...localePage('bookshelf', Bookshelf),

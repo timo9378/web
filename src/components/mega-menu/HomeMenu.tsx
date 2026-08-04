@@ -7,9 +7,9 @@ import { LayersIcon } from '@/components/animate-ui/icons/layers';
 import { SendIcon } from '@/components/animate-ui/icons/send';
 import { RouteIcon } from '@/components/animate-ui/icons/route';
 import { HouseIcon, MailIcon, GithubIcon, LinkedinIcon, InfoIcon, CompassIcon, MessageCircleIcon, UsersIcon, SparklesIcon as SparklesAnimIcon, FacebookIcon, InstagramIcon, WifiIcon } from '@animateicons/react/lucide';
-import { LocaleLink } from '../../locale-link';
+import { LocaleLink } from '@/i18n/locale-link';
 import { useQuery } from '@tanstack/react-query';
-import { siteStatsQueryOptions } from '../../homeData';
+import { siteStatsQueryOptions } from '@/data/homeData';
 
 interface AnimateIconHandle { startAnimation?: () => void; stopAnimation?: () => void }
 

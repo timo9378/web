@@ -167,7 +167,7 @@ async function main() {
   run('nitro', process.execPath, ['.output/server/index.mjs'], {
     PORT: String(PORTS.nitro),
     HOST: '127.0.0.1',
-    // SSR 端的 apiUrl() 直連後端（見 src/api.ts），不繞 koimsurai.com
+    // SSR 端的 apiUrl() 直連後端（見 src/lib/api.ts），不繞 koimsurai.com
     BACKEND_URL: `http://127.0.0.1:${PORTS.backend}`,
     // 兩邊要是同一組，否則 /_revalidate 會回 401；沒設的話它直接 404（功能停用）
     REVALIDATE_SECRET: REVALIDATE_SECRET,

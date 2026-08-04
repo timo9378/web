@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { AdminPostFull } from '@koimsurai/api-types';
-import { adminPostsQueryOptions, adminStatsQueryOptions } from '../../adminData';
+import { adminPostsQueryOptions, adminStatsQueryOptions } from '@/data/adminData';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { FileText, Eye, MessageSquare, TrendingUp, Plus, Edit, Clock, ArrowUpRight } from 'lucide-react';

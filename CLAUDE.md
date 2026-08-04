@@ -66,6 +66,71 @@ SSR HTML 還沒解析完（docH 2792 → 最終 7109）就還原捲動位置」�
 字面內容一律走**引號 heredoc**（`<<'EOF'`），它不做變數展開。
 在雙引號 `echo` 裡寫 nginx／其他系統的 `$變數` 會被 bash 搶走。
 
+## 專案結構
+
+`src/components/` 依**功能領域**分組，不是依元件型別。分組是照實際的 import 圖切的：
+
+| 資料夾 | 放什麼 |
+|---|---|
+| `layout/` | 站台外框：AppShell、Header／MobileNav、Footer、命令面板、右鍵選單 |
+| `backdrop/` | 太空背景與轉場：SpaceBackdropShell 那條線底下的所有特效 |
+| `home/` | 首頁：MainPage、Hero、HomeLately |
+| `about/` | 關於／資訊頁：AboutPage 樹、以及四個共用 InfoPage 的頁面 |
+| `blog/` | 文章與想法：Blog、BlogPost、Comments、Thinking |
+| `mdx/` | MDX 渲染與所有 block 元件（新增 block 要同時改 `mdx-blocks-registry.ts`） |
+| `gallery/` | 照片：PhotoGallery、PhotoViewer、EXIF、圖片檢視 |
+| `media/` | 收藏庫：Watch、Music、Bookshelf、Activity |
+| `account/` | 登入回呼、電子報退訂 |
+| `common/` | 跨領域共用：KoimLoader、LinkCard、SignatureSVG |
+| `ui/`、`animate-ui/` | shadcn 與 animate-ui 產生的檔案，**不要手動整理**（oxlint 與 knip 都有針對這兩個路徑的設定） |
+| `admin/`、`monaco-editor/`、`mega-menu/` | 原本就分好的，維持原樣 |
+
+CSS 跟同名元件放在一起。**跨資料夾的 import 一律走 `@/` alias**，同資料夾才用 `./`。
+這樣下次再搬檔只會動到被搬的那幾個檔案，不會牽動一堆 `../../`。
+
+`src/` 根層只留框架要求的東西（`router.tsx`、`routeTree.gen.ts`、`vite-env.d.ts`、
+`index.css`、`App.css`），其餘各歸各位：
+
+| 資料夾 | 放什麼 |
+|---|---|
+| `data/` | API 查詢模組（react-query 的 queryOptions）與靜態資料 |
+| `i18n/` | 語系切換、`localePage` 系列的路由包裝 |
+| `seo/` | `seoMeta`（JSON-LD）、`pageSeo`（各頁 meta） |
+| `lib/` | 純工具，不含 React |
+| `lib/mdx/` | MDX 編譯鏈：`mdx-compile-core`（plugin 組態）、`shikiHighlight`、`blogContent` |
+| `hooks/` | React hook |
+| `store/` | jotai atom 與訂閱式狀態 |
+| `contexts/`、`types/`、`schemas/`、`styles/`、`workers/` | 各一類，維持原樣 |
+
+⚠️ 不要為了「檔案少」再開新目錄，也不要把單檔目錄併掉：`schemas/`（zod）、`styles/`（CSS）、
+`workers/`（vite 的 worker 慣例）各自是明確的一類，單檔不代表是雜檔。真正該避免的是
+`lib/` 那種「什麼都往裡丟」——它一度長到 24 個檔，混了 hook、MDX 編譯、純工具三類。
+
+⚠️ **搬檔時 tsc 抓不到的兩類引用**（這次兩類都真的踩到了）：
+
+1. `new URL('...', import.meta.url)` 裡的 worker 路徑——vite 靠靜態分析這個字面字串才認得出
+   worker 進入點，所以它**必須是相對路徑**、不能換成 `@/`，而搬檔後要自己算對層數。
+2. 腳本裡硬編的檔案路徑字串（例如 `scripts/mdx-block-names.ts` 用 regex 讀註冊表）。
+
+改完結構後除了 tsc，一定要跑 `pnpm test` 與 `pnpm build`——上面兩類只有它們抓得到。
+
+⚠️ 設定檔集中在 **`.config/`**（nextest、knip、lighthouserc、schemathesis、builder）。
+不要另開一個 `config/`——`.config/` 早就在了（cargo-nextest 指定的位置），兩個並存只是更亂。
+每一個都要靠 CI 明確帶參數才讀得到，改路徑時 `.github/workflows/ci.yml` 要一起改：
+
+```
+pnpm exec knip --config .config/knip.json …
+pnpm exec lhci autorun --config=.config/lighthouserc.cjs
+uvx schemathesis --config-file .config/schemathesis.toml run …   # 頂層選項，在 run 之前
+```
+
+`builder.config.js` 刻意不放 `scripts/builder/`——那裡有 `scripts/builder/**/*.js` 的 gitignore。
+
+留在根目錄的是**搬了得不償失**的，不是搬不動的：`components.json`（shadcn 只有 `--cwd`
+沒有 `--config`，搬了要把裡面每條路徑改成 `../…` 還得在旁邊放 tsconfig）、`vitest.config.ts`
+與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）、`tailwind.config.js` 與
+`postcss.config.js`（Tailwind 還是 v3，升 v4 才能 CSS-first 免掉這兩個）。
+
 ## CI 門檻（跟這些指令一字不差，不要自己改寫）
 
 前端：

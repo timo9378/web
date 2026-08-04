@@ -1,8 +1,8 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { localePagePrefixed } from '../../localePage';
-import Music from '../../components/Music';
-import { recentlyPlayedQueryOptions, topGenresQueryOptions, topTracksQueryOptions } from '../../musicData';
-import { localeFromPrefix } from '../../start-i18n';
+import { localePagePrefixed } from '@/i18n/localePage';
+import Music from '@/components/media/Music';
+import { recentlyPlayedQueryOptions, topGenresQueryOptions, topTracksQueryOptions } from '@/data/musicData';
+import { localeFromPrefix } from '@/i18n/start-i18n';
 
 export const Route = createFileRoute('/$locale/music')({
   ...localePagePrefixed('music', Music),

@@ -10,7 +10,7 @@
  *   pnpm tsx scripts/backfill-exif-dates.ts            # dry-run，只印會改什麼
  *   pnpm tsx scripts/backfill-exif-dates.ts --write    # 真的寫檔（會先備份）
  *
- * 路徑取自 builder.config.js，與 builder / 後端 sync 共用同一份 manifest。
+ * 路徑取自 .config/builder.config.js，與 builder / 後端 sync 共用同一份 manifest。
  */
 
 import * as fs from 'fs/promises';

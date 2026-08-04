@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AdminPostFull } from '@koimsurai/api-types';
-import { adminPostsQueryOptions } from '../../adminData';
+import { adminPostsQueryOptions } from '@/data/adminData';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

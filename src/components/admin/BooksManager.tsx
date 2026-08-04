@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BookRow } from '@koimsurai/api-types';
-import { adminBooksQueryOptions } from '../../adminData';
+import { adminBooksQueryOptions } from '@/data/adminData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

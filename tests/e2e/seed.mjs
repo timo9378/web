@@ -127,7 +127,7 @@ export function seed(dbPath) {
     '有程式碼區塊與圖片',
     T(10),
   );
-  // MDX 路徑：`format='mdx'` 會讓 src/blogList.ts 在 server 端編譯成 React 元件。
+  // MDX 路徑：`format='mdx'` 會讓 src/data/blogList.ts 在 server 端編譯成 React 元件。
   //
   // ⚠ 編譯失敗時它**靜默退回 markdown**（見 blogList.ts 的 catch），讀者看到的是
   // 一行裸的 `<Poll ... />` 文字，而 API 仍然回 200。所以這篇的價值不只是「測投票」，

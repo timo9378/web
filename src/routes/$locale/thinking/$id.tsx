@@ -1,9 +1,9 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { localeWrap } from '../../../localePage';
-import ThinkingDetail from '../../../components/ThinkingDetail';
-import { thoughtDetailQueryOptions, thoughtTitle } from '../../../thoughtData';
-import { pageMeta } from '../../../seoMeta';
-import { localeFromPrefix } from '../../../start-i18n';
+import { localeWrap } from '@/i18n/localePage';
+import ThinkingDetail from '@/components/blog/ThinkingDetail';
+import { thoughtDetailQueryOptions, thoughtTitle } from '@/data/thoughtData';
+import { pageMeta } from '@/seo/seoMeta';
+import { localeFromPrefix } from '@/i18n/start-i18n';
 import { DEFAULT_LOCALE } from '../../../lib/locales';
 
 export const Route = createFileRoute('/$locale/thinking/$id')({

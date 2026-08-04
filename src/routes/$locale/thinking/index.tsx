@@ -1,8 +1,8 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { localePagePrefixed } from '../../../localePage';
-import Thinking from '../../../components/Thinking';
-import { thoughtsListQueryOptions } from '../../../thinkingData';
-import { localeFromPrefix } from '../../../start-i18n';
+import { localePagePrefixed } from '@/i18n/localePage';
+import Thinking from '@/components/blog/Thinking';
+import { thoughtsListQueryOptions } from '@/data/thinkingData';
+import { localeFromPrefix } from '@/i18n/start-i18n';
 
 export const Route = createFileRoute('/$locale/thinking/')({
   ...localePagePrefixed('thinking', Thinking),

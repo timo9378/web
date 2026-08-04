@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, createContext, use, useState, type ReactNode, type CSSProperties } from 'react';
-import { LocaleLink } from '../../locale-link';
+import { LocaleLink } from '@/i18n/locale-link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown } from 'react-icons/fa';
 import './mega-menu.css';

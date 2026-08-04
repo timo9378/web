@@ -1,13 +1,13 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getRequestHeader } from '@tanstack/react-start/server';
-import { buildAlternateLinks, localeFromPrefix, pickLocaleFromAcceptLanguage } from '../start-i18n';
-import { LocaleProvider } from '../LocaleProvider';
+import { buildAlternateLinks, localeFromPrefix, pickLocaleFromAcceptLanguage } from '@/i18n/start-i18n';
+import { LocaleProvider } from '@/i18n/LocaleProvider';
 import { isBotUserAgent } from '../lib/bot';
 import { DEFAULT_LOCALE, LOCALE_PREFIX, type Locale } from '../lib/locales';
-import MainPage from '../components/MainPage';
-import { siteJsonLd } from '../seoMeta';
-import { seoMetaFor } from '../pageSeo';
+import MainPage from '@/components/home/MainPage';
+import { siteJsonLd } from '@/seo/seoMeta';
+import { seoMetaFor } from '@/seo/pageSeo';
 
 // server-only:讀 UA / cookie / Accept-Language → 決定首頁要導向哪個 locale。
 // 包在 createServerFn 裡,server-only 的 header API 才不會被打進 client bundle。

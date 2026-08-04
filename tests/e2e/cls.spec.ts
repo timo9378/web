@@ -146,7 +146,7 @@ for (const [path, label] of [
  * （/blog/palworld-dedicated-server-docker：0.5266）。根因是 `.post-content` 上的
  * `content-visibility: auto` 把整篇文章塌成 1200px 佔位，於是捲動位置被還原到一個
  * docH=2904 的版面上，內容補齊後 docH 變 13157，視口內的東西整批被推走。
- * 修法與四項效能量測見 src/components/BlogPost.css 的註解。
+ * 修法與四項效能量測見 src/components/blog/BlogPost.css 的註解。
  *
  * 門檻：修好之後本機重複跑的分佈是 0.0000，零變異（壞的版本也是零變異的 0.5183）。
  * 訂 GOOD 留了很大的餘裕，因為這個測試要擋的是「回歸到 0.5 那個量級」，

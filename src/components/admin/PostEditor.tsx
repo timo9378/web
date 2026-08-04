@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminCategoriesQueryOptions, adminTagsQueryOptions, adminPostDetailQueryOptions } from '../../adminData';
+import { adminCategoriesQueryOptions, adminTagsQueryOptions, adminPostDetailQueryOptions } from '@/data/adminData';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { postSchema, type PostFormInput } from '@/schemas/post';

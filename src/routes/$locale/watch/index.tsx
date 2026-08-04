@@ -1,8 +1,8 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { localePagePrefixed } from '../../../localePage';
-import Watch from '../../../components/Watch';
-import { animeHistoryQueryOptions, filmsQueryOptions, seriesQueryOptions, watchStatsQueryOptions } from '../../../watchData';
-import { localeFromPrefix } from '../../../start-i18n';
+import { localePagePrefixed } from '@/i18n/localePage';
+import Watch from '@/components/media/Watch';
+import { animeHistoryQueryOptions, filmsQueryOptions, seriesQueryOptions, watchStatsQueryOptions } from '@/data/watchData';
+import { localeFromPrefix } from '@/i18n/start-i18n';
 
 export const Route = createFileRoute('/$locale/watch/')({
   ...localePagePrefixed('watch', Watch),

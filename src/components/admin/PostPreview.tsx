@@ -7,11 +7,11 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { remarkAlert } from 'remark-github-blockquote-alert';
 import rehypeRaw from 'rehype-raw';
-import { MdxContent } from '../MdxContent';
-import { CodeBlock, CustomParagraph } from '../BlogPost';
-import { BlogImage } from '../ImageLightbox';
-import { LinkHoverPreview } from '../LinkHoverPreview';
-import { compileMdx } from '@/lib/mdx-compile';
+import { MdxContent } from '@/components/mdx/MdxContent';
+import { CodeBlock, CustomParagraph } from '@/components/blog/BlogPost';
+import { BlogImage } from '@/components/gallery/ImageLightbox';
+import { LinkHoverPreview } from '@/components/common/LinkHoverPreview';
+import { compileMdx } from '@/lib/mdx/mdx-compile';
 
 // 行內連結 → hover 預覽卡（跟前台一致）；錨點（#foo）不預覽。
 const Anchor = ({ href, children, ...rest }: { href?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLAnchorElement>) => {

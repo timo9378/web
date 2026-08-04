@@ -62,14 +62,14 @@ jobs:
       # --max-warnings 0：這三個目錄目前乾淨，直接鎖死，不留讓它從 0 無聲長大的空間。
       - name: oxlint (scripts + server + packages)
         run: pnpm exec oxlint scripts server packages --max-warnings 0
-      # 未使用的檔案／相依。設定見 knip.json。
+      # 未使用的檔案／相依。設定見 .config/knip.json。
       #
       # ⚠️ 只 gate files + dependencies 這幾類，因為它們現在是零；exports 類還有
       # 24 個未使用匯出 + 11 個未使用型別沒清。那是另一批工作（要逐個判斷是「該刪」
       # 還是「刻意留的公開介面」），清完再把 --include 拿掉。
       # 這裡刻意不是用 ignore 把它們藏起來——藏起來就沒有人會回來清。
       - name: knip（未使用的檔案與相依）
-        run: pnpm exec knip --no-progress --include files,dependencies,unlisted,unresolved,binaries
+        run: pnpm exec knip --config .config/knip.json --no-progress --include files,dependencies,unlisted,unresolved,binaries
       # JUnit 的產出由 vitest.config.ts 依 CI 環境決定，不在這裡改寫指令——
       # `pnpm test` 是 CLAUDE.md 裡列的門檻指令，讓它跟本機跑的是同一條。
       - name: vitest
@@ -348,7 +348,7 @@ jobs:
   #   量到的是 0（開了節流也還是 0）——因為它永遠冷啟動、無 history、單頁直接載入，
   #   而那個位移只在「捲在文章深處按 F5」時出現。那條路徑由 tests/e2e/cls.spec.ts 守。
   #   這裡守的是變異小、退步了又真的會痛的東西：a11y/SEO 規則、以及 JS 位元組預算。
-  #   門檻與每一條的理由都寫在 lighthouserc.cjs。
+  #   門檻與每一條的理由都寫在 .config/lighthouserc.cjs。
   #
   # 拆成獨立 job 而不是併進 e2e：兩者都要 `pnpm build` + `cargo build`（各約 60~90s），
   # 併起來會把 e2e 這條關鍵路徑再拉長三分鐘；分開跑則是平行的，總時間不變。
@@ -384,12 +384,12 @@ jobs:
           set -euo pipefail
           cargo build --locked --bin koimsurai-web-backend
           pnpm build
-      # lhci 自己會用 startServerCommand 起 e2e stack（設定見 lighthouserc.cjs）。
+      # lhci 自己會用 startServerCommand 起 e2e stack（設定見 .config/lighthouserc.cjs）。
       # CHROME_PATH 指向上一步裝的那顆，不讓 chrome-launcher 自己去猜。
       - name: lhci autorun
         env:
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
-        run: pnpm exec lhci autorun --config=lighthouserc.cjs
+        run: pnpm exec lhci autorun --config=.config/lighthouserc.cjs
       # 失敗時把完整的 LHR 收起來。斷言訊息只講「哪一條、差多少」，
       # 要知道是哪個資源變大了得看報告本身。
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v6
@@ -450,7 +450,7 @@ jobs:
   #
   # 為什麼值得：spec 有 123 個 operation，輸入是 schemathesis 生的而不是我們想到的。
   # 第一次跑就撞出 `GET /api/films/recent?limit=abc` → 500（三支 watch 端點都中，
-  # 公開免認證）。設定與已知例外見根目錄的 schemathesis.toml。
+  # 公開免認證）。設定與已知例外見 .config/schemathesis.toml。
   api-fuzz:
     name: API · Schemathesis（從 OpenAPI 自動生成）
     runs-on: ubuntu-latest
@@ -505,7 +505,8 @@ jobs:
       # admin 的 DELETE 會把種子清掉，所以它必須是最後一步——沒有下一步會讀到殘局。
       - name: schemathesis（公開面，不帶認證）
         run: |
-          uvx schemathesis run http://127.0.0.1:13999/api/openapi.json \
+          uvx schemathesis --config-file .config/schemathesis.toml \
+            run http://127.0.0.1:13999/api/openapi.json \
             --exclude-path-regex '^/api/admin/' \
             -w 4 --report-junit-path st.xml
       # admin 寫入端點 typed 之後 stateful 階段才推得出 create → update → delete，
@@ -523,7 +524,8 @@ jobs:
             const sig = createHmac('sha256', 'fuzz').update(head + '.' + body).digest('base64url');
             console.log(head + '.' + body + '.' + sig);
           ")
-          uvx schemathesis run http://127.0.0.1:13999/api/openapi.json \
+          uvx schemathesis --config-file .config/schemathesis.toml \
+            run http://127.0.0.1:13999/api/openapi.json \
             --include-path-regex '^/api/admin/(tags|categories|blacklist|keyword-filters)' \
             -H "Authorization: Bearer $TOKEN" \
             -w 4 --report-junit-path st-admin.xml

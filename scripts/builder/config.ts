@@ -78,7 +78,11 @@ export const defaultConfig: BuilderConfig = {
  */
 export async function loadConfig(): Promise<BuilderConfig> {
   try {
-    const configPath = path.resolve(process.cwd(), 'builder.config.js');
+    // 從本檔位置往上推，而不是 process.cwd()——從子目錄跑腳本時 cwd 會不同，
+    // 以前那樣寫會靜靜退回預設配置（catch 只印警告），照片路徑就整個錯掉。
+    // 放 .config/ 而不是這個資料夾：.gitignore 有 `scripts/builder/**/*.js`（builder 的
+    // TS 編譯產物），設定檔放進來會被一起忽略。
+    const configPath = path.resolve(import.meta.dirname, '../../.config/builder.config.js');
     console.log(`  Trying to load config from: ${configPath}`);
 
     // 嘗試載入 builder.config.js

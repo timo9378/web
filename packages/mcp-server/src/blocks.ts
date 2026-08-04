@@ -1,7 +1,7 @@
 // MDX 自訂 block 的**單一真實來源**：`koimsurai_list_blocks`（結構化目錄）、
 // `koimsurai_validate_mdx`（未知元件偵測）、撰寫指南第 4 節（由此生成）三者共用。
 //
-// ⚠️ 前台新增 block 時：在 src/components/MdxContent.tsx 的 MDX_BLOCKS 註冊後，這裡也要補一筆
+// ⚠️ 前台新增 block 時：在 src/components/mdx/mdx-blocks-registry.ts 的 MDX_BLOCKS 註冊後，這裡也要補一筆
 //    （否則 validate 會把它誤報成「未知元件」，agent 也不會知道有這個 block 可用）。
 
 export interface BlockDef {

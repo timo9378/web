@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { localePage } from '../../localePage';
-import Blog from '../../components/Blog';
-import { blogCategoriesQueryOptions, blogTagsQueryOptions, postsListQueryOptions } from '../../blogList';
+import { localePage } from '@/i18n/localePage';
+import Blog from '@/components/blog/Blog';
+import { blogCategoriesQueryOptions, blogTagsQueryOptions, postsListQueryOptions } from '@/data/blogList';
 import { DEFAULT_LOCALE } from '../../lib/locales';
 
 export const Route = createFileRoute('/blog/')({

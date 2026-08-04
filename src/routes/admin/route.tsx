@@ -1,7 +1,7 @@
 import { ClientOnly, createFileRoute } from '@tanstack/react-router';
 import { Suspense, lazy, useEffect, type ReactNode } from 'react';
 
-import KoimLoader from '../../components/KoimLoader';
+import KoimLoader from '@/components/common/KoimLoader';
 import { useAuth } from '../../contexts/auth';
 
 // /admin/* 的版面層。整段包在 ClientOnly 裡 → 後台一行都不 SSR、不 prerender

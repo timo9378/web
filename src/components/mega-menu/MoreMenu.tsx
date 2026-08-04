@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, createElement, type ReactNode, type ElementType } from 'react';
-import { LocaleLink } from '../../locale-link';
+import { LocaleLink } from '@/i18n/locale-link';
 import { useTranslation } from 'react-i18next';
 import { Monitor } from 'lucide-react';
 import { MegaMenuPanel, MegaMenuColumn } from './MegaMenu';

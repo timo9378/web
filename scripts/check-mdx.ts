@@ -5,11 +5,11 @@
  * 而 create/update API 仍然回 success。CLAUDE.md 記著這件事，但沒有任何東西在執行它。
  *
  * 更麻煩的是錯誤 UI 其實寫好了、卻永遠不會亮：
- *   src/blogList.ts:43        編譯拋錯 → console.error → return data（沒有 compiledMdx）
- *   src/components/MdxContent.tsx:42   <div className="mdx-error">
+ *   src/data/blogList.ts:43            編譯拋錯 → console.error → return data（沒有 compiledMdx）
+ *   src/components/mdx/MdxContent.tsx:42   <div className="mdx-error">
  * 那個錯誤框只在 render 期 runSync 爆掉才出現，而編譯已經在上一層失敗了。
  *
- * 這支腳本用 **src/lib/mdx-compile-core.ts 的同一組 plugin** 把每篇已發布文章的每個
+ * 這支腳本用 **src/lib/mdx/mdx-compile-core.ts 的同一組 plugin** 把每篇已發布文章的每個
  * 語系編一遍。共用而不是抄一份，是因為抄的那份會在有人加 plugin 時悄悄過時。
  *
  * 用法：
@@ -17,7 +17,7 @@
  *   SITE_URL=http://127.0.0.1:3002 pnpm check:mdx
  */
 
-import { compileMdxSource } from '../src/lib/mdx-compile-core';
+import { compileMdxSource } from '../src/lib/mdx/mdx-compile-core';
 import { readRegisteredBlocks } from './mdx-block-names';
 // 掃「未註冊的 block」之前要先去掉程式碼，否則泛型會被當成標籤。理由與另一個使用者見該檔。
 import { stripCode } from './strip-code';

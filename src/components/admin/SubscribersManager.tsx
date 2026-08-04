@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SubscriberRow } from '@koimsurai/api-types';
-import { adminSubscribersByStatusQueryOptions } from '../../adminData';
+import { adminSubscribersByStatusQueryOptions } from '@/data/adminData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, MailX, RefreshCw, Search, Download, Trash2, type LucideIcon } from 'lucide-react';

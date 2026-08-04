@@ -1,0 +1,80 @@
+# Schemathesis：從 /api/openapi.json 自動生成 API 測試。
+#
+# 為什麼值得跑：spec 已經有 101 paths / 123 operations（utoipa 從跟 specta 同一批
+# struct 生的），它照著生成 positive / negative / stateful 案例並跑這幾種檢查：
+#   response_schema_conformance —— 回應與自己宣告的 schema 不符
+#   not_a_server_error          —— 任何輸入都不該讓伺服器 500
+#   ignored_auth                —— 拿掉認證後端點還是給資料（認證繞過）
+#   status_code_conformance     —— 回了 spec 沒宣告的狀態碼
+# 輸入是它生的，不是我們想得到的——這正是手寫測試最補不到的地方。
+#
+# ⚠️ `--config-file` 是**頂層**選項，要放在 `run` 子指令之前——`schemathesis run --help`
+# 裡看不到它，很容易誤以為只能放 repo 根（這份註解以前就是這樣寫錯的）。
+# 不帶這個參數時它只認 CWD 的 schemathesis.toml，而這個檔在 .config/ 下，不會被自動撿到。
+#
+# 用法（先起後端；tests/e2e/stack.mjs 會把它放在 13999）：
+#   node tests/e2e/stack.mjs &
+#   uvx schemathesis --config-file .config/schemathesis.toml \
+#     run http://127.0.0.1:13999/api/openapi.json
+
+[generation]
+max-examples = 30
+# 不要在 CI 的工作區留 hypothesis 的範例資料庫（也避免本機跑出不可重現的差異）
+database = ":memory:"
+
+# ── 排除：會打真的外部 API 的端點 ───────────────────────────────────────
+# 這些 handler 會往 Steam / GitHub / WakaTime / Spotify / TMDb / 任意 URL 送請求。
+# 讓 fuzzer 打它們只會變成對外部服務發垃圾流量，而且結果取決於網路而不是我們的程式碼。
+# 它們的降級路徑另有 e2e 測試驗形狀。
+[[operations]]
+include-path-regex = "^/api/(steam|github|wakatime|spotify|bahamut|link-preview|image-proxy|books/search|quote)"
+enabled = false
+
+# ── admin：不在這裡排除，改由 CI 分兩段跑 ────────────────────────────────
+# 原本整段 `^/api/admin/` 是關的，理由寫的是「帶 token 跑 DELETE 會把種子清掉」。
+# 那個顧慮是對的，但解法不是關掉——是**排序**：ci.yml 的 api-fuzz 先跑無認證的全站
+# （種子還完整），最後才帶 token 跑 admin CRUD，弄髒了也沒有下一步會讀到。
+# 那個 job 本來就用 /tmp/koimsurai-fuzz.db，是拋棄式的。
+#
+# 為什麼值得打開：admin 的寫入端點 typed 之後（回應有 schema 了），stateful 階段
+# 能自動推出 create → update → delete 的串接。實測從「1 covered / 4 links」
+# 變成「7 covered / 8 links、84 個情境」，而且第一次跑就抓到兩類真問題：
+#   · 送壞掉的 JSON 回的是 text/plain（宣告 application/json）→ 加了 JsonBody extractor
+#   · action 欄位我標了 nullable = false，但 handler 其實收 null → spec 在說謊
+# 兩個都是手寫測試不會想到要測的。
+
+# 計數器與投票會累加，跑完數字會漂——不是錯誤，但會污染其他測試的斷言
+[[operations]]
+include-path-regex = "^/api/(polls/[^/]+/vote|posts/[^/]+/(view|like|unlike|reactions))"
+enabled = false
+
+# react 端點：body 宣告是物件，但送 `[null, null]` 也會被收下並回 200。
+# 那不是這支的問題——是 **serde 的位置式 struct 反序列化**：JSON 陣列會依欄位順序
+# 對應到 struct 欄位，全 API 的 `Json<T>` extractor 都是這個行為。
+# 要擋只能給每個 body 型別寫自訂 Deserialize，代價遠大於收益（送對長度的陣列，
+# 結果與等價物件完全相同），所以是「知道且接受」，不是漏掉。
+[[operations]]
+include-path-regex = "^/api/thoughts/[^/]+/react$"
+enabled = false
+
+[checks]
+# negative_data_rejection：畸形輸入該被擋，但「擋下」的合法形式不只 400。
+# 這個專案的端點多半照 Express 舊行為：查不到回 404、參數怪回 200 + 空結果。
+# 200 沒放進來是刻意的——那條要另外看，不該一開始就當成「正常」。
+negative_data_rejection.expected-statuses = [400, 401, 403, 404, 405, 415, 422]
+
+# ── 以下兩個先關掉，原因是 spec 描述不足而不是程式有問題 ──────────────────
+# 兩個都是**真的該修**，但修法是補 utoipa 標註（一支一支加），不該讓 CI 卡在
+# 那之前。先把「會 500 / 回應形狀不符 / 認證繞得過」這幾條守住，這兩條之後再開。
+#
+# positive_data_acceptance（8 筆）：spec 沒有標 required。
+#   請求 body 的 struct 欄位多是 Option<String>，utoipa 於是推不出必填，
+#   schemathesis 就生出 `{}` 當成合法輸入，而 handler 回 400「缺欄位」。
+#   要修＝把真的必填的欄位改成非 Option（型別就擋得住），而不是改測試。
+positive_data_acceptance.enabled = false
+
+# status_code_conformance（30 筆）：handler 回了 spec 沒宣告的狀態碼。
+#   多數 #[utoipa::path] 只寫了 200 與 401，實際上還會回 400 / 404 / 422。
+#   spec 現在是**有負載**的（前端型別與 tests/e2e 的契約驗證都吃它），
+#   所以這條值得補齊；但那是一次機械性的全面標註，另外做。
+status_code_conformance.enabled = false

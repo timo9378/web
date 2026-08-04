@@ -1,12 +1,12 @@
 /**
  * MDX 編譯與「可渲染性」檢查的**唯一一份實作**。
  *
- * 抽成套件的理由是這裡本來就已經抄了兩份：`src/lib/mdx-compile-core.ts` 的檔頭自己寫著
+ * 抽成套件的理由是這裡本來就已經抄了兩份：`src/lib/mdx/mdx-compile-core.ts` 的檔頭自己寫著
  * 「如果那支腳本自己抄一份選項，日後有人在這裡加 plugin，檢查器會用舊的那組編——
  * 過了也不代表線上過，那種檢查比沒有還糟」，而 `packages/mcp-server/src/validate.ts`
  * 正是又抄了一份。三個使用者：
  *
- *   · `src/lib/mdx-compile.ts`（createServerFn）→ 前台渲染
+ *   · `src/lib/mdx/mdx-compile.ts`（createServerFn）→ 前台渲染
  *   · `scripts/check-mdx.ts`（CI 每日）→ 已發布文章
  *   · `packages/mcp-server/src/validate.ts` → agent 送出前的自檢
  *

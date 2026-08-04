@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
 
-import KoimLoader from '../../../components/KoimLoader';
+import KoimLoader from '@/components/common/KoimLoader';
 
 // 編輯既有文章。`$id` 是動態段，PostEditor 用 Route.useParams() 取。
 const Page = lazy(() => import('../../../components/admin/PostEditor'));

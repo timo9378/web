@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaSearch, FaImage } from 'react-icons/fa';
-import { loadPhotosManifest } from '../../utils/manifestLoader';
+import { loadPhotosManifest } from '@/lib/manifestLoader';
 import { exifYmd } from '../../lib/exifDate';
 import type { PhotoManifest } from '../../types/photo';
 import { toast } from 'sonner';

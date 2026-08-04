@@ -16,13 +16,13 @@ import type { QueryClient } from '@tanstack/react-query';
 import { ParallaxProvider } from 'react-scroll-parallax';
 import { AuthProvider } from '../contexts/AuthContext';
 import { PageVisibilityProvider } from '../contexts/PageVisibilityContext';
-import { localeFromPathname } from '../start-i18n';
-import { LocaleProvider } from '../LocaleProvider';
+import { localeFromPathname } from '@/i18n/start-i18n';
+import { LocaleProvider } from '@/i18n/LocaleProvider';
 import { SUPPORTED_LOCALES } from '../lib/locales';
-import { LOCALE_TO_OG } from '../seoMeta';
-import AppShell from '../components/AppShell';
-import NotFound from '../components/NotFound';
-import { localeWrap } from '../localePage';
+import { LOCALE_TO_OG } from '@/seo/seoMeta';
+import AppShell from '@/components/layout/AppShell';
+import NotFound from '@/components/layout/NotFound';
+import { localeWrap } from '@/i18n/localePage';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
