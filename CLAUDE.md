@@ -90,6 +90,24 @@ cargo llvm-cov nextest --locked --fail-under-regions 78   # 門檻以 ci.yml 為
 # specta：改過會進 API 的 struct 就要重跑 export_types 並提交，否則 drift gate 會擋
 ```
 
+⚠️ **跑測試一律用 `cargo nextest run --no-fail-fast`。`cargo test` 在這個專案是壞的，
+不要拿它的結果下任何判斷。**
+
+差別不是輸出好不好看：nextest 是**一個測試一個行程**，`cargo test` 是同一個行程平行跑
+執行緒。而這裡有十幾個測試檔直接寫 process 全域的 `std::env::set_var`（gallery 的輸出
+目錄、bahamut 的 cookie、mailer/oauth/watch/simkl 的金鑰…），外加 `QUOTE_CACHE`、
+`STARS_CACHE`、`GALLERY_SYNC_LOCK` 這些全域 static。同行程平行跑就是互相蓋。
+
+症狀是**隨機幾條紅、每次紅的還不一樣**，看起來完全像「測試本身會抖」。我為此誤判過
+三次，還向使用者回報了三組不存在的「既有失敗」。實際上 nextest 下是 580/580，連跑
+三次全綠。
+
+`--no-fail-fast` 也不是可選的：少了它，nextest 第一個失敗就中止，`580 tests run` 會變成
+`470/580`、每次的數字還不同——那個變動本身又會被誤讀成不穩定。
+
+沒有任何地方需要 `cargo test`：CI 走 `cargo llvm-cov nextest`，cargo-mutants 也已經在
+`.cargo/mutants.toml` 設了 `test_tool = "nextest"`（那份設定裡就記著同一個坑）。
+
 ⚠️ **還有兩道在 repo 根目錄跑、很容易漏掉的門檻**（Backend job 裡排在 fmt 之前）：
 
 ```bash
