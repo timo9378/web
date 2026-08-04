@@ -38,6 +38,16 @@ const linkPreviewQueryOptions = (url: string) =>
     retry: false,
   });
 
+/**
+ * 站外圖片一律經自家代理，不要直接 `<img src={對方網址}>`。
+ *
+ * 這支元件開頭寫著「不用 microlink，因為那會把讀者 hover 了哪個連結送到第三方」——
+ * 但圖片如果直連，對方主機照樣拿到讀者的 IP、UA 和 Referer，那條理由在最後一步破功。
+ * 走 /api/image-proxy 之後對方只看得到伺服器，而且代理本身帶
+ * `Cache-Control: public, max-age=86400`、SSRF 防護、大小上限與 nosniff。
+ */
+const proxied = (remoteUrl: string) => apiUrl(`/api/image-proxy?url=${encodeURIComponent(remoteUrl)}`);
+
 const HOVER_OPEN_DELAY = 320; // 滑過就跳卡片很吵 → 停留一下才開
 const HOVER_CLOSE_DELAY = 140; // 讓滑鼠有時間從連結移進卡片，不會一離開連結就關
 const CARD_W = 300;
@@ -117,11 +127,11 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
               {isPending ? (
                 <div className="lhp-skel" />
               ) : data?.image ? (
-                <img className="lhp-img" src={data.image} alt="" loading="lazy" />
+                <img className="lhp-img" src={proxied(data.image)} alt="" loading="lazy" />
               ) : (
                 /* 降級卡：沒有 og:image 時用 favicon + 站名撐版面，高度與圖片卡一致 */
                 <div className="lhp-fallback">
-                  {data?.favicon && <img className="lhp-favicon" src={data.favicon} alt="" loading="lazy" />}
+                  {data?.favicon && <img className="lhp-favicon" src={proxied(data.favicon)} alt="" loading="lazy" />}
                   <span className="lhp-site">{data?.site_name ?? new URL(href, 'https://koimsurai.com').hostname}</span>
                 </div>
               )}

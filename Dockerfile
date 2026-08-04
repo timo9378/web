@@ -29,8 +29,9 @@ RUN npm config set script-shell sh && npm install -g pnpm@11.17.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api-types/package.json ./packages/api-types/
 COPY packages/mcp-server/package.json ./packages/mcp-server/
-# patchedDependencies 的 patch 檔:install 期就要讀得到，否則 frozen install 直接失敗
-COPY patches ./patches
+# 這裡原本有 `COPY patches ./patches`——patchedDependencies 的 patch 檔在 install 期就要
+# 讀得到。@types/three 那個 patch 已經被上游 0.185.3 吸收，patches/ 整個沒了，這行就會
+# 讓 build 直接失敗（"/patches": not found）。之後若再需要 patch，記得把這行加回來。
 RUN pnpm install --frozen-lockfile
 
 COPY . .

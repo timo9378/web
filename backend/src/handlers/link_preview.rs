@@ -5,7 +5,12 @@
 //!
 //! - `GET /api/link-preview?url=…`：回 { title, description, image, site_name, favicon }
 //!   抓不到 og:image 時仍回標題/描述/favicon → 前端顯示「降級卡」。
-//! - 快取表 `link_previews` 由 main.rs 冪等建表（本 repo 無 migration 框架，沿用既有慣例）。
+//! - 快取表 `link_previews` 在 migrations（0001 建表）。
+//!
+//! ⚠️ 這裡回的 `image` / `favicon` 是站外的絕對網址，**前端不可以直接放進 `<img src>`**——
+//! 那等於讓讀者的瀏覽器去連對方主機，對方就拿到讀者的 IP／UA／Referer，上面那條
+//! 「不外送讀者行為」的哲學會在最後一步破功。前端一律走 `/api/image-proxy`
+//! （見 LinkHoverPreview.tsx）。
 //!
 //! 安全（這支會用使用者提供的 URL 發出站外請求，是 SSRF 的典型面）：
 //!   1. 只允許 http/https
@@ -29,6 +34,9 @@ use crate::{
 
 /// 快取存活時間：7 天（站外頁面的 og 很少變）
 const CACHE_TTL_SECS: i64 = 7 * 24 * 60 * 60;
+/// 這個端點的 `Cache-Control: max-age`。30 分鐘＝對齊前端 useQuery 的 staleTime，
+/// 讓「重新整理後第一次 hover」不必再跑一趟後端（在這之前完全沒有這個標頭）。
+const BROWSER_CACHE_SECS: i64 = 30 * 60;
 /// 只讀前 512KB —— og meta 一定在 <head>，不必把整頁拉回來
 const MAX_BODY_BYTES: usize = 512 * 1024;
 const FETCH_TIMEOUT: Duration = Duration::from_secs(6);
@@ -98,6 +106,11 @@ fn title_tag(html: &str) -> Option<String> {
 }
 
 /// 只處理最常見的幾個實體（og 內容裡多半是 &amp; &quot; &#39;）
+///
+/// ⚠️ 這裡**不截斷**。以前它結尾有 `.chars().take(400)`，而 `meta_content` 是 og:image
+/// 和標題／摘要共用的，於是那個「顯示用的長度上限」也套到了網址上。GitHub repo 頁的
+/// og:image 是 719 個字的預簽章網址，砍到 400 剛好把 `X-Amz-SignedHeaders=ho` 從中間
+/// 切斷 → 簽章失效 → 圖一律 401。截斷要留給真正的文字欄位，見 `clamp_text`。
 fn decode_entities(s: &str) -> String {
     s.replace("&amp;", "&")
         .replace("&quot;", "\"")
@@ -106,15 +119,77 @@ fn decode_entities(s: &str) -> String {
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&nbsp;", " ")
-        .chars()
-        .take(400)
-        .collect()
+}
+
+/// 顯示用文字的長度上限。只給標題／摘要／站名——**不要用在網址上**。
+fn clamp_text(s: String) -> String {
+    s.chars().take(400).collect()
 }
 
 /// 相對路徑 → 絕對 URL（og:image 常給相對路徑）
 fn absolutize(base: &str, maybe_relative: &str) -> Option<String> {
     let b = reqwest::Url::parse(base).ok()?;
     b.join(maybe_relative).ok().map(|u| u.to_string())
+}
+
+/// 預簽章網址的到期時刻（Unix 秒）；不是預簽章就回 None。
+///
+/// 為什麼需要這個：有些站的 og:image 指到帶簽章、會自己失效的網址。GitHub 的 repo 頁
+/// 就是——`repository-images.githubusercontent.com/…?X-Amz-Expires=300`，五分鐘後回 401。
+/// 這張表的 TTL 是 7 天，所以不看期限的話，存進去五分鐘後就開始供應死連結，供應七天。
+///
+/// 認得兩種寫法：
+///   - SigV4（AWS S3／GCS）：`X-Amz-Date=20260803T110407Z` + `X-Amz-Expires=300`
+///     （Google 是同樣格式的 `X-Goog-` 前綴）
+///   - 舊式 CloudFront／GCS 簽章：`Expires=<unix 秒>`
+///
+/// 認不出來就回 None＝當作不會過期，行為與加這個函式之前相同。寧可漏判也不要誤判：
+/// 誤判成「會過期」只會讓穩定的站白白重抓。
+fn signed_image_expiry(url: &str) -> Option<i64> {
+    let u = reqwest::Url::parse(url).ok()?;
+    let q: std::collections::HashMap<_, _> = u.query_pairs().collect();
+
+    // SigV4：簽章時刻 + 有效秒數
+    for (date_key, exp_key) in [("X-Amz-Date", "X-Amz-Expires"), ("X-Goog-Date", "X-Goog-Expires")] {
+        if let (Some(date), Some(exp)) = (q.get(date_key), q.get(exp_key))
+            && let (Some(signed_at), Ok(secs)) = (parse_sigv4_date(date), exp.parse::<i64>())
+        {
+            return Some(signed_at + secs);
+        }
+    }
+
+    // 舊式：Expires 直接就是 unix 秒。只認「看起來像近代時間戳」的值，避免把
+    // `?Expires=0`（有些站用來表示不快取）或短數字誤當成期限。
+    if let Some(v) = q.get("Expires")
+        && let Ok(epoch) = v.parse::<i64>()
+        && epoch > 1_000_000_000
+    {
+        return Some(epoch);
+    }
+
+    None
+}
+
+/// `20260803T110407Z` → Unix 秒。這個格式是 SigV4 固定的，不必拉進日期函式庫。
+fn parse_sigv4_date(s: &str) -> Option<i64> {
+    let b = s.as_bytes();
+    if b.len() != 16 || b[8] != b'T' || b[15] != b'Z' {
+        return None;
+    }
+    let num = |a: usize, z: usize| s.get(a..z)?.parse::<i64>().ok();
+    let (y, mo, d) = (num(0, 4)?, num(4, 6)?, num(6, 8)?);
+    let (h, mi, sec) = (num(9, 11)?, num(11, 13)?, num(13, 15)?);
+    if !(1..=12).contains(&mo) || !(1..=31).contains(&d) || h > 23 || mi > 59 || sec > 60 {
+        return None;
+    }
+    // civil date → 天數（Howard Hinnant 的 days_from_civil，UTC 無時區問題）
+    let y_adj = if mo <= 2 { y - 1 } else { y };
+    let era = if y_adj >= 0 { y_adj } else { y_adj - 399 } / 400;
+    let yoe = y_adj - era * 400;
+    let doy = (153 * (mo + if mo > 2 { -3 } else { 9 }) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some(days * 86_400 + h * 3600 + mi * 60 + sec)
 }
 
 /// `GET /api/link-preview?url=…` —— 站內外連結的 hover 預覽資料。
@@ -127,9 +202,9 @@ fn absolutize(base: &str, maybe_relative: &str) -> Option<String> {
 pub async fn link_preview(
     State(state): State<AppState>,
     Query(q): Query<LinkPreviewQuery>,
-) -> Result<Json<LinkPreviewResponse>, AppError> {
+) -> Result<PreviewResponse, AppError> {
     let Some((url, host)) = validate_url(&q.url) else {
-        return Ok(Json(LinkPreviewResponse::default()));
+        return Ok(with_cache_headers(LinkPreviewResponse::default(), 0));
     };
 
     // ── 快取命中就直接回 ──
@@ -142,16 +217,28 @@ pub async fn link_preview(
     .fetch_optional(&state.pool)
     .await?;
 
+    let now = now_epoch();
     if let Some(c) = cached
         && c.age_secs < CACHE_TTL_SECS
     {
-        return Ok(Json(LinkPreviewResponse {
-            title: c.title,
-            description: c.description,
-            image: c.image,
-            site_name: c.site_name.or_else(|| Some(host.clone())),
-            favicon: Some(format!("https://{host}/favicon.ico")),
-        }));
+        // 到期時刻是從存下來的網址現算的，不另存一欄。這樣寫的好處是「改這段程式之前就
+        // 存進去的列」也一起適用——不必為了回填而動 schema，而且期限本來就是網址的
+        // 函數，存起來只是同一件事的第二份真相。
+        let image_expiry = c.image.as_deref().and_then(signed_image_expiry);
+        // 圖是預簽章而且已經過期 → 往下走當作 miss 重抓。不這樣做的話，這一列會在剩下
+        // 的 TTL 內一直供應一個回 401 的網址（GitHub repo 的 og:image 五分鐘就到期）。
+        if image_expiry.is_none_or(|exp| exp > now) {
+            return Ok(with_cache_headers(
+                LinkPreviewResponse {
+                    title: c.title,
+                    description: c.description,
+                    image: c.image,
+                    site_name: c.site_name.or_else(|| Some(host.clone())),
+                    favicon: Some(format!("https://{host}/favicon.ico")),
+                },
+                response_max_age(image_expiry, now),
+            ));
+        }
     }
 
     // ── 抓取（失敗一律降級，不回錯誤）──
@@ -191,12 +278,15 @@ pub async fn link_preview(
     };
 
     if let Some(html) = fetched {
-        out.title = meta_content(&html, &["og:title", "twitter:title"]).or_else(|| title_tag(&html));
-        out.description = meta_content(&html, &["og:description", "twitter:description", "description"]);
+        // 文字欄位才套長度上限；image 是網址，截斷會直接讓預簽章失效（見 decode_entities）
+        out.title =
+            meta_content(&html, &["og:title", "twitter:title"]).or_else(|| title_tag(&html)).map(clamp_text);
+        out.description =
+            meta_content(&html, &["og:description", "twitter:description", "description"]).map(clamp_text);
         out.image = meta_content(&html, &["og:image", "og:image:url", "twitter:image"])
             .and_then(|img| absolutize(&url, &img));
         if let Some(sn) = meta_content(&html, &["og:site_name"]) {
-            out.site_name = Some(sn);
+            out.site_name = Some(clamp_text(sn));
         }
 
         // 寫回快取（UPSERT；失敗不影響回應）
@@ -217,5 +307,141 @@ pub async fn link_preview(
         .await;
     }
 
-    Ok(Json(out))
+    let image_expiry = out.image.as_deref().and_then(signed_image_expiry);
+    Ok(with_cache_headers(out, response_max_age(image_expiry, now)))
+}
+
+fn now_epoch() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
+}
+
+/// 這次回應可以讓瀏覽器／CDN 留多久。
+///
+/// 平常是 `BROWSER_CACHE_SECS`（對齊前端 useQuery 的 staleTime）。但如果圖是預簽章、
+/// 而且比那個還早到期，就縮到剩餘壽命——否則瀏覽器會拿著一份「圖已經死掉」的 JSON
+/// 繼續用到 max-age 結束，等於把後端剛修好的問題原封搬到讀者的快取裡。
+fn response_max_age(image_expires_at: Option<i64>, now: i64) -> i64 {
+    match image_expires_at {
+        Some(exp) => (exp - now).clamp(0, BROWSER_CACHE_SECS),
+        None => BROWSER_CACHE_SECS,
+    }
+}
+
+/// 回應型別：JSON 加上一個 `Cache-Control`。兩個 return 點都走這裡，型別才一致。
+type PreviewResponse = ([(axum::http::HeaderName, String); 1], Json<LinkPreviewResponse>);
+
+fn with_cache_headers(body: LinkPreviewResponse, max_age: i64) -> PreviewResponse {
+    ([(axum::http::header::CACHE_CONTROL, format!("public, max-age={max_age}"))], Json(body))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sigv4_日期換算成_unix_秒() {
+        // 2026-08-03T11:04:07Z（實測 GitHub og:image 的簽章時刻）
+        assert_eq!(parse_sigv4_date("20260803T110407Z"), Some(1_785_755_047));
+        // 紀元起點，驗證換算沒有偏移
+        assert_eq!(parse_sigv4_date("19700101T000000Z"), Some(0));
+        // 閏日：2024 是閏年，2/29 必須算得出來
+        assert_eq!(parse_sigv4_date("20240229T000000Z"), Some(1_709_164_800));
+    }
+
+    #[test]
+    fn 格式不對就回_none_而不是猜一個時間() {
+        for bad in [
+            "20260803110407Z",  // 少了 T
+            "20260803T110407",  // 少了 Z
+            "20261303T110407Z", // 13 月
+            "20260832T110407Z", // 32 日
+            "20260803T250407Z", // 25 時
+            "",
+            "not-a-date",
+        ] {
+            assert_eq!(parse_sigv4_date(bad), None, "{bad} 應該判定為無效");
+        }
+    }
+
+    #[test]
+    fn 認得出預簽章網址的到期時刻() {
+        // GitHub 的 og:image：SigV4，簽章當下 + 300 秒
+        let gh = "https://repository-images.githubusercontent.com/x/y?X-Amz-Algorithm=AWS4-HMAC-SHA256\
+                  &X-Amz-Date=20260803T110407Z&X-Amz-Expires=300&X-Amz-Signature=deadbeef";
+        assert_eq!(signed_image_expiry(gh), Some(1_785_755_047 + 300));
+
+        // Google 用同樣的格式、不同前綴
+        let gcs = "https://storage.googleapis.com/b/o?X-Goog-Date=20260803T110407Z&X-Goog-Expires=600";
+        assert_eq!(signed_image_expiry(gcs), Some(1_785_755_047 + 600));
+
+        // 舊式：Expires 直接是 unix 秒
+        assert_eq!(
+            signed_image_expiry("https://cdn.example.com/a.jpg?Expires=1785755047"),
+            Some(1_785_755_047)
+        );
+    }
+
+    #[test]
+    fn 一般圖片網址不該被判定成會過期() {
+        // 這些是實測過的穩定網址，誤判只會讓它們白白每次重抓
+        for stable in [
+            "https://opengraph.githubassets.com/abc/owner/repo",
+            "https://eu.simkl.in/posters/97/978264e8bbc2303_m.webp",
+            "https://developer.mozilla.org/mdn-social-share.png",
+            // Expires=0 是「不要快取」的慣用寫法，不是期限
+            "https://cdn.example.com/a.jpg?Expires=0",
+            // 短數字不可能是近代時間戳
+            "https://cdn.example.com/a.jpg?Expires=300",
+            // 有簽章但沒給期限 → 判不出來就別猜
+            "https://cdn.example.com/a.jpg?X-Amz-Signature=deadbeef",
+        ] {
+            assert_eq!(signed_image_expiry(stable), None, "{stable} 不該被判定成會過期");
+        }
+    }
+
+    #[test]
+    fn og_image_的長網址不可以被截斷() {
+        // 這條守的是實際發生過的事：decode_entities 以前結尾有 .chars().take(400)，
+        // 而 meta_content 是文字欄位與 og:image 共用的，於是 719 個字的 GitHub 預簽章
+        // 網址被砍成 400，X-Amz-SignedHeaders 從中間斷掉 → 圖一律 401。
+        let long_url = format!(
+            "https://repository-images.githubusercontent.com/{}?X-Amz-Algorithm=AWS4-HMAC-SHA256\
+             &X-Amz-Credential={}&X-Amz-Date=20260803T110407Z&X-Amz-Expires=300\
+             &X-Amz-Signature={}&X-Amz-SignedHeaders=host",
+            "a".repeat(120),
+            "b".repeat(120),
+            "c".repeat(64),
+        );
+        assert!(long_url.len() > 400, "測試樣本要比舊上限長才有意義（{}）", long_url.len());
+
+        let html = format!(r#"<meta property="og:image" content="{}">"#, long_url.replace('&', "&amp;"));
+        let got = meta_content(&html, &["og:image"]).expect("該抓得到 og:image");
+        assert_eq!(got, long_url, "網址被動過了");
+        assert!(got.ends_with("SignedHeaders=host"), "結尾被截掉：{}", &got[got.len() - 40..]);
+    }
+
+    #[test]
+    fn 文字欄位仍然有長度上限() {
+        // 截斷本身是對的，只是不該套在網址上
+        assert_eq!(clamp_text("字".repeat(500)).chars().count(), 400);
+        assert_eq!(clamp_text("短".to_string()), "短");
+        // 以字元計，不是位元組——切在多位元組字元中間會 panic
+        assert_eq!(clamp_text("é".repeat(500)).chars().count(), 400);
+    }
+
+    #[test]
+    fn max_age_會被圖片的剩餘壽命壓下來() {
+        let now = 1_785_755_047;
+        // 沒有期限 → 用預設值
+        assert_eq!(response_max_age(None, now), BROWSER_CACHE_SECS);
+        // 圖比預設值晚到期 → 還是預設值（不會超過）
+        assert_eq!(response_max_age(Some(now + 99_999), now), BROWSER_CACHE_SECS);
+        // 圖 5 分鐘後到期 → 只能讓瀏覽器留 5 分鐘，否則它會拿著死連結用滿 30 分
+        assert_eq!(response_max_age(Some(now + 300), now), 300);
+        // 已經過期 → 0，不是負數（負數會產生無效的標頭值）
+        assert_eq!(response_max_age(Some(now - 1), now), 0);
+    }
 }

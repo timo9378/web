@@ -1,0 +1,12 @@
+-- hover 預覽卡的圖有一類會自己過期：og:image 指到預簽章網址。
+--
+-- 實例（2026-08-03 實測）：GitHub repo 頁的 og:image 是
+--   https://repository-images.githubusercontent.com/…?X-Amz-Expires=300&X-Amz-Signature=…
+-- 簽章 5 分鐘就失效，而 link_previews 的 TTL 是 7 天 → 存進去 5 分鐘後那個網址回 401，
+-- 接下來 7 天讀者看到的都是破圖。不是每個站都這樣（opengraph.githubassets.com、
+-- simkl、MDN 給的都是穩定網址），但文章裡 GitHub 連結不少，所以會被看見。
+--
+-- 解法不是縮短整張表的 TTL——那會讓穩定的站也每次重抓。改成記下「這張圖什麼時候到期」，
+-- 只有到期的那些列在讀取時視同 miss 去重抓，穩定的站照舊吃滿 7 天。
+-- NULL = 沒有偵測到期限（絕大多數情況），行為與加這欄之前完全相同。
+ALTER TABLE link_previews ADD COLUMN image_expires_at TEXT;
