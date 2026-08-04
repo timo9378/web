@@ -444,4 +444,197 @@ mod tests {
         // 已經過期 → 0，不是負數（負數會產生無效的標頭值）
         assert_eq!(response_max_age(Some(now - 1), now), 0);
     }
+
+    #[test]
+    fn 相對路徑的_og_image_會補成絕對網址() {
+        // og:image 給相對路徑很常見。不補的話前端拿到 "/img/a.png" 丟給
+        // image-proxy，proxy 解不出 host 就整張圖不見——而卡片其他欄位都正常，
+        // 看起來只像「這個站沒有預覽圖」
+        let base = "https://example.com/blog/post-1?x=1";
+        assert_eq!(absolutize(base, "/img/a.png").as_deref(), Some("https://example.com/img/a.png"));
+        assert_eq!(absolutize(base, "cover.png").as_deref(), Some("https://example.com/blog/cover.png"));
+        assert_eq!(
+            absolutize(base, "//cdn.example.com/a.png").as_deref(),
+            Some("https://cdn.example.com/a.png")
+        );
+        // 已經是絕對網址就原樣返回（join 的語義）
+        assert_eq!(absolutize(base, "https://other.test/a.png").as_deref(), Some("https://other.test/a.png"));
+        // base 壞掉就回 None，不要拼出一個怪東西
+        assert_eq!(absolutize("не-url", "/a.png"), None);
+    }
+
+    #[test]
+    fn meta_容忍屬性順序顛倒_也吃得到_title_標籤() {
+        // 這兩條走的是 meta_content 的第二個樣式與 title_tag 的退路。
+        // 少了它們，某些站的卡片會只剩網域名——而不會有任何錯誤
+        let reversed = r#"<meta content="倒著寫的標題" property="og:title">"#;
+        assert_eq!(meta_content(reversed, &["og:title"]).as_deref(), Some("倒著寫的標題"));
+
+        // 完全沒有 og:title 時退回 <title>
+        let only_title = "<html><head><title>  純 title 標籤  </title></head></html>";
+        assert_eq!(meta_content(only_title, &["og:title"]), None);
+        assert_eq!(title_tag(only_title).as_deref(), Some("純 title 標籤"), "要 trim");
+
+        // 空的 content 不算數，要繼續找下一個 key
+        let empty_first =
+            r#"<meta property="og:title" content="  "><meta name="twitter:title" content="備用">"#;
+        assert_eq!(meta_content(empty_first, &["og:title", "twitter:title"]).as_deref(), Some("備用"));
+        // 空的 <title> 也一樣不算
+        assert_eq!(title_tag("<title>   </title>"), None);
+    }
+
+    // ── 端點本體（快取那一側）─────────────────────────────────────────
+    //
+    // 抓取那一段測不到——net_guard 會擋掉任何 loopback 位址，而本機跑得起來的
+    // mock server 位址依定義就落在被擋的網段裡（127.0.0.2 還是 loopback，
+    // docker bridge 的 172.17.x 是私網）。要測就得在 SSRF 守衛上開一個全域關閉
+    // 開關，而那正是 cargo-mutants 證明過「壞了會安靜地壞」的那個函式，不划算。
+    //
+    // 但快取那一側完全不需要網路，而且它壞掉的症狀同樣是安靜的：
+    // hover 卡永遠是舊的、或每次 hover 都重抓。以下都走 DB。
+
+    use crate::state::AppState;
+    use axum::extract::{Query, State};
+
+    /// 直接呼叫 handler（不經 router），回 (Cache-Control 的秒數, body)。
+    async fn preview(state: &AppState, url: &str) -> (i64, LinkPreviewResponse) {
+        let ([(_, cc)], Json(body)) =
+            link_preview(State(state.clone()), Query(LinkPreviewQuery { url: url.into() }))
+                .await
+                .expect("這支永遠回 200");
+        let secs = cc.rsplit_once('=').expect("max-age=N").1.parse().expect("秒數是數字");
+        (secs, body)
+    }
+
+    /// 塞一列快取。`age_secs` 是「幾秒前抓的」。
+    async fn cache_row(state: &AppState, url: &str, image: Option<&str>, age_secs: i64) {
+        sqlx::query(
+            "INSERT INTO link_previews (url, title, description, image, site_name, fetched_at) \
+             VALUES (?, '快取標題', '快取描述', ?, ?, datetime('now', ?))",
+        )
+        .bind(url)
+        .bind(image)
+        .bind(Option::<&str>::None) // site_name 留空，驗它會退回 host
+        .bind(format!("-{age_secs} seconds"))
+        .execute(&state.pool)
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn 快取命中就直接回_不碰網路() {
+        let state = crate::state::test_state().await;
+        let url = "https://example.com/a";
+        cache_row(&state, url, Some("https://cdn.example.com/a.png"), 60).await;
+
+        let (max_age, body) = preview(&state, url).await;
+        assert_eq!(body.title.as_deref(), Some("快取標題"));
+        assert_eq!(body.description.as_deref(), Some("快取描述"));
+        assert_eq!(body.image.as_deref(), Some("https://cdn.example.com/a.png"));
+        // 存的時候 site_name 是 NULL → 回應要退回 host，而不是給前端一個 null
+        assert_eq!(body.site_name.as_deref(), Some("example.com"));
+        assert_eq!(body.favicon.as_deref(), Some("https://example.com/favicon.ico"));
+        // 一般圖片沒有期限 → 用預設的 30 分鐘
+        assert_eq!(max_age, BROWSER_CACHE_SECS);
+    }
+
+    #[tokio::test]
+    async fn 快取過期就當作沒有() {
+        let state = crate::state::test_state().await;
+        // TTL 是 7 天。超過就要重抓，而這裡的重抓必定失敗，所以驗的是
+        // 「沒有拿舊的那列來回」。
+        //
+        // ⚠ 網域刻意用 `.invalid`：那是 RFC 2606 保留的頂級網域，保證不會被註冊，
+        //   DNS 查詢立刻 NXDOMAIN。用 example.com 之類的話這條測試會**真的對外
+        //   發一個請求**——CI 上可能成功、可能因為對方改版而改變行為，那種測試
+        //   的結果取決於別人的服務今天怎麼樣。
+        let url = "https://expired.invalid/a";
+        cache_row(&state, url, None, CACHE_TTL_SECS + 60).await;
+
+        let (_, body) = preview(&state, url).await;
+        assert!(body.title.is_none(), "過期的那列不該被拿來用：{:?}", body.title);
+        // 抓不到也要給降級卡的兩個欄位，前端才有東西可以顯示
+        assert_eq!(body.site_name.as_deref(), Some("expired.invalid"));
+        assert_eq!(body.favicon.as_deref(), Some("https://expired.invalid/favicon.ico"));
+    }
+
+    #[tokio::test]
+    async fn 預簽章的圖過期時_整列當作_miss_重抓() {
+        let state = crate::state::test_state().await;
+        // 這是 GitHub repo 卡片踩過的：og:image 五分鐘就到期，但這張表的 TTL 是 7 天。
+        // 不看圖的期限的話，這一列會在剩下的 TTL 內一直供應一個回 401 的網址——
+        // 讀者看到的是破圖，而後端每次都「快取命中」，log 上完全正常
+        let now = now_epoch();
+        let dead = format!(
+            "https://repository-images.githubusercontent.com/x?X-Amz-Date={}&X-Amz-Expires=1",
+            sigv4_at(now - 3600)
+        );
+        let url = "https://github.invalid/owner/repo";
+        cache_row(&state, url, Some(&dead), 60).await; // 列本身還很新
+
+        let (_, body) = preview(&state, url).await;
+        assert!(body.title.is_none(), "圖死掉時整列要當 miss，不能只回舊資料");
+    }
+
+    #[tokio::test]
+    async fn 預簽章的圖還活著時_max_age_縮到剩餘壽命() {
+        let state = crate::state::test_state().await;
+        let now = now_epoch();
+        // 還有約 120 秒可活
+        let alive = format!(
+            "https://repository-images.githubusercontent.com/x?X-Amz-Date={}&X-Amz-Expires=300",
+            sigv4_at(now - 180)
+        );
+        let url = "https://example.com/live";
+        cache_row(&state, url, Some(&alive), 60).await;
+
+        let (max_age, body) = preview(&state, url).await;
+        assert_eq!(body.title.as_deref(), Some("快取標題"), "圖還活著就該命中快取");
+        // 讓瀏覽器留滿 30 分鐘的話，它會拿著一份「圖已經死掉」的 JSON 用到最後
+        assert!((100..=120).contains(&max_age), "max-age 應該貼著圖的剩餘壽命，得到 {max_age}");
+    }
+
+    #[tokio::test]
+    async fn 擋下來的網址回空卡而且不給快取() {
+        let state = crate::state::test_state().await;
+        for bad in [
+            "http://127.0.0.1/x",
+            "http://169.254.169.254/latest/meta-data/",
+            "http://localhost/x",
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "не-url",
+        ] {
+            let (max_age, body) = preview(&state, bad).await;
+            // 回 200 + 空欄位是刻意的：前端顯示降級卡，不要因為一個 hover 就跳錯誤
+            assert!(body.title.is_none(), "{bad} 不該有內容");
+            assert!(body.site_name.is_none(), "{bad} 連 host 都不該回——那會洩漏被擋的目標");
+            // max-age=0：被擋的判斷結果不值得快取
+            assert_eq!(max_age, 0, "{bad} 不該讓瀏覽器記住");
+        }
+    }
+
+    /// Unix 秒 → SigV4 的 `YYYYMMDDThhmmssZ`（`parse_sigv4_date` 的反函式，測試用）。
+    fn sigv4_at(epoch: i64) -> String {
+        let (days, rem) = (epoch.div_euclid(86_400), epoch.rem_euclid(86_400));
+        let z = days + 719_468;
+        let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+        let doe = z - era * 146_097;
+        let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        let mp = (5 * doy + 2) / 153;
+        let d = doy - (153 * mp + 2) / 5 + 1;
+        let m = if mp < 10 { mp + 3 } else { mp - 9 };
+        let y = yoe + era * 400 + i64::from(m <= 2);
+        format!("{y:04}{m:02}{d:02}T{:02}{:02}{:02}Z", rem / 3600, (rem % 3600) / 60, rem % 60)
+    }
+
+    #[test]
+    fn sigv4_at_與_parse_互為反函式() {
+        // 上面三條測試都靠 sigv4_at 造資料。它自己錯了的話，那三條會用一個
+        // 錯誤的時間戳去驗「圖有沒有過期」——測試照樣綠，但驗的是別的東西
+        for epoch in [0, 1_785_755_047, 1_709_164_800, 946_684_800] {
+            assert_eq!(parse_sigv4_date(&sigv4_at(epoch)), Some(epoch), "epoch={epoch}");
+        }
+    }
 }
