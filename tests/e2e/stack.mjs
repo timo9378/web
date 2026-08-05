@@ -90,6 +90,23 @@ function startProxy() {
       res.end(PIXEL_PNG);
       return;
     }
+    // 分析腳本（Plausible）。生產是 nginx 的 `location ^~ /s/js/` 與 `location = /s/event`
+    // 代理過去的，測試環境沒有那一層——不補的話 nitro 會回整份 SPA 的 HTML，而
+    // **`nosniff` 會讓瀏覽器拒絕執行它**，於是 admin-smoke 的「console 不該有錯誤」變紅。
+    //
+    // ⚠ 只有在 build 時有帶 `VITE_PLAUSIBLE_SCRIPT` 才會走到（值在未提交的 .env）。
+    //   CI 沒有那個檔所以不會輸出腳本標籤，但本機建置過就會——這個樁讓兩邊都乾淨。
+    //   回空腳本而不是真的去打 Plausible：e2e 不該送出任何分析事件。
+    if (req.url.startsWith('/s/js/')) {
+      res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'content-length': 0 });
+      res.end();
+      return;
+    }
+    if (req.url.startsWith('/s/event')) {
+      res.writeHead(202, { 'content-type': 'text/plain' });
+      res.end('ok');
+      return;
+    }
     const toBackend = req.url.startsWith('/api/');
     const port = toBackend ? PORTS.backend : PORTS.nitro;
     const upstream = http.request(

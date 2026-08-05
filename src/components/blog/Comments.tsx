@@ -1,5 +1,6 @@
 import React, { useState, useEffect, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { avatarColor, groupComments, relativeTime, validateCommentDraft } from '@/lib/comments';
 import KoimLoader from '@/components/common/KoimLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -68,24 +69,22 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
     e.preventDefault();
     const isUsingLogin = isLoggedIn && !useAnonymous;
 
-    if (!newComment.trim()) {
-      setError(t('comments.errorEmpty'));
-      return;
-    }
-
-    // 匿名模式需要暱稱和驗證碼
-    if (!isUsingLogin) {
-      if (!author.trim()) {
-        setError(t('comments.errorNoName'));
-        return;
-      }
-      const expectedAnswer = captchaQuestion.num1 + captchaQuestion.num2;
-      if (parseInt(captchaAnswer, 10) !== expectedAnswer) {
-        setError(t('comments.errorCaptcha'));
+    // 驗證鏈是純邏輯，抽在 lib/comments.ts（順序有意義，說明見該檔）。
+    // 這裡只負責把原因對應成訊息、以及驗證碼錯了要換一題。
+    const invalid = validateCommentDraft({
+      content: newComment,
+      author,
+      captchaAnswer,
+      captchaSum: captchaQuestion.num1 + captchaQuestion.num2,
+      requiresIdentity: !isUsingLogin,
+    });
+    if (invalid) {
+      setError(t(`comments.error${invalid === 'empty' ? 'Empty' : invalid === 'noName' ? 'NoName' : 'Captcha'}`));
+      if (invalid === 'captcha') {
         generateCaptcha();
         setCaptchaAnswer('');
-        return;
       }
+      return;
     }
 
     setIsLoading(true);
@@ -164,27 +163,19 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
     }
   };
 
-  const getAvatarColor = (name: string) => {
-    const colors = ['#7f5af0', '#2cb67d', '#e53170', '#ff8906', '#3da9fc', '#ef4444', '#8b5cf6', '#06b6d4'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+
+  // 分類邏輯（含 SQLite 的 UTC 補 `Z`）在 lib/comments.ts；這裡只把分類對應成文案。
+  const formatDate = (dateStr: string) => {
+    const r = relativeTime(dateStr, new Date());
+    if (r.kind === 'justNow') return t('common.justNow');
+    if (r.kind === 'minutes') return t('common.minutesAgo', { count: r.count });
+    if (r.kind === 'hours') return t('common.hoursAgo', { count: r.count });
+    if (r.kind === 'days') return t('common.daysAgo', { count: r.count });
+    return r.date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  const formatDate = (dateStr: string) => {
-    // SQLite CURRENT_TIMESTAMP 是 UTC，需要加 Z 後綴確保正確解析
-    const d = new Date(dateStr.includes('T') || dateStr.includes('Z') ? dateStr : dateStr + 'Z');
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    const hrs = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (mins < 1) return t('common.justNow');
-    if (mins < 60) return t('common.minutesAgo', { count: mins });
-    if (hrs < 24) return t('common.hoursAgo', { count: hrs });
-    if (days < 7) return t('common.daysAgo', { count: days });
-    return d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+  // 巢狀分組是純邏輯（也是連接線那個 bug 的修正點），抽在 lib/comments.ts。
+  const { roots, repliesOf } = groupComments(comments);
 
   // 判斷當前是否使用登入模式
   const isUsingLogin = isLoggedIn && !useAnonymous;
@@ -198,7 +189,7 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
             <div className="avatar-circle" style={{
               background: isUsingLogin
                 ? 'transparent'
-                : (author ? getAvatarColor(author) : 'rgba(127,90,240,0.3)'),
+                : (author ? avatarColor(author) : 'rgba(127,90,240,0.3)'),
               padding: 0,
               overflow: 'hidden',
             }}>
@@ -425,12 +416,13 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
 
         <AnimatePresence>
           {comments.length > 0 ? (
-            comments.map((comment, idx) => {
+            // 先分組再渲染，而不是掃整個陣列、遇到回覆才 `return null`。
+            // ⚠ 這順帶修掉一個顯示 bug：時間軸連接線原本用「整個陣列的 idx」去跟
+            //   「根留言的數量」比，中間夾了回覆之後 idx 會提前超過，後面那些根留言的
+            //   連接線就消失了。現在的 idx 是**在 roots 裡的**索引，比對才有意義。
+            roots.map((comment, idx) => {
               const isAdmin = comment.is_admin === 1;
-              // 找出回覆此留言的所有留言（管理員 + 用戶）
-              const replies = comments.filter(c => c.parent_id === comment.id);
-              // 如果此留言本身是子留言（回覆），跳過它的獨立渲染
-              if (comment.parent_id) return null;
+              const replies = repliesOf.get(comment.id) ?? [];
 
               return (
                 <React.Fragment key={comment.id}>
@@ -441,13 +433,13 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
                     transition={{ delay: idx * 0.05 }}
                   >
                     <div className="comment-left">
-                      <div className="comment-avatar" style={{ background: isAdmin ? '#7f5af0' : (comment.avatar_url ? 'transparent' : getAvatarColor(comment.author)), overflow: 'hidden' }}>
+                      <div className="comment-avatar" style={{ background: isAdmin ? '#7f5af0' : (comment.avatar_url ? 'transparent' : avatarColor(comment.author)), overflow: 'hidden' }}>
                         {isAdmin ? '✦' : (comment.avatar_url
                           ? <img src={comment.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} referrerPolicy="no-referrer" />
                           : comment.author.charAt(0).toUpperCase()
                         )}
                       </div>
-                      {(idx < comments.filter(c => !c.parent_id).length - 1 || replies.length > 0) && <div className="comment-line" />}
+                      {(idx < roots.length - 1 || replies.length > 0) && <div className="comment-line" />}
                     </div>
 
                     <div className="comment-body">
@@ -486,7 +478,7 @@ function Comments({ postId, allowComments = true, basePath = 'posts' }: Comments
                         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
                         <div className="comment-left">
                           <div className="comment-avatar" style={{
-                            background: isReplyAdmin ? '#7f5af0' : (reply.avatar_url ? 'transparent' : getAvatarColor(reply.author)),
+                            background: isReplyAdmin ? '#7f5af0' : (reply.avatar_url ? 'transparent' : avatarColor(reply.author)),
                             overflow: 'hidden',
                           }}>
                             {isReplyAdmin ? '✦' : (reply.avatar_url
