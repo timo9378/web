@@ -80,10 +80,25 @@ jobs:
       # 它們在自己檔案裡還有用，只是不該對外），所以 --include 拿掉，全類別鎖死。
       - name: knip（未使用的檔案、匯出與相依）
         run: pnpm exec knip --config .config/knip.json --no-progress
-      # JUnit 的產出由 vitest.config.ts 依 CI 環境決定，不在這裡改寫指令——
+      # JUnit 與覆蓋率的產出都由 vitest.config.ts 依 CI 環境決定，不在這裡改寫指令——
       # `pnpm test` 是 CLAUDE.md 裡列的門檻指令，讓它跟本機跑的是同一條。
       - name: vitest
         run: pnpm test
+      # 覆蓋率送 Codecov，flag=frontend。跟 backend 分開才看得出各自的趨勢——
+      # 混在一起的話後端 82% 會把前端的個位數蓋掉，而那正是需要被看見的數字。
+      #
+      # ⚠ 這裡量的是**單元測試**的覆蓋率，不含 e2e。e2e 走過的原始碼要另外量
+      #   （scripts/e2e-coverage.mjs，靠 V8 coverage + source map 映回 src/），
+      #   那份沒有進 Codecov：它需要跑起整個 stack，成本與這條門檻不對等。
+      #   兩個數字差很多是正常的，別把它們當成同一件事。
+      - name: 覆蓋率上傳（frontend）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: coverage/lcov.info
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       # 測試結果送 Codecov Test Analytics（不是覆蓋率——那邊看的是每一條測試的
       # 歷史失敗率與 flaky）。!cancelled() 而不是 always()：測試紅的時候才最需要
       # 這份資料，只在成功時上傳等於「壞掉時看不到」。

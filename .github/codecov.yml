@@ -24,6 +24,15 @@ coverage:
         # 0.5pp 的餘裕：region/line 兩套算法本來就會有小數點的漂移，
         # 貼著 0 訂等於每隔幾次就買一個假紅。
         threshold: 0.5%
+      # 前端剛從 2% 起步（單元測試長期只有 6 支）。這兩條都設成 informational：
+      # 以現在的基準，任何一個「加了元件但還沒補測試」的 PR 都會讓它變紅，
+      # 而每個 PR 都要略過的紅燈等於沒有門檻——只會訓練人忽略它。
+      # 先讓數字被看見、追趨勢；等站穩再把 informational 拿掉、訂真的門檻。
+      frontend:
+        flags: [frontend]
+        target: auto
+        threshold: 1%
+        informational: true
     patch:
       backend:
         flags: [backend]
@@ -31,14 +40,24 @@ coverage:
         # 靠「不動的舊檔」撐著，patch 看的是這次真的新增了多少沒測到的路徑。
         target: 80%
         threshold: 0%
+      frontend:
+        flags: [frontend]
+        target: 60%
+        threshold: 0%
+        informational: true
 
 flags:
   backend:
     paths:
       - backend/src/
-    # 前端目前沒有上報覆蓋率，所以不需要 carryforward（那是給「這次 CI 沒跑到
-    # 某個 flag 就沿用上次結果」用的）。哪天前端也接上來再開。
-    carryforward: false
+    # carryforward：某次 CI 沒跑到這個 flag 時沿用上一次的結果。
+    # 兩個 flag 都要開——否則只改了前端的 PR 會讓 backend 的覆蓋率顯示成 0，
+    # 看起來像「後端測試全沒了」。
+    carryforward: true
+  frontend:
+    paths:
+      - src/
+    carryforward: true
 
 comment:
   layout: 'condensed_header, diff, flags, files'
