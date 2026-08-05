@@ -179,6 +179,51 @@ test.describe('文章篩選', () => {
   const cards = (page: import('@playwright/test').Page) =>
     page.locator('.note-card').filter({ hasNotText: E2E_POST_PREFIX });
 
+  /**
+   * 切換排序不該把整頁換掉。
+   *
+   * `sortBy` 是 queryKey 的一部分，換排序＝一個全新的 query。少了
+   * `placeholderData: keepPreviousData`，新 key 沒有快取 → `isPending` 為 true →
+   * Blog.tsx 的 `if (loading)` 直接回全螢幕載入畫面 → 整頁閃一下。
+   *
+   * ⚠ 這個 bug 只有**第一次**按某個排序會出現（之後那個 key 有 5 分鐘快取），
+   *   很容易被當成偶發或錯覺——所以這條測試每次都用乾淨的 page，且刻意把請求拖慢，
+   *   否則本機 fetch 太快，閃爍的窗口小到抓不到。
+   *
+   * 用 MutationObserver 而不是輪詢：輪詢的取樣間隔可能整個錯過那一幀。
+   */
+  test('切換排序不會整頁閃一下', async ({ page }) => {
+    await page.goto('/blog');
+    await expect(page.locator('.sort-pill').first()).toBeVisible();
+
+    await page.route('**/api/posts?sortBy=*', async (route) => {
+      await new Promise((r) => setTimeout(r, 1200));
+      await route.continue();
+    });
+    await page.evaluate(() => {
+      (window as unknown as { __sawLoader?: boolean }).__sawLoader = false;
+      new MutationObserver(() => {
+        if (document.querySelector('.koim-loader')) {
+          (window as unknown as { __sawLoader?: boolean }).__sawLoader = true;
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    });
+
+    const before = await cards(page).count();
+    const firstBefore = await cards(page).first().innerText();
+    await page.locator('.sort-pill').filter({ hasText: '最舊' }).first().click();
+    // 請求還在路上的期間，舊清單必須還在畫面上
+    await expect(cards(page)).toHaveCount(before);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __sawLoader?: boolean }).__sawLoader), { timeout: 5000 })
+      .toBe(false);
+
+    // 資料回來之後排序真的變了（否則這條只證明了「沒閃」，沒證明「有換」）。
+    // ⚠ 比對「第一張卡有沒有換」而不是寫死某篇標題——種子文章增減時後者會誤紅，
+    //   而那跟這條要守的東西無關。
+    await expect.poll(() => cards(page).first().innerText(), { timeout: 15_000 }).not.toBe(firstBefore);
+  });
+
   /** 搜尋只留下符合的文章。 */
   test('搜尋會縮小清單', async ({ page }) => {
     await page.goto('/blog');

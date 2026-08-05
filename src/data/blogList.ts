@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import type {
   CategoriesResponse,
   CategoryRow,
@@ -58,6 +58,16 @@ const STALE = 5 * 60 * 1000;
 export const postsListQueryOptions = (locale: string, sortBy: string) =>
   queryOptions({
     queryKey: ['posts', 'list', locale, sortBy],
+    // ⚠ 沒有這行的話，按「最新／最舊／熱門」會**整頁閃一下**。
+    //
+    // sortBy 進了 queryKey，換排序就是一個全新的 query：沒有快取 → `isPending` 為 true
+    // → Blog.tsx 的 `if (loading)` 直接把整頁換成全螢幕載入畫面 → 資料回來再換回去。
+    // 而且只有**第一次**按會閃，之後那個 key 有快取（staleTime 5 分鐘）就不閃了，
+    // 所以很容易被當成偶發或錯覺。
+    //
+    // keepPreviousData 讓舊資料留在畫面上直到新的回來：`isPending` 保持 false，
+    // 改由 `isPlaceholderData` 表示「這是上一份、新的還在路上」。
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<Post[]> => {
       const res = await fetch(apiUrl(`/api/posts?sortBy=${sortBy}&limit=100&lang=${locale}`));
       if (!res.ok) throw new Error(`GET /api/posts ${res.status}`);
