@@ -63,11 +63,13 @@ test.describe('MDX block 全覆蓋', () => {
       if (m.type() !== 'error') return;
       const t = m.text();
       if (!/violates the following Content Security Policy/.test(t)) return;
-      // excalidraw 的字形 subsetting 會踩 unsafe-eval；它自己 catch 了並降級到主執行緒，
-      // 圖仍然畫得出來。那是第三方的既有行為，不是這條要守的東西。
-      if (/glyph subsetting|Evaluating a string as JavaScript/.test(t)) return;
       cspBlocked.push(t.slice(0, 160));
     });
+    // excalidraw 的字形 subsetting 曾經在這裡噴一堆 unsafe-eval 錯誤，一度被當成
+    // 「第三方的既有行為」排除掉。實際上那是 **e2e 代理層對 /assets/ 多加了 CSP**
+    // 造成的，正式站沒有這回事（見 tests/e2e/stack.mjs 的說明）。代理層對齊之後
+    // 錯誤歸零，所以這裡不再排除任何 CSP 違規——留著排除規則等於把那條路徑重新弄壞
+    // 的時候沒有人會發現。順帶一提，壞掉時的代價是行內 SVG 從 9 KB 變成 285 KB。
 
     await page.goto(POST);
     // 有幾個 block 是 lazy 的（chart / sketch / math），捲到底逼它們載入
