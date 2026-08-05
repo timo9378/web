@@ -61,7 +61,13 @@
   z-index: 0;
 }
 
-/* ── Copy protection ── */
+/* ── Copy protection ──
+   ⚠ 這一組（含下面的 code block 與 video 豁免）刻意留在檔案開頭，而 `.post-content`、
+   `.code-block-wrapper`、`.terminal-block` 的 base 樣式在後面——biome 會為此報三筆
+   noDescendingSpecificity。那是誤判：這裡只設 user-select，base 只設版面與配色，
+   **零屬性重疊**，不是覆蓋關係。
+   不把這組往後搬的理由是它會翻轉與後面三處 user-select 的先後，而防複製是功能不是
+   樣式，不值得為了 lint 冒那個險。三個 base 規則各自帶了 biome-ignore 與說明。 */
 .blog-post-container .post-content {
   -webkit-user-select: none;
   user-select: none;
@@ -770,6 +776,14 @@ a.series-nav-title:hover {
   max-width: 280px;
   padding: 10px 12px;
 }
+.category-tooltip-short {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  margin: 0 0 6px 0;
+  line-height: 1.4;
+}
+
 .category-tooltip.category-tooltip-compact .category-tooltip-short {
   margin: 0;
 }
@@ -800,14 +814,6 @@ a.series-nav-title:hover {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.category-tooltip-short {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  margin: 0 0 6px 0;
-  line-height: 1.4;
 }
 
 .category-tooltip-desc {
@@ -975,6 +981,15 @@ a.series-nav-title:hover {
   /* 定位到的那項小小放大，讓 user 意識到自己在哪一段 */
   transform: scale(1.07);
 }
+.toc-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .toc-item.active .toc-text {
   font-weight: 600;
 }
@@ -1024,15 +1039,6 @@ a.series-nav-title:hover {
 
 .toc-item:hover .toc-bullet {
   background: rgba(255, 255, 255, 0.4);
-}
-
-.toc-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .toc-bottom-link {
@@ -1148,6 +1154,7 @@ a.series-nav-title:hover {
 /* ═══════════════════════
    Markdown Content
    ═══════════════════════ */
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .post-content` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
 .post-content {
   color: rgba(255, 255, 255, 0.82);
   font-size: 1.05rem;
@@ -1993,6 +2000,7 @@ a.series-nav-title:hover {
 /* ═══════════════════════
    Code Block
    ═══════════════════════ */
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .code-block-wrapper` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
 .code-block-wrapper {
   border-radius: 12px;
   overflow: hidden;
@@ -2067,6 +2075,7 @@ a.series-nav-title:hover {
 }
 
 /* ── 終端機渲染（bash/shell 類）：macOS 風視窗，紅黃綠燈 + 標題列，無行號，唯讀 ── */
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .terminal-block` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
 .terminal-block {
   margin: 1.5rem 0;
   border-radius: 12px;

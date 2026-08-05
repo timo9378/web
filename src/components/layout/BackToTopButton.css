@@ -52,6 +52,16 @@
     0 0 0 4px rgba(127, 90, 240, 0.1);
 }
 
+.back-to-top-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(229, 229, 245, 0.9);
+  transition: filter 0.22s ease;
+}
+
 /* 把舊的 CSS launch 動畫拿掉，改交給 @animateicons/react Rocket 的內建動畫驅動。
    保留 hover 時的微弱發光感受。 */
 .back-to-top:hover .back-to-top-icon {
@@ -75,16 +85,6 @@
   stroke: rgba(199, 184, 255, 0.85);
   transition: stroke-dashoffset 120ms linear;
   filter: drop-shadow(0 0 4px rgba(127, 90, 240, 0.5));
-}
-
-.back-to-top-icon {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(229, 229, 245, 0.9);
-  transition: filter 0.22s ease;
 }
 
 @media (max-width: 768px) {

@@ -24,6 +24,22 @@
   border-color: rgba(199, 184, 255, 0.22);
 }
 
+.club-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(127, 90, 240, 0.1);
+  border: 1px solid rgba(127, 90, 240, 0.25);
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  color: rgba(199, 184, 255, 0.95);
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
 .clubs-v2 .club-row.open .club-icon-wrap {
   background: rgba(127, 90, 240, 0.18);
   border-color: rgba(127, 90, 240, 0.45);
@@ -61,22 +77,6 @@
 .clubs-v2 .club-row-head:focus-visible {
   box-shadow: inset 0 0 0 2px rgba(199, 184, 255, 0.45);
   border-radius: inherit;
-}
-
-.club-icon-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.25);
-  display: grid;
-  place-items: center;
-  font-size: 1.1rem;
-  color: rgba(199, 184, 255, 0.95);
-  transition:
-    background 220ms ease,
-    border-color 220ms ease,
-    box-shadow 220ms ease;
 }
 
 /* 名稱 + 職位 chip 同一行（期間移到右側欄） */
@@ -148,11 +148,32 @@
   grid-template-rows: 1fr;
 }
 
+/* 展開：hairline 分隔 + 桌面雙欄活動格（吉他社 8 項不再拖成長串） */
+.club-activities-list {
+  min-height: 0;
+  margin: 0 22px;
+  padding: 14px 0 18px 60px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  list-style: none;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 32px;
+}
+
 /* ── 紙張折疊感 ──
    每條活動像折起的紙片（rotateX -85°，沿上緣），展開時依序攤平、
    收合時瞬間折回。perspective 放在 list 上給子項 3D 景深。 */
 .club-activities-wrap .club-activities-list {
   perspective: 700px;
+}
+
+.club-activity-item {
+  position: relative;
+  padding-left: 14px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .club-activities-wrap .club-activity-item {
@@ -201,27 +222,6 @@
   transition-delay: 460ms;
 }
 
-/* 展開：hairline 分隔 + 桌面雙欄活動格（吉他社 8 項不再拖成長串） */
-.club-activities-list {
-  min-height: 0;
-  margin: 0 22px;
-  padding: 14px 0 18px 60px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  list-style: none;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px 32px;
-}
-
-.club-activity-item {
-  position: relative;
-  padding-left: 14px;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
-}
-
 .club-activity-item::before {
   content: "";
   position: absolute;
@@ -234,7 +234,12 @@
 }
 
 @media (max-width: 720px) {
-  .club-row-head {
+  /* ⚠ 必須帶 `.clubs-v2` 前綴。上面那條 `.clubs-v2 .club-row-head, …:hover, …` 是
+     (0,2,0)，而 **media query 不增加特異性**——寫成裸的 `.club-row-head`(0,1,0) 就會
+     輸給它，手機版的兩欄佈局根本不生效。
+     實測（修之前，375px）：grid-template-columns 仍是桌面版的四欄
+     `42px 193px 0px 0px`、gap 18px（該 14px）、padding 18px 22px（該 16px 18px）。 */
+  .clubs-v2 .club-row-head {
     grid-template-columns: auto minmax(0, 1fr);
     gap: 14px;
     padding: 16px 18px;

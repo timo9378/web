@@ -208,16 +208,6 @@
 .mega-menu-link--compact {
   padding: 7px 10px;
 }
-.mega-menu-link--compact .mega-menu-link-icon {
-  width: 24px;
-  height: 24px;
-  font-size: 0.8rem;
-}
-.mega-menu-link:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(244, 244, 245, 1);
-  transform: translateX(2px);
-}
 .mega-menu-link-icon {
   display: inline-flex;
   flex-shrink: 0;
@@ -233,6 +223,17 @@
   transition:
     background 0.22s ease,
     color 0.22s ease;
+}
+
+.mega-menu-link--compact .mega-menu-link-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+}
+.mega-menu-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 244, 245, 1);
+  transform: translateX(2px);
 }
 .mega-menu-link:hover .mega-menu-link-icon {
   background: rgba(127, 90, 240, 0.28);
@@ -340,6 +341,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.mega-menu-socials {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .mega-menu-profile .mega-menu-socials {
   margin-top: auto; /* 推到欄底，跟右欄底對齊 */
 }
@@ -434,11 +441,6 @@
   margin-top: 2px;
 }
 
-.mega-menu-socials {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
 .mega-menu-social {
   width: 28px;
   height: 28px;

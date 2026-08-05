@@ -424,16 +424,18 @@
   animation: rift-spark 5s steps(1) infinite;
 }
 
+.hero-caret {
+  width: 2px;
+  height: 1.05em;
+  border-radius: 1px;
+  background: #d8b4fe;
+  box-shadow: 0 0 8px rgba(216, 180, 254, 0.8);
+  animation: blink 0.85s steps(1) infinite;
+}
+
 .hero-chip--rift .hero-caret {
   background: #ffffff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-}
-
-.hero-chip--rift .hero-chip-text {
-  position: relative;
-  color: #ffffff;
-  /* 基準文字：閃回時抖動 + 白光爆閃 + 短暫熄滅 */
-  animation: rift-base 5s steps(1) infinite;
 }
 
 /* 打字期間的版面預留（見 Hero.tsx 的說明）：
@@ -444,6 +446,14 @@
   display: inline-block;
   position: relative;
 }
+
+.hero-chip--rift .hero-chip-text {
+  position: relative;
+  color: #ffffff;
+  /* 基準文字：閃回時抖動 + 白光爆閃 + 短暫熄滅 */
+  animation: rift-base 5s steps(1) infinite;
+}
+
 .hero-chip-sizer {
   visibility: hidden;
   white-space: nowrap;
@@ -671,15 +681,6 @@
    避免打字前 chip 塌掉。現在 sizer 永遠在裡面（chip-text 不可能 :empty），而且它連「寬度」
    也一起撐住了，那條規則已經沒有作用，移除。 */
 
-.hero-caret {
-  width: 2px;
-  height: 1.05em;
-  border-radius: 1px;
-  background: #d8b4fe;
-  box-shadow: 0 0 8px rgba(216, 180, 254, 0.8);
-  animation: blink 0.85s steps(1) infinite;
-}
-
 .hero-sub {
   margin: 0 0 30px;
   font-size: 0.8rem;
@@ -760,6 +761,10 @@
 }
 
 /* Fade-in animation for description and actions */
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.home-hero-content .description`
+   只設字體與配色（font-family / font-size / line-height / color / max-width / margin-bottom），
+   這裡設的是淡入用的 opacity 與 transition，零屬性重疊，不是覆蓋關係。
+   加上 `.home-hero-content` 前綴會讓 `.hero-actions` 也被限縮，那才是改壞。 */
 .description,
 .hero-actions {
   opacity: 0;
