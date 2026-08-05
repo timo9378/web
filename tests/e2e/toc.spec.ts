@@ -88,9 +88,14 @@ test.describe('文章目錄', () => {
   });
 
   test('「回到頂端」真的回得去', async ({ page }) => {
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.7));
-    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeGreaterThan(0);
+    // ⚠ 捲一段**固定的短距離**，不要用 `scrollHeight * 0.7`。按鈕走的是
+    //   `scrollTo({ behavior: 'smooth' })`，而平滑捲動的動畫時間跟距離成正比——
+    //   從九千多 px 捲回 0，在整套 e2e 平行跑的負載下會超過逾時，變成間歇性假紅
+    //   （單獨跑必過、整套跑三次紅兩次）。1500px 足夠讓 sticky 側欄吸附、按鈕進到
+    //   視窗內，驗的是同一件事。
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeGreaterThan(1000);
     await page.locator('.toc-bottom-link').click();
-    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 10_000 }).toBeLessThan(50);
+    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 15_000 }).toBeLessThan(50);
   });
 });

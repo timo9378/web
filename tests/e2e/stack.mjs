@@ -16,7 +16,7 @@ import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seed } from './seed.mjs';
-import { CSP_POLICY } from '../../scripts/csp.mjs';
+import { CSP_POLICY, SECURITY_HEADERS } from '../../scripts/csp.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -120,6 +120,17 @@ function startProxy() {
         if (!toBackend && !req.url.startsWith('/assets/')) {
           headers['content-security-policy'] = CSP_POLICY;
         }
+        // 四條安全標頭：nginx 的 snippet 是 include 在 **server 層**的，所以正式站
+        // 每個回應（HTML / assets / API）都帶著它們——這裡也要全部套上。
+        //
+        // ⚠ 加這個**不是**為了在 e2e 裡斷言標頭存不存在。那種測試只驗到這支假代理，
+        //   綠了也不代表線上是對的（`scripts/check-security-headers.ts` 的檔頭把這件事
+        //   講得很清楚，它才是打正式站的那道守門）。這裡要的是**環境等價**：
+        //   `nosniff` 會改變瀏覽器的行為，少了它，MIME 給錯的回應在 e2e 照樣跑得動、
+        //   上線才被擋 —— 測試環境比正式站寬鬆，給的就是假綠燈。
+        //
+        //   政策與這四條都從 scripts/csp.mjs 讀，代理層與 check 腳本不可能各自漂移。
+        Object.assign(headers, SECURITY_HEADERS);
         res.writeHead(up.statusCode ?? 502, headers);
         up.pipe(res);
       },
