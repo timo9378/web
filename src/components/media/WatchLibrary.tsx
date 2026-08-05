@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { dedupeWatchItems, filterAndSortWatchItems } from '@/lib/mediaLists';
 import { useQuery } from '@tanstack/react-query';
 import { LocaleLink } from '@/i18n/locale-link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -127,46 +128,15 @@ function WatchLibrary() {
 
   // 跨「動畫(Bahamut)/影集(Netflix/Trakt)」去重：同 tmdb_id 視為同一部，保留集數最多的那筆。
   // 沒 tmdb_id 的不去重（避免用名字誤殺劇場版/相似名）。
+  // 跨來源去重是純邏輯，抽在 lib/mediaLists.ts（含「沒 tmdbId 不去重」的理由）。
   const deduped = useMemo(() => {
-    const anime = items.anime ?? [];
-    const tv = items.tv ?? [];
-    const winner = new Map<number | string, WatchItem>();
-    for (const it of [...anime, ...tv]) {
-      if (it.tmdbId == null) continue;
-      const cur = winner.get(it.tmdbId);
-      if (!cur || (it.epCount ?? 0) > (cur.epCount ?? 0)) winner.set(it.tmdbId, it);
-    }
-    const keep = (it: WatchItem) => it.tmdbId == null || winner.get(it.tmdbId) === it;
-    return {
-      anime: items.anime ? anime.filter(keep) : null,
-      film: items.film,
-      tv: items.tv ? tv.filter(keep) : null,
-    };
+    const { anime, tv } = dedupeWatchItems(items.anime ?? [], items.tv ?? []);
+    return { anime: items.anime ? anime : null, film: items.film, tv: items.tv ? tv : null };
   }, [items]);
 
   const visible = useMemo(() => {
-    const list = deduped[activeTab] ?? [];
-    const term = search.trim().toLowerCase();
-    const filtered = term
-      ? list.filter((it) => (it.title).toLowerCase().includes(term))
-      : list;
-    const sorted = filtered.slice();
-    sorted.sort((a, b) => {
-      const ad = a.isoDate ?? '';
-      const bd = b.isoDate ?? '';
-      switch (sortBy) {
-        case 'titleAsc': return (a.title).localeCompare(b.title);
-        case 'titleDesc': return (b.title).localeCompare(a.title);
-        case 'oldest':
-          if (!ad || !bd) return (!ad ? 1 : 0) - (!bd ? 1 : 0); // 無日期一律排最後
-          return ad.localeCompare(bd);
-        case 'newest':
-        default:
-          if (!ad || !bd) return (!ad ? 1 : 0) - (!bd ? 1 : 0); // 無日期一律排最後
-          return bd.localeCompare(ad);
-      }
-    });
-    return sorted;
+    // 搜尋與排序同樣抽在 lib/mediaLists.ts。
+    return filterAndSortWatchItems(deduped[activeTab] ?? [], search, sortBy);
   }, [deduped, activeTab, search, sortBy]);
 
   const counts = {
