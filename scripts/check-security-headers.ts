@@ -23,7 +23,7 @@
  *   BASE_URL=https://example.com pnpm check:headers
  */
 
-import { CSP_POLICY } from './csp.mjs';
+import { CSP_POLICY, SECURITY_HEADERS } from './csp.mjs';
 
 interface Rule {
   /** 要打的路徑 */
@@ -38,13 +38,13 @@ interface Rule {
 
 const BASE = process.env.BASE_URL ?? 'https://koimsurai.com';
 
-/** 全站都該有的四條。內容也一起比對——只檢查「有沒有」的話，值被改壞看不出來。 */
-const BASELINE: Record<string, string | undefined> = {
-  'strict-transport-security': 'max-age=31536000; includeSubDomains',
-  'x-content-type-options': 'nosniff',
-  'x-frame-options': 'SAMEORIGIN',
-  'referrer-policy': 'strict-origin-when-cross-origin',
-};
+/**
+ * 全站都該有的四條。內容也一起比對——只檢查「有沒有」的話，值被改壞看不出來。
+ *
+ * 定義在 `csp.mjs`（與 CSP 同一個單一來源），因為 `tests/e2e/stack.mjs` 的代理層
+ * 也要用同一份：兩邊各寫一份的話，測試環境會悄悄地比正式站寬鬆。
+ */
+const BASELINE: Record<string, string | undefined> = SECURITY_HEADERS;
 
 /** 靜態檔那兩條 location 額外要有 CSP——原因見 nginx 設定裡的註解（SVG 直接開啟會執行 script）。 */
 const STATIC_FILE = { ...BASELINE, 'content-security-policy': "default-src 'none'" };

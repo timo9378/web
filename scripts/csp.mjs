@@ -137,6 +137,24 @@ export const CSP_POLICY = Object.entries(DIRECTIVES)
   .map(([k, v]) => `${k} ${v.join(' ')}`)
   .join('; ');
 
+/**
+ * 全站每個回應都該有的四條安全標頭 —— 同樣**這裡是唯一的來源**。
+ *
+ * 對應 nginx 的 `snippets/koimsurai-security.conf`，那個檔 include 在 **server 層**，
+ * 所以正式站的 HTML / assets / API 全部都帶著這四條（實測確認過）。
+ *
+ * ⚠ 放進這個檔（而不是各寫一份）的理由跟 CSP 一樣：`tests/e2e/stack.mjs` 的代理層
+ * 與 `scripts/check-security-headers.ts` 都要用。兩邊各寫一份的後果實際發生過——
+ * e2e 的代理層原本**一條都沒加**，於是「MIME 給錯的回應」在 e2e 照樣能跑、上線才被
+ * nosniff 擋掉。測試環境比正式站寬鬆，給的是假綠燈。
+ */
+export const SECURITY_HEADERS = {
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'SAMEORIGIN',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+};
+
 /** nginx 設定用的多行版本，方便人讀。用 `node scripts/csp.mjs` 印出來。 */
 export function nginxLine() {
   return `add_header Content-Security-Policy "${CSP_POLICY}" always;`;
