@@ -173,6 +173,49 @@ pnpm format:css    # 自動修格式
 設到同一批屬性（例如 `.club-icon-wrap` 的 base 寫在 `.open` 狀態之後），但那是排版
 問題不是 bug。要清的話是把 base 規則搬到狀態變體前面，純搬移、零行為變化。
 
+### 剩下的 43 個 `!important` 都是查過的，不要再清一次
+
+原本 190 個，清到 43。**剩下的每一個都有註解寫明理由**，看到 linter 報 warning 不要
+直接拿掉——先讀那條規則上面的註解。分佈：
+
+| 類別 | 數量 | 為什麼留 |
+|---|---|---|
+| `@media (prefers-reduced-motion)` | 10 | 要蓋過全站元件動畫；**測試瀏覽器不會觸發** |
+| `html.no-gpu *` | 5 | 無 GPU 機器的降級；同樣不會被觸發 |
+| `html.fs-active` | 1 | 全螢幕影片的 GPU 爭用修正；同上 |
+| shiki 背景、`.toc-bottom-link` 邊框 | 9 | 壓 shiki 自己的主題／全域 button 規則 |
+| 後台表單邊框、monaco 捲軸與行號 | 6 | 壓 shadcn utility 與 monaco 注入的樣式 |
+| `.galaxy-bubble`（手機版） | 2 | 壓元件用 inline style 算出來的泡泡大小 |
+
+**壓 inline style 是最常見的正當理由**（shiki、monaco、galaxy-bubble 都是這類）——
+inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。
+判斷「這個 `!important` 是不是多餘」時，先看它要蓋的對象是不是 JS 寫進 `style=""` 的。
+
+### 要清 `!important` 的話，這套方法才測得準
+
+⚠️ **像素比對測不準。** 實測噪音底線：`/blog/43` **7810 px**（mermaid 渲染時序）、
+`/history` 228 px，而 `/music` 的專輯圖來自 Spotify CDN 根本固定不了。真正的 CSS 變化
+會被這些淹掉。改用 **`getComputedStyle` 比對**：它是 cascade 的最終結果，跟圖片載到
+第幾張無關。噪音只剩動畫屬性（`transform`/`opacity`/`box-shadow`/`filter`），過濾掉就是
+確定性的。
+
+⚠️ **三類東西「量到 0 差異」不代表安全**，因為它們在測試環境根本不會套用：
+`prefers-reduced-motion`、`html.no-gpu`、`html.fs-active`。這三類要靠讀規則判斷，
+不要靠量測。
+
+⚠️ **`:hover` / `:focus` 也要主動觸發。** 靜態截圖與靜態 computed style 都碰不到。
+做法是從 CSS 反推「哪些選擇器 × 哪些狀態」帶著 `!important`，再逐一 hover/focus。
+切狀態前要先關掉 transition，否則抓到的是過渡中的中間值。
+
+⚠️ **base 用了 `!important`，狀態變體就必須跟著用。** 只補一半的下場是 base 反過來
+蓋掉 `:hover`/`:focus`——滑過去完全不變色，而靜態截圖看不出來。實際踩過。
+
+⚠️ **後台要驗就起 e2e stack**（`node tests/e2e/stack.mjs`），照
+`tests/e2e/admin-session.ts` 自己簽一個 OWNER token 塞 localStorage，
+不需要碰正式環境的任何密鑰。但注意**每次重啟 stack 會重灌種子**，
+`/admin/subscribers` 的表格欄寬會跟著變（`table-layout: auto` 依內容分配）——
+那不是 CSS 回歸。噪音對照要「重啟 stack 之後再比一次」才有意義。
+
 ## CI 門檻（跟這些指令一字不差，不要自己改寫）
 
 前端：
