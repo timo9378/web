@@ -93,8 +93,8 @@
 @media (prefers-reduced-motion: reduce) {
   .mega-menu-trigger-icon,
   .mega-menu-trigger-chev {
-    transition: none !important;
-    animation: none !important;
+    transition: none;
+    animation: none;
   }
 }
 
@@ -280,11 +280,11 @@
 /* animate-ui icon variant — 由 motion 自己控制 path / circle 動畫，
    不能讓 CSS scale/rotate/stroke-dashoffset 競爭，否則 motion 的 transform 會被覆蓋。 */
 .mega-menu-link-icon--motion > svg {
-  transform: none !important;
-  transition: none !important;
+  transform: none;
+  transition: none;
 }
 .mega-menu-link:hover .mega-menu-link-icon--motion > svg {
-  transform: none !important;
+  transform: none;
 }
 .mega-menu-link-icon--motion > svg path,
 .mega-menu-link-icon--motion > svg circle,
@@ -298,9 +298,9 @@
 .mega-menu-link:hover .mega-menu-link-icon--motion > svg polyline,
 .mega-menu-link:hover .mega-menu-link-icon--motion > svg polygon,
 .mega-menu-link:hover .mega-menu-link-icon--motion > svg line {
-  stroke-dasharray: none !important;
-  stroke-dashoffset: 0 !important;
-  animation: none !important;
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: none;
 }
 .mega-menu-link-text {
   display: flex;
@@ -564,6 +564,6 @@
 @media (prefers-reduced-motion: reduce) {
   .mega-menu-trigger,
   .mega-menu-link {
-    transition: none !important;
+    transition: none;
   }
 }

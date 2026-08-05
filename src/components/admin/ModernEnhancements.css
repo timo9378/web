@@ -8,7 +8,7 @@
   box-shadow:
     0 8px 28px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(63, 63, 70, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -36,8 +36,8 @@
 
 /* ── Table Rows ── */
 .admin-layout tbody tr[data-state="selected"] {
-  background: rgba(39, 39, 42, 0.3) !important;
-  border-color: rgba(63, 63, 70, 0.6) !important;
+  background: rgba(39, 39, 42, 0.3);
+  border-color: rgba(63, 63, 70, 0.6);
 }
 
 /* ── Checkbox / Radio ── */
@@ -49,18 +49,18 @@
 /* ── Menu Items ── */
 .admin-layout [role="menuitem"]:hover,
 .admin-layout [role="option"]:hover {
-  background: rgba(39, 39, 42, 0.3) !important;
+  background: rgba(39, 39, 42, 0.3);
 }
 
 /* ── Search Box ── */
 .admin-layout input[type="search"] {
-  background: rgba(24, 24, 27, 0.45) !important;
-  border: 1px solid rgba(39, 39, 42, 0.6) !important;
+  background: rgba(24, 24, 27, 0.45);
+  border: 1px solid rgba(39, 39, 42, 0.6);
   padding-left: 2.5rem;
 }
 .admin-layout input[type="search"]:focus {
-  background: rgba(24, 24, 27, 0.75) !important;
-  border-color: rgba(82, 82, 91, 0.8) !important;
+  background: rgba(24, 24, 27, 0.75);
+  border-color: rgba(82, 82, 91, 0.8);
 }
 
 /* ── Breadcrumb ── */
@@ -85,11 +85,11 @@
 
 /* ── Toast ── */
 .admin-layout [data-sonner-toast] {
-  background: rgba(24, 24, 27, 0.92) !important;
+  background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(39, 39, 42, 0.6) !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(39, 39, 42, 0.6);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Pagination ── */
@@ -122,14 +122,14 @@
 
 /* ── Dialog Overlay ── */
 .admin-layout [class*="overlay"] {
-  background: rgba(9, 9, 11, 0.82) !important;
+  background: rgba(9, 9, 11, 0.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 /* ── Tooltip ── */
 .admin-layout [role="tooltip"] {
-  background: rgba(24, 24, 27, 0.92) !important;
+  background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(39, 39, 42, 0.6);

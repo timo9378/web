@@ -520,9 +520,9 @@
    注意：它與其他列同樣是 <a>（見 PreviewablePostLink 的 current 註解——維持同型別，
    換文章時 React 才會重用節點、不重播進場動畫）。這裡把「目前這篇」關成不可點。 */
 .posts-nav-current-item {
-  color: #fff !important;
+  color: #fff;
   position: relative;
-  padding-left: 0.75rem !important;
+  padding-left: 0.75rem;
   cursor: default;
   pointer-events: none;
 }
@@ -953,18 +953,18 @@ a.series-nav-title:hover {
 
 .toc-item:hover {
   color: rgba(255, 255, 255, 0.8);
-  background: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
+  background: none;
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 
 .toc-item:focus,
 .toc-item:focus-visible {
-  outline: none !important;
-  background: none !important;
-  box-shadow: none !important;
-  border: none !important;
+  outline: none;
+  background: none;
+  box-shadow: none;
+  border: none;
 }
 
 .toc-item.active {
@@ -980,24 +980,24 @@ a.series-nav-title:hover {
 }
 
 .toc-item.active:hover {
-  background: linear-gradient(90deg, var(--post-accent), var(--post-green)) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
+  background: linear-gradient(90deg, var(--post-accent), var(--post-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 
 .toc-item.active:focus,
 .toc-item.active:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  background: linear-gradient(90deg, var(--post-accent), var(--post-green)) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
+  outline: none;
+  box-shadow: none;
+  border: none;
+  background: linear-gradient(90deg, var(--post-accent), var(--post-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .toc-item.level-3,
@@ -1041,15 +1041,20 @@ a.series-nav-title:hover {
   gap: 0.4rem;
   margin-top: 1rem;
   padding: 0.75rem 0 0;
+  /* ⚠ 這兩條的 !important 不能拿掉：這是個 <button>，而 index.css 的 @layer base 有
+     全站 button 邊框規則。v4 的 cascade layer 讓「分層」輸給「未分層」——但那只對
+     一般宣告成立，**!important 的優先序是反過來的**（低層的 !important 贏過未分層），
+     所以那條 base 規則在 focus 態仍然蓋得過來。實測拿掉之後 focus 時
+     border-top 從 1px rgba(255,255,255,0.06) 變成 0px rgba(255,255,255,0.45)。 */
   border: none !important;
   border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
   font-size: 0.75rem;
   color: var(--post-muted);
   text-decoration: none;
   transition: color 0.2s;
-  background: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  background: none;
+  outline: none;
+  box-shadow: none;
   cursor: pointer;
   width: 100%;
   -webkit-tap-highlight-color: transparent;
@@ -1057,18 +1062,18 @@ a.series-nav-title:hover {
 
 .toc-bottom-link:hover {
   color: var(--post-accent);
-  background: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: none;
+  outline: none;
+  box-shadow: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .toc-bottom-link:focus,
 .toc-bottom-link:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-  background: none !important;
+  outline: none;
+  box-shadow: none;
+  background: none;
 }
 
 /* ═══════════════════════
@@ -2103,26 +2108,28 @@ a.series-nav-title:hover {
   margin: 0;
 }
 .terminal-body .shiki-output pre.shiki {
-  margin: 0 !important;
-  padding: 0 1.1rem !important;
+  margin: 0;
+  padding: 0 1.1rem;
+  /* ⚠ !important 不能拿掉：shiki 會把主題背景寫進 pre 自己的樣式，這裡要的是
+     透明（背景由外層 .terminal-body 畫）。實測拿掉之後變成 rgb(18,18,18)。 */
   background: transparent !important;
   font-size: 0.88rem;
   line-height: 1.75;
-  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace !important;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
   width: max-content;
   min-width: 100%;
   box-sizing: border-box;
 }
 .terminal-body .shiki-output code {
-  background: none !important;
-  padding: 0 !important;
-  border: 0 !important;
-  font-family: inherit !important;
+  background: none;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
   display: block;
 }
 .terminal-body .shiki-fallback {
-  margin: 0 !important;
-  padding: 0 1.1rem !important;
+  margin: 0;
+  padding: 0 1.1rem;
   color: rgba(255, 255, 255, 0.75);
   white-space: pre;
   font-size: 0.88rem;
@@ -2183,21 +2190,22 @@ a.series-nav-title:hover {
   padding: 1.1rem 1.3rem 1.3rem;
 }
 .code-surface-body .shiki-output pre.shiki {
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
+  /* ⚠ 同上：shiki 的主題背景要壓掉，背景由外層 .code-surface-body 畫 */
   background: transparent !important;
   font-size: 0.9rem;
   line-height: 1.7;
-  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace !important;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
   width: max-content;
   min-width: 100%;
   box-sizing: border-box;
 }
 .code-surface-body .shiki-output code {
-  background: none !important;
-  padding: 0 !important;
-  border: 0 !important; /* 防呆：不吃 .post-content code 的 inline 樣式（框線/底） */
-  font-family: inherit !important;
+  background: none;
+  padding: 0;
+  border: 0; /* 防呆：不吃 .post-content code 的 inline 樣式（框線/底） */
+  font-family: inherit;
   display: block;
   counter-reset: shiki-ln;
 }
@@ -2224,10 +2232,10 @@ a.series-nav-title:hover {
   animation: shikiPulse 1.4s ease-in-out infinite;
 }
 .code-surface-body .shiki-fallback code {
-  background: none !important;
-  padding: 0 !important;
-  border: 0 !important;
-  font-family: inherit !important;
+  background: none;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
 }
 @keyframes shikiPulse {
   0%,
@@ -2333,7 +2341,7 @@ a.series-nav-title:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   overflow: hidden;
-  text-decoration: none !important;
+  text-decoration: none;
   margin: 1.2rem 0;
   background: rgba(255, 255, 255, 0.03);
   transition: all 0.25s ease;
@@ -3052,17 +3060,17 @@ a.series-nav-title:hover {
 
 /* TOC Fixes */
 .toc-item {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
+  outline: none;
+  box-shadow: none;
+  border: none;
 }
 
 .toc-item:focus,
 .toc-item:focus-visible,
 .toc-item:hover {
-  outline: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .toc-bottom-link {
@@ -3073,7 +3081,7 @@ a.series-nav-title:hover {
 }
 
 .toc-bottom-link:hover {
-  background: transparent !important;
+  background: transparent;
   color: var(--post-accent);
 }
 

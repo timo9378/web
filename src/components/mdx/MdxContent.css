@@ -268,7 +268,7 @@
 }
 /* recharts 圖例文字改亮 */
 .mdx-chart .recharts-legend-item-text {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.6);
 }
 /* ── 互動圖表：圖 + 滑桿 ── */
 .mdx-chart-interactive {

@@ -200,13 +200,13 @@
 }
 
 .chevron {
-  font-size: 0.65em !important;
-  transition: transform 0.3s ease !important;
+  font-size: 0.65em;
+  transition: transform 0.3s ease;
   opacity: 0.6;
 }
 
 .chevron.rotated {
-  transform: rotate(180deg) !important;
+  transform: rotate(180deg);
 }
 
 .dropdown-menu {

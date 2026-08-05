@@ -1160,6 +1160,11 @@
     padding: 20px 0;
   }
 
+  /* ⚠ 這兩個 !important 不能拿掉。泡泡的大小是**元件用 inline style 依播放次數算出來的**
+     （所以每顆不一樣大），這條 media query 要在手機上把它們壓成統一的 110px——
+     inline style 只有 !important 蓋得過。
+     實測拿掉之後五顆變成 200 / 176 / 144 / 140 / 132px，手機版直接排版爆掉。
+     （驗證條件：390px 寬 + /music 切到「最愛曲風」分頁才看得到這些元素。） */
   .galaxy-bubble {
     width: 110px !important;
     height: 110px !important;

@@ -457,7 +457,12 @@ body::after {
   }
 }
 
-/* Reduce motion for users who prefer it — saves GPU/battery */
+/* 使用者在系統設定要求「減少動態」時把全站動畫壓到近乎靜止。
+   ⚠️ 這四條的 !important 是**必要**的，不要因為 linter 報 noImportantStyles 就拿掉：
+      它要蓋過的是全站幾百條元件動畫，而那些元件 CSS 是未分層的（v4 的 cascade layer
+      讓未分層恆勝過分層），沒有 !important 就一條都壓不住。
+   ⚠️ 而且**任何截圖或計算後樣式的比對都驗不到它**——測試瀏覽器不會開 reduced-motion，
+      這段規則根本不會套用，量到的永遠是 0 差異。清 !important 那次就是這樣差點誤刪。 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
