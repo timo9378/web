@@ -45,6 +45,11 @@ ARG VITE_SENTRY_DSN=
 ARG VITE_RELEASE=
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 ENV VITE_RELEASE=$VITE_RELEASE
+
+# Plausible v3 的站台專屬腳本檔名（pa-XXXX.js，從後台安裝畫面的 snippet 複製）。
+# 同樣是 build 時烤進 bundle：沒帶 = 追蹤腳本整個不輸出。
+ARG VITE_PLAUSIBLE_SCRIPT=
+ENV VITE_PLAUSIBLE_SCRIPT=$VITE_PLAUSIBLE_SCRIPT
 RUN pnpm run build
 
 # ── source map：烙 debug id → 上傳 → 從映像裡刪掉 ──────────────────────────
