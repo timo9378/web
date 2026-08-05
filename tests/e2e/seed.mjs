@@ -13,7 +13,7 @@ import { DatabaseSync } from 'node:sqlite';
  * （id=4 就是為了 CLS 測試加的），而寫死的那一版每加一篇就會讓一個不相干的
  * API 契約測試變紅，讀的人還得回頭猜「這個 2 是哪來的」。
  */
-export const PUBLISHED_POSTS = 5;
+export const PUBLISHED_POSTS = 6;
 
 /**
  * 測試自己建立的文章一律用這個前綴命名。
@@ -57,6 +57,94 @@ function longArticle() {
     out.push(`## 第 ${i} 節`, '', para, '', para, '');
   }
   return out.join('\n');
+}
+
+/**
+ * 用到**每一個**已註冊 MDX block 的文章（見下方 id=7）。
+ *
+ * 為什麼需要它：MDX 編譯失敗時前台是**靜默退回 markdown**（見 blogList.ts 的 catch），
+ * 讀者看到一行裸的 `<BarChart … />`，而 API 照樣回 200——沒有任何東西會告訴你它壞了。
+ * id=6 那篇只用了 `<Poll>`，所以那條保護一次只涵蓋一個 block。
+ *
+ * 量 e2e 覆蓋率時發現有 6 個 block 的檔案**從頭到尾沒被載入過**
+ * （BarChart / Chart / ImageCompare / InteractiveChart / Math / Sketch），
+ * 也就是說它們就算整個壞掉，整套 e2e 也不會有任何一條變紅。
+ *
+ * ⚠ 用 `join('\n')` 而不是樣板字串：內文裡有 markdown 的三個反引號，
+ *   包在樣板字串裡要逐個逸出，是製造錯誤的好方法。
+ * ⚠ 圖片與影片一律指向 public/ 底下真的存在的檔案——smoke.spec.ts 會把任何
+ *   非 /api 的 404 收集起來報錯。
+ */
+function allBlocksArticle() {
+  return [
+    '# 每個 MDX block 都在這裡',
+    '',
+    '這篇不是給人讀的，是給 `tests/e2e/mdx-blocks.spec.ts` 檢查「每個 block 都真的渲染成元件」。',
+    '',
+    '<Note title="這是 Note">提示區塊的內文。</Note>',
+    '',
+    '一段內文，裡面有 <Annot note="這是註解的內容">帶註解的字</Annot>，',
+    '也有 <Spoiler>被遮住的雷</Spoiler>，還有日文的 <Ruby text="請求書" reading="せいきゅうしょ" />。',
+    '按 <Kbd>Ctrl</Kbd> + <Kbd>K</Kbd> 開命令面板。提到 <Mention platform="github" user="timo9378" />。',
+    '',
+    '<BarChart title="語言分佈" unit="%" data={[{label:"Rust",value:48},{label:"TypeScript",value:37},{label:"CSS",value:15}]} />',
+    '',
+    '<Chart type="line" title="每週建置時間" unit="s" categoryKey="week" series={[{key:"build",name:"建置"}]} data={[{week:"W1",build:42},{week:"W2",build:37},{week:"W3",build:29}]} />',
+    '',
+    '<InteractiveChart type="bar" title="可調整的示範" unit="ms" min={0} max={100} step={5} data={[{label:"A",value:20},{label:"B",value:60}]} />',
+    '',
+    '<Math tex="E = mc^2" display />',
+    '',
+    '行內的 <Math tex="a^2 + b^2 = c^2" /> 也要能渲染。',
+    '',
+    '<Sketch title="流程" chart={"graph TD\\n  A[開始] --> B[結束]"} />',
+    '',
+    '<ImageCompare before="/og-default-v2.png" after="/pwa-512.png" beforeLabel="修之前" afterLabel="修之後" alt="對照圖" caption="拉桿可以左右拖" />',
+    '',
+    '<CodeTabs files={[{name:"a.ts",lang:"ts",code:"export const a = 1;"},{name:"b.rs",lang:"rust",code:"fn main() {}"}]} />',
+    '',
+    '<Diff lang="ts" title="修好之後" code={"- const x = 1\\n+ const x = 2"} />',
+    '',
+    '<Install pkg="v8-to-istanbul" dev />',
+    '',
+    '<Tabs>',
+    '  <Tab title="第一頁">分頁一的內容。</Tab>',
+    '  <Tab title="第二頁">分頁二的內容。</Tab>',
+    '</Tabs>',
+    '',
+    '<Steps>',
+    '  <Step title="第一步">先做這個。</Step>',
+    '  <Step title="第二步">再做那個。</Step>',
+    '</Steps>',
+    '',
+    '<Stats>',
+    '  <Stat label="e2e 覆蓋率" value="53.7" unit="%" trend="up" hint="statement" />',
+    '  <Stat label="單元測試" value="102" trend="up" />',
+    '</Stats>',
+    '',
+    '<Details summary="展開看細節">被摺疊起來的內容。</Details>',
+    '',
+    '<FileTree tree={"src/\\n  lib/\\n    blogContent.ts\\n  components/"} />',
+    '',
+    '<Video src="/videos/Web_video.mkv" caption="影片區塊" />',
+    '',
+    '<YouTube id="dQw4w9WgXcQ" title="外嵌影片（點了才載）" />',
+    '',
+    '<Poll id="all-blocks" question="這篇渲染正常嗎?" options={[{key:"y",label:"正常"},{key:"n",label:"壞了"}]} />',
+    '',
+    '<Refs title="延伸閱讀" items={[{label:"MDN",links:[{text:"getComputedStyle",href:"https://developer.mozilla.org/"}]}]} />',
+    '',
+    '## 一般 markdown 也要照常運作',
+    '',
+    '```rust',
+    'fn main() {',
+    '    println!("hello");',
+    '}',
+    '```',
+    '',
+    '結尾的一段內文。',
+    '',
+  ].join('\n');
 }
 
 export function seed(dbPath) {
@@ -141,6 +229,15 @@ export function seed(dbPath) {
       '一段普通內文。\n',
     'MDX 區塊',
     T(11),
+  );
+  // 用到每一個已註冊 block 的文章（理由見 allBlocksArticle 的說明）。
+  run(
+    `INSERT INTO posts (id, title, content, excerpt, category, status, author, created_at, format, allow_comments)
+     VALUES (7, ?, ?, ?, '技術', 'published', 'Koimsurai', ?, 'mdx', 1)`,
+    '每個 MDX block 都在這裡',
+    allBlocksArticle(),
+    '把所有 MDX block 放在同一頁，用來確認沒有任何一個安靜地退回純文字',
+    T(12),
   );
   run('INSERT INTO post_tags (post_id, tag_id) VALUES (1, 1), (1, 2), (2, 3)');
   run("INSERT INTO post_reactions (post_id, emoji, count) VALUES (1, '👍', 5)");
