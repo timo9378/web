@@ -13,12 +13,20 @@
         "src/components/ui/**",
         "src/components/animate-ui/**"
       ],
-      "project": ["src/**/*.{ts,tsx}", "server/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "server/**/*.ts",
+        "scripts/**/*.ts",
+        "tests/**/*.ts"
+      ]
     }
   },
   "ignoreDependencies": [
     "@koimsurai/api-types",
     "decimal.js-light",
     "@sentry/cli"
+  ],
+  "stryker": [
+    ".config/stryker.config.json"
   ]
 }

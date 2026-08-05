@@ -19,6 +19,10 @@ overrides:
   ajv: '^6.14.0'
   '@modelcontextprotocol/sdk>ajv': '^8.17.1'
   'ajv-formats>ajv': '^8.17.1'
+  # Stryker 9 宣告 ajv ~8.18，被上面那條全域 pin 拉成 v6 之後會炸
+  # （`TypeError: Ajv is not a constructor` —— v6 是 CJS 預設匯出，v8 不是）。
+  # 跟上面兩條一樣是範圍例外，不動全域那條。
+  '@stryker-mutator/core>ajv': '^8.17.1'
   dompurify: '>=3.4.11'
   picomatch: '^4.0.4'
   minimatch: '^9.0.7'

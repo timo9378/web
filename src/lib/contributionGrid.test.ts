@@ -94,6 +94,29 @@ describe('gridFromEvents', () => {
     expect([at(1), at(2), at(3), at(5), at(6), at(8), at(9)]).toEqual([1, 1, 2, 2, 3, 3, 4]);
   });
 
+  // Stryker 指出來的兩個洞：
+  // 1. `if (count === 0) return 0` 被改成 `if (false)` 沒人發現——空白日的 level 沒被驗過，
+  //    而那正是熱力圖絕大多數格子的樣子（全部變成 level 1 = 整張圖亮起來）。
+  it('沒有 commit 的日子 level 是 0（整張圖大多數格子都是這個）', () => {
+    const grid = gridFromEvents([], NOW);
+    expect(grid.flat().every((c) => c.level === 0)).toBe(true);
+  });
+
+  // 2. `week * 7` 被改成 `week / 7` 也沒人發現——只驗了「順序」與「最後一格是今天」，
+  //    沒驗每一欄之間真的相差七天。
+  it('相鄰兩欄的同一列剛好差七天', () => {
+    const grid = gridFromEvents([], NOW);
+    const dayMs = 86_400_000;
+    for (const w of [1, 25, 51]) {
+      const cur = new Date(grid[w][0].date).getTime();
+      const prev = new Date(grid[w - 1][0].date).getTime();
+      expect(Math.round((cur - prev) / dayMs), `第 ${w} 欄`).toBe(7);
+    }
+    // 最舊的那一格是 51 週又 6 天前
+    const oldest = new Date(grid[0][0].date).getTime();
+    expect(Math.round((new Date(NOW.toDateString()).getTime() - oldest) / dayMs)).toBe(51 * 7 + 6);
+  });
+
   it('超出 52 週的事件不會出現在格子裡', () => {
     const grid = gridFromEvents([push('2020-01-01T00:00:00', 50)], NOW);
     expect(grid.flat().every((c) => c.count === 0)).toBe(true);

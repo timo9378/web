@@ -106,6 +106,25 @@ describe('pickActiveHeading', () => {
     expect(pickActiveHeading([{ id: 'early', top: 500 }, { id: 'later', top: 120 }], WH)).toBe('later');
   });
 
+  // 以下三條是變異測試（Stryker）指出來的漏洞：邊界只測了「有沒有算進帶內」，
+  // 沒測「邊界值本身換成嚴格不等號會不會被抓到」。改成讓後備會挑到**別人**，
+  // 邊界那個才真的被驗到。
+  it('top 剛好 200 算在帶內，會贏過只符合後備條件的', () => {
+    // 若 `<= 200` 被改成 `< 200`，'edge' 掉出帶內 → 後備會挑到排在前面的 'other'
+    expect(pickActiveHeading([{ id: 'other', top: 500 }, { id: 'edge', top: 200 }], WH)).toBe('edge');
+  });
+
+  it('後備的下界是「大於 0」：剛好 0 不算', () => {
+    expect(pickActiveHeading([{ id: 'zero', top: 0 }], 800)).toBe('zero'); // 0 在帶內（-100~200）
+    // 帶外、剛好 0 → 後備也不該收（`> 0` 若被改成 `>= 0` 這條會紅）
+    expect(pickActiveHeading([{ id: 'far', top: -300 }, { id: 'zero', top: 0 }], 800)).toBe('zero');
+    expect(pickActiveHeading([{ id: 'onlyZeroOutOfBand', top: -100 }], 800)).toBe('onlyZeroOutOfBand');
+  });
+
+  it('後備的上界是「小於視窗高」：剛好等於視窗高不算', () => {
+    expect(pickActiveHeading([{ id: 'atEdge', top: 800 }], 800)).toBe('');
+  });
+
   it('一個標題都沒有就回空字串（呼叫端自己決定要不要沿用上一個）', () => {
     expect(pickActiveHeading([], WH)).toBe('');
   });
