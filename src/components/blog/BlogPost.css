@@ -868,7 +868,10 @@ a.series-nav-title:hover {
   position: sticky;
   top: 100px;
   max-height: calc(100vh - 120px);
-  /* 同左欄：藏捲軸但保留可捲動（長 TOC 仍能捲） */
+  /* 同左欄：藏捲軸但保留可捲動（長 TOC 仍能捲）。
+     ⚠ `overflow-y` 是這組設定的**必要**成員，不是可選的美化：少了它，max-height
+     不會裁切、藏捲軸的那兩條也沒有東西可藏，內容照樣溢出去。 */
+  overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   overscroll-behavior: contain;
@@ -930,6 +933,12 @@ a.series-nav-title:hover {
   flex-direction: column;
   gap: 0;
   max-height: calc(100vh - 260px);
+  /* ⚠ 同上：沒有 overflow-y 的話 max-height 形同虛設。
+     實際後果：標題超過約 20 個時清單溢出容器，把底下的「回到頂端」按鈕整個蓋住
+     ——按鈕看得到、`pointer-events` 也正常，但 elementFromPoint 打到的是 .toc-item，
+     所以點下去沒有反應。線上 25 個標題的文章就是這樣（15 個的那篇則正常）。
+     讓清單自己捲，header 與底部按鈕就固定在上下兩端。 */
+  overflow-y: auto;
   scrollbar-width: none;
 }
 

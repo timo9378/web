@@ -40,6 +40,9 @@ import { MdxContent } from '@/components/mdx/MdxContent';
 // slugify / extractHeadings / computeReadTime：與 BlogPostPage（SSR fallback）共用同一份，
 // 確保 heading anchor id / TOC / 閱讀時間兩邊逐字一致。
 import { slugify, extractHeadings, computeReadTime } from '@/lib/mdx/blogContent';
+// 標題拆解、閱讀進度、scroll-spy 的挑選邏輯——純函式，抽出去才測得到（見該檔說明）。
+import { pickActiveHeading, readingProgressPct, splitTitle } from '@/lib/blogReading';
+import { parseMermaidFrontmatter } from '@/lib/mdx/mermaidFrontmatter';
 import { useCategoryLabel, useTagLabel, useLocalizedCategoryInfo } from '@/lib/categoryLabel';
 import { postPath } from '@/lib/postPath';
 import { lookup } from '@/lib/tableLookup';
@@ -232,32 +235,6 @@ const DARK_THEME_VARS = {
   fontSize: '14px',
 };
 
-function parseMermaidFrontmatter(code: string): { config: Record<string, string | Record<string, string>>; body: string } {
-  const trimmed = code.trim();
-  const fm = /^---\s*\n([\s\S]*?)\n---\s*\n?/.exec(trimmed);
-  if (!fm) return { config: {}, body: trimmed };
-  const yamlBlock = fm[1];
-  const config: Record<string, string | Record<string, string>> = {};
-  let current: string | null = null;
-  for (const line of yamlBlock.split('\n')) {
-    const indent = line.search(/\S/);
-    const trimLine = line.trim();
-    if (!trimLine || trimLine.startsWith('#')) continue;
-    const kv = /^(\w[\w-]*):\s*(.*)/.exec(trimLine);
-    if (kv) {
-      if (indent === 0 || indent === 2) {
-        if (kv[2]) { config[kv[1]] = kv[2]; current = null; }
-        else { config[kv[1]] = {}; current = kv[1]; }
-      } else if (current) {
-        const cur = config[current];
-        if (cur && typeof cur === 'object') {
-          cur[kv[1]] = kv[2];
-        }
-      }
-    }
-  }
-  return { config, body: trimmed.slice(fm[0].length) };
-}
 
 /* ── Mermaid 自動置中 + fit ──
    圖是 SVG 非同步塞進 DOM 的（先載 mermaid、再 render）。TransformWrapper 的 centerOnInit
@@ -685,13 +662,6 @@ const MermaidBlock = ({ code }: { code: string }) => {
 /* 標題「主標：副標」拆分（display 用）：第一個全形「：」或半形「: 」切開，前面主標、後面副標。
    兩側都要有內容才拆，否則整串當主標。SEO 的 document title / og:title 仍用完整 post.title
    （搜尋結果要完整描述性標題），這裡只影響頁面上 h1 的呈現。 */
-function splitTitle(title: string): { main: string; sub: string | null } {
-  const m = /：|:\s/.exec(title);
-  if (!m || m.index === 0) return { main: title, sub: null };
-  const main = title.slice(0, m.index).trim();
-  const sub = title.slice(m.index + m[0].length).trim();
-  return main && sub ? { main, sub } : { main: title, sub: null };
-}
 
 /* 安全地把 React children 攤平成純文字（避免 String(obj) → [object Object]） */
 const nodeText = (node: React.ReactNode): string => {
@@ -1999,30 +1969,18 @@ function BlogPost() {
 
     const handleScroll = () => {
       const wh = window.innerHeight;
-      const dh = document.documentElement.scrollHeight;
-      const st = window.scrollY;
-      const scrollable = dh - wh;
-      setReadingProgress(scrollable > 0 ? Math.min(100, Math.max(0, (st / scrollable) * 100)) : 0);
+      setReadingProgress(readingProgressPct(window.scrollY, wh, document.documentElement.scrollHeight));
 
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         if (!contentRef.current || !headings.length) return;
-        // 只看「TOC 有列到的標題」——原本抓所有 [id]（含腳註/alert 的 id），會被非標題元素
+        // 只看「TOC 有列到的標題」——抓所有 [id]（含腳註/alert 的 id）的話會被非標題元素
         // 劫持 active 狀態、害 TOC 高亮消失。以 heading id 集合過濾。
         const headingIds = new Set(headings.map((h) => h.id));
-        const els = Array.from(contentRef.current.querySelectorAll('[id]')).filter((el) => headingIds.has(el.id));
-        let cur = '';
-        let minD = Infinity;
-        els.forEach((el) => {
-          const t = el.getBoundingClientRect().top;
-          if (t <= 200 && t >= -100 && Math.abs(t - 100) < minD) { minD = Math.abs(t - 100); cur = el.id; }
-        });
-        if (!cur) {
-          for (const el of els) {
-            const t = el.getBoundingClientRect().top;
-            if (t > 0 && t < wh) { cur = el.id; break; }
-          }
-        }
+        const rects = Array.from(contentRef.current.querySelectorAll('[id]'))
+          .filter((el) => headingIds.has(el.id))
+          .map((el) => ({ id: el.id, top: el.getBoundingClientRect().top }));
+        const cur = pickActiveHeading(rects, wh);
         if (cur && cur !== lastActiveRef.current) {
           lastActiveRef.current = cur;
           setActiveHeading(cur);

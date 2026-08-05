@@ -16,6 +16,9 @@
       "!**/target/**",
       "!**/mutants.out*/**",
       "!**/.lighthouseci/**",
+      "!**/coverage/**",
+      "!**/test-results/**",
+      "!**/playwright-report/**",
       "!**/src/components/ui/**",
       "!**/src/components/animate-ui/**"
     ]
