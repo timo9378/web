@@ -12,8 +12,16 @@
  * 對外的簽章是誠實的，內部那一道 `Partial<...>` 斷言是「索引存取其實可能落空」的唯一宣告點。
  */
 
-/** 查表；查不到回 undefined（呼叫端自己決定怎麼處理）。 */
+/**
+ * 查表；查不到回 undefined（呼叫端自己決定怎麼處理）。
+ *
+ * ⚠ 一定要先問 `Object.hasOwn`，不能直接索引：物件字面量帶著 Object.prototype，
+ * 所以 `lookup({}, 'toString')` 會回一個**函式**而不是 undefined，`lookupOr` 的
+ * fallback 也就永遠不會生效。而這個函式的 key 來源正好是 DB 的 role/status、
+ * URL 的 locale 這類外部字串——撞到 `constructor` / `toString` 不是假想情況。
+ */
 export function lookup<T>(table: Record<string, T>, key: string): T | undefined {
+  if (!Object.hasOwn(table, key)) return undefined;
   return (table as Partial<Record<string, T>>)[key];
 }
 
