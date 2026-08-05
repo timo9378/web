@@ -14,6 +14,15 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string;
   /** 版本標記，讓 GlitchTip 能把 issue 歸到某次部署。未設則 SDK 不帶 release。 */
   readonly VITE_RELEASE?: string;
+  /**
+   * Plausible v3 的站台專屬腳本檔名，例如 `pa-KHBhcGG6B_XCFx5Uwsa-d.js`。
+   * 在後台 Site Settings 的安裝畫面複製 snippet 就看得到（src 的最後一段）。
+   * 站台名與「Outbound links / File downloads / Form submissions」等選項都烤在
+   * 這個檔案裡，所以前端不需要再給 data-domain。
+   * 空／未設 = 不掛追蹤腳本。dev 與 e2e 都不會設，所以不會送出任何事件。
+   * 見 src/routes/__root.tsx。
+   */
+  readonly VITE_PLAUSIBLE_SCRIPT?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

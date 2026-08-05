@@ -151,6 +151,41 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               "(function(){try{var d=sessionStorage.getItem('introCompleted')==='true';var m=matchMedia('(max-width:768px)').matches;var p=location.pathname;var h=p==='/'||/^\\/(en|ja|ko|zh-cn)\\/?$/.test(p);if(!d&&!m&&h){document.documentElement.classList.add('intro-pending');setTimeout(function(){document.documentElement.classList.remove('intro-pending')},4000);}}catch(e){}try{var f=localStorage.getItem('blogFont');if(f&&/^[a-z-]{1,20}$/.test(f)){document.documentElement.setAttribute('data-blog-font',f);}}catch(e){}})()",
           }}
         />
+        {/* Plausible 分析。未設 VITE_PLAUSIBLE_SCRIPT 就整個不輸出 —— dev 與 e2e 都不設。
+            （腳本本身也會忽略 localhost、127 開頭的位址與 file: 協定，但那是第二道防線。）
+
+            這是 v3 的寫法，不是官網那些教學裡的 data-domain 版本（v3 稱之為 legacy）。
+            站台名與「Outbound links / File downloads / Form submissions」等選項都烤在
+            那支站台專屬腳本（pa-XXXX.js）裡，所以這裡不需要、也蓋不掉 domain。
+
+            ⚠️ endpoint 一定要覆蓋，這是整個同源設計的關鍵。腳本裡是：
+                  Object.assign(i={endpoint:"https://plausible.koimsurai.com/api/event",
+                                  domain:"koimsurai.com",…}, o, {domain:i.domain})
+               `o` 就是 init() 傳進來的物件、合併在預設之後 —— 所以 endpoint 蓋得掉，
+               domain 蓋不掉（最後又被寫回）。不覆蓋的話事件會往 plausible.koimsurai.com
+               送，那是跨源：撞 CSP 的 connect-src 'self'，也會被內容攔截器擋。
+
+            ⚠️ 兩支 <script> 的順序無所謂，也不需要等載入 —— 這正是上面能用 async 的原因。
+               下面那段先把設定存進 plausible.o，站台腳本載入後自己會讀
+               （`plausible.o && S(plausible.o)`）。
+
+            對應的 nginx 在 /etc/nginx/sites-available/koimsurai：
+            location ^~ /s/js/ 與 location = /s/event。
+            SPA 換頁不必額外處理：腳本自己 patch 了 history.pushState 並監聽 popstate。 */}
+        {import.meta.env.VITE_PLAUSIBLE_SCRIPT ? (
+          <>
+            <script async src={`/s/js/${import.meta.env.VITE_PLAUSIBLE_SCRIPT}`} />
+            <script
+              // 內容是原始碼寫死的字串常量（唯一的變數是上面那個 build 時就決定的檔名，
+              // 而它不進這段），沒有使用者輸入落地。CSP 的 script-src 已含 'unsafe-inline'。
+              // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
+              dangerouslySetInnerHTML={{
+                __html:
+                  "window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init({endpoint:'/s/event'})",
+              }}
+            />
+          </>
+        ) : null}
       </head>
       <body>
         {/* 全域 providers(對齊舊 App.tsx 疊法)。SEOHead 已退休 → HelmetProvider/react-helmet-async 一併移除。 */}

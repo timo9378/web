@@ -26,6 +26,9 @@ services:
         # 錯誤上報。DSN 裡那把 key 是假的（真的在 .env.backend，後端轉發時換上）。
         - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
         - VITE_RELEASE=${VITE_RELEASE:-}
+        # Plausible 分析（~/Server/plausible/）。空 = 不掛追蹤腳本。
+        # 值是後台 snippet 裡的 pa-XXXX.js，放未提交的 ./.env（跟 REVALIDATE_SECRET 同一個檔）。
+        - VITE_PLAUSIBLE_SCRIPT=${VITE_PLAUSIBLE_SCRIPT:-}
       secrets:
         # source map 上傳用。走 secret 而不是 ARG——ARG 會留在映像歷史裡。
         # 檔案不存在時 compose 會報錯，所以 .env.sourcemaps 是必要的
