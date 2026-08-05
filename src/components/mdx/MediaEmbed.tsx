@@ -40,7 +40,10 @@ export function YouTube({ id, title = 'YouTube 影片' }: { id?: string; title?:
           className="mdx-youtube-facade"
           onClick={() => setPlay(true)}
           aria-label={`播放：${title}`}
-          style={{ backgroundImage: `url(https://i.ytimg.com/vi/${id}/hqdefault.jpg)` }}
+          // ⚠ 縮圖一定要走 `img.youtube.com`，不是 `i.ytimg.com`。兩個 host 回的是**同一張圖**
+          //   （實測都是 21011 bytes），但站上的 CSP `img-src` 只允許前者——用 i.ytimg.com 的話
+          //   縮圖會被擋掉，facade 變成一個空白按鈕，而且畫面上完全看不出原因。
+          style={{ backgroundImage: `url(https://img.youtube.com/vi/${id}/hqdefault.jpg)` }}
         >
           <span className="mdx-youtube-play" aria-hidden>▶</span>
         </button>
