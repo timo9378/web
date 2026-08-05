@@ -99,6 +99,47 @@ describe('filterAndSortBooks', () => {
     ]);
   });
 
+  // Stryker 指出 published_date_desc 整條沒有任何測試走到（NoCoverage）。
+  it('依出版日期降冪排序', () => {
+    const b = [
+      book({ title: '舊', published_date: '1999-01-01' }),
+      book({ title: '新', published_date: '2020-05-01' }),
+      book({ title: '沒寫' }),
+    ];
+    expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'published_date_desc' }))).toEqual(['新', '舊', '沒寫']);
+  });
+
+  // Stryker 指出評分排序的 `(b.rating ?? 0)` 被改成 `(b.rating && 0)` 也沒人發現——
+  // 原本的資料剛好讓兩者結果一樣。換一組能區分的。
+  it('評分排序在有多本同分與未評分時仍然正確', () => {
+    const b = [
+      book({ title: '三分', rating: 3 }),
+      book({ title: '沒評分' }),
+      book({ title: '五分', rating: 5 }),
+      book({ title: '一分', rating: 1 }),
+    ];
+    expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'rating_desc' }))).toEqual([
+      '五分', '三分', '一分', '沒評分',
+    ]);
+  });
+
+  // Stryker 指出 `a.date_added ?? ''` 的 `''` 被換成任意字串也沒人發現——
+  // 原本的斷言用 `.sort()` 比對後兩筆，太鬆。改成釘住確切順序，並挑一個
+  // 「字典序會排在替代字串之前」的日期，讓替代值真的改變結果。
+  it('缺日期的排在最後，且順序是確切的', () => {
+    const b = [
+      book({ title: '沒日期A' }),
+      book({ title: '有日期', date_added: '2026-01-01' }),
+      book({ title: '沒日期B' }),
+    ];
+    expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'date_added_asc' }))).toEqual([
+      '有日期', '沒日期A', '沒日期B',
+    ]);
+    expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'date_added_desc' }))).toEqual([
+      '有日期', '沒日期A', '沒日期B',
+    ]);
+  });
+
   it('不認得的排序值不會改變順序，也不會炸', () => {
     expect(titles(filterAndSortBooks(BOOKS, { ...ALL, sortBy: '不存在的排序' }))).toEqual(titles(BOOKS));
   });

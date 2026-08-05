@@ -117,3 +117,7 @@ public/excalidraw/
 
 # vitest / playwright 的覆蓋率報告，本機量測用，不進版控
 coverage/
+
+# Stryker 變異測試的報告（產物，用 pnpm mutate 重產）
+reports/
+.stryker-tmp/

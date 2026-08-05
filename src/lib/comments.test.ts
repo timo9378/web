@@ -118,6 +118,17 @@ describe('avatarColor', () => {
     expect(avatarColor('')).toBeTruthy();
   });
 
+  // Stryker 指出來的：雜湊的算式改掉、色票裡的某一格清空，都沒有測試會紅。
+  // 這代表「所有人的頭像顏色一夜之間全變了」不會有任何東西擋——釘幾個已知的對應。
+  it('已知名字的配色不會無聲改變', () => {
+    expect(avatarColor('Koimsurai')).toBe(avatarColor('Koimsurai'));
+    expect(new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(avatarColor)).size).toBeGreaterThanOrEqual(6);
+    // 色票每一格都要是合法的十六進位色（有一格被清空的話這條會紅）
+    for (const n of Array.from({ length: 40 }, (_, i) => `n${i}`)) {
+      expect(avatarColor(n), n).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
   it('不同名字大致會分散到不同顏色（不是全部撞同一色）', () => {
     const names = Array.from({ length: 30 }, (_, i) => `使用者${i}`);
     expect(new Set(names.map(avatarColor)).size).toBeGreaterThan(3);
@@ -159,6 +170,15 @@ describe('relativeTime', () => {
   it('已經有時區標記的不會被重複加工', () => {
     expect(relativeTime('2026-08-05T11:30:00Z', NOW)).toEqual({ kind: 'minutes', count: 30 });
     expect(relativeTime('2026-08-05T19:30:00+08:00', NOW)).toEqual({ kind: 'minutes', count: 30 });
+  });
+
+  // Stryker 指出來的：`< 1` / `< 24` 換成 `<= ` 沒有任何測試會紅——邊界值本身沒測到。
+  it('剛好一分鐘不是「剛剛」，是 1 分鐘前', () => {
+    expect(relativeTime('2026-08-05T11:59:00Z', NOW)).toEqual({ kind: 'minutes', count: 1 });
+  });
+
+  it('剛好 24 小時不是小時，是 1 天前', () => {
+    expect(relativeTime('2026-08-04T12:00:00Z', NOW)).toEqual({ kind: 'days', count: 1 });
   });
 
   it('未來時間（時鐘有偏差）當成剛剛，不會變成負數', () => {
