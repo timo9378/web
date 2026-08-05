@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { filterPosts, groupPostsByMonth } from '@/lib/blogFilter';
 import ReactDOM from 'react-dom';
 import { useRouterState } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -23,7 +24,6 @@ export type Post = PostListItem;
 // Tag / Category 的手寫型別已移除：兩個端點都吃後端 specta 生成的
 // TagRow / CategoryRow（見 blogList.ts）。手寫那份把 post_count 標成可選、
 // 還允許 Tag 是裸字串，都與實際回應不符。
-interface PostGroup { year: number; month: number; label: string; posts: Post[] }
 interface HeatmapCell { date: Date; count: number; level: number }
 
 /* ════════════════════════════════════════════════
@@ -427,40 +427,12 @@ function Blog() {
   // posts / tags / categories 都改由 useQuery 管理（見檔案上方）；
   // 排序切換由 sortBy 進 queryKey 自動 refetch，不再需要手動 fetch useEffect。
 
-  const filteredPosts = useMemo(() => {
-    return posts.filter(post => {
-      // 內文只搜得到 content_preview（前 260 字）；列表本來就沒有整篇 content。
-      // 全文搜尋要走後端 `/api/posts?search=`（SQL 對 p.content LIKE）。
-      const matchSearch = !searchTerm || post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.content_preview.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchTag = !selectedTag || post.tags.includes(selectedTag);
-      const matchCat = !selectedCategory || post.category === selectedCategory;
-      return matchSearch && matchTag && matchCat;
-    });
-  }, [posts, searchTerm, selectedTag, selectedCategory]);
-
-  // 按年月分組
-  const groupedPosts = useMemo(() => {
-    // 用 Map 而非物件當累加器：Map.get 的型別本來就是 PostGroup | undefined，
-    // 「還沒建過這個月份」的判斷在型別上自然成立，不必靠 Record 索引存取的謊言。
-    const groups = new Map<string, PostGroup>();
-    filteredPosts.forEach(post => {
-      const d = new Date(post.created_at);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      let group = groups.get(key);
-      if (!group) {
-        group = {
-          year: d.getFullYear(),
-          month: d.getMonth(),
-          label: d.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' }),
-          posts: [],
-        };
-        groups.set(key, group);
-      }
-      group.posts.push(post);
-    });
-    return [...groups.values()].sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
-  }, [filteredPosts]);
+  // 篩選與分組是純邏輯，抽在 lib/blogFilter.ts（分組那邊也修掉了時間戳被當成本地時間的問題）。
+  const filteredPosts = useMemo(
+    () => filterPosts(posts, { searchTerm, selectedTag, selectedCategory }),
+    [posts, searchTerm, selectedTag, selectedCategory],
+  );
+  const groupedPosts = useMemo(() => groupPostsByMonth(filteredPosts), [filteredPosts]);
 
   const clearFilters = useCallback(() => {
     setSearchTerm('');

@@ -1,3 +1,5 @@
+import { parseServerDate } from '@/lib/serverDate';
+
 // 留言區的純邏輯：送出前的驗證、巢狀分組、頭像配色、相對時間。
 //
 // 從 Comments.tsx 抽出來的理由跟 blogReading.ts 一樣：這些東西原本埋在元件裡，
@@ -102,8 +104,7 @@ export type RelativeTime =
  * `now` 由呼叫端傳入而不是在函式裡取——這樣才測得動。
  */
 export function relativeTime(dateStr: string, now: Date): RelativeTime {
-  const hasZone = dateStr.includes('T') || dateStr.includes('Z');
-  const date = new Date(hasZone ? dateStr : `${dateStr}Z`);
+  const date = parseServerDate(dateStr);
   const diff = now.getTime() - date.getTime();
   const mins = Math.floor(diff / 60_000);
   const hrs = Math.floor(diff / 3_600_000);
