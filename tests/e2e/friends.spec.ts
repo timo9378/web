@@ -11,7 +11,8 @@
  *   回饋、以及回饋裡有沒有給出退路（自動開信件失敗時該寄到哪）。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 const modal = (page: Page) => page.locator('.friends-modal');
 

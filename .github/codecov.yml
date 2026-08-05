@@ -33,6 +33,14 @@ coverage:
         target: auto
         threshold: 1%
         informational: true
+      # e2e 覆蓋率：203 條 e2e 走過多少 src/。跟 frontend 那個 flag 量的是**不同的東西**，
+      # 不是同一個數字的兩種算法——frontend 是單元測試（分母八成是 React 元件，
+      # 所以數字很低），e2e 是瀏覽器真的執行到的行。兩個要並排看。
+      e2e:
+        flags: [e2e]
+        target: auto
+        threshold: 2%
+        informational: true
     patch:
       backend:
         flags: [backend]
@@ -45,6 +53,14 @@ coverage:
         target: 60%
         threshold: 0%
         informational: true
+      e2e:
+        flags: [e2e]
+        # e2e 量的是「走過」而不是「驗過」，patch 門檻對它意義不大——
+        # 改一行元件的 render，e2e 幾乎一定會走到，數字漂亮但沒說明任何事。
+        # 留 informational，看趨勢就好。
+        target: 50%
+        threshold: 0%
+        informational: true
 
 flags:
   backend:
@@ -55,6 +71,10 @@ flags:
     # 看起來像「後端測試全沒了」。
     carryforward: true
   frontend:
+    paths:
+      - src/
+    carryforward: true
+  e2e:
     paths:
       - src/
     carryforward: true

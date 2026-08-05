@@ -11,7 +11,8 @@
  * 底下的斷言全部避開「圖真的畫出來」，只驗結構與行為。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 const gallery = (page: Page) => page.locator('.photo-gallery-section');
 const cards = (page: Page) => page.locator('.photo-masonry-item');

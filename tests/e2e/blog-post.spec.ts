@@ -14,7 +14,8 @@
  *   · **上一篇／下一篇** —— 壞了讀者就走不到相鄰的文章。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 /** 種子第 5 篇：有程式碼區塊與圖片（見 seed.mjs）。 */
 const RICH = '/blog/5';

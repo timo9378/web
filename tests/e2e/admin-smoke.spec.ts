@@ -14,7 +14,8 @@
  * 而煙霧測試的價值正是「便宜到可以每一頁都跑」。
  */
 
-import { expect, test, type ConsoleMessage, type Page, type Request } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { ConsoleMessage, Page, Request } from '@playwright/test';
 
 import { gotoAdminUntil, signIn } from './admin-session';
 import { discoverAdminRoutes } from './routes';

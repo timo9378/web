@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * 每一個註冊過的 MDX block 都要真的渲染成元件。

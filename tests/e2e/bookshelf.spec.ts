@@ -11,7 +11,8 @@
  *   兩本書的狀態篩選剩一本、排序反轉只有兩個元素，任何實作都會過。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 const cards = (page: Page) => page.locator('.book-card');
 const titles = async (page: Page): Promise<string[]> =>

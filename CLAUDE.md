@@ -272,6 +272,27 @@ pnpm test          # vitest
 pnpm build         # vite + nitro
 ```
 
+### 覆蓋率有三個數字，量的是不同的東西
+
+| Codecov flag | 量什麼 | 目前 |
+|---|---|---|
+| `frontend` | **單元測試**（vitest）走過多少 `src/` | ~6% |
+| `e2e` | **203 條 Playwright** 走過多少 `src/` | ~55% |
+| `backend` | cargo-llvm-cov | ~93% |
+
+⚠ **`frontend` 那個數字低不代表「幾乎沒測」。** 它的分母有**八成是 React 元件**
+（5477/6923 行），而元件的渲染路徑本來就是 e2e 在守。要提升它得寫 jsdom 測試去複製
+e2e 已經在做的事，投報率很差。真正值得補單元測試的是 `src/lib/`（純邏輯，目前 32%）。
+
+e2e 的覆蓋率是 `tests/e2e/fixtures.ts` 收 V8 coverage、`scripts/e2e-coverage-report.mjs`
+轉成 lcov 的。**所有 spec 都要從 `./fixtures` import `test`／`expect`，不要直接 import
+`@playwright/test`**（型別可以）——直接 import 的那支就不會被計入。
+沒設 `E2E_COVERAGE_DIR` 時 fixture 完全不做事，本機跑 e2e 不會多付成本。
+
+⚠ 變異測試（`pnpm mutate`，Stryker）只跑 `src/lib/`，**不接 CI**，定位同
+`.cargo/mutants.toml`：拿來找洞的工具，不是門檻。覆蓋率不等於測試有效——
+第一次跑就在剛寫完的測試裡找到 42 個沒被殺掉的變異，全是邊界值。
+
 後端（`cd backend`）：
 
 ```bash

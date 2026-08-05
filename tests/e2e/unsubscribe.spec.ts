@@ -9,7 +9,8 @@
  * 這條測的是完整往返：信裡的連結 → 頁面查得到是誰 → 按確認 → 後端真的改了狀態。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 import { UNSUB_TOKEN } from './seed.mjs';
 

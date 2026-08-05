@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type ConsoleMessage, type Page, type Request } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { ConsoleMessage, Page, Request } from '@playwright/test';
 import { discoverRoutes } from './routes';
 
 /**

@@ -1,5 +1,6 @@
 import { Validator } from '@cfworker/json-schema';
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { APIRequestContext } from '@playwright/test';
 
 import { E2E_POST_PREFIX, PUBLISHED_POSTS } from './seed.mjs';
 

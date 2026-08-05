@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * 文章頁的目錄（TOC）、scroll-spy 與閱讀進度。

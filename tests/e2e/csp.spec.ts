@@ -16,7 +16,8 @@
  *   換句話說這個檔擋的是「政策把自家東西擋掉了」，不是「白名單漏了外部來源」。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 import { gotoAdminUntil } from './admin-session';
 

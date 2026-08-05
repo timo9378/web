@@ -9,7 +9,8 @@
  * 才抓的，所以它們的載入時序跟頁面本身無關，開啟之後要等一下才會出現。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 // ⚠ 必須指定，不能靠預設。Playwright 的瀏覽器預設是 en-US，而首頁 `/` 會依
 //   Accept-Language 在 server 端 302 到 `/en`（見 src/routes/index.tsx）——
