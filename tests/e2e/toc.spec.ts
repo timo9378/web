@@ -32,6 +32,16 @@ test.describe('文章目錄', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(POST);
     await page.locator('.toc-item').first().waitFor({ timeout: 20_000 });
+    // ⚠ 等 `.toc-item` 出現**不代表頁面已經可以捲**。TOC 是從文章內容字串同步算出來的
+    //   （useMemo + extractHeadings），比本文真正繪製完早得多。這中間去捲動的話，
+    //   `scrollTo` 會被夾在當時的最大捲動量——文件還不夠高時那就是 0，
+    //   下面每一條依賴捲動的斷言都會莫名其妙地失敗（負載大時特別容易中）。
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight), {
+        message: '文章本文還沒撐開頁面，捲不動',
+        timeout: 20_000,
+      })
+      .toBeGreaterThan(2000);
   });
 
   // 這條守的是整條鏈最容易斷的地方：TOC 與標題元素的 id 是同一個 slugify 算的，
