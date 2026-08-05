@@ -114,3 +114,6 @@ public/monaco/
 public/excalidraw/
 .env.sourcemaps
 .env.sourcemaps.token
+
+# vitest / playwright 的覆蓋率報告，本機量測用，不進版控
+coverage/
