@@ -147,7 +147,7 @@
 /* 隱藏 Swiper 預設導航按鈕 */
 .main-swiper .swiper-button-prev,
 .main-swiper .swiper-button-next {
-  display: none !important;
+  display: none;
 }
 
 /* 自定義導航按鈕 */

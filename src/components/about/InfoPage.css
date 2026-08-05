@@ -179,7 +179,7 @@
     transform 0.2s ease,
     color 0.2s ease;
   /* 蓋掉 info-page-content 對 a 加的 dashed underline */
-  border-bottom: none !important;
+  border-bottom: none;
 }
 .info-page-pager-prev:hover {
   transform: translateX(-3px);
@@ -221,8 +221,8 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  text-decoration: none !important;
-  border-bottom: none !important;
+  text-decoration: none;
+  border-bottom: none;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,

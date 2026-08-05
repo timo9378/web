@@ -431,7 +431,7 @@
 
 /* Admin comment card */
 .comment-card--admin .comment-avatar {
-  background: #7f5af0 !important;
+  background: #7f5af0;
   font-style: normal;
 }
 
