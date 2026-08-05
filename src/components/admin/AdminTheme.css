@@ -108,23 +108,23 @@
 
 /* ── Glass Sidebar ── */
 :is(.admin-layout, .admin-mode) aside {
-  background: rgba(9, 9, 11, 0.78) !important;
-  backdrop-filter: saturate(180%) blur(24px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
-  border-color: rgba(39, 39, 42, 0.6) !important;
+  background: rgba(9, 9, 11, 0.78);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border-color: rgba(39, 39, 42, 0.6);
 }
 
 /* ── Glass Header ── */
 :is(.admin-layout, .admin-mode) > div > header {
-  background: rgba(9, 9, 11, 0.65) !important;
-  backdrop-filter: saturate(180%) blur(20px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
-  border-color: rgba(39, 39, 42, 0.6) !important;
+  background: rgba(9, 9, 11, 0.65);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-color: rgba(39, 39, 42, 0.6);
 }
 
 /* ── Main Content ── */
 :is(.admin-layout, .admin-mode) main.min-h-screen {
-  background: transparent !important;
+  background: transparent;
   position: relative;
   z-index: 1;
 }
@@ -132,14 +132,14 @@
 /* ── Glass Cards ── */
 :is(.admin-layout, .admin-mode) .bg-card,
 :is(.admin-layout, .admin-mode) [class*="Card"] {
-  background: rgba(24, 24, 27, 0.6) !important;
+  background: rgba(24, 24, 27, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-color: rgba(39, 39, 42, 0.6) !important;
-  border-radius: 16px !important;
+  border-color: rgba(39, 39, 42, 0.6);
+  border-radius: 16px;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -158,47 +158,53 @@
 }
 
 :is(.admin-layout, .admin-mode) tbody tr:hover {
-  background: rgba(39, 39, 42, 0.3) !important;
+  background: rgba(39, 39, 42, 0.3);
 }
 
 /* ── Inputs — Glass (exclude Monaco toolbar) ── */
 :is(.admin-layout, .admin-mode) input:not(.monaco-toolbar-glass *),
 :is(.admin-layout, .admin-mode) select:not(.monaco-toolbar-glass *),
 :is(.admin-layout, .admin-mode) textarea:not(.monaco-toolbar-glass *) {
-  background: rgba(24, 24, 27, 0.45) !important;
+  background: rgba(24, 24, 27, 0.45);
+  /* ⚠ !important 不能拿掉：shadcn 的 <Input>/<Select> 用 border-input 這類 utility，
+     實測拿掉之後邊框從 rgba(39,39,42,0.6) 變成 rgb(228,228,231)（zinc-200 的亮色），
+     整個後台表單會變成淺色邊框配深色底。 */
   border-color: rgba(39, 39, 42, 0.6) !important;
-  color: #e4e4e7 !important;
-  border-radius: 10px !important;
+  color: #e4e4e7;
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
 :is(.admin-layout, .admin-mode) input:hover,
 :is(.admin-layout, .admin-mode) select:hover,
 :is(.admin-layout, .admin-mode) textarea:hover {
+  /* base 的 border-color 帶了 !important（見上），狀態變體就必須跟著帶，
+     否則 base 會反過來蓋掉 hover/focus——實測過，hover 時邊框完全不變色。 */
   border-color: rgba(63, 63, 70, 0.8) !important;
 }
 
 :is(.admin-layout, .admin-mode) input:focus,
 :is(.admin-layout, .admin-mode) select:focus,
 :is(.admin-layout, .admin-mode) textarea:focus {
+  /* 同上：base 帶了 !important，focus 也要帶 */
   border-color: rgba(82, 82, 91, 0.8) !important;
-  box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.2) !important;
-  background: rgba(24, 24, 27, 0.75) !important;
+  box-shadow: 0 0 0 3px rgba(82, 82, 91, 0.2);
+  background: rgba(24, 24, 27, 0.75);
 }
 
 /* ── Dropdowns & Dialogs — Glass ── */
 :is(.admin-layout, .admin-mode) [role="menu"],
 :is(.admin-layout, .admin-mode) [role="dialog"],
 :is(.admin-layout, .admin-mode) [data-radix-popper-content-wrapper] [role="listbox"] {
-  background: rgba(24, 24, 27, 0.92) !important;
-  backdrop-filter: saturate(180%) blur(28px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
-  border-color: rgba(39, 39, 42, 0.6) !important;
+  background: rgba(24, 24, 27, 0.92);
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  border-color: rgba(39, 39, 42, 0.6);
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  border-radius: 14px !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
 }
 
 /* ── Scrollbar ── */
@@ -225,8 +231,8 @@
 :is(.admin-layout, .admin-mode) .separator,
 :is(.admin-layout, .admin-mode) [data-orientation="horizontal"],
 :is(.admin-layout, .admin-mode) [data-orientation="vertical"] {
-  border-color: rgba(39, 39, 42, 0.6) !important;
-  background: rgba(39, 39, 42, 0.6) !important;
+  border-color: rgba(39, 39, 42, 0.6);
+  background: rgba(39, 39, 42, 0.6);
 }
 
 /* ── Badges — Glass ── */
@@ -257,12 +263,12 @@
 
 /* ── Button — Remove focus ring borders ── */
 :is(.admin-layout, .admin-mode) button:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+  outline: none;
+  box-shadow: none;
 }
 
 :is(.admin-layout, .admin-mode) button:focus-visible:not(:hover) {
-  outline: none !important;
+  outline: none;
 }
 
 /* ── Reset global button base styles for admin ──
@@ -288,36 +294,36 @@
 /* ── Default Buttons — Neutral glass style ── */
 :is(.admin-layout, .admin-mode) .bg-primary,
 :is(.admin-layout, .admin-mode) [class*="bg-primary"] {
-  background: rgba(228, 228, 231, 0.12) !important;
-  color: #e4e4e7 !important;
-  border: 1px solid rgba(228, 228, 231, 0.2) !important;
+  background: rgba(228, 228, 231, 0.12);
+  color: #e4e4e7;
+  border: 1px solid rgba(228, 228, 231, 0.2);
 }
 
 :is(.admin-layout, .admin-mode) .bg-primary:hover,
 :is(.admin-layout, .admin-mode) [class*="bg-primary"]:hover {
-  background: rgba(228, 228, 231, 0.18) !important;
+  background: rgba(228, 228, 231, 0.18);
 }
 
 /* ── Link variant — Neutral text ── */
 :is(.admin-layout, .admin-mode) .text-primary {
-  color: #a1a1aa !important;
+  color: #a1a1aa;
 }
 
 :is(.admin-layout, .admin-mode) .text-primary:hover {
-  color: #e4e4e7 !important;
+  color: #e4e4e7;
 }
 
 /* ── Destructive Buttons — Red accent ── */
 :is(.admin-layout, .admin-mode) .bg-destructive,
 :is(.admin-layout, .admin-mode) [class*="bg-destructive"] {
-  background: rgba(239, 68, 68, 0.2) !important;
-  color: #fca5a5 !important;
-  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 :is(.admin-layout, .admin-mode) .bg-destructive:hover,
 :is(.admin-layout, .admin-mode) [class*="bg-destructive"]:hover {
-  background: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.3);
 }
 
 /* ── Zen 模式：寫作專注 ──
@@ -326,23 +332,23 @@
 */
 body.zen-mode-active .admin-layout > aside,
 body.zen-mode-active .admin-layout > div > header {
-  display: none !important;
+  display: none;
 }
 body.zen-mode-active .admin-layout > div {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  width: 100% !important;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
 }
 body.zen-mode-active .admin-layout > div > main {
-  min-height: 100vh !important;
+  min-height: 100vh;
 }
 /* PostEditor 右側 metadata 面板（form 內 aside.w-[280px]）— Zen 中藏起來 */
 body.zen-mode-active .admin-layout > div > main form > aside {
-  display: none !important;
+  display: none;
 }
 /* 編輯器主欄置中、限寬 */
 body.zen-mode-active .admin-layout > div > main form > main {
-  max-width: 920px !important;
-  margin: 0 auto !important;
-  padding: 2.5rem 2rem !important;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
 }

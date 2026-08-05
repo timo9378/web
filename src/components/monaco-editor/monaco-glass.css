@@ -2,7 +2,7 @@
 
 /* 編輯器容器 */
 .monaco-editor-glass {
-  background: rgba(24, 24, 27, 0.6) !important;
+  background: rgba(24, 24, 27, 0.6);
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.75rem;
   box-shadow:
@@ -13,21 +13,21 @@
 
 /* 工具欄 — 輕薄 border-bottom 風格 */
 .monaco-toolbar-glass {
-  background: transparent !important;
+  background: transparent;
   border-bottom: 1px solid rgba(39, 39, 42, 0.4);
 }
 
 /* 工具欄按鈕 — 確保可見 */
 .monaco-toolbar-glass button {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0.375rem !important;
-  color: #a1a1aa !important;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: #a1a1aa;
   cursor: pointer;
 }
 .monaco-toolbar-glass button:hover:not(:disabled) {
-  background: rgba(39, 39, 42, 0.5) !important;
-  color: #e4e4e7 !important;
+  background: rgba(39, 39, 42, 0.5);
+  color: #e4e4e7;
 }
 .monaco-toolbar-glass button:disabled {
   opacity: 0.4;
@@ -35,43 +35,47 @@
 
 /* 工具欄分隔線 */
 .monaco-toolbar-glass .w-px {
-  background: rgba(39, 39, 42, 0.5) !important;
+  background: rgba(39, 39, 42, 0.5);
 }
 
 /* 狀態欄 — 輕薄 border-top 風格 */
 .monaco-statusbar-glass {
-  background: transparent !important;
+  background: transparent;
   border-top: 1px solid rgba(39, 39, 42, 0.3);
 }
 
 /* Monaco Editor 內部樣式 */
 .monaco-editor-glass .monaco-editor {
-  background: transparent !important;
+  background: transparent;
 }
 
 .monaco-editor-glass .monaco-editor .margin {
-  background: transparent !important;
+  background: transparent;
 }
 
 .monaco-editor-glass .monaco-editor .monaco-scrollable-element {
-  background: transparent !important;
+  background: transparent;
 }
 
 /* 選取區域 */
 .monaco-editor-glass .selected-text {
-  background: rgba(100, 149, 237, 0.2) !important;
+  background: rgba(100, 149, 237, 0.2);
 }
 
-/* 行號 */
+/* 行號 —— ⚠ !important 不能拿掉：monaco 自己會注入行號顏色，
+   實測拿掉之後 rgba(255,255,255,0.3) 變成 rgba(133,133,133,0.4)。 */
 .monaco-editor-glass .line-numbers {
   color: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* 滾動條 */
 .monaco-editor-glass .monaco-scrollable-element .scrollbar {
-  background: transparent !important;
+  background: transparent;
 }
 
+/* ⚠ 這兩處的 !important 不能拿掉：monaco 自己把捲軸滑塊的顏色注入成很高優先序的樣式，
+   實測拿掉之後 rgba(255,255,255,0.15) 變成 rgba(121,121,121,0.4)——捲軸會變成 monaco
+   預設的灰，跟玻璃質感的編輯器外框對不上。 */
 .monaco-editor-glass .monaco-scrollable-element .slider {
   background: rgba(255, 255, 255, 0.15) !important;
   border-radius: 8px;
@@ -83,7 +87,7 @@
 
 /* 懸停提示 */
 .monaco-editor-glass .monaco-hover {
-  background: rgba(24, 24, 27, 0.95) !important;
+  background: rgba(24, 24, 27, 0.95);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.5rem;
@@ -92,7 +96,7 @@
 
 /* 建議框 */
 .monaco-editor-glass .suggest-widget {
-  background: rgba(24, 24, 27, 0.95) !important;
+  background: rgba(24, 24, 27, 0.95);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.5rem;
@@ -108,9 +112,9 @@
 
 /* 拖放圖片時的視覺提示（domNode 是 monaco 內部容器，加 class 切換） */
 .monaco-drop-active {
-  outline: 2px dashed rgba(127, 90, 240, 0.6) !important;
+  outline: 2px dashed rgba(127, 90, 240, 0.6);
   outline-offset: -4px;
-  background: rgba(127, 90, 240, 0.08) !important;
+  background: rgba(127, 90, 240, 0.08);
   transition: background 0.15s ease;
 }
 
@@ -119,7 +123,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(24, 24, 27, 0.85) !important;
+  background: rgba(24, 24, 27, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
