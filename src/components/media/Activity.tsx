@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { gridFromContributions, gridFromEvents, uptimeSince, type ContributionCell } from '@/lib/contributionGrid';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useTranslation, Trans } from 'react-i18next';
@@ -63,7 +64,6 @@ export interface GithubData {
   error?: string;
 }
 
-interface ContributionCell { date: string; count: number; level: number }
 
 const Activity = () => {
   const { t, i18n } = useTranslation();
@@ -88,66 +88,14 @@ const Activity = () => {
     return () => clearInterval(id);
   }, []);
 
-  const getUptime = () => {
-    const startDate = new Date('2025-04-01T00:00:00+08:00');
-    const diffTime = Math.abs(new Date().getTime() - startDate.getTime());
-    return {
-      days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-    };
-  };
+  const getUptime = () => uptimeSince(new Date('2025-04-01T00:00:00+08:00'), new Date());
 
-  // contribution 熱力圖格子（純函式；優先用 /api/github/contributions 的日曆，
-  // 抓不到才退回從 push events 硬推——後者只看得到公開 push，數字會偏低）。
-  const gridFromContributions = (apiData: GithubContributions): ContributionCell[][] => {
-    const contributions = apiData.contributions;
-    const data: ContributionCell[][] = [];
-    const totalWeeks = Math.ceil(contributions.length / 7);
-    for (let i = 0; i < totalWeeks; i++) {
-      const weekData: ContributionCell[] = [];
-      for (let j = 0; j < 7; j++) {
-        const idx = i * 7 + j;
-        if (idx < contributions.length) {
-          const day = contributions[idx];
-          const count = day.count || 0;
-          weekData.push({ date: day.date, count, level: count === 0 ? 0 : count <= 3 ? 1 : count <= 6 ? 2 : count <= 9 ? 3 : 4 });
-        } else {
-          weekData.push({ date: '', count: 0, level: -1 });
-        }
-      }
-      data.push(weekData);
-    }
-    return data;
-  };
-
-  const gridFromEvents = (events: GithubEvent[]): ContributionCell[][] => {
-    const data: ContributionCell[][] = [];
-    const today = new Date();
-    const commitsByDate: Record<string, number> = {};
-    events.forEach(e => {
-      if (e.type === 'PushEvent') {
-        const d = new Date(e.created_at).toDateString();
-        // 原本是 `commits?.length ?? 1`；`??` 只擋 null/undefined，空陣列本來就算 0，
-        // 而 commits 現在恆為陣列（後端塑形時缺就給 []），那個 1 是取不到的分支。
-        commitsByDate[d] = (commitsByDate[d] ?? 0) + e.payload.commits.length;
-      }
-    });
-    for (let week = 51; week >= 0; week--) {
-      const weekData: ContributionCell[] = [];
-      for (let day = 0; day < 7; day++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - (week * 7 + day));
-        const ds = d.toDateString();
-        const count = commitsByDate[ds] ?? 0;
-        weekData.push({ date: ds, count, level: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 8 ? 3 : 4 });
-      }
-      data.push(weekData);
-    }
-    return data.reverse();
-  };
-
+  // 熱力圖的格子計算抽在 lib/contributionGrid.ts（那裡也修掉了後備路徑兩軸反向的 bug）。
   const contributionData = useMemo<ContributionCell[][]>(
-    () => (contributions?.contributions.length ? gridFromContributions(contributions) : gridFromEvents(githubData?.recentCommits ?? [])),
+    () =>
+      contributions?.contributions.length
+        ? gridFromContributions(contributions.contributions)
+        : gridFromEvents(githubData?.recentCommits ?? [], new Date()),
     [contributions, githubData],
   );
 
