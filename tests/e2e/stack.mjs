@@ -96,11 +96,30 @@ function startProxy() {
       { host: '127.0.0.1', port, path: req.url, method: req.method, headers: req.headers },
       (up) => {
         // CSP 在正式環境是 nginx `location /` 加的，而這一層代理存在的目的就是
-        // 模擬 nginx。加在這裡，165 條 e2e 就會替我們踩到違規——放 nginx 的話
+        // 模擬 nginx。加在這裡，e2e 就會替我們踩到違規——放 nginx 的話
         // e2e 完全碰不到它，只能等部署後才發現某個功能被擋掉。
         // 政策本身在 scripts/csp.mjs（單一來源，check-security-headers 也讀它）。
+        //
+        // ⚠ `/assets/` 要排除，因為**正式站的 nginx 也沒加**（`location /assets/` 是
+        //   獨立的 block，裡面沒有 add_header CSP）。這不是無關緊要的細節：
+        //   **module worker 套用的是它自己那個回應的 CSP，不是文件的**。多加在這裡的話
+        //   worker 會比正式站更嚴，而 e2e 就會報出線上根本不存在的問題。
+        //
+        //   實際踩過：excalidraw 的字形 subsetting worker 需要 `Function()`。
+        //   正式站的 worker 沒有 CSP → 正常；代理層加了 → worker 一啟動就死、主執行緒
+        //   等 1000ms 逾時後走後備、後備又被文件的 CSP 擋掉 → subsetting 整個跳過，
+        //   行內 SVG 從 55 KB 變成 1472 KB（同一張圖實測）。花了很久才查出來兩邊
+        //   差在哪，就是因為這一層跟正式站不一致。
+        //
+        //   ⚠ 反過來說：哪天真的想在 nginx 幫 `/assets/` 補上 CSP，`<Sketch>` 就會
+        //   以上面那個方式壞掉——那是刻意的取捨，不是可以順手加的硬化。
+        //
+        //   文件自己的 CSP 不受影響：主執行緒的 eval 照樣被擋（csp.spec.ts 就靠這個
+        //   守著 Zod 那筆已知的 eval 探測）。
         const headers = { ...up.headers };
-        if (!toBackend) headers['content-security-policy'] = CSP_POLICY;
+        if (!toBackend && !req.url.startsWith('/assets/')) {
+          headers['content-security-policy'] = CSP_POLICY;
+        }
         res.writeHead(up.statusCode ?? 502, headers);
         up.pipe(res);
       },
