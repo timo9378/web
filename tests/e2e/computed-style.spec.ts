@@ -32,7 +32,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 // 專案是 ESM（package.json 的 "type": "module"），沒有 __dirname。
 //

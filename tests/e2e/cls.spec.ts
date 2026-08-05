@@ -25,7 +25,8 @@
  * 不是猜的，是實際重複跑量變異數之後訂的——見各測試上方的註解。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 /** Google 的 CLS 分級：≤0.1 good、≤0.25 needs improvement。 */
 const GOOD = 0.1;

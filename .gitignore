@@ -121,3 +121,7 @@ coverage/
 # Stryker 變異測試的報告（產物，用 pnpm mutate 重產）
 reports/
 .stryker-tmp/
+
+# e2e 覆蓋率的中間產物（見 scripts/e2e-coverage-report.mjs）
+.e2e-coverage/
+lcov-e2e.info

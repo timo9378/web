@@ -8,7 +8,8 @@
  * ⚠ 種子每個分頁各放三筆（見 seed.mjs）。只有一筆的時候排序與搜尋測不出東西。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 const cards = (page: Page) => page.locator('.wl-card');
 const titles = async (page: Page): Promise<string[]> =>

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 /**
  * 剩下的公開互動：電子報訂閱、留言按讚，以及行動裝置的版面。

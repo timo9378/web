@@ -32,7 +32,8 @@
  * 而那條斷言也改成排除這個前綴（見 api-contract.spec.ts 的註解）。
  */
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 import { gotoAdminUntil, signIn } from './admin-session';
 import { E2E_POST_PREFIX } from './seed.mjs';

@@ -350,6 +350,29 @@ jobs:
       # 並在 PR 說明為什麼那些元素該變。理由與陷阱見 CLAUDE.md 的 CSS 段。
       - name: playwright
         run: pnpm e2e
+        env:
+          # 設了才會收 V8 coverage（見 tests/e2e/fixtures.ts）。沒設就完全不做事，
+          # 所以本機跑 e2e 不會多付成本。
+          E2E_COVERAGE_DIR: .e2e-coverage
+      # e2e 走過多少原始碼 → lcov → Codecov（flag = e2e）。
+      #
+      # 為什麼這個數字必須存在：單元測試的覆蓋率分母有**八成是 React 元件**
+      # （5477/6923 行），而元件的渲染路徑本來就是 e2e 在守。只看單元覆蓋率會得到
+      # 6% 這種數字，看起來像「幾乎沒測」，實際上 e2e 走過的原始碼是它的十倍（55%）。
+      # 兩個數字並排才看得懂各自在守什麼。
+      #
+      # ⚠ 依賴上面那步的 `pnpm build`——source map 是從 .output/public 讀的。
+      - name: e2e 覆蓋率報告
+        if: ${{ !cancelled() }}
+        run: node scripts/e2e-coverage-report.mjs .e2e-coverage lcov-e2e.info
+      - name: 覆蓋率上傳（e2e）
+        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: lcov-e2e.info
+          flags: e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       # ⚠ 這一個是整組裡最有價值的：e2e 是唯一會 flaky 的那批（瀏覽器在併發下崩潰、
       #   hydration 競賽），而定位它們過去靠的是手動重跑幾十輪。Codecov 會自己累積
       #   每一條測試的失敗率並標出 flaky——playwright 的 retry 讓「失敗後重試成功」
