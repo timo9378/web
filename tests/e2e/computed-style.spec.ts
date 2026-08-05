@@ -153,13 +153,27 @@ test.describe('計算後樣式沒有非預期的變化', () => {
       expect(fs.existsSync(file), `${route} 沒有基準檔——新增頁面要先跑一次更新`).toBe(true);
       const want = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, string>;
 
+      // ⚠ 只比對「兩邊都存在」的路徑。
+      //
+      // 只出現在一邊的路徑代表 DOM 結構不同，而**CSS 改不動 DOM**——那種差異一定來自
+      // 資料或時序。實際踩過：種子資料的時間戳是相對的，首頁「最近更新」清單的項目數
+      // 因此會隨「跑的時間」變，本機產的基準拿到 CI 就報 4 個元素變了（重試也一樣紅，
+      // 所以不是 flaky，是結構差異被誤判成樣式差異）。
+      //
+      // 忽略它們不會漏掉真的回歸：樣式回歸一定發生在「同一個元素、值變了」。
+      const onlyOneSide: string[] = [];
       const changed: string[] = [];
       for (const k of new Set([...Object.keys(want), ...Object.keys(hashed)])) {
+        if (want[k] === undefined || hashed[k] === undefined) { onlyOneSide.push(k); continue; }
         if (want[k] !== hashed[k]) changed.push(k);
+      }
+      if (onlyOneSide.length) {
+        console.log(`${route}：${onlyOneSide.length} 個路徑只存在一邊（DOM 結構差異，非樣式），已略過`);
       }
       expect(
         changed.slice(0, 20),
-        `${route}：${changed.length} 個元素的計算後樣式變了。若是預期中的改動：\n` +
+        `${route}：${changed.length} 個元素的計算後樣式變了（另有 ${onlyOneSide.length} 個路徑只存在一邊，` +
+          `那是 DOM 結構差異不算）。若是預期中的改動：\n` +
           `  UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style\n` +
           `並在 PR 說明為什麼這些元素該變。`,
       ).toEqual([]);
