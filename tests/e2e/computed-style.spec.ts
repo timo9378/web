@@ -48,15 +48,31 @@ const ROUTES = [
   '/history', '/friends', '/bookshelf', '/watch', '/messages', '/about-site',
 ];
 
-/** 會被 !important / cascade 影響、且不隨動畫逐幀改變的屬性 */
+/**
+ * 會被 !important / cascade 影響、且**不隨環境或動畫改變**的屬性。
+ *
+ * ⚠ 刻意排除的，每一條都是實際害這支測試在 CI 紅過的：
+ *
+ *   width / height          —— `auto` 的解析值取決於文字寬度
+ *   margin-left / -right    —— 同上（`margin: auto` 置中時解出來的是「剩餘空間」）
+ *   line-height             —— `normal` 的解析值直接取自字體度量
+ *   transform / opacity /
+ *   box-shadow / filter     —— 動畫元素上逐幀不同
+ *
+ * 前三類的共通點是**依賴字體度量**，而 CI runner 沒有這台機器上的 CJK 字體
+ * （MiSans / Noto Sans TC / PingFang TC…），fallback 不同 → 文字寬度不同 → 數字就不同。
+ * 實測 /setup 的 `.setup-category-subtitle` 本機 margin-left 是 687.906px，CI 不是。
+ *
+ * margin-top / -bottom 留著：一般流裡 `margin: auto` 的垂直方向解析成 0，不受影響。
+ */
 const PROPS = [
   'background-color', 'background-image', 'color',
   'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
   'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
   'border-radius', 'outline-color', 'outline-width', 'outline-style',
-  'display', 'visibility', 'font-family', 'font-size', 'font-weight', 'line-height',
+  'display', 'visibility', 'font-family', 'font-size', 'font-weight',
   'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-  'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'margin-top', 'margin-bottom',
   'text-decoration-line', 'text-align', 'flex-direction', 'justify-content', 'align-items',
 ];
 

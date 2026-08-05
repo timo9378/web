@@ -210,8 +210,26 @@ UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style
 2. **等 DOM 穩定，不是等固定秒數**。Hero 有 JS 打字機（`useTypingEffect`，延遲 900ms
    開始、每字 80ms），而 **CSS 的 `animation:none` 停不掉 `setInterval`**。
    固定 sleep 500ms 會抓到打到一半的 DOM，間歇性報 34~688 個假變化。
-3. **不收 `transform` / `opacity` / `box-shadow` / `filter` / `width` / `height`**：
-   前四個在動畫元素上逐幀不同，後兩個依字體度量而變。
+3. **不收這幾個屬性**，每一條都是實際害它在 CI 紅過的：
+
+   | 排除 | 原因 |
+   |---|---|
+   | `transform` `opacity` `box-shadow` `filter` | 動畫元素上逐幀不同 |
+   | `width` `height` | `auto` 的解析值取決於文字寬度 |
+   | `margin-left` `margin-right` | 同上（`margin: auto` 置中時解出的是「剩餘空間」） |
+   | `line-height` | `normal` 的解析值直接取自字體度量 |
+
+   後三類的共通點是**依賴字體度量**，而 CI runner 沒有這台機器上的 CJK 字體
+   （MiSans / Noto Sans TC / PingFang TC…），fallback 不同 → 文字寬度不同 → 數字就不同。
+   實測 `/setup` 的 `.setup-category-subtitle` 本機 `margin-left` 是 687.906px、CI 不是。
+
+   ⚠️ 要加新屬性之前先測它會不會被字體影響：把全站 `font-family` 換成另一個**比例**
+   字體（不要用 monospace——瀏覽器對等寬字有不同的預設字級，會讓 `font-size` 跟著全變，
+   em 推導的 padding 也跟著動，測出一堆假陽性）再比一次，只有 `font-family` 該變。
+
+4. **只比對兩邊都存在的 DOM 路徑。** 只出現在一邊的代表結構不同，而 **CSS 改不動 DOM**
+   ——那種差異一定來自資料或時序（種子資料的時間戳是相對的，首頁「最近更新」的項目數
+   會隨跑的時間變）。忽略它們不會漏掉真回歸：樣式回歸必然是「同一個元素、值變了」。
 
 ### 要清 `!important` 的話，這套方法才測得準
 
