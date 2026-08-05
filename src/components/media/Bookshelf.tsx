@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense, type CSSProperties, type ReactNode } from 'react';
+import { filterAndSortBooks } from '@/lib/mediaLists';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaStarHalfAlt, FaBook, FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
@@ -130,49 +131,11 @@ const Bookshelf = () => {
   // filteredBooks 完全由 books + 四個篩選條件推導 —— 是衍生值不是狀態。
   // 原本用 useEffect + setState：每次條件變動都要先繪一次舊清單、effect 再補繪一次，
   // 而且中間那一幀顯示的是過期資料。改成 render 期計算就沒有這個窗口。
-  const filteredBooks = useMemo(() => {
-    let filtered = [...books];
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(book =>
-        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (book.authors?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(book => book.reading_status === statusFilter);
-    }
-
-    // Rating filter
-    if (ratingFilter !== 'all') {
-      filtered = filtered.filter(book => book.rating === parseInt(ratingFilter, 10));
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date_added_asc':
-          return new Date(a.date_added ?? '').getTime() - new Date(b.date_added ?? '').getTime();
-        case 'date_added_desc':
-          return new Date(b.date_added ?? '').getTime() - new Date(a.date_added ?? '').getTime();
-        case 'title_asc':
-          return a.title.localeCompare(b.title);
-        case 'title_desc':
-          return b.title.localeCompare(a.title);
-        case 'rating_desc':
-          return (b.rating ?? 0) - (a.rating ?? 0);
-        case 'published_date_desc':
-          return (b.published_date ?? '').localeCompare(a.published_date ?? '');
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }, [books, searchTerm, statusFilter, ratingFilter, sortBy]);
+  // 篩選與排序是純邏輯，抽在 lib/mediaLists.ts（那裡也修掉了日期排序回傳 NaN 的問題）。
+  const filteredBooks = useMemo(
+    () => filterAndSortBooks(books, { searchTerm, statusFilter, ratingFilter, sortBy }),
+    [books, searchTerm, statusFilter, ratingFilter, sortBy],
+  );
 
   const getStatusBadge = (status?: string | null) => {
     const badges: Record<'read' | 'reading' | 'to-read', { text: string; color: string }> = {
