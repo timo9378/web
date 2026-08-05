@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react';
+// ⚠ 改名匯入：這個檔案裡本來就有一個叫 trackAnalytics 的區域變數（算好的結果）。
+import { trackAnalytics as computeTrackAnalytics } from '@/lib/trackAnalytics';
 import { useQuery } from '@tanstack/react-query';
 import {
   recentlyPlayedQueryOptions,
@@ -113,39 +115,8 @@ const Music = () => {
   };
 
   // 以 topTracks 的 metadata 推導聆聽分析（Spotify 2024/11 已停用 audio-features）
-  const getTrackAnalytics = () => {
-    const tracks = topTracks?.tracks;
-    if (!tracks || tracks.length === 0) return null;
-    const n = tracks.length;
-
-    const totalPopularity = tracks.reduce((s, t) => s + t.popularity, 0);
-    const totalDuration = tracks.reduce((s, t) => s + t.duration_ms, 0);
-    const explicitCount = tracks.filter(t => t.explicit).length;
-
-    const years = tracks
-      .map(t => parseInt(t.album.release_date.slice(0, 4), 10))
-      .filter(y => !Number.isNaN(y));
-    const avgYear = years.length ? Math.round(years.reduce((s, y) => s + y, 0) / years.length) : null;
-
-    const decadeMap = new Map<string, number>();
-    years.forEach(y => {
-      const dec = `${Math.floor(y / 10) * 10}s`;
-      decadeMap.set(dec, (decadeMap.get(dec) ?? 0) + 1);
-    });
-    const decades = Array.from(decadeMap.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([decade, count]) => ({ decade, count }));
-
-    return {
-      avgPopularity: Math.round(totalPopularity / n),
-      avgDurationMs: Math.round(totalDuration / n),
-      explicitRatio: explicitCount / n,
-      explicitCount,
-      totalTracks: n,
-      avgYear,
-      decades,
-    };
-  };
+  // 統計聚合抽在 lib/trackAnalytics.ts。
+  const getTrackAnalytics = () => computeTrackAnalytics(topTracks?.tracks);
 
   /* ─── Now Playing 資訊 ─── */
   const getNowPlayingData = (): NowPlayingData | null => {
