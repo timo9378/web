@@ -329,6 +329,10 @@ jobs:
             cat /tmp/pw-install.log
             exit 1
           fi
+      # 這裡面也包含 computed-style.spec.ts —— 計算後樣式的回歸守門（基準在
+      # tests/e2e/computed-style.baseline/，一頁一個檔）。改了樣式而它報紅是正常的，
+      # 用 `UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style` 更新，
+      # 並在 PR 說明為什麼那些元素該變。理由與陷阱見 CLAUDE.md 的 CSS 段。
       - name: playwright
         run: pnpm e2e
       # ⚠ 這一個是整組裡最有價值的：e2e 是唯一會 flaky 的那批（瀏覽器在併發下崩潰、

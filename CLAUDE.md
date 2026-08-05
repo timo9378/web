@@ -191,6 +191,28 @@ pnpm format:css    # 自動修格式
 inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。
 判斷「這個 `!important` 是不是多餘」時，先看它要蓋的對象是不是 JS 寫進 `style=""` 的。
 
+### 樣式回歸有守門：`tests/e2e/computed-style.spec.ts`
+
+跟著 `pnpm e2e` 一起跑（CI 不用另外設），比對 11 個公開頁面共 4243 個元素的 34 個
+計算後屬性。改了樣式而它報紅是**正常的**：
+
+```bash
+UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style
+```
+
+更新後在 PR 說明「為什麼這些元素該變」。基準在 `tests/e2e/computed-style.baseline/`，
+一頁一個檔（共用一個檔的話多 worker 會互相覆蓋，而且 diff 會糊成一團）。
+
+⚠️ 三件讓它能穩定的事，改動時不要拆掉：
+
+1. **排除隨機裝飾背景**（`RandomComets` / `RandomShootingStars` / `RandomUFOs`）——
+   它們產生的元素**數量本身是隨機的**，收進來首頁每跑必紅（實測 700 個）。
+2. **等 DOM 穩定，不是等固定秒數**。Hero 有 JS 打字機（`useTypingEffect`，延遲 900ms
+   開始、每字 80ms），而 **CSS 的 `animation:none` 停不掉 `setInterval`**。
+   固定 sleep 500ms 會抓到打到一半的 DOM，間歇性報 34~688 個假變化。
+3. **不收 `transform` / `opacity` / `box-shadow` / `filter` / `width` / `height`**：
+   前四個在動畫元素上逐幀不同，後兩個依字體度量而變。
+
 ### 要清 `!important` 的話，這套方法才測得準
 
 ⚠️ **像素比對測不準。** 實測噪音底線：`/blog/43` **7810 px**（mermaid 渲染時序）、
