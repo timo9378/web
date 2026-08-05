@@ -106,7 +106,11 @@ module.exports = {
             'unused-javascript': 'off', // 路由層已做 code splitting，剩下的是框架本體
             'legacy-javascript': 'off', // 由 vite 的 target 決定，不是逐次可調的東西
             'uses-long-cache-ttl': 'off', // 快取標頭在 nginx 那層，e2e stack 沒有那一層
-            'csp-xss': 'off', // CSP 是另外排程的工作，還沒做
+            // CSP **已經做了**（nginx 那層，含 report-uri 接自架 GlitchTip）。這裡關掉的
+            // 理由跟上面 uses-long-cache-ttl 一樣：lhci 打的是 e2e stack，那裡沒有 nginx，
+            // 量不到 CSP 標頭。真正的守門在 `pnpm check:headers`（content job，打正式站，
+            // 同時守 CSP / HSTS / X-Frame-Options / Referrer-Policy / nosniff）。
+            'csp-xss': 'off',
           },
         },
         {

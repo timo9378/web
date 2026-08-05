@@ -1,4 +1,4 @@
-import type { SVGProps } from 'react';
+import { useId, type SVGProps } from 'react';
 
 // Inline brand SVG icons — pulled individually so we don't ship an entire
 // icon library for 5 logos. Each component accepts {className, style} so
@@ -172,7 +172,13 @@ export const IconCdn = (props: SVGProps<SVGSVGElement>) => (
 // is ignored (icon stays VS-Code-blue regardless of inline color).
 // Stripped of the dropshadow filters from the original devicon SVG to
 // keep payload light; visually identical at icon scales.
-export const IconVscode = (props: SVGProps<SVGSVGElement>) => (
+// ⚠ mask 的 id 必須每個實例都不同。原本寫死成 "vscode-mask"，同一頁渲染兩次
+// （/setup 與 /about 的技能區都會用到）時，第二個 <g mask={`url(#${maskId})`}>
+// 會引用到第一個實例的 mask —— SVG 的 id 是文件層級的，DOM 只認第一個。
+// 症狀是第二顆圖示的遮罩錯位或整個不顯示，而且只在「同頁出現兩次」時才發生。
+export const IconVscode = (props: SVGProps<SVGSVGElement>) => {
+  const maskId = useId();
+  return (
   <svg
     {...props}
     viewBox="0 0 128 128"
@@ -180,7 +186,7 @@ export const IconVscode = (props: SVGProps<SVGSVGElement>) => (
     height="1em"
     aria-hidden
   >
-    <mask id="vscode-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128" style={{ maskType: 'alpha' }}>
+    <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128" style={{ maskType: 'alpha' }}>
       <path
         fill="#fff"
         fillRule="evenodd"
@@ -188,10 +194,11 @@ export const IconVscode = (props: SVGProps<SVGSVGElement>) => (
         d="M90.767 127.126a7.968 7.968 0 0 0 6.35-.244l26.353-12.681a8 8 0 0 0 4.53-7.209V21.009a8 8 0 0 0-4.53-7.21L97.117 1.12a7.97 7.97 0 0 0-9.093 1.548l-50.45 46.026L15.6 32.013a5.328 5.328 0 0 0-6.807.302l-7.048 6.411a5.335 5.335 0 0 0-.006 7.888L20.796 64 1.74 81.387a5.336 5.336 0 0 0 .006 7.887l7.048 6.411a5.327 5.327 0 0 0 6.807.303l21.974-16.68 50.45 46.025a7.96 7.96 0 0 0 2.743 1.793Zm5.252-92.183L57.74 64l38.28 29.058V34.943Z"
       />
     </mask>
-    <g mask="url(#vscode-mask)">
+    <g mask={`url(#${maskId})`}>
       <path fill="#0065A9" d="M123.471 13.82 97.097 1.12A7.973 7.973 0 0 0 88 2.668L1.662 81.387a5.333 5.333 0 0 0 .006 7.887l7.052 6.411a5.333 5.333 0 0 0 6.811.303l103.971-78.875c3.488-2.646 8.498-.158 8.498 4.22v-.306a8.001 8.001 0 0 0-4.529-7.208Z" />
       <path fill="#007ACC" d="m123.471 114.181-26.374 12.698A7.973 7.973 0 0 1 88 125.333L1.662 46.613a5.333 5.333 0 0 1 .006-7.887l7.052-6.411a5.333 5.333 0 0 1 6.811-.303l103.971 78.874c3.488 2.647 8.498.159 8.498-4.219v.306a8.001 8.001 0 0 1-4.529 7.208Z" />
       <path fill="#1F9CF0" d="M97.098 126.882A7.977 7.977 0 0 1 88 125.333c2.952 2.952 8 .861 8-3.314V5.98c0-4.175-5.048-6.266-8-3.313a7.977 7.977 0 0 1 9.098-1.549L123.467 13.8A8 8 0 0 1 128 21.01v85.982a8 8 0 0 1-4.533 7.21l-26.369 12.681Z" />
     </g>
   </svg>
-);
+  );
+};
