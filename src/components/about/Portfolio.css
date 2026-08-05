@@ -192,6 +192,14 @@
   user-select: none;
 }
 
+.portfolio-secondary-body {
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
 .portfolio-secondary--code .portfolio-secondary-body {
   padding-top: 18px;
 }
@@ -216,14 +224,6 @@
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.portfolio-secondary-body {
-  padding: 22px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
 }
 
 .portfolio-secondary-title {

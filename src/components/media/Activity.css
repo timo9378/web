@@ -840,6 +840,11 @@
     opacity 0.3s ease,
     filter 0.3s ease;
 }
+.heatmap-grid {
+  display: flex;
+  gap: 3px;
+}
+
 /* 刷新中：熱度圖淡出並失焦，loader 從上方淡入 */
 .heatmap-grid-wrapper.is-refreshing > .heatmap-grid {
   opacity: 0.25;
@@ -884,11 +889,6 @@
   to {
     opacity: 1;
   }
-}
-
-.heatmap-grid {
-  display: flex;
-  gap: 3px;
 }
 
 .heatmap-week {
