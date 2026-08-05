@@ -191,6 +191,46 @@ pnpm format:css    # 自動修格式
 inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。
 判斷「這個 `!important` 是不是多餘」時，先看它要蓋的對象是不是 JS 寫進 `style=""` 的。
 
+### 樣式回歸有守門：`tests/e2e/computed-style.spec.ts`
+
+跟著 `pnpm e2e` 一起跑（CI 不用另外設），比對 11 個公開頁面共 4243 個元素的 34 個
+計算後屬性。改了樣式而它報紅是**正常的**：
+
+```bash
+UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style
+```
+
+更新後在 PR 說明「為什麼這些元素該變」。基準在 `tests/e2e/computed-style.baseline/`，
+一頁一個檔（共用一個檔的話多 worker 會互相覆蓋，而且 diff 會糊成一團）。
+
+⚠️ 三件讓它能穩定的事，改動時不要拆掉：
+
+1. **排除隨機裝飾背景**（`RandomComets` / `RandomShootingStars` / `RandomUFOs`）——
+   它們產生的元素**數量本身是隨機的**，收進來首頁每跑必紅（實測 700 個）。
+2. **等 DOM 穩定，不是等固定秒數**。Hero 有 JS 打字機（`useTypingEffect`，延遲 900ms
+   開始、每字 80ms），而 **CSS 的 `animation:none` 停不掉 `setInterval`**。
+   固定 sleep 500ms 會抓到打到一半的 DOM，間歇性報 34~688 個假變化。
+3. **不收這幾個屬性**，每一條都是實際害它在 CI 紅過的：
+
+   | 排除 | 原因 |
+   |---|---|
+   | `transform` `opacity` `box-shadow` `filter` | 動畫元素上逐幀不同 |
+   | `width` `height` | `auto` 的解析值取決於文字寬度 |
+   | `margin-left` `margin-right` | 同上（`margin: auto` 置中時解出的是「剩餘空間」） |
+   | `line-height` | `normal` 的解析值直接取自字體度量 |
+
+   後三類的共通點是**依賴字體度量**，而 CI runner 沒有這台機器上的 CJK 字體
+   （MiSans / Noto Sans TC / PingFang TC…），fallback 不同 → 文字寬度不同 → 數字就不同。
+   實測 `/setup` 的 `.setup-category-subtitle` 本機 `margin-left` 是 687.906px、CI 不是。
+
+   ⚠️ 要加新屬性之前先測它會不會被字體影響：把全站 `font-family` 換成另一個**比例**
+   字體（不要用 monospace——瀏覽器對等寬字有不同的預設字級，會讓 `font-size` 跟著全變，
+   em 推導的 padding 也跟著動，測出一堆假陽性）再比一次，只有 `font-family` 該變。
+
+4. **只比對兩邊都存在的 DOM 路徑。** 只出現在一邊的代表結構不同，而 **CSS 改不動 DOM**
+   ——那種差異一定來自資料或時序（種子資料的時間戳是相對的，首頁「最近更新」的項目數
+   會隨跑的時間變）。忽略它們不會漏掉真回歸：樣式回歸必然是「同一個元素、值變了」。
+
 ### 要清 `!important` 的話，這套方法才測得準
 
 ⚠️ **像素比對測不準。** 實測噪音底線：`/blog/43` **7810 px**（mermaid 渲染時序）、
