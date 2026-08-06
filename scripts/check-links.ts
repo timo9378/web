@@ -135,8 +135,35 @@ async function probe(url: string, attempt = 0): Promise<number | string> {
   return 'ERR';
 }
 
+/**
+ * 抓自家 API，失敗會重試。
+ *
+ * ⚠ 這一層是必要的，不是防禦性程式碼的裝飾。下面那些**外部**連結的檢查本來就有
+ * 15 秒逾時 + catch（對方掛掉不是我們的 bug，不擋 CI），但抓自家清單／內文的
+ * fetch 原本是裸的——runner 上一次網路抖動就會讓整個排程 job 以
+ * `check-links 執行失敗: fetch failed` 收場，而那跟連結好不好完全無關。
+ * 實際發生過（2026-08-05 的排程跑），同一時間本機跑是全綠的。
+ *
+ * 假紅比漏報更貴：一個每天跑、偶爾無故變紅的 job，最後就是沒有人看。
+ */
+async function fetchOwn(url: string, attempts = 3): Promise<Response> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+      // 5xx 也重試：自家服務重啟中的短暫窗口不該讓巡檢失敗
+      if (res.status < 500) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+    }
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
+  }
+  throw new Error(`抓 ${url} 連續 ${attempts} 次失敗：${lastErr instanceof Error ? lastErr.message : lastErr}`);
+}
+
 async function main(): Promise<void> {
-  const listRes = await fetch(`${SITE}/api/posts?limit=500`);
+  const listRes = await fetchOwn(`${SITE}/api/posts?limit=500`);
   if (!listRes.ok) throw new Error(`取文章清單失敗：${listRes.status}`);
   const { posts } = (await listRes.json()) as { posts: PostListItem[] };
 
@@ -147,7 +174,7 @@ async function main(): Promise<void> {
       const url = lang
         ? `${SITE}/api/posts/${p.id}?lang=${encodeURIComponent(lang)}`
         : `${SITE}/api/posts/${p.id}`;
-      const res = await fetch(url);
+      const res = await fetchOwn(url);
       if (res.status === 404) continue; // 該語系無此文，正常
       if (!res.ok) continue;
       const post = (await res.json()) as PostDetail;
