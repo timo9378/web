@@ -15,7 +15,14 @@
   }
 }
 
-@theme {
+/* ⚠ `inline` 這個字不能拿掉。
+   沒有它，Tailwind 會把 `--color-muted-foreground: hsl(var(--muted-foreground))` 宣告在 :root
+   並「在 :root 上就解析完」，utility 拿到的是 `var(--color-muted-foreground)`——於是後代
+   （AdminTheme 的 `:is(.admin-layout,.admin-mode)` 重新定義了整組 shadcn token）再怎麼改
+   `--muted-foreground` 都來不及，後台的 text-muted-foreground / bg-accent / rounded-* 全部
+   吃到 :root 的值。v3 的 utility 是直接展開成 `hsl(var(--muted-foreground))` 寫在使用點，
+   所以 scoping 一直有效；`inline` 就是在 v4 恢復同樣的行為。 */
+@theme inline {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -46,6 +53,22 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* 把 text-* 的 line-height 從 v4 的「無單位比例」改回 v3 的絕對值。
+     v4 預設是 `calc(1 / 0.75)` 這種比例，乘上元素自己的 font-size；只要字級沒被別的
+     規則蓋掉，算出來就等於下面這些數字（比例本來就是這樣推導的），所以這一段對絕大多數
+     元素是零變化。它救的是「字級被覆寫、line-height 沒被覆寫」的情況——
+     後台的 `.admin-layout label { font-size: 0.875rem }` 正是如此：v3 的 text-xs 給
+     絕對的 1rem=16px，v4 的比例卻算成 14×1.333=18.67px，每個欄位高 2.7px，
+     整個右欄累積下移約 30px、把編輯器一起往下推。 */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -311,32 +334,39 @@ body,
   background: transparent;
 }
 
-body {
-  color: var(--clr-paragraph);
-  background-color: transparent;
-}
+/* ⚠ 這一段全域元素預設**必須待在 `@layer base`**，跟上面那條 `button` 同理。
+   Tailwind v4 用原生 cascade layer：未分層的規則恆勝過 `@layer utilities`，跟特異性無關。
+   在 v3 它們寫在檔案頂層沒問題（`h1`=0,0,1 輸給 `.text-muted-foreground/70`=0,1,0），
+   升 v4 之後同樣的寫法反過來把每一個 heading 的文字顏色與 `mb-*` 都壓掉——
+   實測後台編輯頁右欄的區塊標題從灰色變全白、`mb-3`(12px) 被這裡的 0.5em(5.5px) 取代。 */
+@layer base {
+  body {
+    color: var(--clr-paragraph);
+    background-color: transparent;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--clr-headline);
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--clr-headline);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
 
-a {
-  color: var(--clr-button);
-  text-decoration: none;
-  transition: color 0.2s ease-in-out;
-}
+  a {
+    color: var(--clr-button);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+  }
 
-a:hover,
-a:focus {
-  color: var(--clr-tertiary);
-  text-shadow: 0 0 8px var(--clr-tertiary);
+  a:hover,
+  a:focus {
+    color: var(--clr-tertiary);
+    text-shadow: 0 0 8px var(--clr-tertiary);
+  }
 }
 
 /* Prevent scrollbars during intro animation */

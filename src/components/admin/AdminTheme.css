@@ -272,23 +272,33 @@
 }
 
 /* ── Reset global button base styles for admin ──
-/* ── Reset global button base styles for admin ──
-   用 :where() 包裹 :is(.admin-layout, .admin-mode) 讓 specificity 降為 (0,0,1)
-   這樣 Tailwind 的 class selector (0,1,0) 仍可覆蓋 */
-:where(.admin-layout, .admin-mode) button {
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  font-size: inherit;
-  font-weight: inherit;
-  box-shadow: none;
-}
+   中和 index.css 那條全站 `button { 紫底 + padding .6em 1.2em + radius 8px }`。
+   後台的按鈕全部由 shadcn 的 utility 決定外觀，套上那條會整排變紫色膠囊。
 
-:where(.admin-layout, .admin-mode) button:hover,
-:where(.admin-layout, .admin-mode) button:focus {
-  background-color: transparent;
-  border-color: transparent;
-  box-shadow: none;
+   ⚠ 這兩條**必須待在 `@layer base` 裡**，理由是 Tailwind v4 用原生 cascade layer：
+   未分層的規則恆勝過 `@layer utilities`，跟特異性無關。原本它們寫在檔案頂層（未分層），
+   於是把後台每一顆按鈕的 `px-3 py-2 rounded-md text-sm` 全部歸零——編輯頁右欄的
+   欄位因此擠成一團、select 沒有圓角也沒有內距。
+
+   放進 base 之後：對上同樣在 base 的全域 `button`（0,0,1）靠 `:is()` 的 (0,2,1) 取勝，
+   對上 utilities 則因為層序在後而讓位，兩邊都對。
+   （v3 時代這條用 `:where()` 降特異性就夠了——那個做法在 v4 已經沒有意義。） */
+@layer base {
+  :is(.admin-layout, .admin-mode) button {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    box-shadow: none;
+  }
+
+  :is(.admin-layout, .admin-mode) button:hover,
+  :is(.admin-layout, .admin-mode) button:focus {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
 }
 
 /* ── Default Buttons — Neutral glass style ── */
