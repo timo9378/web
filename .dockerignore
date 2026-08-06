@@ -6,6 +6,26 @@ dist
 build
 .output
 .nitro
+.tanstack
+
+# ⚠️ 測試/分析工具的暫存目錄。漏掉這些的代價不是「多送幾 MB」——
+# 實際發生過：`.stryker-tmp` 沒被排除，某次 `docker compose up -d --build frontend`
+# 把 115 GB 的 Stryker 沙箱整包當成 build context 送進 BuildKit，
+# 在快取裡留下三筆共 325 GB（"local source for context" 123 GB +
+# 兩筆 "[builder 8/13] COPY . ." 123 GB / 78.7 GB）。
+# 排除之後 context 從 123 GB 變成 264 MB。
+#
+# Stryker 的沙箱是複製整個專案（含 target/），見 CLAUDE.md 的說明。
+# 新增大型產物目錄時，這裡與 .config/stryker 的 ignorePatterns 要一起加。
+.stryker-tmp
+mutants.out
+mutants.out.old
+.e2e-coverage
+.lighthouseci
+test-results
+playwright-report
+.playwright-mcp
+coverage
 
 # Ignore .env files potentially containing secrets
 .env*
