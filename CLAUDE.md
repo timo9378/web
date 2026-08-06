@@ -289,6 +289,16 @@ e2e 的覆蓋率是 `tests/e2e/fixtures.ts` 收 V8 coverage、`scripts/e2e-cover
 `@playwright/test`**（型別可以）——直接 import 的那支就不會被計入。
 沒設 `E2E_COVERAGE_DIR` 時 fixture 完全不做事，本機跑 e2e 不會多付成本。
 
+⚠ **Stryker 的沙箱會吃掉整顆硬碟，如果沒設 `ignorePatterns`。** 它把整個專案複製到
+`.stryker-tmp/sandbox-XXXX`，而**預設排除清單只有 node_modules / .git / reports，它不讀
+`.gitignore`**——所以 `target/`（Rust 建置產物）會被整包複製。實測一次跑完留下 **115 GB**，
+其中 114 GB 是 target。設定裡已經列好排除清單，**新增大型產物目錄時要同步加進去**。
+另外 `cleanTempDir: "always"`：預設只在成功時清，而中止（逾時、Ctrl-C、設定錯誤）留下的
+那幾個沙箱正是最大的。cargo-mutants 沒有這個問題（`mutants.out` 只有 log 與 diff，不到 10 MB）。
+
+⚠ 變異測試會讓 `target/` 快速膨脹（每個變異都是一次不同的編譯，cargo 不會回收舊產物）。
+`target/debug/incremental` 與 `target/llvm-cov-target` 是純快取，刪掉只是下次重建慢一點。
+
 ⚠ 變異測試（`pnpm mutate`，Stryker）只跑 `src/lib/`，**不接 CI**，定位同
 `.cargo/mutants.toml`：拿來找洞的工具，不是門檻。覆蓋率不等於測試有效——
 第一次跑就在剛寫完的測試裡找到 42 個沒被殺掉的變異，全是邊界值。
