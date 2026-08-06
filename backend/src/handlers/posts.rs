@@ -1033,3 +1033,165 @@ pub async fn create_post_legacy(
         }
     }
 }
+
+#[cfg(test)]
+mod locale_tests {
+    use super::*;
+
+    /// 語系代碼 → 欄位後綴。
+    ///
+    /// ⚠ 一段一筆斷言，而不是只驗「認得的回 Some、不認得的回 None」。
+    /// 理由是 cargo-mutants 的結果：刪掉 `"zh-CN"` 那一條 match arm，**沒有任何測試會紅**
+    /// ——而那等於「全站的簡體中文譯文一起消失」（`locale_content` 走到 `locale_suffix(locale)?`
+    /// 就回 None，SQL 那邊也只剩 source 判斷）。畫面上不會報錯，只是簡中讀者看到的全是原文。
+    #[test]
+    fn locale_suffix_每個語系各自對到自己的欄位後綴() {
+        assert_eq!(locale_suffix("zh-CN"), Some("zh_cn"));
+        assert_eq!(locale_suffix("en"), Some("en"));
+        assert_eq!(locale_suffix("ja"), Some("ja"));
+        assert_eq!(locale_suffix("ko"), Some("ko"));
+        // zh-TW 是來源語，沒有後綴欄位——這是 None 的**正當**來源，不是「不認得」
+        assert_eq!(locale_suffix("zh-TW"), None);
+        assert_eq!(locale_suffix("de"), None);
+        assert_eq!(locale_suffix(""), None);
+    }
+
+    /// `?lang=` 的正規化。同樣一個語系一筆——刪掉 `"zh-tw" | "zh-hant"` 或
+    /// `"zh-cn" | "zh-hans"` 任一條原本都不會被抓到（cargo-mutants 指出的）。
+    /// 那兩條壞掉的後果是「帶了 lang 參數等於沒帶」，讀者永遠拿到原文。
+    #[test]
+    fn parse_locale_認得的別名都正規化得出來() {
+        assert_eq!(parse_locale(Some("zh-TW")), Some("zh-TW"));
+        assert_eq!(parse_locale(Some("zh-Hant")), Some("zh-TW"));
+        assert_eq!(parse_locale(Some("zh-CN")), Some("zh-CN"));
+        assert_eq!(parse_locale(Some("zh-Hans")), Some("zh-CN"));
+        assert_eq!(parse_locale(Some("en")), Some("en"));
+        assert_eq!(parse_locale(Some("ja")), Some("ja"));
+        assert_eq!(parse_locale(Some("ko")), Some("ko"));
+        // 大小寫不敏感（`to_lowercase` 之後比對）
+        assert_eq!(parse_locale(Some("ZH-tw")), Some("zh-TW"));
+        assert_eq!(parse_locale(Some("EN")), Some("en"));
+        // 認不得與缺席都回 None
+        assert_eq!(parse_locale(Some("de")), None);
+        assert_eq!(parse_locale(Some("")), None);
+        assert_eq!(parse_locale(None), None);
+    }
+
+    /// 建一個只填了指定 i18n 欄位的 row（其餘走預設）。
+    ///
+    /// 走 DB 往返而不是手寫 31 個欄位的 struct literal：欄位加減時這裡不用跟著改，
+    /// 而且順便確認 `PostRow` 的 `FromRow` 對得上真正的 schema。
+    async fn row_with(
+        pool: &sqlx::SqlitePool,
+        source: &str,
+        i18n: &[(&str, Option<&str>, Option<&str>)],
+    ) -> PostRow {
+        sqlx::query(
+            "INSERT INTO posts (id, title, content, status, created_at, source_language) \
+             VALUES (1, '原文標題', '原文內容', 'published', '2026-01-01 00:00:00', ?)",
+        )
+        .bind(source)
+        .execute(pool)
+        .await
+        .unwrap();
+        for (sfx, title, content) in i18n {
+            let up = format!("UPDATE posts SET title_{sfx} = ?, content_{sfx} = ? WHERE id = 1");
+            sqlx::query(sqlx::AssertSqlSafe(up.as_str()))
+                .bind(title)
+                .bind(content)
+                .execute(pool)
+                .await
+                .unwrap();
+        }
+        // ⚠ 要補 `NULL as tags`：`PostRow` 的 tags 不是真欄位，正式查詢是
+        //   `GROUP_CONCAT(t.name) as tags` 湊出來的，裸 `SELECT *` 會 ColumnNotFound。
+        sqlx::query_as::<_, PostRow>("SELECT p.*, NULL as tags FROM posts p WHERE p.id = 1")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    async fn memory_pool() -> sqlx::SqlitePool {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        pool
+    }
+
+    /// 「有標題但沒內文」不算該語系可用。
+    ///
+    /// ⚠ cargo-mutants 指出把 `&&` 換成 `||` 沒有任何測試會紅。那個改動的後果很具體：
+    /// 語系切換器會列出該語系、讀者點下去，`locale_content` 卻因為要求 title 與 content
+    /// 都非空而回 None —— 也就是「選單說有、點進去沒有」。
+    #[tokio::test]
+    async fn available_locales_只認標題與內文都在的語系() {
+        let pool = memory_pool().await;
+        let row = row_with(
+            &pool,
+            "zh-TW",
+            &[
+                ("en", Some("English title"), Some("English body")), // 兩者都有 → 算
+                ("ja", Some("日本語タイトル"), None),                // 只有標題 → 不算
+                ("ko", None, Some("한국어 본문")),                   // 只有內文 → 不算
+                ("zh_cn", Some(""), Some("")),                       // 空字串等同沒有
+            ],
+        )
+        .await;
+
+        let locales = available_locales_with_source(&row, "zh-TW");
+        assert_eq!(locales, vec!["zh-TW".to_string(), "en".to_string()], "只有 source 與 en 該被列出");
+    }
+
+    /// **`locale_content`（Rust，列表用）與 `locale_available_sql`（SQL，計數用）必須同語意。**
+    ///
+    /// 這是 `locale_available_sql` 的註解點名、但先前沒有任何測試盯著的不變式。
+    /// 兩邊漂掉的症狀寫在那段註解裡：「分類寫 4 篇、點進去 0 篇」「分頁說有 11 篇卻翻到空白頁」
+    /// ——列表 `continue` 掉沒譯文的文章，計數卻照算。
+    ///
+    /// 做法是把同一列同時餵給兩邊：Rust 直接呼叫，SQL 則把述詞放進 `SELECT` 讓 SQLite 自己算。
+    /// 涵蓋各種「部分翻譯」的組合 × 五個語系。
+    #[tokio::test]
+    async fn rust_與_sql_對同一列的判斷必須一致() {
+        /// (來源語, 各語系的 (欄位後綴, 標題, 內文), 這一組在測什麼)
+        type Case<'a> = (&'a str, &'a [(&'a str, Option<&'a str>, Option<&'a str>)], &'a str);
+        let cases: &[Case<'_>] = &[
+            ("zh-TW", &[], "完全沒有譯文"),
+            ("zh-TW", &[("en", Some("t"), Some("c"))], "只有英文完整"),
+            ("zh-TW", &[("ja", Some("t"), None)], "日文只有標題"),
+            ("zh-TW", &[("ko", None, Some("c"))], "韓文只有內文"),
+            ("zh-TW", &[("zh_cn", Some(""), Some(""))], "簡中是空字串"),
+            ("en", &[("zh_cn", Some("t"), Some("c"))], "來源語是英文"),
+            (
+                "zh-TW",
+                &[
+                    ("en", Some("t"), Some("c")),
+                    ("ja", Some("t"), Some("c")),
+                    ("ko", Some("t"), Some("c")),
+                    ("zh_cn", Some("t"), Some("c")),
+                ],
+                "全語系齊全",
+            ),
+        ];
+
+        for (source, i18n, why) in cases {
+            let pool = memory_pool().await;
+            let row = row_with(&pool, source, i18n).await;
+            for locale in I18N_LOCALES {
+                let rust_says = locale_content(&row, locale).is_some();
+                let sql = format!("SELECT {} FROM posts WHERE id = 1", locale_available_sql(locale, "posts"));
+                let sql_says: i64 =
+                    sqlx::query_scalar(sqlx::AssertSqlSafe(sql.as_str())).fetch_one(&pool).await.unwrap();
+                assert_eq!(
+                    rust_says,
+                    sql_says == 1,
+                    "{why}：locale={locale} 時 Rust 說 {rust_says}、SQL 說 {}——\
+                     兩邊漂掉就會出現「分類寫 N 篇、點進去 0 篇」",
+                    sql_says == 1,
+                );
+            }
+        }
+    }
+}
