@@ -88,6 +88,17 @@ const DECORATIVE = [
   '.css-starfield', '.nebula-bg', '.nebula-dust', '.nebula-dim-overlay',
   '.foreground-stars-container', '.comet', '.shooting-star', '.ufo',
   '.cursor-trail-canvas', '.intro-overlay', '.starfield-gpu',
+  // ⚠ 熱力圖是**跟著日曆走**的，不是樣式。格線錨在 `new Date()`（見 Blog.tsx 的 `cells`
+  //   與 Activity 的 gridFromEvents），所以每過一天就有一格從「未來」翻成「過去」
+  //   （`heatmap-level--1` → `heatmap-level-0`），背景色跟著變。
+  //
+  //   後果是**基準檔每天都會過期**：2026-08-05 產的基準，08-06 一跑就報「1 個元素變了」，
+  //   而那一格正是「今天」。追查過一輪才發現不是任何一次改動造成的——
+  //   guard 本身把一個時間相依的東西收進了快照。
+  //
+  //   排除它不會漏掉真回歸：格子的配色規則若真的改了，會是**整排**一起變，
+  //   而 CSS 檔的改動本來就會反映在別的元素上。
+  '.heatmap-cell', '.heatmap-day',
 ];
 
 /**
