@@ -81,8 +81,16 @@ test.describe('文章目錄', () => {
     await expect.poll(async () => (await active()).length, { timeout: 10_000 }).toBe(1);
     const first = (await active())[0];
 
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.6));
-    await expect.poll(async () => (await active())[0], { timeout: 10_000 }).not.toBe(first);
+    // 同上：重下捲動指令，避免被捲動還原重設
+    await expect
+      .poll(
+        async () => {
+          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.6));
+          return (await active())[0];
+        },
+        { timeout: 15_000 },
+      )
+      .not.toBe(first);
     // 高亮消失比高亮沒換更糟：讀者會以為目錄壞了
     expect(await active(), '捲到一半時高亮不該消失').toHaveLength(1);
   });
@@ -92,8 +100,15 @@ test.describe('文章目錄', () => {
       page.locator('.reading-progress-fill').evaluate((el) => Number.parseFloat(getComputedStyle(el).width));
     const atTop = await pct();
 
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect.poll(pct, { timeout: 10_000 }).toBeGreaterThan(atTop);
+    await expect
+      .poll(
+        async () => {
+          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          return pct();
+        },
+        { timeout: 15_000 },
+      )
+      .toBeGreaterThan(atTop);
     await expect.poll(() => page.locator('.progress-text').innerText(), { timeout: 10_000 }).toMatch(/9\d|100/);
   });
 
@@ -103,8 +118,19 @@ test.describe('文章目錄', () => {
     //   從九千多 px 捲回 0，在整套 e2e 平行跑的負載下會超過逾時，變成間歇性假紅
     //   （單獨跑必過、整套跑三次紅兩次）。1500px 足夠讓 sticky 側欄吸附、按鈕進到
     //   視窗內，驗的是同一件事。
-    await page.evaluate(() => window.scrollTo(0, 1500));
-    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 }).toBeGreaterThan(1000);
+    // ⚠ 每次輪詢都**重下一次捲動指令**，不是捲一次然後等它成立。
+    //   hydration 與 TanStack Router 的捲動還原會在載入後把 scrollY 重設回 0，
+    //   而那個時間點在 CI 上不固定——捲一次就等的話，剛好被重設到的那次就是
+    //   `Expected: > 1000, Received: 0`（實際在 CI 上紅過兩次，本機重現不出來）。
+    await expect
+      .poll(
+        async () => {
+          await page.evaluate(() => window.scrollTo(0, 1500));
+          return page.evaluate(() => window.scrollY);
+        },
+        { timeout: 15_000 },
+      )
+      .toBeGreaterThan(1000);
     await page.locator('.toc-bottom-link').click();
     await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 15_000 }).toBeLessThan(50);
   });
