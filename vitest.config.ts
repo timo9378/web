@@ -11,6 +11,9 @@ export default defineConfig({
     // CI 多產一份 JUnit 給 Codecov Test Analytics（每條測試的歷史失敗率 / flaky）。
     // 寫在這裡而不是在 workflow 裡改寫指令：`pnpm test` 是 CLAUDE.md 列的門檻指令，
     // 兩邊跑的必須是同一條，不然「本機綠 CI 紅」會多一個說不清的來源。
+    // 只補環境缺口（localStorage / matchMedia / IntersectionObserver…），
+    // 不改變任何被測程式的行為。理由與實測見 vitest.setup.ts 的檔頭。
+    setupFiles: ['./vitest.setup.ts'],
     reporters: process.env.CI ? ['default', 'junit'] : ['default'],
     outputFile: { junit: './junit-frontend.xml' },
     // 覆蓋率同樣只在 CI 自動打開（本機跑 `pnpm test` 不該多付插樁的時間）。
