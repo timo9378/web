@@ -245,4 +245,168 @@ mod tests {
         assert!(!key_matches("abcdef", "abc"));
         assert!(!key_matches("", "abc"));
     }
+
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    /// 起一台假的 GlitchTip，並把 `SENTRY_FRONTEND_DSN` 指過去。
+    ///
+    /// ⚠ 這裡動 process 全域的環境變數，只有在**一個測試一個行程**的前提下才安全——
+    ///   而這個專案本來就強制 `cargo nextest`（見 .cargo/mutants.toml 與 CLAUDE.md）。
+    ///   拿 `cargo test` 跑會讓這幾條互相蓋，症狀是隨機幾條紅、每次還不一樣。
+    async fn upstream(project: &str, key: &str) -> MockServer {
+        let server = MockServer::start().await;
+        let host = server.uri();
+        // SAFETY: nextest 一個測試一個行程，沒有其他執行緒同時讀寫環境變數
+        unsafe {
+            std::env::set_var(
+                "SENTRY_FRONTEND_DSN",
+                format!("{host}/{project}").replace("://", &format!("://{key}@")),
+            )
+        };
+        unsafe { std::env::remove_var("SENTRY_TUNNEL_PUBLIC_KEY") };
+        server
+    }
+
+    fn envelope(dsn: &str) -> Bytes {
+        Bytes::from(format!("{{\"dsn\":\"{dsn}\"}}\n{{\"type\":\"event\"}}\n{{}}"))
+    }
+
+    /// 轉發成功的那條路徑：上游必須真的收到一次，而且帶對 content-type 與 sentry_key。
+    ///
+    /// ⚠ 這幾條測試都必須驗「上游有沒有被呼叫」，不能只看回傳碼——
+    ///   這兩個端點**一律回 202**（檔頭寫明的設計），所以狀態碼在任何情況下都一樣，
+    ///   只斷言它等於什麼都沒測到。
+    #[tokio::test]
+    async fn envelope_轉發到上游並帶上真正的_key() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST"))
+            .and(path("/api/7/envelope/"))
+            .and(query_param("sentry_key", "realkey"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let state = crate::state::test_state().await;
+        let code = tunnel(State(state), HeaderMap::new(), envelope("http://realkey@x/7")).await;
+        assert_eq!(code, StatusCode::ACCEPTED);
+        // MockServer 在 drop 時驗證 `.expect(1)`
+    }
+
+    /// DSN 的 key 不符就丟掉。這是這個端點唯一的濫用防線——
+    /// 不驗的話它就是一台對外開放的 Sentry 轉發器，任何人都能拿它往別人的專案送東西。
+    #[tokio::test]
+    async fn key_不符的_envelope_不轉發() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST")).respond_with(ResponseTemplate::new(200)).expect(0).mount(&server).await;
+
+        let state = crate::state::test_state().await;
+        let code = tunnel(State(state), HeaderMap::new(), envelope("http://WRONGKEY@x/7")).await;
+        assert_eq!(code, StatusCode::ACCEPTED, "不論如何都回 202");
+    }
+
+    /// 超過上限的 envelope 直接丟，不佔上游頻寬。
+    #[tokio::test]
+    async fn 超過上限的_envelope_不轉發() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST")).respond_with(ResponseTemplate::new(200)).expect(0).mount(&server).await;
+
+        let state = crate::state::test_state().await;
+        let big = Bytes::from(vec![b'x'; MAX_BODY + 1]);
+        assert_eq!(tunnel(State(state), HeaderMap::new(), big).await, StatusCode::ACCEPTED);
+    }
+
+    /// 第一行不是合法 JSON（或整個不是 envelope 格式）就丟。
+    #[tokio::test]
+    async fn 首行不是_json_的不轉發() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST")).respond_with(ResponseTemplate::new(200)).expect(0).mount(&server).await;
+
+        let state = crate::state::test_state().await;
+        let junk = Bytes::from_static(b"not json at all\nsecond line");
+        assert_eq!(tunnel(State(state), HeaderMap::new(), junk).await, StatusCode::ACCEPTED);
+    }
+
+    /// 讀者的真實 IP 要原樣帶給上游，否則 GlitchTip 會把所有事件都算在後端容器頭上。
+    #[tokio::test]
+    async fn 轉發時帶上讀者的真實_ip() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST"))
+            .and(wiremock::matchers::header("x-forwarded-for", "203.0.113.9"))
+            .and(wiremock::matchers::header("x-real-ip", "203.0.113.9"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "203.0.113.9".parse().unwrap());
+        headers.insert("x-real-ip", "203.0.113.9".parse().unwrap());
+
+        let state = crate::state::test_state().await;
+        tunnel(State(state), headers, envelope("http://realkey@x/7")).await;
+    }
+
+    /// CSP report 的正常路徑。
+    #[tokio::test]
+    async fn csp_report_轉發到_security_端點() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST"))
+            .and(path("/api/7/security/"))
+            .and(query_param("sentry_key", "realkey"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let state = crate::state::test_state().await;
+        let body = Bytes::from_static(br#"{"csp-report":{"document-uri":"https://x/"}}"#);
+        assert_eq!(csp_report(State(state), HeaderMap::new(), body).await, StatusCode::ACCEPTED);
+    }
+
+    /// 形狀不對的就丟——這個端點是公開的，不先驗一下等於幫別人往資料庫塞任意 JSON。
+    #[tokio::test]
+    async fn 沒有_csp_report_欄位的不轉發() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST")).respond_with(ResponseTemplate::new(200)).expect(0).mount(&server).await;
+
+        let state = crate::state::test_state().await;
+        for body in [&br#"{"foo":1}"#[..], &br#"{"csp-report":"not an object"}"#[..], b"not json"] {
+            let code = csp_report(State(state.clone()), HeaderMap::new(), Bytes::from_static(body)).await;
+            assert_eq!(code, StatusCode::ACCEPTED);
+        }
+    }
+
+    /// CSP report 也有自己的（小得多的）上限。
+    #[tokio::test]
+    async fn 超過上限的_csp_report_不轉發() {
+        let server = upstream("7", "realkey").await;
+        Mock::given(method("POST")).respond_with(ResponseTemplate::new(200)).expect(0).mount(&server).await;
+
+        let state = crate::state::test_state().await;
+        let big = Bytes::from(vec![b'x'; MAX_CSP_BODY + 1]);
+        assert_eq!(csp_report(State(state), HeaderMap::new(), big).await, StatusCode::ACCEPTED);
+    }
+
+    /// 前端 bundle 那把假 key：設了 `SENTRY_TUNNEL_PUBLIC_KEY` 之後，
+    /// envelope 要帶**那一把**才過，而轉發時換成真的。這正是這層區隔的意義。
+    #[tokio::test]
+    async fn 設了_tunnel_key_時只認那一把_轉發仍用真_key() {
+        let server = upstream("7", "realkey").await;
+        // SAFETY: 同上，nextest 一個測試一個行程
+        unsafe { std::env::set_var("SENTRY_TUNNEL_PUBLIC_KEY", "fakekey") };
+        Mock::given(method("POST"))
+            .and(query_param("sentry_key", "realkey"))
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let state = crate::state::test_state().await;
+        // 帶假 key → 過
+        tunnel(State(state.clone()), HeaderMap::new(), envelope("http://fakekey@x/7")).await;
+        // 帶真 key → 不過（前端不該知道真 key）
+        tunnel(State(state), HeaderMap::new(), envelope("http://realkey@x/7")).await;
+    }
 }
