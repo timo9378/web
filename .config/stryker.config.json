@@ -13,7 +13,17 @@
     "",
     "用法：pnpm mutate         （報告在 reports/mutation/mutation.html）",
     "沒有接進 CI：這是拿來『找洞』的工具，不是門檻。",
-    "⚠ `plugins` 必須明確列出：Stryker 靠掃 node_modules 找外掛，而 pnpm 的隔離式 node_modules 讓它掃不到（錯誤訊息是 `no TestRunner plugins were loaded`）。"
+    "⚠ `plugins` 必須明確列出：Stryker 靠掃 node_modules 找外掛，而 pnpm 的隔離式 node_modules 讓它掃不到（錯誤訊息是 `no TestRunner plugins were loaded`）。",
+    "",
+    "⚠⚠ `ignorePatterns` 是**必須**的，不是最佳化。Stryker 會把整個專案複製到沙箱，",
+    "  而它的預設排除清單只有 node_modules / .git / reports 那幾個——**它不讀 .gitignore**。",
+    "  這裡的 `target/`（Rust 建置產物）因此被整包複製：實測一次跑完留下 **115 GB** 的",
+    "  `.stryker-tmp/sandbox-XXXX`，其中 114 GB 是 target。而 Stryker 是 JS 的工具，",
+    "  一個 Rust 的 .o 檔都用不到。",
+    "  新增大型產物目錄時記得同步加進來。",
+    "",
+    "⚠ `cleanTempDir: \"always\"` —— 預設只在成功時清。而變異測試最容易半途中止",
+    "  （逾時、Ctrl-C、設定錯誤），那幾次留下的沙箱正是最大的那幾個。"
   ],
   "packageManager": "pnpm",
   "reporters": [
@@ -42,5 +52,24 @@
   "timeoutMS": 60000,
   "plugins": [
     "@stryker-mutator/vitest-runner"
-  ]
+  ],
+  "ignorePatterns": [
+    "target",
+    ".output",
+    "dist",
+    "public",
+    "coverage",
+    "reports",
+    "mutants.out",
+    "mutants.out.old",
+    ".e2e-coverage",
+    "test-results",
+    "playwright-report",
+    ".playwright-mcp",
+    "backend",
+    "docs",
+    ".git",
+    ".stryker-tmp"
+  ],
+  "cleanTempDir": "always"
 }
