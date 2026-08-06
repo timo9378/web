@@ -33,6 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { expect, test } from './fixtures';
+import { gotoAdmin, signIn } from './admin-session';
 import type { Page } from '@playwright/test';
 
 // 專案是 ESM（package.json 的 "type": "module"），沒有 __dirname。
@@ -47,6 +48,27 @@ const UPDATE = process.env.UPDATE_STYLE_BASELINE === '1';
 const ROUTES = [
   '/', '/about', '/blog', '/photos', '/setup',
   '/history', '/friends', '/bookshelf', '/watch', '/messages', '/about-site',
+];
+
+/**
+ * 後台頁面。
+ *
+ * ⚠ 加進來是因為這支測試漏掉了一次真實的回歸：升 Tailwind v4 之後，`AdminTheme.css`
+ * 那條未分層的 `:where(…) button { padding:0; border-radius:0; font-size:inherit }`
+ * 反過來壓死 `@layer utilities`（v4 用原生 cascade layer，未分層恆勝，跟特異性無關），
+ * 後台每顆按鈕的 `px-3 py-2 rounded-md text-sm` 全部歸零、欄位擠成一團。
+ * 上面那 11 條公開路由**一個像素都沒變**，所以整套 e2e 全綠——是使用者回報才發現的。
+ *
+ * `padding-*` / `border-radius` / `font-size` / `color` 本來就在 PROPS 裡，
+ * 差的只是沒有任何一條測試打開過後台。
+ *
+ * 後台沒有密碼登入 UI（走 OAuth），所以照 admin-session.ts 自簽一個 OWNER token。
+ * 每個路由要等的東西不一樣，用標題（編輯器那種沒有 <h1> 的頁面才需要另外處理）。
+ */
+const ADMIN_ROUTES: { route: string; heading: string | RegExp }[] = [
+  { route: '/admin/dashboard', heading: /儀表板|Dashboard/ },
+  { route: '/admin/posts', heading: /文章/ },
+  { route: '/admin/tags', heading: '標籤管理' },
 ];
 
 /**
@@ -155,56 +177,74 @@ async function collect(page: Page): Promise<Record<string, string>> {
  */
 const hash = (s: string) => BigInt(`0x${createHash('sha1').update(s).digest('hex').slice(0, 16)}`).toString();
 
+/**
+ * 收集並與基準比對。抽出來是因為後台路由的「怎麼到那一頁」不一樣（要先自簽 token），
+ * 但「到了之後怎麼比」完全相同——抄一份的下場是其中一份會慢慢跟另一份不一樣。
+ */
+async function compareWithBaseline(page: Page, route: string) {
+  // 動畫關掉：不關的話 transition 中途的值會混進來
+  await page.addStyleTag({
+    content: '*,*::before,*::after{transition:none!important;animation:none!important}',
+  });
+  await waitForDomStable(page);
+
+  const raw = await collect(page);
+  const hashed: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) hashed[k] = hash(v);
+
+  const file = fileFor(route);
+  if (UPDATE) {
+    fs.mkdirSync(BASELINE_DIR, { recursive: true });
+    // 排序後輸出：元素順序不影響語意，但排過的檔案 diff 才讀得懂
+    const sorted = Object.fromEntries(Object.entries(hashed).sort(([a], [b]) => a.localeCompare(b)));
+    fs.writeFileSync(file, `${JSON.stringify(sorted, null, 1)}\n`);
+    return;
+  }
+
+  expect(fs.existsSync(file), `${route} 沒有基準檔——新增頁面要先跑一次更新`).toBe(true);
+  const want = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, string>;
+
+  // ⚠ 只比對「兩邊都存在」的路徑。
+  //
+  // 只出現在一邊的路徑代表 DOM 結構不同，而**CSS 改不動 DOM**——那種差異一定來自
+  // 資料或時序。實際踩過：種子資料的時間戳是相對的，首頁「最近更新」清單的項目數
+  // 因此會隨「跑的時間」變，本機產的基準拿到 CI 就報 4 個元素變了（重試也一樣紅，
+  // 所以不是 flaky，是結構差異被誤判成樣式差異）。
+  //
+  // 忽略它們不會漏掉真的回歸：樣式回歸一定發生在「同一個元素、值變了」。
+  const onlyOneSide: string[] = [];
+  const changed: string[] = [];
+  for (const k of new Set([...Object.keys(want), ...Object.keys(hashed)])) {
+    if (want[k] === undefined || hashed[k] === undefined) { onlyOneSide.push(k); continue; }
+    if (want[k] !== hashed[k]) changed.push(k);
+  }
+  if (onlyOneSide.length) {
+    console.log(`${route}：${onlyOneSide.length} 個路徑只存在一邊（DOM 結構差異，非樣式），已略過`);
+  }
+  expect(
+    changed.slice(0, 20),
+    `${route}：${changed.length} 個元素的計算後樣式變了（另有 ${onlyOneSide.length} 個路徑只存在一邊，` +
+      `那是 DOM 結構差異不算）。若是預期中的改動：\n` +
+      `  UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style\n` +
+      `並在 PR 說明為什麼這些元素該變。`,
+  ).toEqual([]);
+}
+
 test.describe('計算後樣式沒有非預期的變化', () => {
   for (const route of ROUTES) {
     test(`${route} 的計算後樣式與基準一致`, async ({ page }) => {
       await page.goto(route, { waitUntil: 'networkidle' });
-      // 動畫關掉：不關的話 transition 中途的值會混進來
-      await page.addStyleTag({
-        content: '*,*::before,*::after{transition:none!important;animation:none!important}',
-      });
-      await waitForDomStable(page);
+      await compareWithBaseline(page, route);
+    });
+  }
+});
 
-      const raw = await collect(page);
-      const hashed: Record<string, string> = {};
-      for (const [k, v] of Object.entries(raw)) hashed[k] = hash(v);
-
-      const file = fileFor(route);
-      if (UPDATE) {
-        fs.mkdirSync(BASELINE_DIR, { recursive: true });
-        // 排序後輸出：元素順序不影響語意，但排過的檔案 diff 才讀得懂
-        const sorted = Object.fromEntries(Object.entries(hashed).sort(([a], [b]) => a.localeCompare(b)));
-        fs.writeFileSync(file, `${JSON.stringify(sorted, null, 1)}\n`);
-        return;
-      }
-
-      expect(fs.existsSync(file), `${route} 沒有基準檔——新增頁面要先跑一次更新`).toBe(true);
-      const want = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, string>;
-
-      // ⚠ 只比對「兩邊都存在」的路徑。
-      //
-      // 只出現在一邊的路徑代表 DOM 結構不同，而**CSS 改不動 DOM**——那種差異一定來自
-      // 資料或時序。實際踩過：種子資料的時間戳是相對的，首頁「最近更新」清單的項目數
-      // 因此會隨「跑的時間」變，本機產的基準拿到 CI 就報 4 個元素變了（重試也一樣紅，
-      // 所以不是 flaky，是結構差異被誤判成樣式差異）。
-      //
-      // 忽略它們不會漏掉真的回歸：樣式回歸一定發生在「同一個元素、值變了」。
-      const onlyOneSide: string[] = [];
-      const changed: string[] = [];
-      for (const k of new Set([...Object.keys(want), ...Object.keys(hashed)])) {
-        if (want[k] === undefined || hashed[k] === undefined) { onlyOneSide.push(k); continue; }
-        if (want[k] !== hashed[k]) changed.push(k);
-      }
-      if (onlyOneSide.length) {
-        console.log(`${route}：${onlyOneSide.length} 個路徑只存在一邊（DOM 結構差異，非樣式），已略過`);
-      }
-      expect(
-        changed.slice(0, 20),
-        `${route}：${changed.length} 個元素的計算後樣式變了（另有 ${onlyOneSide.length} 個路徑只存在一邊，` +
-          `那是 DOM 結構差異不算）。若是預期中的改動：\n` +
-          `  UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style\n` +
-          `並在 PR 說明為什麼這些元素該變。`,
-      ).toEqual([]);
+test.describe('後台的計算後樣式沒有非預期的變化', () => {
+  for (const { route, heading } of ADMIN_ROUTES) {
+    test(`${route} 的計算後樣式與基準一致`, async ({ page }) => {
+      await signIn(page);
+      await gotoAdmin(page, route, heading);
+      await compareWithBaseline(page, route);
     });
   }
 });
