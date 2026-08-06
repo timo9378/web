@@ -19,6 +19,14 @@ let runner: StarfieldRunner | null = null;
 // init 是 async（renderer.init + 貼圖）——先到的狀態訊息記下來，ready 後補放
 let lastScroll = 0;
 let lastSaturn: { visible: boolean; animate: boolean } | null = null;
+// ⚠ running 也必須補放，理由跟上面兩個不同：它不只是「狀態晚一點才對」。
+//
+// runner 建好時預設是跑的。所以 init 期間抵達的 `running:false` 被丟掉的話，
+// 使用者已經進了全螢幕、背景卻在 init 完成後自己跑起來——而暫停這件事存在的唯一理由
+// 就是「全螢幕播影片時不要跟影片搶 GPU」（見 SpaceBackdropShell 的長註解：
+// 沒停掉時 Edge 上連續 seek 第 8~15 次就會把媒體管線卡死）。
+// 冷啟動第一次進文章頁按全螢幕正好落在這個窗口裡。
+let lastRunning: boolean | null = null;
 
 self.onmessage = (e: MessageEvent<InMsg>) => {
   const msg = e.data;
@@ -31,10 +39,14 @@ self.onmessage = (e: MessageEvent<InMsg>) => {
           height: msg.height,
           dpr: msg.dpr,
           onPerf: (fps, avgMs, quality) => self.postMessage({ type: 'perf', fps, avgMs, quality }),
+          // device lost：worker 裡的 console.error 不會出現在頁面 console，而且這個 renderer
+          // 之後一幀都不會再畫。轉給主執行緒，由它換一張新 canvas 重建（見 StarfieldGpu）。
+          onDeviceLost: (message) => self.postMessage({ type: 'lost', message }),
         });
         runner = r;
         runner.setScroll(lastScroll);
         if (lastSaturn) runner.setSaturn(lastSaturn.visible, lastSaturn.animate);
+        if (lastRunning !== null) runner.setRunning(lastRunning);
         self.postMessage({ type: 'ready', backend });
       } catch (err) {
         self.postMessage({ type: 'error', message: String(err) });
@@ -43,6 +55,7 @@ self.onmessage = (e: MessageEvent<InMsg>) => {
   } else if (msg.type === 'resize') {
     runner?.setSize(msg.width, msg.height);
   } else if (msg.type === 'running') {
+    lastRunning = msg.value;
     runner?.setRunning(msg.value);
   } else if (msg.type === 'scroll') {
     lastScroll = msg.y;

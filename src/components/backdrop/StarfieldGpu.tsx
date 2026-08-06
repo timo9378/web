@@ -5,7 +5,7 @@
 //   fallback = 主執行緒直接跑同一個 runner（無 OffscreenCanvas 的瀏覽器）
 //   backend  = WebGPU（有 adapter）/ WebGL2（three 自動 fallback）——同一份場景碼四種組合全吃
 // 場景/渲染全在 lib/starfieldGpu.ts；本元件只管 canvas 元素、訊息、徽章/量測 overlay。
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // type-only：編譯期抹除，不影響 lazy dynamic import 的 chunk 邊界
 import type { StarfieldRunner } from '@/lib/starfieldGpu';
 
@@ -33,6 +33,46 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
   const perfDebug = useMemo(() => new URLSearchParams(window.location.search).get('debug') === 'perf', []);
   // 統一控制介面：worker 路徑=postMessage、主執行緒路徑=直呼 runner（見下兩個 effect）
   const controlRef = useRef<{ scroll(y: number): void; saturn(v: boolean, a: boolean): void } | null>(null);
+
+  // ── GPU device / WebGL context 掉了之後的重建 ────────────────────────────
+  //
+  // 為什麼需要：device 掉了是永久的，three 只會 console.error 一行（在 worker 裡連那行都
+  // 看不到），renderer 之後一幀都不會再畫。實測 loseContext 後 draw call 歸零，等 15 秒、
+  // 換路由都不會回來。使用者看到的就是「星空停住、切回首頁土星也不出現，但流星還在跑」——
+  // 流星是 CSS/DOM 特效，跟這條管線無關。
+  //
+  // 重建方式是 bump generation：它同時是 <canvas> 的 key（transferControlToOffscreen 一張
+  // canvas 只能做一次，所以必須換一個新的 DOM 節點）與下面那個 effect 的依賴，
+  // 於是舊 worker/runner 走正常的 cleanup 收掉，新的從頭建起來。
+  const [generation, setGeneration] = useState(0);
+  const recoveriesRef = useRef(0);
+  const recoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 上限存在的理由：device 一直掉的機器（驅動有問題）不該無限重建，那比不顯示更糟。
+  // 用完就收掉整個 3D，由 shell 的 DOM 特效兜底。
+  const MAX_RECOVERIES = 3;
+
+  const recover = useCallback((reason: string) => {
+    if (recoveriesRef.current >= MAX_RECOVERIES) {
+      console.warn(`[StarfieldGpu] ${reason}；已重建 ${MAX_RECOVERIES} 次仍失敗，放棄 3D（DOM 特效繼續）`);
+      setFailed(true);
+      return;
+    }
+    recoveriesRef.current += 1;
+    console.warn(`[StarfieldGpu] ${reason}；第 ${recoveriesRef.current} 次重建`);
+    // 分頁還在背景時重建沒有意義（GPU 資源正是那時候被回收的），等切回來再做。
+    if (document.hidden) {
+      const once = () => {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', once);
+        setGeneration((g) => g + 1);
+      };
+      document.addEventListener('visibilitychange', once);
+      return;
+    }
+    recoverTimerRef.current = setTimeout(() => setGeneration((g) => g + 1), 500);
+  }, []);
+
+  useEffect(() => () => { clearTimeout(recoverTimerRef.current ?? undefined); }, []);
 
   // 捲動轉發（worker 無 window）+ 土星顯示（僅首頁）——控制介面就緒後立即同步當前狀態
   useEffect(() => {
@@ -69,6 +109,14 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
         { type: 'init', canvas: offscreen, width, height, dpr: window.devicePixelRatio },
         [offscreen],
       );
+      // ⚠ 明送一次當下的狀態，不能只靠下面的 visibilitychange / fullscreenchange。
+      //
+      // 那兩個事件只在「狀態改變」時觸發，而這個元件是 lazy 的（intro 播完才掛、
+      // three chunk 還要下載）——在它掛好之前就進全螢幕的話，事件早就發完了，
+      // 監聽器接不到任何東西，runner 於是用預設值「跑」起來，整個全螢幕期間都在跟影片搶 GPU。
+      // 實測：domcontentloaded 後 600ms 進全螢幕，一則 running 訊息都沒送出。
+      // worker 端會把這個值存進 lastRunning，等 async init 完成後補套。
+      worker.postMessage({ type: 'running', value: shouldRun() });
       controlRef.current = {
         scroll: (y) => worker.postMessage({ type: 'scroll', y }),
         saturn: (v, a) => worker.postMessage({ type: 'saturn', visible: v, animate: a }),
@@ -76,6 +124,7 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       const onMsg = (e: MessageEvent<{ type: string; backend?: string; fps?: number; avgMs?: number; quality?: number; message?: string }>) => {
         if (e.data.type === 'ready') setBackend(`${e.data.backend} · worker`);
         else if (e.data.type === 'perf') setPerf({ fps: e.data.fps ?? 0, avgMs: e.data.avgMs ?? 0, quality: e.data.quality });
+        else if (e.data.type === 'lost') recover(e.data.message ?? 'GPU device lost');
         else if (e.data.type === 'error') {
           // canvas 已 transfer、無法回收給主執行緒重用 → 本 session 放棄（外層有 DOM 特效兜底）
           console.warn('[StarfieldGpu] worker 初始化失敗:', e.data.message);
@@ -108,9 +157,15 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
         const { runner, backend: be } = await createStarfieldRunner({
           canvas, width, height, dpr: window.devicePixelRatio,
           onPerf: (fps, avgMs, quality) => setPerf({ fps, avgMs, quality }),
+          onDeviceLost: (message) => { if (!disposed) recover(message); },
         });
         if (disposed) { runner.dispose(); return; }
         runnerHandle = runner;
+        // runner 預設是跑的，而 init 是 async——這段期間發生的 visibility/fullscreen 變化
+        // 只會打到還是 null 的 runnerHandle 上、被靜默丟掉。補套一次當下的狀態，
+        // 否則「冷啟動時就進全螢幕」會讓背景在影片播放中自己跑起來（worker 路徑同理，
+        // 見 spaceGpuWorker 的 lastRunning）。
+        runner.setRunning(shouldRun());
         controlRef.current = {
           scroll: (y) => runner.setScroll(y),
           saturn: (v, a) => runner.setSaturn(v, a),
@@ -133,14 +188,17 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       document.removeEventListener('fullscreenchange', onVis);
       runnerHandle?.dispose();
     };
-  }, []);
+    // generation 變化 = device lost 之後要整組重建（canvas 換了新的 DOM 節點，見上面的註解）
+  }, [generation, recover]);
 
   // 初始化失敗（無 WebGPU 也無 WebGL 的機器）→ 優雅消失，DOM 特效由 shell 兜底
   if (failed) return null;
 
   return (
     <>
-      <canvas ref={canvasRef} style={{ ...canvasStyle, zIndex }} />
+      {/* key=generation：transferControlToOffscreen 一張 canvas 只能做一次，
+          device lost 之後必須換一個全新的 DOM 節點才重建得起來 */}
+      <canvas key={generation} ref={canvasRef} style={{ ...canvasStyle, zIndex }} />
       {/* backend 徽章：?debug=perf 才顯示（正式訪客不看 debug 資訊） */}
       {perfDebug && (
         <div style={{

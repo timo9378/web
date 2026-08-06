@@ -31,6 +31,20 @@ export interface StarfieldInit {
   dpr: number;
   /** 每秒回報一次渲染迴圈 fps / 平均幀時 / 目前品質等級（?debug=perf 用） */
   onPerf?: (fps: number, avgMs: number, quality?: number) => void;
+  /**
+   * GPU device / WebGL context 掉了。
+   *
+   * 這不是理論上的邊角情況：分頁切到背景時 GPU 行程回收資源、驅動 reset（Windows TDR）、
+   * GPU 行程崩潰重啟都會觸發，而且**掉了就是永久的**——three 的預設處理只有 console.error
+   * 一行（worker 裡的話連那行都不會轉出來），renderer 之後一幀都不會再畫。
+   * 實測：手動 loseContext 之後 draw call 直接歸零，等 15 秒、換路由都不會回來，只有重整能救。
+   *
+   * 症狀是「星空停住不動、切回首頁連土星都不出現，但流星還在跑」——後者是 CSS/DOM 特效，
+   * 跟這條 WebGL 管線無關，所以看起來像「只有 3D 死掉」。
+   *
+   * 呼叫端收到之後要整個重建（canvas 已 transfer 給 worker 的話得換一個新的 canvas 元素）。
+   */
+  onDeviceLost?: (message: string) => void;
 }
 
 interface StarLayerCfg {
@@ -199,6 +213,11 @@ export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runn
   });
   renderer.setPixelRatio(Math.min(init.dpr, 2));
   renderer.setSize(init.width, init.height, false);
+  // 覆蓋 three 的預設處理（只 console.error 一行），改成回報給呼叫端重建。見 onDeviceLost 的註解。
+  // 要在 init() 之前掛：WebGPU 的 device.lost promise 是在 init 裡建 device 時就接上的。
+  renderer.onDeviceLost = (info: { api?: string; message?: string; reason?: string | null }) => {
+    init.onDeviceLost?.(`${info.api ?? 'GPU'} device lost: ${info.message ?? '未知'}${info.reason ? ` (${info.reason})` : ''}`);
+  };
   await renderer.init();
   const backend: 'WebGPU' | 'WebGL2' =
     (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend === true ? 'WebGPU' : 'WebGL2';
