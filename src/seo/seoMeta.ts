@@ -46,6 +46,23 @@ const toIso = (s?: string | null): string | undefined => {
   return `${s.replace(' ', 'T')}Z`;
 };
 
+/**
+ * 序列化成要塞進 `<script type="application/ld+json">` 的字串。
+ *
+ * ⚠ `JSON.stringify` **不會**動 `<`，所以標題裡只要出現 `</script>`（後台可以打進去的字），
+ * HTML parser 就會在那裡把 script 提早收掉，後面的內容變成頁面上的裸 HTML。
+ * 逸出成 `<` 是 JSON 合法的字串逸出，`JSON.parse` 還原得回原字元，爬蟲讀到的值不變。
+ *
+ * 這一步在兩種情況下都是對的，所以不必先釐清框架有沒有幫忙逸出：
+ *   · 框架不逸出 → 這裡擋掉 script 被截斷
+ *   · 框架用 HTML 實體逸出 → 輸出根本不含 `<`，就不會被轉成 `&lt;`
+ *     （實體化的 JSON-LD 爬蟲反而解不開——`<script>` 裡的實體不會被還原）
+ */
+const jsonLdScript = (data: unknown): { type: string; children: string } => ({
+  type: 'application/ld+json',
+  children: JSON.stringify(data).replace(/</g, '\\u003c'),
+});
+
 /** 一般頁面（非文章）head() 用的 meta。canonicalPath 例:/music、/en/music */
 export function pageMeta(
   title: string | null,
@@ -162,13 +179,10 @@ export function articleJsonLd(
     { '@type': 'ListItem', position: 3, name: post.title, item: url },
   ];
 
-  return {
-    type: 'application/ld+json',
-    children: JSON.stringify({
-      '@context': 'https://schema.org',
-      '@graph': [blogPosting, { '@type': 'BreadcrumbList', itemListElement: crumbs }],
-    }),
-  };
+  return jsonLdScript({
+    '@context': 'https://schema.org',
+    '@graph': [blogPosting, { '@type': 'BreadcrumbList', itemListElement: crumbs }],
+  });
 }
 
 /**
@@ -178,45 +192,42 @@ export function articleJsonLd(
  */
 export function siteJsonLd(locale: Locale = DEFAULT_LOCALE): { type: string; children: string } {
   const home = `${BASE_URL}${localePathname(locale)}`;
-  return {
-    type: 'application/ld+json',
-    children: JSON.stringify({
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'WebSite',
-          '@id': `${BASE_URL}/#website`,
-          url: home,
-          name: SITE_NAME,
-          inLanguage: locale,
-          publisher: { '@id': `${BASE_URL}/#person` },
-        },
-        {
-          '@type': 'Person',
-          '@id': `${BASE_URL}/#person`,
-          name: 'Koimsurai',
-          url: BASE_URL,
-          sameAs: ['https://github.com/timo9378'],
-        },
-      ],
-    }),
-  };
+  return jsonLdScript({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${BASE_URL}/#website`,
+        url: home,
+        name: SITE_NAME,
+        inLanguage: locale,
+        publisher: { '@id': `${BASE_URL}/#person` },
+      },
+      {
+        '@type': 'Person',
+        '@id': `${BASE_URL}/#person`,
+        name: 'Koimsurai',
+        url: BASE_URL,
+        sameAs: ['https://github.com/timo9378'],
+      },
+    ],
+  });
 }
 
 /** 文章列表頁的 Blog（CollectionPage 的專用型別），讓爬蟲知道這頁是文章集合而不是普通頁。 */
 export function blogListJsonLd(locale: Locale = DEFAULT_LOCALE): { type: string; children: string } {
   const url = `${BASE_URL}${localePathname(locale, 'blog')}`;
-  return {
-    type: 'application/ld+json',
-    children: JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Blog',
-      '@id': `${url}#blog`,
-      url,
-      name: SITE_NAME,
-      inLanguage: locale,
-      isPartOf: { '@id': `${BASE_URL}/#website` },
-      publisher: { '@id': `${BASE_URL}/#person` },
-    }),
-  };
+  return jsonLdScript({
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    '@id': `${url}#blog`,
+    url,
+    name: SITE_NAME,
+    inLanguage: locale,
+    // ⚠ 這兩個 @id 指向的實體只在**首頁**出（siteJsonLd）。改動任何一邊的
+    // `#website` / `#person` 字串就會讓圖斷開，而斷開之後站上完全沒有症狀——
+    // 只是 Google 不再把這頁跟站台／作者實體連起來。seoMeta.test.ts 有釘住這組對應。
+    isPartOf: { '@id': `${BASE_URL}/#website` },
+    publisher: { '@id': `${BASE_URL}/#person` },
+  });
 }
