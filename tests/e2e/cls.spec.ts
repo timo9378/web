@@ -211,3 +211,45 @@ test('捲在文章深處重新整理，scroll restoration 不該造成位移', a
       `\n位移來源：\n${blame(r)}\n`,
   ).toBeLessThan(GOOD);
 });
+
+/**
+ * 文章內的上傳圖片一定要有 `width` / `height` 屬性。
+ *
+ * ⚠ 上面那條 CLS 門檻理論上涵蓋這件事，但它是**間接**的：位移量還受捲動位置、
+ * 圖片剛好在不在視窗內、載入時序影響，訊息也只說「CLS 超標」。這條直接檢查不變量，
+ * 壞掉時一眼看得出是哪張圖少了什麼。
+ *
+ * 為什麼值得單獨釘：這正是 2026-08 上了正式站的那個回歸——`.blog-image-wrapper`
+ * 是 `width: fit-content`，圖片載入前固有寬度是 0，只有 `aspect-ratio` 反推不出高度，
+ * 整個盒子塌掉；等圖載入才撐開，底下內容整片位移。實地量到 CLS 0.3362。
+ * 尺寸來自網址片段的 `&w=&h=`（上傳時寫入，見 handlers/upload.rs）。
+ */
+test('文章內的上傳圖片都要有 width/height，否則版面預留不了', async ({ page }) => {
+  await page.goto('/blog/4', { waitUntil: 'load' });
+
+  const imgs = await page.evaluate(() =>
+    [...document.querySelectorAll('article img')]
+      .filter((i) => i.getAttribute('src')?.includes('/uploads/'))
+      .map((i) => ({
+        src: i.getAttribute('src') ?? '',
+        w: i.getAttribute('width'),
+        h: i.getAttribute('height'),
+      })),
+  );
+
+  // 沒抓到圖 = 種子資料被改動過，這條測試什麼都沒測到。
+  // 這種「安靜地通過」比失敗更糟——CLS 守門原本就是這樣漏掉那個回歸的。
+  expect(
+    imgs.length,
+    'seed 的長文裡應該有上傳圖片（見 tests/e2e/seed.mjs 的 longArticle）——' +
+      '一張都沒有的話這條測試沒有測到東西',
+  ).toBeGreaterThan(0);
+
+  const missing = imgs.filter((i) => !i.w || !i.h);
+  expect(
+    missing.map((i) => i.src.slice(-60)),
+    `${missing.length}/${imgs.length} 張圖沒有 width/height 屬性。` +
+      '\n它們在圖片載入前會塌成 0 高，讀者捲到那裡重整就會看到整片位移。' +
+      '\n尺寸來自網址片段的 &w=&h=（上傳時寫入）——舊圖片要跑 backfill migration。',
+  ).toEqual([]);
+});
