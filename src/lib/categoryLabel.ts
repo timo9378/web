@@ -58,8 +58,18 @@ export function useTagLabel(): (name: string | null | undefined) => string {
     const map = new Map<string, string>();
     for (const t of tags) {
       // 標籤清單可能是字串或物件（兩種來源），只有物件那種才帶得到譯名。
-      if (typeof t !== 'object') continue;
-      const row = t as Record<string, unknown>;
+      //
+      // ⚠ 先落成 unknown 再收窄，`null` 那半邊才擋得住、也才不會被 oxlint 判成恆真：
+      // 型別上 `t` 不可能是 null，但那個型別是 `JSON.parse` 之後貼上去的**宣稱**，
+      // 不是保證。而 `typeof null === 'object'`——只判 typeof 的話 null 會通過守衛，
+      // 下一行存取屬性直接 TypeError，而這個函式是在 render 期間呼叫的，
+      // 一筆髒資料就會讓整個部落格頁白掉，不是只少一個譯名。
+      //
+      // （字串那半邊反而不影響結果：字串沒有 .name，本來就會被下面的 `if (name && …)`
+      //  跳過。留著是因為它把「只有物件帶得到譯名」這個意圖寫出來了。）
+      const raw: unknown = t;
+      if (typeof raw !== 'object' || raw === null) continue;
+      const row = raw as Record<string, unknown>;
       const name = typeof row.name === 'string' ? row.name : '';
       const translated = row[field];
       if (name && typeof translated === 'string' && translated) map.set(name, translated);
