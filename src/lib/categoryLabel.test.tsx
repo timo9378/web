@@ -8,9 +8,10 @@
 // 而那正是作者自己最少打開的版本。
 //
 // ⚠ 這裡刻意測 hook 的對外行為而不是把 fieldFor / suffixFor 挖出來測。
-// 那兩個函式各自寫了一份「locale → 語系變體」的判斷（一個回欄位名 `name_en`、
-// 一個回後綴 `en`），彼此沒有任何關聯——只在其中一邊加語系是最可能發生的回歸，
-// 而它只有從外部行為才看得出來（分類名翻了、tooltip 沒翻）。
+// 那兩個函式曾經各自寫了一份「locale → 語系變體」的判斷（一個回欄位名 `name_en`、
+// 一個回後綴 `en`），彼此沒有任何關聯——只在其中一邊加語系是最可能發生的回歸。
+// 現在 fieldFor 由 suffixFor 推導，但測試維持測對外行為：那樣不管日後怎麼實作，
+// 「分類名翻了、tooltip 沒翻」這個症狀都跑不掉（見最後一條）。
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
@@ -185,10 +186,14 @@ describe('useLocalizedCategoryInfo', () => {
   });
 
   // ⚠ 這條是這支測試最重要的一條。
-  // 語系 → 變體的判斷在這個檔案裡寫了**兩份**（fieldFor 回 `name_en`、suffixFor 回 `en`），
-  // 彼此沒有任何關聯。只在其中一邊加語系的話，分類名翻了但 tooltip 沒翻——
-  // 而那只有在該語系的頁面上才看得出來。
-  it('會翻分類名的語系，tooltip 也一定翻得到（兩份判斷不能漂移）', () => {
+  // 語系 → 變體的判斷原本在 categoryLabel.ts 裡寫了**兩份**（fieldFor 回 `name_en`、
+  // suffixFor 回 `en`），彼此沒有任何關聯。只在其中一邊加語系的話，分類名翻了但
+  // tooltip 沒翻——而那只有在該語系的頁面上才看得出來。
+  //
+  // 現在 fieldFor 由 suffixFor 推導，只剩一張表，這條的角色也跟著變：
+  // 它守的不再是「有沒有記得改兩邊」，而是**不准有人再把兩層拆開各寫一份**。
+  // 拆回去的那一刻這條不會馬上紅（兩份剛拆出來是一致的），但下次加語系就會紅在這裡。
+  it('會翻分類名的語系，tooltip 也一定翻得到（兩層判斷不能漂移）', () => {
     for (const l of ['en', 'ja', 'ko', 'zh-CN']) {
       const translatedLabel = labelFor(l, [CAT])('技術') !== CAT.name;
       const translatedInfo = infoFor(l)(CAT as never)?.name !== CAT.name;

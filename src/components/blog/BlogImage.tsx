@@ -5,10 +5,16 @@ import { FaTimes } from 'react-icons/fa';
 import { thumbHashToDataURL, thumbHashToApproximateAspectRatio } from 'thumbhash';
 
 /**
- * 圖片 Lightbox 組件
- * - 點擊放大圖片（浮動在頁面正中央）
- * - 滾動立即關閉（不 preventDefault，不卡頓）
- * - NAS 圖片 hover 顯示完整 EXIF 資訊（從 manifest 讀取）
+ * `BlogImage` — 文章內文的 `<img>` 渲染器（ReactMarkdown / MDX 的 `img` 元件）。
+ * - 從 URL 的 `#th=…&w=…&h=…` fragment 解出 thumbhash 佔位圖與原始尺寸（防 CLS）
+ * - 點擊放大：下方的 `ImageLightbox` modal（浮在正中央、滾動立即關閉）
+ * - NAS 圖片 hover 顯示完整 EXIF（從 manifest 讀取）
+ *
+ * ⚠ 這個檔原本叫 `gallery/ImageLightbox.tsx`，但它**跟照片牆沒有任何關係**：
+ * 唯一的 export 是 `BlogImage`，呼叫端只有 `blog/BlogPost.tsx` 與 `admin/PostPreview.tsx`
+ * （後台預覽要跟前台同一套渲染），`gallery/` 底下零個。照片牆自己的燈箱是 `PhotoViewer.tsx`。
+ * 元件依「實際 import 圖」分組（見 CLAUDE.md），所以它屬於 `blog/`；
+ * 檔名也跟著改成 export 的名字，`ImageLightbox` 留給檔案內部那個 modal。
  */
 
 interface ExifData {
