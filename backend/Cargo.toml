@@ -26,7 +26,7 @@ dotenvy = "0.15"
 # JWT 驗章/簽章（HS256），對齊 Express 的 jsonwebtoken
 # v10 default features 不含 crypto provider（只有 use_pem）→ 顯式選純 Rust 的 rust_crypto
 # （HS256 用 hmac+sha2，免 C 工具鏈，Docker/CI 都能編）。不然 runtime 會噴 CryptoProvider 找不到。
-jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
+jsonwebtoken = { version = "11.0", features = ["rust_crypto"] }
 # bcrypt 驗密碼，相容 Express 的 bcryptjs（$2a/$2b/$2y）
 bcrypt = "0.19"
 # proxy fallback 用：把未接管的請求原樣轉回 Express；stream 給 /image-proxy 串流代理
