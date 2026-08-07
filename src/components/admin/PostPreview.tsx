@@ -9,7 +9,7 @@ import { remarkAlert } from 'remark-github-blockquote-alert';
 import rehypeRaw from 'rehype-raw';
 import { MdxContent } from '@/components/mdx/MdxContent';
 import { CodeBlock, CustomParagraph } from '@/components/blog/BlogPost';
-import { BlogImage } from '@/components/gallery/ImageLightbox';
+import { BlogImage } from '@/components/blog/BlogImage';
 import { LinkHoverPreview } from '@/components/common/LinkHoverPreview';
 import { compileMdx } from '@/lib/mdx/mdx-compile';
 

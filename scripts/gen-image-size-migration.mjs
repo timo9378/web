@@ -2,7 +2,7 @@
 //
 // 為什麼要回填：上傳端從 2026-08 起才把原始尺寸寫進 URL fragment，在那之前上傳的
 // 圖片只有 `#th=<hash>`。前端拿不到尺寸就寫不出 `<img width height>`，而那是文章頁
-// CLS 的唯一解藥（見 src/components/gallery/ImageLightbox.tsx 的 decodeSizeFromSrc）。
+// CLS 的唯一解藥（見 src/components/blog/BlogImage.tsx 的 decodeSizeFromSrc）。
 //
 // 為什麼是 migration 而不是走 CMS API：這只換網址片段，不碰 MDX 內容結構——
 // 用 SQL 的 REPLACE 精準且可重跑，走 API 得把整篇內容讀出來重寫再存回去，

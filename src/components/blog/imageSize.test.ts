@@ -12,12 +12,12 @@
 // 而 Lighthouse 那種「載入一次量一次」的工具永遠測不到它（見 CLAUDE.md）。
 import { describe, expect, it } from 'vitest';
 
-import { BlogImage } from './ImageLightbox';
+import { BlogImage } from './BlogImage';
 
 /**
  * 直接測 React 元件會牽出 lightbox / EXIF / NAS 那一整串。
  * 這裡要釘的是「fragment → width/height」這段純字串邏輯，
- * 所以把它重寫一份對照——⚠ 兩邊必須一致，改了 ImageLightbox 就要改這裡。
+ * 所以把它重寫一份對照——⚠ 兩邊必須一致，改了 BlogImage.tsx 就要改這裡。
  *
  * 用對照實作而不是把函式匯出，是因為匯出一個只給測試用的內部函式會讓 knip
  * 判成未使用的匯出（CI 有鎖），而這段邏輯只有五行、抄一份的成本低於開一個洞。
@@ -92,7 +92,7 @@ describe('從 URL fragment 解原始尺寸', () => {
 });
 
 describe('元件仍然匯出得出來', () => {
-  // 這條不是形式主義：上面那份對照實作是抄的，若哪天 ImageLightbox 整個被搬走
+  // 這條不是形式主義：上面那份對照實作是抄的，若哪天 BlogImage 整個被搬走
   // 或改名，至少這裡會紅，提醒人回來看對照有沒有跟著漂移。
   it('BlogImage 還在', () => {
     expect(BlogImage).toBeTypeOf('function');

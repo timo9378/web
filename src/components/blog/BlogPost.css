@@ -3293,7 +3293,7 @@ a.series-nav-title:hover {
 }
 
 /* 圖片的放大按鈕外殼：只提供焦點與鍵盤語意，外觀完全交給裡面的 <img>
-   （見 ImageLightbox — 原本 onClick 掛在 img 上，鍵盤根本按不到）。 */
+   （見 BlogImage.tsx — 原本 onClick 掛在 img 上，鍵盤根本按不到）。 */
 .blog-image-zoom {
   display: block;
   padding: 0;

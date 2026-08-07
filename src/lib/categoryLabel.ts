@@ -9,13 +9,27 @@ import { useTranslation } from 'react-i18next';
 import { blogCategoriesDetailQueryOptions, blogTagsQueryOptions, type CategoryInfo } from '@/data/blogList';
 import { useLocale } from '@/hooks/useLocale';
 
-/** locale → CategoryInfo 上的譯名欄位名。預設語系（zh-TW）與未知語系都用 name。 */
-function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {
-  if (locale.startsWith('en')) return 'name_en';
-  if (locale.startsWith('ja')) return 'name_ja';
-  if (locale.startsWith('ko')) return 'name_ko';
-  if (locale.toLowerCase().startsWith('zh-cn')) return 'name_zh_cn';
+/**
+ * locale → 譯文欄位的後綴。預設語系（zh-TW）與未知語系回 null（用原欄位）。
+ *
+ * ⚠ 這張表是**唯一**一份。原本有兩份：`fieldFor()` 回 `'name_en'`、`suffixFor()` 回 `'en'`，
+ * 各自把同一組 `startsWith` 判斷抄了一遍。加語系時漏改其中一份不會有任何錯誤——
+ * 分類名照樣顯示，只是永遠是未翻譯的原文，而那正是「沒人會發現」的那種壞法。
+ * 現在欄位名一律由後綴推導，兩層不可能對不上；
+ * `categoryLabel.test.tsx` 最後那條（「兩層判斷不能漂移」）守的就是別再拆回兩份。
+ */
+function suffixFor(locale: string): 'en' | 'ja' | 'ko' | 'zh_cn' | null {
+  if (locale.startsWith('en')) return 'en';
+  if (locale.startsWith('ja')) return 'ja';
+  if (locale.startsWith('ko')) return 'ko';
+  if (locale.toLowerCase().startsWith('zh-cn')) return 'zh_cn';
   return null;
+}
+
+/** locale → CategoryInfo / Tag 上的譯名欄位名（`name_<後綴>`）。 */
+function fieldFor(locale: string): 'name_en' | 'name_ja' | 'name_ko' | 'name_zh_cn' | null {
+  const sfx = suffixFor(locale);
+  return sfx && (`name_${sfx}` as const);
 }
 
 /**
@@ -76,15 +90,6 @@ export function useTagLabel(): (name: string | null | undefined) => string {
     }
     return (name) => (name ? (map.get(name) ?? name) : '');
   }, [tags, locale]);
-}
-
-/** locale → 後綴（en / ja / ko / zh_cn）；預設語系回 null（用原欄位）。 */
-function suffixFor(locale: string): string | null {
-  if (locale.startsWith('en')) return 'en';
-  if (locale.startsWith('ja')) return 'ja';
-  if (locale.startsWith('ko')) return 'ko';
-  if (locale.toLowerCase().startsWith('zh-cn')) return 'zh_cn';
-  return null;
 }
 
 /**

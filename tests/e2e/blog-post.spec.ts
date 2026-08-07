@@ -87,7 +87,12 @@ test.describe('文章頁的互動', () => {
   test('圖片點得開燈箱，Esc 關得掉', async ({ page }) => {
     await page.goto(RICH);
     // 圖片包在 <button> 裡（原本 onClick 掛在 <img> 上，不可聚焦也沒有鍵盤操作）
-    const zoom = article(page).getByRole('button', { name: /放大檢視/ }).first();
+    //
+    // ⚠ 這裡必須用「放大檢視：<alt>」這個**帶冒號**的形式，不能只比對 /放大檢視/ 再 .first()。
+    // mermaid 的全螢幕鈕 aria-label 剛好就是「放大檢視」，而圖表排在圖片前面——
+    // 只比對前綴的話 .first() 會抓到圖表的鈕，然後對著沒開的燈箱等 20 秒。
+    // 原本會過只是因為種子文章裡沒有圖表；線上的文章圖表與圖片本來就常常同時出現。
+    const zoom = article(page).getByRole('button', { name: /^放大檢視：/ }).first();
     await expect(zoom, '圖片要包成可聚焦的按鈕').toBeVisible({ timeout: 15_000 });
 
     // 燈箱是 createPortal 出去的，不在 <article> 底下——用整頁的選擇器
@@ -111,6 +116,35 @@ test.describe('文章頁的互動', () => {
     await expect(lightbox).toBeVisible({ timeout: 10_000 });
     await page.locator('.image-lightbox-close').click();
     await expect(lightbox).toHaveCount(0, { timeout: 10_000 });
+  });
+
+  /**
+   * ```mermaid 的區塊必須畫成 SVG。
+   *
+   * 為什麼補這條：整套 e2e 原本**沒有任何一條會渲染 mermaid**——種子資料裡從來沒有圖表
+   * （跟 #77 的圖片一模一樣的漏法）。於是 MermaidBlock.tsx 那 575 行就算整個不動作，
+   * 測試也全綠，而讀者看到的是一塊空白或一段裸的 `graph TD`。
+   *
+   * 這條刻意只釘最外層的事實：**mermaid 有被動態載入、有跑出 <svg>、而且不是錯誤框**。
+   * 不去斷言節點座標或連線路徑——那是 mermaid 自己的排版，版本一升就會變，
+   * 釘住它只會製造「每次升級都要改測試」的假警報。
+   */
+  test('mermaid 區塊會畫成 SVG，不是空白也不是裸的原始碼', async ({ page }) => {
+    await page.goto(RICH);
+    const render = article(page).locator('.mermaid-render');
+    await expect(render, '文章裡要有 mermaid 容器').toBeVisible({ timeout: 15_000 });
+
+    // mermaid + ELK 是動態 import 的，第一次要抓好幾百 KB → timeout 放寬
+    const svg = render.locator('svg');
+    await expect(svg, 'mermaid 應該把圖畫成 SVG（沒畫出來 = lib 沒載到或渲染丟例外）')
+      .toBeVisible({ timeout: 30_000 });
+
+    // 解析失敗時元件是渲染 .mermaid-error + 原始碼，那也「看得到東西」——要明確排除
+    await expect(article(page).locator('.mermaid-error'), 'mermaid 不該落到錯誤框')
+      .toHaveCount(0);
+
+    // 空的 <svg> 也會 visible。節點文字在才代表真的畫完了。
+    await expect(svg, '圖上要有節點文字').toContainText('開始');
   });
 
   /**

@@ -54,7 +54,7 @@ const T = (daysAgo = 0) =>
  * 原本這篇長文是純文字，於是「圖片沒有預留版面就塌掉」這條路徑從來沒進過測試資料——
  * CLS 守門寫得好好的（連「捲不到深處＝沒測到東西」都防了），卻整整漏掉一個
  * 上了正式站的回歸：實地量到「捲到 4000px 後重整」CLS 0.3362，而 CI 全綠。
- * 詳細的歸因見 ImageLightbox.tsx 的 `decodeSizeFromSrc`。
+ * 詳細的歸因見 BlogImage.tsx 的 `decodeSizeFromSrc`。
  *
  * 三個細節都不能省：
  *   · 檔名要帶 `-<寬>x<高>`——stack.mjs 靠它造出**真的那麼大**的圖。用 1×1 的話
@@ -238,9 +238,16 @@ export function seed(dbPath) {
      VALUES (5, ?, ?, ?, '技術', 'published', 'Koimsurai', ?, 1)`,
     '有程式碼與圖片的文章',
     // 圖片指向站上真的存在的資產——隨便編一個路徑會讓 smoke 的「不該有 404」紅掉
+    //
+    // ⚠ mermaid 那塊是後補的，理由跟 #77 的圖片一模一樣：**種子裡從來沒有圖表**，
+    // 所以那 575 行（渲染、工具列、主題／版面切換、全螢幕、ELK 延遲載入）整個
+    // 沒有任何一條 e2e 走過——它就算完全不渲染，整套測試也還是綠的。
+    // 用 `graph TD` 而不是更複雜的圖：這裡釘的是「mermaid 有被載入並畫成 SVG」，
+    // 不是 mermaid 自己的排版能力（那是它的測試該做的事）。
     '# 互動元素\n\n```rust\nfn main() {\n    println!("hello");\n}\n```\n\n' +
+      '```mermaid\ngraph TD\n  A[開始] --> B[結束]\n```\n\n' +
       '![一張測試圖片](/og-default-v2.png)\n',
-    '有程式碼區塊與圖片',
+    '有程式碼區塊、圖表與圖片',
     T(10),
   );
   // MDX 路徑：`format='mdx'` 會讓 src/data/blogList.ts 在 server 端編譯成 React 元件。

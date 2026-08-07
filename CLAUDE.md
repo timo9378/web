@@ -215,6 +215,22 @@ pnpm format:css    # 自動修格式
 inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。
 判斷「這個 `!important` 是不是多餘」時，先看它要蓋的對象是不是 JS 寫進 `style=""` 的。
 
+### ⚠️ 本機 `pnpm e2e` **不會 rebuild**，它跑的是上一次 `pnpm build` 的產物
+
+`tests/e2e/stack.mjs` 起的是 `node .output/server/index.mjs`——已經建好的 nitro server。
+它不呼叫 vite，所以**改完 `src/` 直接跑 e2e，測的還是舊的程式碼**，而且一切正常地綠。
+
+踩過一次而且是最糟的踩法：為了確認新測試有沒有效，故意把 mermaid 的載入改成必定失敗，
+跑 e2e 卻**全綠**——差點據此判定「這條測試是空的」而把它刪掉。實際上是變異根本沒進到
+跑起來的那份程式。中間補一次 `pnpm build` 之後它立刻紅，而且只紅那一條。
+
+所以：**動過 `src/` 就先 `pnpm build` 再 `pnpm e2e`**。
+只改 `tests/`（含 `seed.mjs`、`stack.mjs`）不用重建——那些是 runtime 讀的。
+CI 沒有這個問題（workflow 裡 build 是獨立的前置 job）。
+
+改完之後 stack 也要重起才會重新灌種子：`pkill -f tests/e2e/stack.mjs`
+（`playwright.config.ts` 本機是 `reuseExistingServer: true`，會沿用還開著的那個）。
+
 ### 樣式回歸有守門：`tests/e2e/computed-style.spec.ts`
 
 跟著 `pnpm e2e` 一起跑（CI 不用另外設），比對 11 個公開頁面共 4243 個元素的 34 個
