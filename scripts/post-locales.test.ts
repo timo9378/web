@@ -13,12 +13,11 @@
 // 而錯誤訊息只會說「逾時」。所以值得釘住。
 import { describe, expect, it } from 'vitest';
 
-import { hostHasNoDot, localesOf, type PostListItem } from './check-links';
+import { hostHasNoDot } from './check-links';
+import { localesOf, type PostWithLocales } from './post-locales';
 
-const post = (available_locales?: string[]): PostListItem => ({
+const post = (available_locales?: string[]): PostWithLocales => ({
   id: 1,
-  title: 't',
-  slug: null,
   ...(available_locales ? { available_locales } : {}),
 });
 

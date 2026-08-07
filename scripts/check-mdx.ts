@@ -20,13 +20,11 @@
 import { compileMdxSource } from '../src/lib/mdx/mdx-compile-core';
 import { readRegisteredBlocks } from './mdx-block-names';
 // 掃「未註冊的 block」之前要先去掉程式碼，否則泛型會被當成標籤。理由與另一個使用者見該檔。
+import { LOCALES, localesOf } from './post-locales';
 import { stripCode } from './strip-code';
 
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
-// '' = 原文（不帶 lang 參數，對齊 blogList.ts 的 no-lang 行為）
-const LOCALES = ['', 'zh-CN', 'en', 'ja', 'ko'] as const;
-
-interface PostListItem { id: number; title: string }
+interface PostListItem { id: number; title: string; available_locales?: string[] }
 interface PostDetail { id: number; title: string; content: string | null; format: string | null }
 
 const label = (lang: string) => lang || 'zh-TW（原文）';
@@ -38,7 +36,9 @@ async function main() {
   const listRes = await fetch(`${SITE}/api/posts?limit=500`);
   if (!listRes.ok) throw new Error(`取文章清單失敗：${listRes.status} ${SITE}/api/posts`);
   const { posts } = (await listRes.json()) as { posts: PostListItem[] };
-  console.log(`${SITE} — ${posts.length} 篇已發布，逐篇 × ${LOCALES.length} 語系編譯\n`);
+  // 不是每篇都 × 5：只抓 available_locales 真的有的那些（見 post-locales.ts）。
+  const planned = posts.reduce((n, p) => n + localesOf(p).length, 0);
+  console.log(`${SITE} — ${posts.length} 篇已發布，共 ${planned} 個語系版本要編譯（上限 ${posts.length * LOCALES.length}）\n`);
 
   const failures: string[] = [];
   let compiled = 0;
@@ -46,10 +46,13 @@ async function main() {
   let skippedNoLocale = 0;
 
   for (const p of posts) {
-    for (const lang of LOCALES) {
+    for (const lang of localesOf(p)) {
       const url = lang ? `${SITE}/api/posts/${p.id}?lang=${encodeURIComponent(lang)}` : `${SITE}/api/posts/${p.id}`;
       const res = await fetch(url);
-      // 404 = 該語系無此文（LOCALE_NOT_AVAILABLE），是正常狀態不是錯誤
+      // 走到這裡的 404 代表 available_locales 說有、詳情卻拿不到（資料不一致），
+      // 不再是「正常的沒翻譯」——那些現在由 localesOf 事先排掉。
+      // 不排掉的代價不是多幾個請求：CrowdSec 的 http-probing 情境在數 404，
+      // 撞夠了整個 runner 的 IP 會被封，後續請求全部逾時（見 post-locales.ts）。
       if (res.status === 404) {
         skippedNoLocale++;
         continue;

@@ -27,11 +27,11 @@
 
 import { pathToFileURL } from 'node:url';
 
+import { localesOf } from './post-locales';
 import { stripCode } from './strip-code';
 
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
 const SITE_HOST = new URL(SITE).hostname;
-const LOCALES = ['', 'zh-CN', 'en', 'ja', 'ko'] as const;
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
@@ -96,22 +96,7 @@ export interface PostListItem {
   id: number;
   title: string;
   slug: string | null;
-  /**
-   * 這篇實際有哪幾個語系（例：`["zh-TW","zh-CN","en"]`）。清單端點本來就會回這一欄。
-   *
-   * ⚠ 一定要用它來決定要抓哪些語系，不要對每篇都把 LOCALES 全撞一輪——
-   * 沒有翻譯的語系會回 404，而**那些 404 會讓這支腳本被當成掃描器封鎖**：
-   * CrowdSec 的 http-probing 情境就是在數 404（預設 capacity 10 / leakspeed 10s）。
-   *
-   * 實測兩次 CI（08:37 與 09:17，不同的 runner IP）形狀一模一樣：
-   * 恰好 14 個 404 集中在約 11 秒內 → 最後一個 404 之後 6~7 秒，該 IP 的封包開始被丟掉
-   * → 後續請求全部逾時（不是 429，因為根本沒進到 nginx），腳本以
-   * 「連續 3 次失敗：The operation was aborted due to timeout」收場。
-   * 那個錯誤訊息完全看不出真正的原因，是比對 nginx access log 才找到的。
-   *
-   * 舊寫法的迴圈裡就寫著 `if (res.status === 404) continue; // 該語系無此文，正常`
-   * ——它知道那些 404 是正常的，卻還是每次都去撞一遍。
-   */
+  /** 這篇實際有哪幾個語系。用途與「為什麼一定要用它」見 post-locales.ts。 */
   available_locales?: string[];
 }
 interface PostDetail {
@@ -211,23 +196,6 @@ async function fetchOwn(url: string, attempts = 3): Promise<Response> {
       '\n  並比對 /var/log/nginx/access.log —— 被封的特徵是「請求打到一半整個消失，同時其他 IP 照常」。'
     : '';
   throw new Error(`抓 ${url} 連續 ${attempts} 次失敗：${msg}${hint}`);
-}
-
-/**
- * 這篇要抓哪幾個語系。
- *
- * 回傳的是 LOCALES 的形式（原文用空字串表示，對應不帶 `?lang=` 的網址），
- * 只保留 `available_locales` 真的有的那些——見 PostListItem 的註解，
- * 撞出來的 404 會讓整支腳本被 CrowdSec 封掉。
- *
- * 舊資料若沒有這一欄就退回全部語系（維持原行為）：少抓不如多抓，
- * 而「欄位不存在」跟「這篇只有中文」是兩件事，不該混為一談。
- */
-export function localesOf(p: PostListItem): readonly string[] {
-  if (!p.available_locales?.length) return LOCALES;
-  // available_locales 用完整代碼（zh-TW 是原文），LOCALES 用空字串代表原文
-  const has = new Set(p.available_locales);
-  return LOCALES.filter((l) => (l === '' ? true : has.has(l)));
 }
 
 async function main(): Promise<void> {
