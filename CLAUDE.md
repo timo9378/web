@@ -40,15 +40,39 @@ chrome-devtools 只有 `new_page`、共用 profile。曾經因此誤判：量到
 用對之後它量到 0.4252，跟手刻 CDP 的數字一致。
 
 ⚠️ **它測得到、不一定解釋得了。** 同一筆 0.4252 它回「No potential root causes identified」——
-CLSCulprits 認得的是字體、圖片無尺寸、動態插入這類標準模式，而這頁的成因是「瀏覽器在
-SSR HTML 還沒解析完（docH 2792 → 最終 7109）就還原捲動位置」，不在它的分類裡。
-遇到它答不出來的，還是得自己逐幀追 docH / scrollY / 各區塊高度。
+CLSCulprits 認得的是字體、圖片無尺寸、動態插入這類標準模式，這一筆不在它的分類裡。
+遇到它答不出來的，讀 **`LayoutShift.sources`**：每個來源都帶 `previousRect` / `currentRect`
+與 `node`，直接回答「哪個元素、動了多少」，再配上逐幀的 docH / scrollY 就追得到源頭。
 反過來它也抓到過我漏掉的：TASA Explorer 那支 latin webfont 造成 0.0337 位移。
+
+⚠️ **`sources` 的 rect 是「視窗座標下的可見矩形」，不是版面高度。** 元素被裁切時
+`height` 的差值會很大（實測看到 −763），但那不代表它的版面高度變了——照著追會追錯方向。
+要判斷「誰長高了」得自己逐幀量 `getBoundingClientRect().height`。
+
+⚠️ **2026-08-07 找到並修掉的成因（已修，記錄在此避免重蹈）：文章圖片沒有
+`width`/`height` 屬性。** 外層 `.blog-image-wrapper` 是 `width: fit-content`，寬度取決於
+圖片的固有尺寸——圖還沒載入時固有寬度是 **0**，`aspect-ratio` 反推的高度也是 0，
+整個盒子塌掉；等圖載入才撐開，底下內容整片位移。thumbhash 佔位圖救不了，盒子早就塌了。
+
+  · 冷啟動不算 CLS 是因為那些圖在畫面外；捲到深處重整時它們正好在視窗內才被計進去
+    ——這就是「只有捲在深處按 F5 才出事」的機制。
+  · 修法：上傳時把原始尺寸寫進網址片段（`#th=<hash>&w=<寬>&h=<高>`，見
+    `handlers/upload.rs` 的 `compute_image_meta`），前端 `decodeSizeFromSrc` 解出來寫成
+    `<img width height>`。既有文章由 `0018_backfill_image_size.sql` 回填。
+  · **此前這裡寫的成因是「瀏覽器在 SSR HTML 還沒解析完就還原捲動位置」——那是錯的。**
+    實測捲動還原在 t=114ms 就完成，位移發生在其後、由圖片塌陷造成。
+    另一個錯過的方向是「shiki 高亮換入」（SSR 出 `shiki-fallback`）：實測只有
+    −8/−7/−3 px 共 18px，不是主因。兩次都是量完才推翻的。
 
 ⚠️ **Lighthouse 測不出實地才有的問題。** 同一頁在無節流本機跑是 CLS 0，開了節流還是 0
 （LCP 卻爆到 4.2s，證明節流有生效）——因為它永遠是冷啟動、無 history、單頁直接載入。
 文章頁真正的 CLS 只在「重新整理且捲在深處」時出現，任何「載入一次量一次」的工具都抓不到。
 實地歸因靠 `web_vitals` 表的 `target` / `shift_path` 兩欄（見 migration 0010/0011）。
+
+⚠️ **查實地數據時記得排除 `/admin`。** 上報端從 2026-07-31 起就擋掉後台了
+（`reportWebVitals.ts` 擋在 `send()`，理由見那裡的註解），但**在那之前的資料還在表裡**——
+用 30 天窗口撈會把它們一起算進來。實測差距：CLS p75 含 admin 0.0458、排除後 0.0174。
+查詢一律加 `path NOT LIKE '/admin%'`。
 
 ### 為什麼「改檔案一定要用 Edit」
 
