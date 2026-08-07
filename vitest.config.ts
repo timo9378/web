@@ -6,7 +6,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    // scripts/ 也收進來：那裡有真的邏輯（連結巡檢的語系挑選、MDX block 名稱擷取…），
+    // 而且它們壞掉的方式是安靜的——排程 job 過幾天才紅，訊息還指不出原因。
+    // ⚠ 只影響「跑哪些測試」；下面 coverage.include 仍然只算 src/**，
+    // 因為 Codecov 的 frontend flag 量的是前端程式碼，混進腳本會讓那個數字失去意義。
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     environment: 'node',
     // CI 多產一份 JUnit 給 Codecov Test Analytics（每條測試的歷史失敗率 / flaky）。
     // 寫在這裡而不是在 workflow 裡改寫指令：`pnpm test` 是 CLAUDE.md 列的門檻指令，
