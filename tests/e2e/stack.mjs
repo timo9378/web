@@ -82,10 +82,48 @@ const PIXEL_PNG = Buffer.from(
   'base64',
 );
 
+/**
+ * 依檔名裡的 `-<寬>x<高>` 造一張該尺寸的 PNG，給 `/uploads/` 的假圖用。
+ *
+ * ⚠ 為什麼不能沿用上面那張 1×1：這個 stub 存在的目的是讓 CLS 測試碰得到
+ * 「圖片沒有預留版面就會塌掉」那條路徑。1×1 的圖載入後只撐開 1px，位移小到量不出來，
+ * 測試會**安靜地通過**——而那正是這個守門原本漏掉那個 bug 的方式（見 seed.mjs 的說明）。
+ *
+ * 尺寸寫在**路徑**而不是 fragment：fragment 不會隨 HTTP 請求送出，伺服器看不到。
+ * 正式環境是真的檔案，所以那裡沒有這個問題。
+ */
+const sizedPngCache = new Map();
+async function sizedPng(w, h) {
+  const key = `${w}x${h}`;
+  if (!sizedPngCache.has(key)) {
+    const { default: sharp } = await import('sharp');
+    sizedPngCache.set(
+      key,
+      await sharp({ create: { width: w, height: h, channels: 3, background: '#334' } }).png().toBuffer(),
+    );
+  }
+  return sizedPngCache.get(key);
+}
+
 /** 生產是 nginx 做這件事；這裡用最小的等價物，讓 /api 與頁面同源。 */
 function startProxy() {
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/nas-images/')) {
+      res.writeHead(200, { 'content-type': 'image/png', 'content-length': PIXEL_PNG.length });
+      res.end(PIXEL_PNG);
+      return;
+    }
+    // 上傳的圖：生產是 nginx 從磁碟送，測試環境沒有那些檔。
+    // 檔名帶 `-<寬>x<高>` 的就照那個尺寸造一張，其餘退回 1×1。
+    if (req.url.startsWith('/uploads/')) {
+      const m = /-(\d+)x(\d+)\.png/.exec(req.url);
+      if (m) {
+        void sizedPng(Number(m[1]), Number(m[2])).then((buf) => {
+          res.writeHead(200, { 'content-type': 'image/png', 'content-length': buf.length });
+          res.end(buf);
+        });
+        return;
+      }
       res.writeHead(200, { 'content-type': 'image/png', 'content-length': PIXEL_PNG.length });
       res.end(PIXEL_PNG);
       return;

@@ -46,6 +46,26 @@ const T = (daysAgo = 0) =>
  * 目標是渲染後的頁面高度落在生產文章的量級（實地量到的最終 docH 約 7100px）。
  * 段落長度刻意固定、不隨機——CLS 是量測，輸入每次不一樣的話數字就沒得比。
  */
+/**
+ * 上傳圖片的網址形狀，與正式環境一致：`#th=<hash>&w=<寬>&h=<高>`。
+ *
+ * ⚠ 這幾張圖不是裝飾，是 cls.spec 的**受測對象**。
+ *
+ * 原本這篇長文是純文字，於是「圖片沒有預留版面就塌掉」這條路徑從來沒進過測試資料——
+ * CLS 守門寫得好好的（連「捲不到深處＝沒測到東西」都防了），卻整整漏掉一個
+ * 上了正式站的回歸：實地量到「捲到 4000px 後重整」CLS 0.3362，而 CI 全綠。
+ * 詳細的歸因見 ImageLightbox.tsx 的 `decodeSizeFromSrc`。
+ *
+ * 三個細節都不能省：
+ *   · 檔名要帶 `-<寬>x<高>`——stack.mjs 靠它造出**真的那麼大**的圖。用 1×1 的話
+ *     載入後只撐開 1px，位移量不出來，測試會安靜地通過。
+ *   · fragment 要帶 `w`/`h`——那是前端寫出 `<img width height>` 的唯一來源。
+ *   · 尺寸要夠大且長寬比各異，塌陷才明顯、也才像真實文章。
+ * `#th=` 的雜湊借用正式站某張圖的，只是為了讓佔位圖那條路徑也一起走到。
+ */
+const TH = 'ivcFDIIJTMeGeYmGeXb8esqvpw';
+const img = (n, w, h) => `![測試圖 ${n}](/uploads/2026/08/cls-fixture-${n}-${w}x${h}.png#th=${TH}&w=${w}&h=${h})`;
+
 function longArticle() {
   const SECTIONS = 36;
   const para =
@@ -55,6 +75,14 @@ function longArticle() {
   const out = ['# CLS 量測用的長文', '', '這篇文章不是給人讀的，是給 tests/e2e/cls.spec.ts 捲的。', ''];
   for (let i = 1; i <= SECTIONS; i++) {
     out.push(`## 第 ${i} 節`, '', para, '', para, '');
+    // 圖片散在各節之間，而且**要落在捲動目標的附近**——cls.spec 捲到文章深處才重整，
+    // 位移只有在「重整後那些圖正好在視窗內」時才算進 CLS（畫面外的不計）。
+    // 全塞在開頭的話捲下去就看不到了，等於沒測到。
+    if (i % 7 === 0) {
+      const n = i / 7;
+      const [w, h] = [[1142, 724], [1145, 305], [704, 85], [651, 183], [900, 600]][n - 1] ?? [800, 450];
+      out.push(img(n, w, h), '');
+    }
   }
   return out.join('\n');
 }
