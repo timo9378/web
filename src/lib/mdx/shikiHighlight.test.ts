@@ -147,9 +147,13 @@ describe('認不得的語言要安全退回，不是炸掉', () => {
 });
 
 describe('grammar 動態載入', () => {
-  it('預載的三個語言不會再 loadLanguage 一次', async () => {
+  // ⚠ 這條原本釘的是相反的行為（「預載的三個語言不會再 loadLanguage」）。
+  // 那個預載已經拿掉了：三個 grammar 加起來 520 KB，而實測正式站 18 篇含程式碼的文章
+  // 裡有 10 篇（56%）根本用不到 js/ts/tsx，卻無條件付那筆流量。
+  // 現在**沒有任何語言預載**，全部按需——改回去的話這條會紅。
+  it('沒有任何語言是預載的，js/ts/tsx 也要按需載入', async () => {
     for (const l of ['javascript', 'typescript', 'tsx']) await highlight('x', l);
-    expect(loadedByHighlighter).toHaveLength(0);
+    expect(loadedByHighlighter, 'js/ts/tsx 應該跟其他語言一樣按需載入').toHaveLength(3);
   });
 
   it('沒預載的語言會載一次，第二次就用快取', async () => {

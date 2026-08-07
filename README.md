@@ -25,7 +25,7 @@ Koimsurai 的個人網站原始碼。一個 full-stack blog + portfolio + 多平
 
 - **完整 CMS** — 自製管理後台、文章 / 分類 / 標籤 / 系列文 / 評論 / 訂閱者 / 圖片管理
 - **Markdown 編輯器** — Monaco Editor + Vim 模式 + 自訂 snippets + 斜線指令 + 拖放上傳
-- **語法高亮** — Shiki async highlight，零 client-side 庫 bundle
+- **語法高亮** — Shiki fine-grained core，白名單語言各自切 chunk、按需載入（不預載）
 - **Mermaid 圖表** — 即時渲染 + 多主題 + zoom/pan/fullscreen
 - **多語系 i18n** — 繁中 / 簡中 / English / 日本語，OpenCC 自動轉繁簡，每語系獨立 Monaco model
 - **AI 輔助** — AI 摘要生成、AI 標籤建議、文章自動生成

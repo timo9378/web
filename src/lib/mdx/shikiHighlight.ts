@@ -112,10 +112,20 @@ async function getHighlighter(): Promise<HighlighterCore> {
     ]);
     const h = await createHighlighterCore({
       themes: [import('@shikijs/themes/vitesse-dark')],
-      langs: [LANG_LOADERS.javascript(), LANG_LOADERS.typescript(), LANG_LOADERS.tsx()], // 預載常用，其餘 lazy
+      // ⚠ 不預載任何語言。原本這裡是 `[javascript, typescript, tsx]`（註解寫「預載常用」），
+      // 而那三個 grammar 加起來 **520 KB**，每一篇文章頁無條件下載。
+      //
+      // 實測正式站的 18 篇含程式碼文章：真的用到 js/ts/tsx 的只有 8 篇，
+      // **10 篇（56%）完全用不到卻照樣付那 520 KB**。而實際最常用的是
+      // mermaid(15) / bash(9) / yaml(6) / console(6)，`ts` 只排第六——
+      // 那份預載清單是憑印象挑的，跟真實內容對不上。
+      //
+      // 改成按需載入之後，用到 TS 的頁面會多一次 round trip（grammar 在 init 之後才抓，
+      // 不再與 init 平行）。但那正是 bash / yaml / python 這些語言**今天已經在走**的路徑，
+      // 也就是 56% 的頁面早就是這個行為，不是新的降級。
+      langs: [],
       engine: createOnigurumaEngine(import('shiki/wasm')),
     });
-    loadedLangs.add('javascript').add('typescript').add('tsx');
     return h;
   })();
   return highlighterPromise;
