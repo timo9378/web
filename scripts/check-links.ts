@@ -25,6 +25,8 @@
  *   SITE_URL=http://127.0.0.1:3002 pnpm check:links
  */
 
+import { pathToFileURL } from 'node:url';
+
 import { stripCode } from './strip-code';
 
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
@@ -68,13 +70,49 @@ function resolveProbeUrl(url: string): { probe: string; rewritten: boolean } {
 
 /** 程式碼以外也可能出現的佔位符：有這些字元就不是真的網址。 */
 const PLACEHOLDER = /[{}$*<>]|\.\.\.|xxx|檔名/i;
+
+/**
+ * 主機名稱裡沒有點 → 不是網際網路上的位址。
+ *
+ * 用通則而不是列黑名單。這次實地跑出來的 9 個「連不上的外部連結」裡有 5 個是同一句
+ * 教學文的五語系版本：`http://你的網域/…`、`你的网域`、`your-domain`、
+ * `あなたのドメイン`、`당신의도메인`——把它們一個個加進 PLACEHOLDER 只能撐到下一篇
+ * 用別的講法的文章，而檔頭寫得很清楚：這支腳本一旦開始有假警報就沒有人會再看它。
+ *
+ * 真實網域一定至少有一個點（TLD），所以「沒有點」是安全的判準，不會誤殺真連結。
+ * localhost / host:port 那類由 LOCAL 處理（它還要判通訊埠，兩件事分開寫比較讀得懂）。
+ */
+export function hostHasNoDot(url: string): boolean {
+  try {
+    return !new URL(url).hostname.includes('.');
+  } catch {
+    return false; // 連 URL 都 parse 不了的交給後面的探測去報，不在這裡吞掉
+  }
+}
 /** 容器內部 / 本機位址，文章裡是設定範例不是連結。 */
 const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\]|[a-z0-9-]+:\d{2,5}\/?$)/i;
 
-interface PostListItem {
+export interface PostListItem {
   id: number;
   title: string;
   slug: string | null;
+  /**
+   * 這篇實際有哪幾個語系（例：`["zh-TW","zh-CN","en"]`）。清單端點本來就會回這一欄。
+   *
+   * ⚠ 一定要用它來決定要抓哪些語系，不要對每篇都把 LOCALES 全撞一輪——
+   * 沒有翻譯的語系會回 404，而**那些 404 會讓這支腳本被當成掃描器封鎖**：
+   * CrowdSec 的 http-probing 情境就是在數 404（預設 capacity 10 / leakspeed 10s）。
+   *
+   * 實測兩次 CI（08:37 與 09:17，不同的 runner IP）形狀一模一樣：
+   * 恰好 14 個 404 集中在約 11 秒內 → 最後一個 404 之後 6~7 秒，該 IP 的封包開始被丟掉
+   * → 後續請求全部逾時（不是 429，因為根本沒進到 nginx），腳本以
+   * 「連續 3 次失敗：The operation was aborted due to timeout」收場。
+   * 那個錯誤訊息完全看不出真正的原因，是比對 nginx access log 才找到的。
+   *
+   * 舊寫法的迴圈裡就寫著 `if (res.status === 404) continue; // 該語系無此文，正常`
+   * ——它知道那些 404 是正常的，卻還是每次都去撞一遍。
+   */
+  available_locales?: string[];
 }
 interface PostDetail {
   id: number;
@@ -159,7 +197,37 @@ async function fetchOwn(url: string, attempts = 3): Promise<Response> {
     }
     if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
   }
-  throw new Error(`抓 ${url} 連續 ${attempts} 次失敗：${lastErr instanceof Error ? lastErr.message : lastErr}`);
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  // 「每一次都逾時」跟「回 5xx」是兩種完全不同的故障。前者代表封包根本沒到伺服器
+  // ——正式站掛掉時會回 5xx 或連線被拒，不會是逾時。從 CI 打過去而全部逾時，
+  // 最可能的是這個 IP 被 CrowdSec 封了（見 PostListItem 的註解：404 會餵飽 http-probing）。
+  //
+  // 這段提示是拿實際的事故換來的：原本只寫「連續 3 次失敗：timeout」，
+  // 兩次 CI 都紅，而訊息完全指不出方向，最後是比對 nginx access log
+  // （請求打到一半整個消失、其他 IP 照常）才確定的。
+  const hint = /timeout|abort/i.test(msg)
+    ? '\n  三次全部逾時＝封包沒進到伺服器。正式站真的掛掉會回 5xx 或拒絕連線，不會是逾時。' +
+      '\n  先確認這個 IP 是不是被擋了：在伺服器上跑 `sudo cscli decisions list` 看有沒有 runner 的 IP，' +
+      '\n  並比對 /var/log/nginx/access.log —— 被封的特徵是「請求打到一半整個消失，同時其他 IP 照常」。'
+    : '';
+  throw new Error(`抓 ${url} 連續 ${attempts} 次失敗：${msg}${hint}`);
+}
+
+/**
+ * 這篇要抓哪幾個語系。
+ *
+ * 回傳的是 LOCALES 的形式（原文用空字串表示，對應不帶 `?lang=` 的網址），
+ * 只保留 `available_locales` 真的有的那些——見 PostListItem 的註解，
+ * 撞出來的 404 會讓整支腳本被 CrowdSec 封掉。
+ *
+ * 舊資料若沒有這一欄就退回全部語系（維持原行為）：少抓不如多抓，
+ * 而「欄位不存在」跟「這篇只有中文」是兩件事，不該混為一談。
+ */
+export function localesOf(p: PostListItem): readonly string[] {
+  if (!p.available_locales?.length) return LOCALES;
+  // available_locales 用完整代碼（zh-TW 是原文），LOCALES 用空字串代表原文
+  const has = new Set(p.available_locales);
+  return LOCALES.filter((l) => (l === '' ? true : has.has(l)));
 }
 
 async function main(): Promise<void> {
@@ -169,25 +237,34 @@ async function main(): Promise<void> {
 
   // url → 出現在哪幾篇（同一個連結被多篇引用時，壞掉要一次列出全部）
   const found = new Map<string, Set<string>>();
+  let skipped404 = 0;
   for (const p of posts) {
-    for (const lang of LOCALES) {
+    for (const lang of localesOf(p)) {
       const url = lang
         ? `${SITE}/api/posts/${p.id}?lang=${encodeURIComponent(lang)}`
         : `${SITE}/api/posts/${p.id}`;
       const res = await fetchOwn(url);
-      if (res.status === 404) continue; // 該語系無此文，正常
+      // 走到這裡的 404 代表 available_locales 與實際內容不一致（資料問題），
+      // 不再是「正常的沒翻譯」——數出來，多了就該去看後端。
+      if (res.status === 404) { skipped404 += 1; continue; }
       if (!res.ok) continue;
       const post = (await res.json()) as PostDetail;
       if (!post.content) continue;
       const where = post.slug ?? `#${post.id}`;
       for (const m of stripCode(post.content).matchAll(/https?:\/\/[^\s)>\]"'`]+/g)) {
         const link = m[0].replace(/[.,;:！。，]+$/, '');
-        if (PLACEHOLDER.test(link) || LOCAL.test(link)) continue;
+        if (PLACEHOLDER.test(link) || LOCAL.test(link) || hostHasNoDot(link)) continue;
         const seen = found.get(link) ?? new Set<string>();
         seen.add(where);
         found.set(link, seen);
       }
     }
+  }
+
+  // 期望是 0。不是 0 代表清單說有、詳情卻拿不到，而每一個都是在替 CrowdSec 的
+  // http-probing 水桶加水——累積到一定量整支腳本就會被封鎖（見 PostListItem 的註解）。
+  if (skipped404) {
+    console.log(`⚠ ${skipped404} 個語系在 available_locales 裡但詳情回 404——資料不一致，去看後端\n`);
   }
 
   const links = [...found.keys()];
@@ -243,7 +320,16 @@ async function main(): Promise<void> {
   console.log(`✅ ${links.length} 個連結，自家的全部正常${external.length ? '（外部的見上方）' : ''}`);
 }
 
-main().catch((e: unknown) => {
-  console.error('check-links 執行失敗:', e instanceof Error ? e.message : e);
-  process.exit(1);
-});
+// 只有被直接執行時才跑。
+//
+// 沒有這道判斷的話，測試 `import` 進來就會立刻打正式站抓全部文章——
+// 而這支腳本被封鎖的原因正是請求量，測試不該是幫兇。
+const runDirectly = process.argv[1] !== undefined
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (runDirectly) {
+  main().catch((e: unknown) => {
+    console.error('check-links 執行失敗:', e instanceof Error ? e.message : e);
+    process.exit(1);
+  });
+}
