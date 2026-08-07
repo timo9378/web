@@ -46,14 +46,40 @@ fn fit_inside(w: u32, h: u32, max: u32) -> (u32, u32) {
     ((w as f64 * ratio).round().max(1.0) as u32, (h as f64 * ratio).round().max(1.0) as u32)
 }
 
-/// `computeThumbHashBase64` 等價：失敗回 None（Express catch → null）。
-fn compute_thumbhash(bytes: &[u8]) -> Option<String> {
+/// 上傳圖片的中繼資料：thumbhash + **原始像素尺寸**。
+///
+/// ⚠ 尺寸不是順便回傳的。前端把它寫成 `<img width height>`，那是文章頁 CLS 的解藥：
+/// 圖片外層是 `width: fit-content`，寬度取決於圖片的固有尺寸——圖還沒載入時固有寬度
+/// 是 0，於是 `aspect-ratio` 反推出來的高度也是 0，整個盒子塌掉。等圖載入才撐開，
+/// 底下的內容就整片位移。
+///
+/// 實測（2026-08-07，正式站 /blog/why-i-switched-to-zed）：
+///   冷啟動（scrollY=0）      CLS 0.0000   ← 圖在畫面外，位移不計入
+///   捲到 4000px 後重整       CLS 0.3362   ← 四個 <p> 從 0px 長到 432/216/186/101
+/// 最小重現：只有 aspect-ratio → 高 19px；補上 width/height → 高 653px。
+///
+/// 為什麼不能只靠 thumbhash 的比例：`thumbHashToApproximateAspectRatio` 是**近似值**
+/// （1142×724 解出 1.75、704×85 解出 7），預留高度會差幾個百分點。而且比例本身
+/// 救不了寬度為 0 的問題——要有確定的寬度，aspect-ratio 才反推得出高度。
+struct ImageMeta {
+    hash: String,
+    width: u32,
+    height: u32,
+}
+
+/// `computeThumbHashBase64` 等價（外加原始尺寸）：失敗回 None（Express catch → null）。
+fn compute_image_meta(bytes: &[u8]) -> Option<ImageMeta> {
     let img = image::load_from_memory(bytes).ok()?;
-    let (tw, th) = fit_inside(img.width(), img.height(), 100);
+    let (w, h) = (img.width(), img.height());
+    let (tw, th) = fit_inside(w, h, 100);
     let resized = img.resize_exact(tw, th, image::imageops::FilterType::Lanczos3);
     let rgba = resized.to_rgba8();
     let hash = thumbhash::rgba_to_thumb_hash(tw as usize, th as usize, rgba.as_raw());
-    Some(base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&hash))
+    Some(ImageMeta {
+        hash: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&hash),
+        width: w,
+        height: h,
+    })
 }
 
 /// ffmpeg 最長跑多久（大檔重編可能要幾分鐘；超時就保留原檔，不讓上傳卡死）
@@ -230,11 +256,17 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
 
     let mut file_url = format!("/uploads/{year}/{month}/{filename}");
     // 圖片才算 thumbhash（mimetype 為 client 宣告，對齊 multer）
-    let mut th: Option<String> = None;
+    let mut meta: Option<ImageMeta> = None;
     if mimetype.starts_with("image/") {
-        th = tokio::task::spawn_blocking(move || compute_thumbhash(&bytes)).await.ok().flatten();
-        if let Some(t) = &th {
-            file_url.push_str(&format!("#th={t}"));
+        meta = tokio::task::spawn_blocking(move || compute_image_meta(&bytes)).await.ok().flatten();
+        if let Some(m) = &meta {
+            // 中繼資料全部塞在 **fragment**：瀏覽器送 HTTP 請求時不帶 fragment，
+            // 所以對 nginx 快取與 CDN 完全無影響，也不必為此開 DB 欄位或改 API 型別
+            // ——這些網址是寫在文章內容裡的，由內容自己帶著走。
+            //
+            // 順序固定 th → w → h：前端的解析用具名參數不靠順序，但固定寫法讓
+            // 既有內容的 diff 讀得懂，也讓 `#th=` 那條舊 regex 照樣命中（`&` 會斷開）。
+            file_url.push_str(&format!("#th={}&w={}&h={}", m.hash, m.width, m.height));
         }
     }
 
@@ -242,7 +274,9 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
         "message": "success",
         "url": file_url,
         "filename": filename,
-        "thumbhash": th,
+        "thumbhash": meta.as_ref().map(|m| m.hash.clone()),
+        "width": meta.as_ref().map(|m| m.width),
+        "height": meta.as_ref().map(|m| m.height),
     }))
     .into_response()
 }
@@ -288,8 +322,9 @@ mod tests {
     /// 合法圖片 → Some，而且是 base64url 無 padding（會被塞進 URL 的 `#th=` 片段，
     /// 用標準 base64 的話 `+` `/` `=` 在 URL 裡會出事）。
     #[test]
-    fn compute_thumbhash_returns_url_safe_base64() {
-        let th = compute_thumbhash(&png(200, 120)).expect("合法 PNG 應該算得出 thumbhash");
+    fn compute_image_meta_returns_url_safe_base64() {
+        let m = compute_image_meta(&png(200, 120)).expect("合法 PNG 應該算得出 thumbhash");
+        let th = m.hash;
         assert!(!th.is_empty());
         assert!(!th.contains('='), "不該有 padding：{th}");
         assert!(!th.contains('+') && !th.contains('/'), "必須是 URL-safe 字母表：{th}");
@@ -299,20 +334,38 @@ mod tests {
         );
     }
 
+    /// 回的是**原始**像素尺寸，不是縮圖後的（thumbhash 內部會縮到 fit_inside 100）。
+    ///
+    /// 這條是這次修正的核心：前端要拿它寫 `<img width height>` 來預留版面。
+    /// 拿成縮圖尺寸的話比例還是對的、但 `fit-content` 的寬度會變成 100px，
+    /// 圖片被限制在 100px 寬——是「看起來還好、實際壞掉」的那種錯。
+    #[test]
+    fn compute_image_meta_returns_original_pixel_size() {
+        let m = compute_image_meta(&png(1142, 724)).expect("合法 PNG");
+        assert_eq!((m.width, m.height), (1142, 724));
+
+        // 極端長寬比也要照實回報（fit_inside 會把短邊夾成 1，但那是縮圖的事）
+        let wide = compute_image_meta(&png(704, 85)).expect("合法 PNG");
+        assert_eq!((wide.width, wide.height), (704, 85));
+    }
+
     /// 不是圖片 → None（對齊 Express 的 `catch → null`），不是 panic 也不是 Err。
     #[test]
-    fn compute_thumbhash_returns_none_for_non_image_bytes() {
-        assert_eq!(compute_thumbhash(b"this is not an image"), None);
-        assert_eq!(compute_thumbhash(&[]), None);
+    fn compute_image_meta_returns_none_for_non_image_bytes() {
+        assert!(compute_image_meta(b"this is not an image").is_none());
+        assert!(compute_image_meta(&[]).is_none());
         // PNG magic 開頭但內容截斷——比純垃圾更容易讓解碼器走到別的分支
-        assert_eq!(compute_thumbhash(&png(10, 10)[..8]), None);
+        assert!(compute_image_meta(&png(10, 10)[..8]).is_none());
     }
 
     /// 同一張圖每次算出來要一樣（thumbhash 進 URL，不穩定的話快取與比對都會壞）。
     #[test]
-    fn compute_thumbhash_is_deterministic() {
+    fn compute_image_meta_is_deterministic() {
         let bytes = png(64, 64);
-        assert_eq!(compute_thumbhash(&bytes), compute_thumbhash(&bytes));
+        let a = compute_image_meta(&bytes).expect("合法 PNG");
+        let b = compute_image_meta(&bytes).expect("合法 PNG");
+        assert_eq!(a.hash, b.hash);
+        assert_eq!((a.width, a.height), (b.width, b.height));
     }
 
     /// ffprobe 真實輸出的兩種形狀：新版把值放 `side_data` 的 rotation，舊檔放 tags 的
