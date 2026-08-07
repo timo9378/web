@@ -1,6 +1,6 @@
 //! `POST /api/admin/upload` 的整合測試——這個檔在此之前是 **0% 覆蓋**。
 //!
-//! 純函式（`fit_inside` / `compute_thumbhash` / `uploads_base`）是私有的，
+//! 純函式（`fit_inside` / `compute_image_meta` / `uploads_base`）是私有的，
 //! 單元測試放在 `src/handlers/upload.rs` 檔內；這裡測的是 handler 整條路徑：
 //! 授權順序、multipart 解析、檔案落地、以及**client 給的檔名不能逃出上傳目錄**。
 //!
@@ -161,9 +161,19 @@ async fn image_upload_lands_on_disk_unmodified_and_gets_a_thumbhash() {
     let filename = resp["filename"].as_str().unwrap();
     let th = resp["thumbhash"].as_str().expect("圖片應該算出 thumbhash");
 
-    // URL 形狀：/uploads/YYYY/MM/{檔名}#th={hash}
+    // URL 形狀：/uploads/YYYY/MM/{檔名}#th={hash}&w={寬}&h={高}
     assert!(url.starts_with("/uploads/"), "url = {url}");
-    assert!(url.ends_with(&format!("#th={th}")), "thumbhash 應該掛在 URL 片段上：{url}");
+
+    // ⚠ 尺寸不是可有可無的裝飾。前端把 w/h 寫成 `<img width height>` 來預留版面——
+    // 少了它，圖片外層的 `width: fit-content` 在圖載入前寬度是 0，`aspect-ratio`
+    // 反推的高度也是 0，整個盒子塌掉，等圖載入才撐開 → 底下內容整片位移。
+    // 實測正式站「捲到深處按 F5」CLS 0.3362，補上之後才會歸零。
+    let w = resp["width"].as_u64().expect("圖片應該回原始寬度");
+    let h = resp["height"].as_u64().expect("圖片應該回原始高度");
+    assert_eq!((w, h), (200, 120), "回的必須是原始像素尺寸，不是 thumbhash 縮圖後的");
+    assert!(url.ends_with(&format!("#th={th}&w={w}&h={h}")), "thumbhash 與尺寸都要掛在 URL 片段上：{url}");
+    // 舊格式的 `#th=` 解析（前端那條 regex 到 `&` 為止）必須照樣命中
+    assert!(url.contains(&format!("#th={th}&")), "#th= 後面要接 & 才不會把尺寸吃進 hash：{url}");
     // 副檔名沿用 client 給的（含大小寫），檔名主體則是伺服器生的 {毫秒}-{亂數}
     assert!(filename.ends_with(".PNG"), "副檔名應該保留原樣：{filename}");
     let stem = filename.trim_end_matches(".PNG");

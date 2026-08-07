@@ -95,11 +95,45 @@ const getNASDisplayUrl = (src?: string): string | undefined => {
 interface ThumbPlaceholder { dataUrl: string; aspectRatio: number }
 
 /**
+ * 從圖片 URL 的 fragment 解出上傳時寫進去的原始像素尺寸（`#th=…&w=1142&h=724`）。
+ *
+ * ⚠ 這是文章頁 CLS 的解藥，不是效能微調。`.blog-image-wrapper` 是
+ * `width: fit-content`——寬度取決於圖片的固有尺寸，而圖還沒載入時固有寬度是 **0**，
+ * 於是 `aspect-ratio` 反推出來的高度也是 0，整個盒子塌掉；等圖載入才撐開，
+ * 底下的內容就整片位移。thumbhash 佔位圖救不了，因為盒子早就塌了。
+ *
+ * 實測（2026-08-07 正式站 /blog/why-i-switched-to-zed）：
+ *   冷啟動（scrollY=0）  CLS 0.0000  ← 圖在畫面外，位移不計入
+ *   捲到 4000px 後重整   CLS 0.3362  ← 四個 <p> 從 0px 長到 432/216/186/101
+ * 最小重現：只有 aspect-ratio → 高 19px；補上 width/height → 高 653px。
+ *
+ * ⚠ 不能改用 `thumbHashToApproximateAspectRatio` 代替：那是**近似值**
+ * （1142×724 解出 1.75、704×85 解出 7），而且比例本身救不了「寬度為 0」——
+ * 要先有確定的寬度，aspect-ratio 才反推得出高度。
+ *
+ * 舊文章的網址沒有 w/h（那是 2026-08 才加的），回 null → 退回原本只有
+ * aspect-ratio 的行為，不會比現在更糟。
+ */
+const decodeSizeFromSrc = (src?: string): { width: number; height: number } | null => {
+  if (!src) return null;
+  const w = /[#&]w=(\d+)/.exec(src);
+  const h = /[#&]h=(\d+)/.exec(src);
+  if (!w || !h) return null;
+  const width = Number(w[1]);
+  const height = Number(h[1]);
+  // 0 或 NaN 比沒有更糟：width="0" 會讓瀏覽器把圖片壓成 0 寬
+  return width > 0 && height > 0 ? { width, height } : null;
+};
+
+/**
  * 從圖片 URL 的 #th=<base64url> fragment 解出 thumbhash，
  * 回傳 { dataUrl, aspectRatio } 供模糊佔位使用。沒 fragment 或解析失敗回 null。
  *
- * 後端 (server/index.js 的 /admin/upload) 上傳時會把 thumbhash 編進 URL fragment，
+ * 後端 (`/admin/upload`) 上傳時會把 thumbhash 編進 URL fragment，
  * 瀏覽器送 HTTP 請求時不會帶 fragment，所以對 nginx 快取無影響。
+ *
+ * ⚠ 這條 regex 到 `&` 為止（`[A-Za-z0-9_-]+` 不含 `&`），所以後面接 `&w=&h=`
+ * 不會把尺寸吃進 hash——舊網址與新網址走同一條路。
  */
 const decodeThumbHashFromSrc = (src?: string): ThumbPlaceholder | null => {
   if (!src) return null;
@@ -135,9 +169,11 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
   // 點擊放大用原圖
   const fullSrc = isNAS ? getNASHighResUrl(src) : src;
 
-  // 從 URL #th= fragment 解 thumbhash（後端 /admin/upload 寫入），
-  // 拿來做模糊佔位 + 用近似 aspect ratio 預留版面避免 CLS。
+  // 從 URL #th= fragment 解 thumbhash（後端 /admin/upload 寫入），拿來做模糊佔位。
   const placeholder = useMemo(() => decodeThumbHashFromSrc(src), [src]);
+  // 原始尺寸（同一個 fragment 的 &w= &h=）。真正預留版面的是這個，不是 aspect-ratio
+  // ——理由見 decodeSizeFromSrc 的註解。
+  const size = useMemo(() => decodeSizeFromSrc(src), [src]);
 
   // 載入 EXIF 資訊
   useEffect(() => {
@@ -201,6 +237,12 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
           {...props}
           src={displaySrc}
           alt={alt ?? ''}
+          // ⚠ 這兩個屬性是版面預留的唯一來源（見 decodeSizeFromSrc）。
+          // CSS 的 `max-width:100%; height:auto` 照樣負責縮放，屬性只是讓瀏覽器
+          // 在圖片載入**之前**就知道要留多高。舊文章沒有 w/h 時退回 undefined，
+          // 行為與這次修正前相同。
+          width={size?.width}
+          height={size?.height}
           onLoad={() => setImgLoaded(true)}
           className={`blog-image-clickable${placeholder && !imgLoaded ? ' blog-image-loading' : ''}`}
           loading="lazy"
