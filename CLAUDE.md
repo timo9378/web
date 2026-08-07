@@ -276,16 +276,22 @@ pnpm build         # vite + nitro
 
 | Codecov flag | 量什麼 | 目前 |
 |---|---|---|
-| `frontend` | **單元測試**（vitest）走過多少 `src/` | ~6% |
-| `e2e` | **203 條 Playwright** 走過多少 `src/` | ~55% |
+| `frontend` | **單元測試**（vitest）走過多少 `src/` | ~41% |
+| `e2e` | **206 條 Playwright** 走過多少 `src/` | ~77% |
 | `backend` | cargo-llvm-cov | ~93% |
 
 ⚠ **`frontend` 那個數字低不代表「幾乎沒測」。** 它的分母有**八成是 React 元件**
-（5477/6923 行），而元件的渲染路徑本來就是 e2e 在守。要提升它得寫 jsdom 測試去複製
-e2e 已經在做的事，投報率很差。真正值得補單元測試的是 `src/lib/`（純邏輯，目前 32%）。
+（5468/6970 行），而元件的渲染路徑本來就是 e2e 在守。要提升它得寫 jsdom 測試去複製
+e2e 已經在做的事，投報率很差。純邏輯的部分目前是 `src/lib/` 59%、`src/data/` 64%、
+`src/seo/` 69%——挑檔案時看「壞了會不會有人發現」比看百分比有用。
 
 e2e 的覆蓋率是 `tests/e2e/fixtures.ts` 收 V8 coverage、`scripts/e2e-coverage-report.mjs`
-轉成 lcov 的。**所有 spec 都要從 `./fixtures` import `test`／`expect`，不要直接 import
+轉成 lcov 的。⚠ **多份 dump 的合併一定要用 `@bcoe/v8-coverage` 的 `mergeScriptCovs`，
+不要自己寫**——同一個函式在不同 dump 裡的 range 數量會不一樣（V8 只為「count 與父層
+不同」的區塊開 range），自己寫的版本曾經把 105664 筆帶著命中的資料靜靜丟掉，
+整體數字被壓低 21.5 個百分點（Comments.tsx 顯示 7%、實際 82%）。細節見那支腳本的檔頭。
+
+**所有 spec 都要從 `./fixtures` import `test`／`expect`，不要直接 import
 `@playwright/test`**（型別可以）——直接 import 的那支就不會被計入。
 沒設 `E2E_COVERAGE_DIR` 時 fixture 完全不做事，本機跑 e2e 不會多付成本。
 
