@@ -284,8 +284,26 @@ jobs:
   # 跑的是真的 stack：後端 binary（temp SQLite + seed）＋ nitro server ＋ 一層 /api 代理
   # （生產是 nginx 做這件事）。細節見 tests/e2e/stack.mjs。
   e2e:
-    name: E2E · 全站煙霧 + API 契約 + a11y
+    name: E2E · 全站煙霧 + API 契約 + a11y (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
+    # 分片：206 條在單機跑要 436s，是整個 CI 的關鍵路徑（其餘 job 都 ≤331s）。
+    #
+    # ⚠ 為什麼是分片而不是調高 workers：`workers: 2` 是刻意的，playwright.config.ts
+    #   有一段 8 輪實測——workers=4 有 3/8 輪 chromium 整個崩掉，而那種崩潰會被 retry
+    #   接住變成「綠的 flaky」，蓋掉真實失敗訊號。分片是把 206 條分到三台機器，
+    #   每台仍然 workers=2，完全不碰那條線。
+    #
+    # ⚠ 也不是「只跑有變更的頁面」。那需要用覆蓋率建 spec ↔ 原始檔的對照表，
+    #   而它抓不到 CSS、種子資料、設定檔、SSR-only 路徑這些非程式碼相依——
+    #   漏掉的方式是安靜的。這個 repo 已經為「某條路徑沒被跑到」付過兩次代價
+    #   （#68 只修了兩個呼叫端之一；內容 job 只在 schedule 跑 → PR 綠、main 紅）。
+    #   分片跑的還是全部 206 條，沒有這個風險。
+    #
+    # fail-fast: false —— 一片紅了另外兩片照跑完，才看得到「到底壞了幾條」。
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
@@ -349,30 +367,34 @@ jobs:
       # 用 `UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style` 更新，
       # 並在 PR 說明為什麼那些元素該變。理由與陷阱見 CLAUDE.md 的 CSS 段。
       - name: playwright
-        run: pnpm e2e
+        # ⚠ 不要寫成 `pnpm e2e -- --shard=…`。pnpm v11 不需要那個分隔符，而帶了之後
+        #   參數不會傳到 playwright——實測 `pnpm e2e -- --shard=2/3 --list` 連 `--list`
+        #   都失效（webServer 直接起來了），不帶 `--` 才正確吐出 `Total: 78 tests`。
+        #   寫錯的話每片都跑全部 206 條：三倍的工，零加速，而且 CI 是綠的。
+        run: pnpm e2e --shard=${{ matrix.shard }}/3
         env:
           # 設了才會收 V8 coverage（見 tests/e2e/fixtures.ts）。沒設就完全不做事，
           # 所以本機跑 e2e 不會多付成本。
           E2E_COVERAGE_DIR: .e2e-coverage
-      # e2e 走過多少原始碼 → lcov → Codecov（flag = e2e）。
-      #
-      # 為什麼這個數字必須存在：單元測試的覆蓋率分母有**八成是 React 元件**
-      # （5477/6923 行），而元件的渲染路徑本來就是 e2e 在守。只看單元覆蓋率會得到
-      # 6% 這種數字，看起來像「幾乎沒測」，實際上 e2e 走過的原始碼是它的十倍以上（77%）。
-      # 兩個數字並排才看得懂各自在守什麼。
-      #
-      # ⚠ 依賴上面那步的 `pnpm build`——source map 是從 .output/public 讀的。
-      - name: e2e 覆蓋率報告
+      # ⚠ 覆蓋率**不在這裡**算。每片只走過三分之一的測試，各自產報告會得到三份
+      # 互不相干的數字；而 lcov 送上 Codecov 之後是「同一個 flag 的多次上傳」，
+      # 合併規則跟我們要的（逐行相加）不一定一致。
+      # 改成把原始 dump 丟成 artifact，由下面的彙整 job 一次合併——那支用的是
+      # `mergeScriptCovs`，跨分片合併本來就是它在做的事（見 e2e-coverage-report.mjs）。
+      - name: 覆蓋率 dump 上傳（給彙整用）
         if: ${{ !cancelled() }}
-        run: node scripts/e2e-coverage-report.mjs .e2e-coverage lcov-e2e.info
-      - name: 覆蓋率上傳（e2e）
-        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6
         with:
-          files: lcov-e2e.info
-          flags: e2e
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+          name: e2e-coverage-${{ matrix.shard }}
+          path: .e2e-coverage
+          retention-days: 1
+          # ⚠ `.e2e-coverage` 是**隱藏目錄**，而 upload-artifact 從 v4.4 起預設排除隱藏檔。
+          #   沒有這一行的結果是「No files were found」——而它只是個 warning，
+          #   job 照樣綠，直到下游的彙整 job 才炸。第一次跑就踩到了。
+          include-hidden-files: true
+          # 不能用 ignore：沒東西上傳一定是出事了（上面那個 bug 就是被 ignore 蓋住的）。
+          # 讓它在源頭紅，而不是在三個 job 之後才紅。
+          if-no-files-found: error
       # ⚠ 這一個是整組裡最有價值的：e2e 是唯一會 flaky 的那批（瀏覽器在併發下崩潰、
       #   hydration 競賽），而定位它們過去靠的是手動重跑幾十輪。Codecov 會自己累積
       #   每一條測試的失敗率並標出 flaky——playwright 的 retry 讓「失敗後重試成功」
@@ -388,11 +410,62 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v6
         if: failure()
         with:
-          name: playwright-report
+          # ⚠ 名字要帶分片編號：同名 artifact 在 v4 之後會直接衝突報錯，
+          #   而那會發生在「已經有測試失敗」的時候——最不需要多一個錯誤訊息的時機。
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
+
+  e2e-coverage:
+    name: E2E · 覆蓋率彙整
+    needs: e2e
+    # 有分片紅掉時照樣算——那時候最需要看「到底走過哪些路徑」。
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # ⚠ 這裡非得重建不可：報告要從 `.output/public` 讀 source map 才映得回原始檔，
+      #   而 vite 用 `sourcemap: 'hidden'`（產物沒有 sourceMappingURL，必須手動餵）。
+      #   把整個 .output 當 artifact 在 job 之間搬比重建還慢，而且相依已經有快取，
+      #   這一步實測只要 ~35s。
+      - run: pnpm build
+      - name: 取回各分片的 dump
+        uses: actions/download-artifact@448e3f862ab3ef47aa50ff917776823c9946035b # v6
+        with:
+          pattern: e2e-coverage-*
+          merge-multiple: true
+          path: .e2e-coverage
+      # e2e 走過多少原始碼 → lcov → Codecov（flag = e2e）。
+      #
+      # 為什麼這個數字必須存在：單元測試的覆蓋率分母有**八成是 React 元件**
+      # （5468/6970 行），而元件的渲染路徑本來就是 e2e 在守。只看單元覆蓋率會得到
+      # 41% 這種數字，而 e2e 走過的是 77%。兩個數字並排才看得懂各自在守什麼。
+      #
+      # ⚠ 合併一定要用 `mergeScriptCovs`（腳本裡已經是）。自己寫的版本曾經把 105664 筆
+      #   帶著命中的資料靜靜丟掉，整體被壓低 21.5 個百分點——見那支腳本的檔頭。
+      #   分片之後這件事更關鍵：同一個檔在三片裡的 range 形狀必然不同。
+      - name: e2e 覆蓋率報告
+        run: node scripts/e2e-coverage-report.mjs .e2e-coverage lcov-e2e.info
+      - name: 覆蓋率上傳（e2e）
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: lcov-e2e.info
+          flags: e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
   # Lighthouse：可及性／SEO 的分數、資源預算、以及幾條「一定是 bug」的稽核。
   #
