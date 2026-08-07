@@ -18,13 +18,34 @@
  *      不餵它不會報錯，只會安靜地回 0 個檔。
  *   2. 多份 dump 的 V8 range **不能直接串接**：v8-to-istanbul 是依序套用的，
  *      後面某個測試裡 count=0 的 range 會把前面 count>0 的蓋回 0。
- *      症狀很好認——載入檔數變多、覆蓋率反而掉。要逐 range 相加。
+ *      症狀很好認——載入檔數變多、覆蓋率反而掉。
+ *
+ *      ⚠ 但「逐 range 相加」也是錯的，這是第二次踩：**同一個函式在不同 dump 裡的
+ *      range 數量不一樣**。V8 只為「count 與父層不同」的區塊額外開一個 range，
+ *      所以「完全沒跑到」是 1 個 range、「跑到而且走了幾個分支」是好幾個——
+ *      位置對不起來，相加會把不同區塊的數字加在一起。
+ *
+ *      舊版遇到形狀不同就 `continue` 跳過（「寧可保守」），而**先到先贏**：
+ *      早跑的測試多半只是把元件載入、沒互動（1 個 range、count 0），於是後面真正
+ *      操作過它的 dump 整筆被丟掉。實測 191 份 dump 裡有 114461 筆因此被丟，
+ *      其中 105664 筆帶著實際命中（合計 1.5 億次），整體覆蓋率被壓低 21.5 個百分點：
+ *
+ *        Comments.tsx     7% → 82%      Unsubscribe.tsx  12% → 95%
+ *        PhotoViewer.tsx 41% → 93%      Bookshelf.tsx    15% → 83%
+ *        整體          55.7% → 77.2%
+ *
+ *      而這種錯法**不會有任何症狀**——數字看起來只是「偏低」，還會讓人根據它去補
+ *      根本不缺的測試（差點就這樣做了）。
+ *
+ *      正解是 `@bcoe/v8-coverage` 的 `mergeScriptCovs`：c8 / nyc 用的同一套，
+ *      它會先把 range 展開成樹再合併，形狀不同也對得起來。不要自己寫。
  *   3. 過濾自家檔案要用**絕對路徑**。曾經寫成 `'src/' + abs.split('/src/').pop()`，
  *      結果第三方套件底下的 src 目錄也被重組成看似自家的路徑，排除規則永遠比對不到。
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import v8toIstanbul from 'v8-to-istanbul';
+import { mergeScriptCovs } from '@bcoe/v8-coverage';
 
 const [, , dumpDirArg, outArg] = process.argv;
 const DUMP_DIR = path.resolve(dumpDirArg ?? '.e2e-coverage');
@@ -44,35 +65,28 @@ if (!fs.existsSync(OUT_DIR)) {
   process.exit(1);
 }
 
-// ── 合併：同一支 script 在各測試裡的 range 逐一相加（見檔頭第 2 點）──
-const merged = new Map(); // pathname -> Map<funcKey, fn>
+// ── 合併：同一支 script 在各測試裡的 coverage（見檔頭第 2 點，別自己寫）──
+const byPath = new Map(); // pathname -> ScriptCov[]
 let dumps = 0;
 for (const f of fs.readdirSync(DUMP_DIR)) {
   if (!f.endsWith('.json')) continue;
   dumps++;
   for (const e of JSON.parse(fs.readFileSync(path.join(DUMP_DIR, f), 'utf8'))) {
     const p = new URL(e.url, 'http://x').pathname;
-    if (!merged.has(p)) merged.set(p, new Map());
-    const fns = merged.get(p);
-    for (const fn of e.functions) {
-      if (!fn.ranges?.length) continue;
-      const key = `${fn.functionName}@${fn.ranges[0].startOffset}-${fn.ranges[0].endOffset}`;
-      const prev = fns.get(key);
-      if (!prev) {
-        fns.set(key, structuredClone(fn));
-        continue;
-      }
-      if (prev.ranges.length !== fn.ranges.length) continue; // 形狀不同就不合併，寧可保守
-      fn.ranges.forEach((r, i) => {
-        prev.ranges[i].count += r.count;
-      });
-    }
+    if (!byPath.has(p)) byPath.set(p, []);
+    // scriptId 是 mergeScriptCovs 的必填欄位，但我們是依 URL 分組的，同一組本來就是
+    // 同一支 script —— 給固定值即可（它只用來排序，不影響合併結果）。
+    byPath.get(p).push({ scriptId: '0', url: e.url, functions: e.functions });
   }
+}
+const merged = new Map(); // pathname -> functions[]
+for (const [p, covs] of byPath) {
+  merged.set(p, mergeScriptCovs(covs)?.functions ?? []);
 }
 
 // ── 映回原始檔，累計每一行的命中次數 ──
 const lineHits = new Map(); // repo 相對路徑 -> Map<行號, 命中數>
-for (const [p, fnMap] of merged) {
+for (const [p, functions] of merged) {
   const file = path.join(OUT_DIR, p);
   const mapFile = `${file}.map`;
   if (!fs.existsSync(file) || !fs.existsSync(mapFile)) continue;
@@ -85,7 +99,7 @@ for (const [p, fnMap] of merged) {
   } catch {
     continue;
   }
-  conv.applyCoverage([...fnMap.values()]);
+  conv.applyCoverage(functions);
   for (const [abs, data] of Object.entries(conv.toIstanbul())) {
     if (!abs.startsWith(SRC_ROOT) || abs.includes('node_modules')) continue;
     const rel = path.relative(REPO, abs);
