@@ -14,8 +14,18 @@
  * ## 基準檔為什麼存 hash 而不是原值
  *
  * 8560 個元素 × 34 個屬性直接存是好幾 MB，每次改樣式都會產生巨大 diff。
- * 存 hash 之後基準檔只有幾十 KB，而「哪個元素變了」照樣指得出來——
- * 要知道「變成什麼」再跑一次本機比對即可。
+ * 存 hash 之後基準檔只有幾十 KB，而「哪個元素變了」照樣指得出來。
+ *
+ * ⚠ 代價是**報錯訊息本身不能只有 hash 與路徑**。只給
+ * `HTML:0>BODY:1>DIV:0>…>DIV:0` 的話，讀的人唯一能做的事是接受新基準，
+ * 而一個只能按接受的守門會慢慢變成裝飾。實際發生過：為了查一次報紅，
+ * 得另外寫一支一次性的 spec 把路徑走回元素，才知道那是**留言區的 loading 狀態**
+ * ——跟 CSS 無關的時序差異，卻長得跟樣式回歸一模一樣。
+ *
+ * 所以 `collect()` 會順便收元素身分（tag/id/class + 一小段文字），失敗時連同
+ * **現在的屬性值**一起印出來。身分不進基準檔、不參與比對，純粹是給人看的。
+ * 「之前是什麼值」仍然講不出來（那要存原值），但「這是哪個元素、現在長什麼樣」
+ * 通常就夠判斷了——因為看的人剛改過 CSS，知道自己動了什麼。
  *
  * ## 動畫屬性為什麼排除
  *
@@ -146,9 +156,27 @@ async function waitForDomStable(page: Page, { stableFor = 3, interval = 250, tim
   }
 }
 
-async function collect(page: Page): Promise<Record<string, string>> {
+/**
+ * 收樣式，同時收「這個路徑是哪個元素」。
+ *
+ * ⚠ `ids` 不進基準檔，也不參與比對——它只在報錯時用。
+ *
+ * 為什麼需要它：基準檔存的是 hash，所以測試紅的時候只講得出
+ * `HTML:0>BODY:1>DIV:0>DIV:1>MAIN:1>DIV:0>DIV:2>DIV:1>DIV:2>DIV:0>DIV:1>DIV:0` 變了，
+ * 而那串東西無法回答任何問題。實際發生過：為了查一次報紅，得另外寫一支
+ * 一次性的 spec 去把那條路徑走回元素，才知道它是**留言區的 loading 狀態**
+ * ——一個跟 CSS 完全無關的時序差異。
+ *
+ * 那次之後這個守門的可用回應只剩「接受新基準」，而一個只能按接受的守門會慢慢變成裝飾。
+ *
+ * ⚠ 不能在報錯時「照路徑從 documentElement 走回去」——`pathOf` 有 12 層上限，
+ *   深的元素路徑是**截斷**的，第一段不一定是 `HTML`。所以身分必須在採樣的同一次
+ *   `evaluate` 裡跟著算出來，那時手上還有元素本身。
+ */
+async function collect(page: Page): Promise<{ values: Record<string, string>; ids: Record<string, string> }> {
   return page.evaluate(({ props, skip }) => {
-    const out: Record<string, string> = {};
+    const values: Record<string, string> = {};
+    const ids: Record<string, string> = {};
     const pathOf = (el: Element) => {
       const parts: string[] = [];
       for (let e: Element | null = el; e && parts.length < 12; e = e.parentElement) {
@@ -157,13 +185,23 @@ async function collect(page: Page): Promise<Record<string, string>> {
       }
       return parts.join('>');
     };
+    // `className` 在 SVG 元素上是 SVGAnimatedString 而不是字串——直接 split 會炸，
+    // 而炸在 evaluate 裡的訊息很難讀。用 classList 就沒有這個分岔。
+    const idOf = (el: Element) => {
+      const cls = [...el.classList].join('.');
+      const tag = el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '') + (cls ? `.${cls}` : '');
+      const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
+      return text ? `${tag} 「${text}」` : tag;
+    };
     const skipSel = skip.join(',');
     for (const el of document.querySelectorAll('body *')) {
       if (el.closest(skipSel)) continue;
       const cs = getComputedStyle(el);
-      out[pathOf(el)] = props.map((p) => cs.getPropertyValue(p)).join('|');
+      const p = pathOf(el);
+      values[p] = props.map((x) => cs.getPropertyValue(x)).join('|');
+      ids[p] = idOf(el);
     }
-    return out;
+    return { values, ids };
   }, { props: PROPS, skip: DECORATIVE });
 }
 
@@ -178,6 +216,29 @@ async function collect(page: Page): Promise<Record<string, string>> {
 const hash = (s: string) => BigInt(`0x${createHash('sha1').update(s).digest('hex').slice(0, 16)}`).toString();
 
 /**
+ * 每個屬性各兩位十進位數字，串成一條「指紋」。基準檔每筆存成 `<hash> <指紋>`。
+ *
+ * 為什麼要有它：只有整體 hash 的話，報錯只能講「這個元素變了」，講不出**哪個屬性**變了。
+ * 而 PROPS 有 31 個，把 31 個值全印出來反而更難讀——真正變的那一個會被淹掉
+ * （第一版就是這樣，footer 連結的 `color` 夾在 30 條 `0px` / `none` 中間）。
+ *
+ * ⚠ **比對用的仍然是前面那個完整 hash，不是這條指紋。**
+ * 兩位數字每個屬性有 1/100 的碰撞機率，拿來當門檻會漏掉真回歸；
+ * 但當提示用剛好——碰撞只會讓某個變了的屬性**沒被標記出來**，
+ * 不會反過來把沒變的說成變了（值一樣 → 數字必定一樣）。
+ * 也就是說最壞情況是提示少講一條，門檻本身仍然是準的。
+ *
+ * ⚠ 只能用十進位。base36 / hex 會在基準檔裡湊出像英文單字的片段，而 `typos` 掃整個
+ *   repo 含這些 json——理由同上面 `hash()` 的註解，那是真的發生過的 CI 紅。
+ *
+ * 成本：每筆多 62 個字元。基準檔平均每筆 97 bytes（大部分是那條 DOM 路徑），
+ * 所以整體約從 477 KB 長到 790 KB——換到「哪個屬性變了」很划算。
+ */
+const PROP_DIGITS = 2;
+const fingerprint = (values: string[]) =>
+  values.map((v) => hash(v).slice(-PROP_DIGITS).padStart(PROP_DIGITS, '0')).join('');
+
+/**
  * 收集並與基準比對。抽出來是因為後台路由的「怎麼到那一頁」不一樣（要先自簽 token），
  * 但「到了之後怎麼比」完全相同——抄一份的下場是其中一份會慢慢跟另一份不一樣。
  */
@@ -188,9 +249,10 @@ async function compareWithBaseline(page: Page, route: string) {
   });
   await waitForDomStable(page);
 
-  const raw = await collect(page);
+  const { values: raw, ids } = await collect(page);
+  // 每筆存 `<整體 hash> <每屬性兩位數字的指紋>`：前者是門檻，後者只在報錯時拿來指出屬性。
   const hashed: Record<string, string> = {};
-  for (const [k, v] of Object.entries(raw)) hashed[k] = hash(v);
+  for (const [k, v] of Object.entries(raw)) hashed[k] = `${hash(v)} ${fingerprint(v.split('|'))}`;
 
   const file = fileFor(route);
   if (UPDATE) {
@@ -212,19 +274,52 @@ async function compareWithBaseline(page: Page, route: string) {
   // 所以不是 flaky，是結構差異被誤判成樣式差異）。
   //
   // 忽略它們不會漏掉真的回歸：樣式回歸一定發生在「同一個元素、值變了」。
+  // ⚠ 門檻只看空白前面那個完整 hash。後面的指紋是給人看的提示，
+  //   兩位數字會碰撞，拿它當門檻會漏掉真回歸（理由見 fingerprint 的註解）。
+  const hashOf = (v: string | undefined) => v?.split(' ')[0];
+  const fpOf = (v: string | undefined) => v?.split(' ')[1] ?? '';
+
   const onlyOneSide: string[] = [];
   const changed: string[] = [];
   for (const k of new Set([...Object.keys(want), ...Object.keys(hashed)])) {
     if (want[k] === undefined || hashed[k] === undefined) { onlyOneSide.push(k); continue; }
-    if (want[k] !== hashed[k]) changed.push(k);
+    if (hashOf(want[k]) !== hashOf(hashed[k])) changed.push(k);
   }
   if (onlyOneSide.length) {
-    console.log(`${route}：${onlyOneSide.length} 個路徑只存在一邊（DOM 結構差異，非樣式），已略過`);
+    // 也附幾個身分：只有數字的話，這行永遠只是雜訊；帶上元素才看得出「哦，是留言區還沒載完」。
+    const sample = onlyOneSide.slice(0, 3).map((k) => ids[k] ?? '(只在基準裡，這次沒出現)');
+    console.log(
+      `${route}：${onlyOneSide.length} 個路徑只存在一邊（DOM 結構差異，非樣式），已略過` +
+        `${sample.length ? `　例：${sample.join('、')}` : ''}`,
+    );
   }
+
+  // 報錯時把「哪個元素、哪個屬性、現在是什麼值」講出來。
+  //
+  // 只給 DOM 路徑的話，讀的人唯一能做的事就是接受新基準——那等於這道門沒有守。
+  // 「之前是什麼值」仍然講不出來（基準只存 hash，要講前後差異就得存原值，
+  // 那是好幾 MB 與每次改樣式都爆炸的 diff，見檔頭的取捨）。但實務上
+  // 「哪個元素 + 哪個屬性 + 現在是什麼」已經夠判斷了，因為看的人剛改過 CSS。
+  const detail = changed.slice(0, 8).map((k) => {
+    const vals = raw[k].split('|');
+    const oldFp = fpOf(want[k]);
+    const newFp = fpOf(hashed[k]);
+    const moved = PROPS
+      .map((p, i) => ({ p, v: vals[i], i }))
+      .filter(({ i }) => oldFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS)
+        !== newFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS));
+    // 指紋碰撞（1/100）時 moved 可能是空的——那就退回列出全部，總比什麼都不講好
+    const shown = moved.length ? moved : PROPS.map((p, i) => ({ p, v: vals[i], i }));
+    return `  · ${ids[k] ?? '(?)'}\n      ${k}\n      ${moved.length ? '變了的屬性' : '（指紋碰撞，列出全部）'}：` +
+      shown.map(({ p, v }) => `${p} = ${v}`).join('、');
+  }).join('\n');
+
   expect(
     changed.slice(0, 20),
     `${route}：${changed.length} 個元素的計算後樣式變了（另有 ${onlyOneSide.length} 個路徑只存在一邊，` +
-      `那是 DOM 結構差異不算）。若是預期中的改動：\n` +
+      `那是 DOM 結構差異不算）。\n` +
+      `${detail}${changed.length > 8 ? `\n  …另外還有 ${changed.length - 8} 個` : ''}\n\n` +
+      `若是預期中的改動：\n` +
       `  UPDATE_STYLE_BASELINE=1 pnpm exec playwright test computed-style\n` +
       `並在 PR 說明為什麼這些元素該變。`,
   ).toEqual([]);
