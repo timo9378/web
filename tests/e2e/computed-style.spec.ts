@@ -58,6 +58,16 @@ const UPDATE = process.env.UPDATE_STYLE_BASELINE === '1';
 const ROUTES = [
   '/', '/about', '/blog', '/photos', '/setup',
   '/history', '/friends', '/bookshelf', '/watch', '/messages', '/about-site',
+  // ⚠ `/blog/5` 是**文章內頁**，跟上面的 `/blog`（清單頁）是兩套完全不同的 CSS。
+  //
+  // 加它是因為守備範圍差太多：`BlogPost.css` 有 **3317 行**，是全專案最大的一支，
+  // 而在此之前**沒有任何一條路由會載到它**——清單頁走的是 Blog.css。
+  // 也就是說整個文章頁的排版（內文、程式碼區塊、圖表、目錄、留言）改壞了，
+  // 這道守門一個字都不會說。後台那三條當初就是因為同樣的理由補進來的（見下面的說明）。
+  //
+  // 挑 5 而不是別篇：種子資料裡只有它同時有**程式碼區塊、mermaid 圖表、圖片**
+  // 三種內容（見 seed.mjs），也就是文章頁最容易出事的那幾塊都在同一頁上。
+  '/blog/5',
 ];
 
 /**
