@@ -1,0 +1,230 @@
+/**
+ * 404 頁的場景。
+ *
+ * 構圖參考使用者提供的一張 AI 插畫：太空人 + 艙體、漂浮的書、星座連線、
+ * 一塊顯示「Location Not Found」的螢幕、彩色星雲。那張是點陣圖，這裡是手寫 SVG／CSS
+ * 重畫成線稿版本——換來的是 **零額外請求**（不必再下載一張數百 KB 的插畫）、
+ * 跟著主題色走、而且在任何解析度都不糊。
+ *
+ * ⚠ 這一頁是疊在全站的太空背景（SpaceBackdropShell）之上的，所以這裡**不畫星星**，
+ *   只加「近景」的元素。再鋪一層星點會跟背景的星空打架（密度變兩倍、視差也對不上）。
+ */
+
+.nf-wrap {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 72vh;
+  padding: 2rem 1rem 3rem;
+  text-align: center;
+  /* 場景本身會溢出一點（星座連線刻意超出畫面），不要讓它撐出橫向捲軸 */
+  overflow: hidden;
+}
+
+/* ── 星雲光暈 ──
+   用兩個大範圍的 radial-gradient 而不是圖片：它們是純合成，不佔頻寬。
+   blur 交給 gradient 自己的漸層而不是 filter: blur()——後者會強制建立一個
+   很大的離屏圖層，在低階機器上是實際的掉幀來源。 */
+.nf-wrap::before,
+.nf-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.nf-wrap::before {
+  background:
+    radial-gradient(38% 46% at 22% 32%, rgba(127, 90, 240, 0.22), transparent 70%),
+    radial-gradient(34% 40% at 78% 26%, rgba(255, 138, 76, 0.13), transparent 72%);
+}
+
+.nf-wrap::after {
+  background: radial-gradient(42% 38% at 64% 78%, rgba(44, 182, 125, 0.12), transparent 70%);
+}
+
+/* ── 場景 ── */
+.nf-scene {
+  width: min(560px, 92vw);
+  height: auto;
+  margin-bottom: -1.5rem; /* 讓 404 字樣往上咬進場景，兩者不要各自為政 */
+  overflow: visible;
+}
+
+/* 太空人整體很慢地上下飄。時間拉長到 9s 是刻意的：
+   短週期會讓人一直注意到它在動，長週期才像「漂浮」。 */
+.nf-astronaut {
+  animation: nf-float 9s ease-in-out infinite;
+  transform-origin: 308px 130px;
+}
+
+.nf-book {
+  animation: nf-drift 11s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nf-book--b {
+  animation-duration: 13s;
+  animation-delay: -3s;
+}
+.nf-book--c {
+  animation-duration: 15s;
+  animation-delay: -7s;
+}
+
+/* 螢幕上的路線是一條 dash，讓它慢慢走完再重來——「找不到路」的視覺提示 */
+.nf-route {
+  stroke-dasharray: 4 4;
+  animation: nf-dash 2.4s linear infinite;
+}
+
+/* 星座連線淡入淡出，錯開時間才不像整組在閃 */
+.nf-constellation {
+  animation: nf-twinkle 6s ease-in-out infinite;
+}
+.nf-constellation--b {
+  animation-duration: 8s;
+  animation-delay: -2.5s;
+}
+
+@keyframes nf-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.2deg);
+  }
+}
+
+@keyframes nf-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(5deg);
+  }
+}
+
+@keyframes nf-dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+@keyframes nf-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* ── 文字 ── */
+.nf-code {
+  margin: 0;
+  font-size: clamp(4.5rem, 14vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #7f5af0, #2cb67d);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  user-select: none;
+}
+
+.nf-lead {
+  margin: 0.75rem 0 0;
+  max-width: 30rem;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.nf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* ⚠ 這是 <a> 不是 <button>，所以不會撞到 index.css 那條全站的 `button` 規則。
+   如果哪天改成 <button>，記得那條規則在 @layer base（分層），元件 CSS 未分層恆勝，
+   不需要靠 !important 蓋——理由見 CLAUDE.md 的 CSS 那節。 */
+.nf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.nf-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #7f5af0, #2cb67d);
+  box-shadow: 0 0 20px rgba(127, 90, 240, 0.3);
+}
+
+.nf-btn--primary:hover,
+.nf-btn--primary:focus-visible {
+  transform: scale(1.04);
+  box-shadow: 0 0 30px rgba(127, 90, 240, 0.5);
+}
+
+.nf-btn--ghost {
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.nf-btn--ghost:hover,
+.nf-btn--ghost:focus-visible {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 手機：場景縮小、間距收緊，避免整頁要捲兩屏才看得到按鈕 */
+@media (max-width: 640px) {
+  .nf-wrap {
+    min-height: 64vh;
+    padding-top: 1rem;
+  }
+
+  .nf-scene {
+    width: 100%;
+    margin-bottom: -0.5rem;
+  }
+}
+
+/* ⚠ 這幾條要蓋掉上面所有 keyframes，而動畫是宣告在元件自己的規則上（未分層），
+   所以必須用 !important——這跟 cascade layer 怎麼排無關，是同層同特異性的覆蓋。
+   測試瀏覽器預設不會觸發這個 media query（見 CLAUDE.md），所以它量不到，要靠讀規則確認。 */
+@media (prefers-reduced-motion: reduce) {
+  .nf-astronaut,
+  .nf-book,
+  .nf-route,
+  .nf-constellation {
+    animation: none !important;
+  }
+
+  .nf-btn {
+    transition: none !important;
+  }
+}
