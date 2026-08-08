@@ -7,7 +7,7 @@ use koimsurai_web_backend::{handlers, router, state};
 use state::AppState;
 
 // jemalloc（tikv fork）：長跑 server 的 RSS/碎片化優於 glibc malloc
-//（反代大量短命 alloc + resvg/webp 圖片管線爆量 alloc）。MSVC 不支援 → cfg 排除。
+//（反代大量短命 alloc + takumi/webp 圖片管線爆量 alloc）。MSVC 不支援 → cfg 排除。
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;

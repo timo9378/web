@@ -167,7 +167,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/api/image-proxy", get(handlers::gallery::image_proxy))
         // gallery sync（rotate+resize+lossy webp+EXIF+manifest）
         .route("/api/admin/gallery/sync", post(handlers::gallery::gallery_sync))
-        // OG 圖（resvg；axum 不支援 :id.png 部分參數，handler 內 strip 後綴）
+        // OG 圖（takumi；axum 不支援 :id.png 部分參數，handler 內 strip 後綴）
         .route("/api/og/{file}", get(handlers::og::og_png))
         // 上傳（axum multipart；thumbhash 實測等價）
         .route(

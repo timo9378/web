@@ -68,7 +68,10 @@ RUN cargo build --release -p koimsurai-web-backend \
 # `libc.so.6: version 'GLIBC_2.39' not found`——編得起來、跑不起來。
 # 這一段有名字（runtime）是為了讓 CI 能對「只有它」關掉快取，見下面那段註解。
 FROM debian:trixie-slim AS runtime
-# fonts-noto-cjk：OG 圖 SVG 光柵化字型；ca-certificates：對外 HTTPS；curl：healthcheck
+# fonts-noto-cjk：OG 圖的中文字型。⚠ takumi **不掃系統字型**，是 handlers/og.rs 直接
+#   讀 /usr/share/fonts/opentype/noto/NotoSansCJK-{Regular,Bold}.ttc。所以這個套件
+#   不能拿掉，而且那兩個檔名也不能變——變了的話 OG 圖的中文會變豆腐（端點仍回 200）。
+# ca-certificates：對外 HTTPS；curl：healthcheck
 # ffmpeg：上傳影片正規化（把 tkhd 旋轉矩陣烘進畫素，見 handlers/upload.rs）。
 # 用 -no-install-recommends 只帶必要相依，image 約多 100 MB。
 #
