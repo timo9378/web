@@ -135,7 +135,8 @@
     "subMessage": "이 페이지는 존재하지 않거나 삭제되었습니다.",
     "backHome": "홈으로 돌아가기",
     "requested": "찾으시던 위치",
-    "signature": "— 길을 잃은 어느 방문자"
+    "search": "사이트 검색",
+    "pageTitleShort": "페이지를 찾을 수 없음"
   },
   "home": {
     "aboutMe": {

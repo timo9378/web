@@ -122,13 +122,18 @@ test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   // ⚠ 原本這裡只有 `body` 不是空的。那條**幾乎擋不住任何東西**——版面全掛、
   // 場景一個元素都沒渲染出來，只要 header/footer 還在，body 就不是空的。
   // 404 又是最少人打開的頁面，壞了不會有人回報。所以改成釘三件實際的事：
-  await expect(page.locator('.nf-code'), '要看得到 404 這個字').toHaveText('404');
-  // 卡片會把「你要找的位置」印出來——那是這一頁唯一有功能性的東西，
-  // 印錯或沒印（例如哪天改成讀 state 而不是 location）從畫面上看不出來
-  await expect(page.locator('.nf-path'), '要印出使用者要找的路徑')
+  await expect(page.locator('.nf-eyebrow'), '要看得到 404 這個狀態碼').toContainText('404');
+  // 把「你要找的位置」印出來是這一頁唯一有功能性的東西，印錯或沒印
+  //（例如哪天改成讀 state 而不是 location）從畫面上看不出來
+  await expect(page.locator('.nf-addr-path'), '要印出使用者要找的路徑')
     .toHaveText('/this-route-does-not-exist');
-  // 兩個出口都要在：只給「回首頁」的話，從舊連結進來想找文章的人得自己再找一次
-  await expect(page.locator('.nf-actions a'), '要有回首頁與手記兩個出口').toHaveCount(2);
+  // 前景濾鏡：少了它文字會壓在最亮的星空上。這條擋的是「新頁面忘記加 scrim」，
+  // 而那正是這一頁前兩版都犯過的錯
+  await expect(page.locator('.nf-scrim'), '要有壓暗星空的前景濾鏡').toBeAttached();
+
+  // 搜尋鈕要真的打得開命令面板——手機沒有 ⌘K，這是它們唯一的入口
+  await page.locator('.nf-btn--primary').click();
+  await expect(page.locator('.cmdk-wrap'), '搜尋鈕要打得開命令面板').toBeVisible();
 });
 
 test('草稿不會出現在公開清單', async ({ page }) => {

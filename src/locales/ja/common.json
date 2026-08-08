@@ -135,7 +135,8 @@
     "subMessage": "このページは存在しないか、削除されました。",
     "backHome": "ホームに戻る",
     "requested": "お探しの場所",
-    "signature": "— 道に迷った訪問者より"
+    "search": "サイト内を検索",
+    "pageTitleShort": "ページが見つかりません"
   },
   "home": {
     "aboutMe": {

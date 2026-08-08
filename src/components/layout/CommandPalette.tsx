@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Command } from 'cmdk';
 import { useLocale, useLocaleNavigate } from '@/hooks/useLocale';
@@ -9,6 +9,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { recentPostsQueryOptions, blogCategoriesQueryOptions, blogTagsQueryOptions } from '@/data/blogList';
+import {
+  closeCommandPalette, toggleCommandPalette, useCommandPaletteOpen,
+} from '@/store/commandPaletteStore';
 import './CommandPalette.css';
 import { useCategoryLabel } from '@/lib/categoryLabel';
 
@@ -29,7 +32,9 @@ const STATIC_PAGES: StaticPage[] = [
 export default function CommandPalette() {
   const categoryLabel = useCategoryLabel();
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  // 開關狀態在 store 裡而不是這裡：手機沒有 ⌘K，404 頁需要一顆按鈕打得開它。
+  // 理由見 store/commandPaletteStore.ts。
+  const open = useCommandPaletteOpen();
   const navigate = useLocaleNavigate();
   const navLocale = useLocale();
 
@@ -38,9 +43,9 @@ export default function CommandPalette() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setOpen((v) => !v);
+        toggleCommandPalette();
       } else if (e.key === 'Escape') {
-        setOpen(false);
+        closeCommandPalette();
       }
     };
     window.addEventListener('keydown', onKey);
@@ -53,7 +58,7 @@ export default function CommandPalette() {
   const { data: tags = [] } = useQuery({ ...blogTagsQueryOptions(navLocale), enabled: open });
   const posts = useMemo(() => postsData.filter((p) => p.status === 'published' || !p.status), [postsData]);
 
-  const go = (path: string) => { setOpen(false); void navigate(path); };
+  const go = (path: string) => { closeCommandPalette(); void navigate(path); };
 
   const postItems = useMemo(() => posts.slice(0, 50), [posts]);
 
@@ -66,7 +71,7 @@ export default function CommandPalette() {
     // 點遮罩關閉是滑鼠的便利路徑，不是唯一出口：cmdk 原生處理 Escape，
         // 輸入框也在焦點序列內。遮罩本身不該進 Tab 序列（那反而多一個空的停留點）
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div className="cmdk-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+    <div className="cmdk-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeCommandPalette(); }}>
       <div className="cmdk-wrap">
         <Command label={t('commandPalette.label')} shouldFilter>
           <div className="cmdk-input-row">

@@ -135,7 +135,8 @@
     "subMessage": "这个页面不存在，或已被移除。",
     "backHome": "返回首页",
     "requested": "你要找的位置",
-    "signature": "— 某个迷路的访客"
+    "search": "搜索站内",
+    "pageTitleShort": "找不到页面"
   },
   "home": {
     "aboutMe": {

@@ -1,16 +1,21 @@
 import { useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { LocaleLink } from '@/i18n/locale-link';
+import { openCommandPalette } from '@/store/commandPaletteStore';
 import './NotFound.css';
 
 /**
  * 404 頁。
  *
- * 構圖是「一張漂在星海裡的紙條」，不是置中的大字報——理由見 NotFound.css 的檔頭。
+ * 兩個決定：
  *
- * 唯一有功能性的新東西是**把使用者要找的路徑印出來**。404 最常見的來源是打錯字
- * 或舊連結，而讀者通常不會去看網址列；把它寫在紙條上，他自己就看得出來是
- * 少了一段、還是整頁真的沒了。
+ * 1. **主角是那句話，不是那個數字。** 404 只是個狀態碼，讀者需要知道的是
+ *    「這裡沒有東西、接下來能去哪」。所以數字縮成一行小小的 eyebrow，
+ *    訊息用大字。
+ *
+ * 2. **給搜尋，不只給連結。** 404 最常見的來源是舊連結與打錯字，這兩種人都
+ *    「知道自己要找什麼」——直接丟他回首頁等於要他從頭再找一次。站上本來就有
+ *    命令面板（⌘K），這裡把它接上，手機也按得到（見 store/commandPaletteStore.ts）。
  */
 const NotFound = () => {
   const { t } = useTranslation();
@@ -18,42 +23,37 @@ const NotFound = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <div className="nf-wrap">
-      <div className="nf-card">
-        {/* 紙膠帶。純裝飾，不進無障礙樹 */}
-        <span className="nf-tape" aria-hidden="true" />
+    <div className="nf-page">
+      {/* 前景濾鏡：壓暗亮星空，跟 .about-scrim / .w-scrim / .wl-scrim 同款。
+          少了它，文字會直接壓在最亮的那片星空上，對比整個垮掉。 */}
+      <div className="nf-scrim" />
 
-        {/* ⚠ 必須是 <h1>。改成 <p> 的話整頁就沒有一級標題，axe 的
-            `page-has-heading-one` 會紅——這條真的擋下過（見 a11y.spec.ts）。
-            版面上它看起來只是個數字，但它就是這一頁的標題。 */}
-        <h1 className="nf-code">404</h1>
-
-        <p className="nf-message">
-          {t('notFound.lostMessage')}
-          <br />
-          {t('notFound.subMessage')}
+      <div className="nf-inner">
+        <p className="nf-eyebrow">
+          <span className="nf-dot" aria-hidden="true" />
+          404 · {t('notFound.pageTitleShort')}
         </p>
 
-        <hr className="nf-rule" />
+        {/* ⚠ 必須是 <h1>。少了一級標題 axe 的 page-has-heading-one 會紅，
+            而這一頁在 /ja/blog/1 之類沒有該語系版本的路徑上也會渲染，
+            所以那條 a11y 測試真的走得到這裡。 */}
+        <h1 className="nf-title">{t('notFound.lostMessage')}</h1>
+        <p className="nf-sub">{t('notFound.subMessage')}</p>
 
-        <p className="nf-label">{t('notFound.requested')}</p>
-        {/* 路徑可能很長（有人會貼一整串），用 wrap-anywhere 讓它換行而不是撐破卡片 */}
-        <p className="nf-path">{pathname}</p>
+        <div className="nf-addr">
+          <span className="nf-addr-label">{t('notFound.requested')}</span>
+          {/* 路徑可能很長（有人會貼一整串），讓它換行而不是撐破版面 */}
+          <code className="nf-addr-path">{pathname}</code>
+        </div>
 
-        <nav className="nf-actions">
-          <LocaleLink to="/" className="nf-link">
-            <span className="nf-mark" aria-hidden="true" />
-            {t('notFound.backHome')}
-          </LocaleLink>
-          {/* 第二個出口：從舊連結進來的人多半是要找文章，只給「回首頁」
-              等於要他們自己再找一次 */}
-          <LocaleLink to="/blog" className="nf-link">
-            <span className="nf-mark" aria-hidden="true" />
-            {t('nav.notes')}
-          </LocaleLink>
-        </nav>
-
-        <p className="nf-signature">{t('notFound.signature')}</p>
+        <div className="nf-actions">
+          <button type="button" className="nf-btn nf-btn--primary" onClick={openCommandPalette}>
+            {t('notFound.search')}
+            <kbd className="nf-kbd">⌘K</kbd>
+          </button>
+          <LocaleLink to="/" className="nf-btn">{t('notFound.backHome')}</LocaleLink>
+          <LocaleLink to="/blog" className="nf-btn">{t('nav.notes')}</LocaleLink>
+        </div>
       </div>
     </div>
   );
