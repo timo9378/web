@@ -135,7 +135,8 @@
     "subMessage": "This page doesn't exist, or has been removed.",
     "backHome": "Back to home",
     "requested": "You were looking for",
-    "signature": "— a wandering visitor"
+    "search": "Search the site",
+    "pageTitleShort": "Page not found"
   },
   "home": {
     "aboutMe": {

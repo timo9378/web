@@ -1,194 +1,195 @@
 /**
- * 404 頁：一張漂在星海裡的紙條。
+ * 404 頁。
  *
- * ## 為什麼不是置中的大字報
+ * ## 這一版是重寫的，前兩版都不算數
  *
- * 上一版是「巨大漸層 404 + 兩行置中文字 + 藥丸按鈕」，再往上黏一張太空人插畫。
- * 那其實**跟原本沒有差別**——構圖一模一樣，只是多了裝飾。
+ * 第一版：原本的置中巨大漸層 404 + 兩行字 + 藥丸按鈕，上面黏一張太空人插畫。
+ *   → 那是加裝飾，構圖跟原本一模一樣。
+ * 第二版：照著別人的站做了一張紙條卡片（紙膠帶、襯線斜體、右下簽名）。
+ *   → 那是抄，不是參考。做出來的東西不屬於這個站。
  *
- * 這一版換掉的是構圖本身：內容全部靠左、收進一張略微傾斜的卡片裡，
- * 數字不再用漸層、也不再是視覺主角。理由是這一頁**已經有主視覺了**——
- * 全站的太空背景（SpaceBackdropShell）就在後面跑。再放一個搶眼的置中元素
- * 只會跟它打架；讓背景當背景、紙條當內容，兩邊才各自成立。
+ * 這一版改用**站上自己的排版慣例**：
+ *   · 內容直接放在星空上，不做卡片——`/about`、`/watch`、`/thinking` 都是這樣
+ *   · 配一層 scrim 壓暗星空（同 `.about-scrim` / `.w-scrim` / `.wl-scrim`）
+ *   · 漸層只當細部點綴（那顆小圓點），不拿來灌一個巨大的數字
  *
- * 卡片刻意做得偏小、偏安靜：404 是個壞消息，版面越大聲越煩人。
+ * ## 主角是那句話，不是那個數字
  *
- * ## backdrop-filter 的取捨
- *
- * 卡片用半透明 + blur 讓後面的星星透出來一點，這是「漂在星海裡」的關鍵。
- * 但 backdrop-filter 在低階機器上是實際的成本，所以：
- *   · 只有這一張卡片用，不是滿版
- *   · html.no-gpu 底下退回不透明底色（那個 class 的用途見 index.css）
+ * 404 只是狀態碼。讀者要知道的是「這裡沒有東西、接下來能去哪」，所以數字縮成
+ * 一行小小的 eyebrow，訊息用大字。
  */
 
-.nf-wrap {
+.nf-page {
   position: relative;
-  z-index: 10;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 68vh;
-  padding: 3rem 1.25rem 4rem;
+  min-height: 78vh;
+  padding: 96px 1.5rem 64px; /* 上方留 fixed header 的位置 */
 }
 
-.nf-card {
-  position: relative;
-  width: min(30rem, 100%);
-  padding: 2.5rem 2.25rem 1.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
-  /* 半透明讓星空透出來；沒有這個就只是一塊貼在星空上的黑方塊 */
-  background: rgba(16, 16, 26, 0.72);
-  backdrop-filter: blur(14px);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    0 2px 0 rgba(255, 255, 255, 0.03) inset;
-  /* 一度就夠。再多就從「隨手貼上」變成「刻意歪」 */
-  transform: rotate(-1deg);
+/* 前景濾鏡：壓暗亮星空。
+   ⚠ 數值與 z-index 要跟 .about-scrim / .w-scrim / .wl-scrim 一致——
+   那幾頁各自抄了一份同樣的規則，改這裡的話那邊也要一起改。 */
+.nf-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(6, 5, 14, 0.55);
+  pointer-events: none;
 }
 
-/* 紙膠帶：斜紋用 repeating-linear-gradient，不需要圖片 */
-.nf-tape {
-  position: absolute;
-  top: -0.75rem;
-  left: 50%;
-  width: 6.5rem;
-  height: 1.5rem;
-  transform: translateX(-50%) rotate(1.5deg);
-  background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 4px, rgba(255, 255, 255, 0.06) 4px 8px),
-    rgba(196, 154, 168, 0.28);
-  border-radius: 2px;
-  /* 兩端做出撕開的漸淡感 */
-  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+.nf-inner {
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
 }
 
-.nf-code {
-  margin: 0;
-  font-size: 3.25rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: rgba(255, 255, 255, 0.94);
-}
-
-/* 訊息用襯線斜體：跟站上其他地方的無襯線內文區隔開，讀起來像手寫的旁白 */
-.nf-message {
-  margin: 1rem 0 0;
-  font-family: Georgia, "Noto Serif TC", "Songti TC", serif;
-  font-style: italic;
-  font-size: 1rem;
-  line-height: 1.85;
+/* ── eyebrow：404 · 找不到頁面 ── */
+.nf-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.55);
 }
 
-.nf-rule {
-  width: 2.5rem;
-  margin: 1.75rem 0 1.25rem;
-  border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+/* 站上的主色漸層在這裡只出現這麼一點。
+   把它灌進一個 clamp(5rem,15vw,10rem) 的數字是上一版做的事，太吵。 */
+.nf-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7f5af0, #2cb67d);
+  box-shadow: 0 0 12px rgba(127, 90, 240, 0.65);
 }
 
-/* ⚠ 這兩個灰階（label 與下面的 signature）不能再壓低。
-   原本設 .32 / .26，axe 判定 serious:color-contrast——卡片底是半透明的深色，
-   白字要到大約 alpha 0.45 才過 4.5:1。想要更安靜的話請改別的（字級、間距），
-   不要調淡。 */
-.nf-label {
-  margin: 0 0 0.4rem;
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.58);
-}
-
-.nf-path {
+.nf-title {
   margin: 0;
+  font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.nf-sub {
+  margin: 0.75rem 0 0;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── 你要找的位置 ── */
+.nf-addr {
+  margin-top: 2.25rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 2px solid rgba(127, 90, 240, 0.65);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nf-addr-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* ⚠ 不要再壓低這個灰階。上一版設 .32，axe 判定 serious:color-contrast——
+     白字在這個底色上大約要 alpha 0.45 才過 4.5:1。要更安靜請改字級或間距。 */
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.nf-addr-path {
+  display: block;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.68);
-  /* 有人會把一整串網址貼進來——讓它換行，不要撐破卡片 */
+  color: rgba(255, 255, 255, 0.85);
+  /* 有人會把一整串網址貼進來——換行，不要撐破版面 */
   overflow-wrap: anywhere;
 }
 
+/* ── 出口 ── */
 .nf-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-top: 2rem;
+  gap: 0.75rem;
+  margin-top: 2.25rem;
 }
 
-.nf-link {
+/* ⚠ 這裡有 <button> 也有 <a>，而 index.css 的 `@layer base` 有一條全站的
+   `button { 紫底 + hover 光暈 }`。元件 CSS 是**未分層**的，未分層恆勝過分層，
+   所以直接寫就會贏，不需要 !important——理由見 CLAUDE.md 的 CSS 那節。 */
+.nf-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
-  transition: color 0.18s ease;
-}
-
-/* 前面那個小方塊：借用核取方塊的樣子，暗示「挑一條路走」。
-   用 span 而不是真的 checkbox——它不是表單，不該被鍵盤當成可勾選的控制項。 */
-.nf-mark {
-  width: 0.7rem;
-  height: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 2px;
+  cursor: pointer;
   transition:
     background-color 0.18s ease,
-    border-color 0.18s ease;
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
-.nf-link:hover,
-.nf-link:focus-visible {
+.nf-btn:hover,
+.nf-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
 
-.nf-link:hover .nf-mark,
-.nf-link:focus-visible .nf-mark {
-  background-color: var(--clr-button, #7f5af0);
-  border-color: var(--clr-button, #7f5af0);
+.nf-btn--primary {
+  border-color: rgba(127, 90, 240, 0.5);
+  background: rgba(127, 90, 240, 0.16);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.nf-signature {
-  margin: 2rem 0 0;
-  font-family: Georgia, "Noto Serif TC", "Songti TC", serif;
-  font-style: italic;
-  font-size: 0.78rem;
-  text-align: right;
-  color: rgba(255, 255, 255, 0.55);
+.nf-btn--primary:hover,
+.nf-btn--primary:focus-visible {
+  background: rgba(127, 90, 240, 0.3);
+  border-color: rgba(127, 90, 240, 0.85);
 }
 
-@media (max-width: 480px) {
-  .nf-card {
-    padding: 2rem 1.5rem 1.5rem;
+.nf-kbd {
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ⌘K 在手機上按不到，藏起來——但按鈕本身留著（它會打開同一個面板）。
+   這就是把面板的開關搬進 store 的理由。 */
+@media (max-width: 640px) {
+  .nf-page {
+    min-height: 70vh;
+    padding-top: 72px;
   }
 
-  .nf-code {
-    font-size: 2.75rem;
+  .nf-kbd {
+    display: none;
   }
 }
 
-/* 無 GPU 的機器：blur 退場，改用不透明底色。
-   不這樣做的話 backdrop-filter 會在那些機器上變成明顯的掉幀來源。 */
-html.no-gpu .nf-card {
-  background: #12121c;
-  backdrop-filter: none;
-}
-
-/* ⚠ 這條要蓋掉 .nf-card 自己的 transform，同層同特異性，所以需要 !important。
-   跟 cascade layer 無關。測試瀏覽器預設不觸發這個 media query（見 CLAUDE.md），
-   量不到，只能靠讀規則確認。 */
 @media (prefers-reduced-motion: reduce) {
-  .nf-card {
-    transform: none !important;
-  }
-
-  .nf-link,
-  .nf-mark {
+  /* ⚠ 同層同特異性的覆蓋，所以要 !important；跟 cascade layer 無關。
+     測試瀏覽器預設不觸發這個 media query（見 CLAUDE.md），量不到，只能讀規則確認。 */
+  .nf-btn {
     transition: none !important;
   }
 }

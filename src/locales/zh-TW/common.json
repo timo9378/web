@@ -135,7 +135,8 @@
     "subMessage": "這個頁面不存在，或已被移除。",
     "backHome": "返回首頁",
     "requested": "你要找的位置",
-    "signature": "— 某個迷路的訪客"
+    "search": "搜尋站內",
+    "pageTitleShort": "找不到頁面"
   },
   "home": {
     "aboutMe": {
