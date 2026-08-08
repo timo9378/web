@@ -133,7 +133,9 @@
     "seoDescription": "你迷路了嗎？這個頁面不存在。",
     "lostMessage": "看起來你迷失在星際之間了。",
     "subMessage": "這個頁面不存在，或已被移除。",
-    "backHome": "返回首頁"
+    "backHome": "返回首頁",
+    "requested": "你要找的位置",
+    "signature": "— 某個迷路的訪客"
   },
   "home": {
     "aboutMe": {

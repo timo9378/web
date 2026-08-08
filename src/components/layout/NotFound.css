@@ -1,230 +1,194 @@
 /**
- * 404 頁的場景。
+ * 404 頁：一張漂在星海裡的紙條。
  *
- * 構圖參考使用者提供的一張 AI 插畫：太空人 + 艙體、漂浮的書、星座連線、
- * 一塊顯示「Location Not Found」的螢幕、彩色星雲。那張是點陣圖，這裡是手寫 SVG／CSS
- * 重畫成線稿版本——換來的是 **零額外請求**（不必再下載一張數百 KB 的插畫）、
- * 跟著主題色走、而且在任何解析度都不糊。
+ * ## 為什麼不是置中的大字報
  *
- * ⚠ 這一頁是疊在全站的太空背景（SpaceBackdropShell）之上的，所以這裡**不畫星星**，
- *   只加「近景」的元素。再鋪一層星點會跟背景的星空打架（密度變兩倍、視差也對不上）。
+ * 上一版是「巨大漸層 404 + 兩行置中文字 + 藥丸按鈕」，再往上黏一張太空人插畫。
+ * 那其實**跟原本沒有差別**——構圖一模一樣，只是多了裝飾。
+ *
+ * 這一版換掉的是構圖本身：內容全部靠左、收進一張略微傾斜的卡片裡，
+ * 數字不再用漸層、也不再是視覺主角。理由是這一頁**已經有主視覺了**——
+ * 全站的太空背景（SpaceBackdropShell）就在後面跑。再放一個搶眼的置中元素
+ * 只會跟它打架；讓背景當背景、紙條當內容，兩邊才各自成立。
+ *
+ * 卡片刻意做得偏小、偏安靜：404 是個壞消息，版面越大聲越煩人。
+ *
+ * ## backdrop-filter 的取捨
+ *
+ * 卡片用半透明 + blur 讓後面的星星透出來一點，這是「漂在星海裡」的關鍵。
+ * 但 backdrop-filter 在低階機器上是實際的成本，所以：
+ *   · 只有這一張卡片用，不是滿版
+ *   · html.no-gpu 底下退回不透明底色（那個 class 的用途見 index.css）
  */
 
 .nf-wrap {
   position: relative;
   z-index: 10;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 72vh;
-  padding: 2rem 1rem 3rem;
-  text-align: center;
-  /* 場景本身會溢出一點（星座連線刻意超出畫面），不要讓它撐出橫向捲軸 */
-  overflow: hidden;
+  min-height: 68vh;
+  padding: 3rem 1.25rem 4rem;
 }
 
-/* ── 星雲光暈 ──
-   用兩個大範圍的 radial-gradient 而不是圖片：它們是純合成，不佔頻寬。
-   blur 交給 gradient 自己的漸層而不是 filter: blur()——後者會強制建立一個
-   很大的離屏圖層，在低階機器上是實際的掉幀來源。 */
-.nf-wrap::before,
-.nf-wrap::after {
-  content: "";
+.nf-card {
+  position: relative;
+  width: min(30rem, 100%);
+  padding: 2.5rem 2.25rem 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  /* 半透明讓星空透出來；沒有這個就只是一塊貼在星空上的黑方塊 */
+  background: rgba(16, 16, 26, 0.72);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 2px 0 rgba(255, 255, 255, 0.03) inset;
+  /* 一度就夠。再多就從「隨手貼上」變成「刻意歪」 */
+  transform: rotate(-1deg);
+}
+
+/* 紙膠帶：斜紋用 repeating-linear-gradient，不需要圖片 */
+.nf-tape {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.nf-wrap::before {
+  top: -0.75rem;
+  left: 50%;
+  width: 6.5rem;
+  height: 1.5rem;
+  transform: translateX(-50%) rotate(1.5deg);
   background:
-    radial-gradient(38% 46% at 22% 32%, rgba(127, 90, 240, 0.22), transparent 70%),
-    radial-gradient(34% 40% at 78% 26%, rgba(255, 138, 76, 0.13), transparent 72%);
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 4px, rgba(255, 255, 255, 0.06) 4px 8px),
+    rgba(196, 154, 168, 0.28);
+  border-radius: 2px;
+  /* 兩端做出撕開的漸淡感 */
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
 }
 
-.nf-wrap::after {
-  background: radial-gradient(42% 38% at 64% 78%, rgba(44, 182, 125, 0.12), transparent 70%);
-}
-
-/* ── 場景 ── */
-.nf-scene {
-  width: min(560px, 92vw);
-  height: auto;
-  margin-bottom: -1.5rem; /* 讓 404 字樣往上咬進場景，兩者不要各自為政 */
-  overflow: visible;
-}
-
-/* 太空人整體很慢地上下飄。時間拉長到 9s 是刻意的：
-   短週期會讓人一直注意到它在動，長週期才像「漂浮」。 */
-.nf-astronaut {
-  animation: nf-float 9s ease-in-out infinite;
-  transform-origin: 308px 130px;
-}
-
-.nf-book {
-  animation: nf-drift 11s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.nf-book--b {
-  animation-duration: 13s;
-  animation-delay: -3s;
-}
-.nf-book--c {
-  animation-duration: 15s;
-  animation-delay: -7s;
-}
-
-/* 螢幕上的路線是一條 dash，讓它慢慢走完再重來——「找不到路」的視覺提示 */
-.nf-route {
-  stroke-dasharray: 4 4;
-  animation: nf-dash 2.4s linear infinite;
-}
-
-/* 星座連線淡入淡出，錯開時間才不像整組在閃 */
-.nf-constellation {
-  animation: nf-twinkle 6s ease-in-out infinite;
-}
-.nf-constellation--b {
-  animation-duration: 8s;
-  animation-delay: -2.5s;
-}
-
-@keyframes nf-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(1.2deg);
-  }
-}
-
-@keyframes nf-drift {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-4deg);
-  }
-  50% {
-    transform: translateY(-14px) rotate(5deg);
-  }
-}
-
-@keyframes nf-dash {
-  to {
-    stroke-dashoffset: -16;
-  }
-}
-
-@keyframes nf-twinkle {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-/* ── 文字 ── */
 .nf-code {
   margin: 0;
-  font-size: clamp(4.5rem, 14vw, 9rem);
+  font-size: 3.25rem;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #7f5af0, #2cb67d);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  user-select: none;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.94);
 }
 
-.nf-lead {
-  margin: 0.75rem 0 0;
-  max-width: 30rem;
-  font-size: clamp(1rem, 2.4vw, 1.25rem);
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.62);
+/* 訊息用襯線斜體：跟站上其他地方的無襯線內文區隔開，讀起來像手寫的旁白 */
+.nf-message {
+  margin: 1rem 0 0;
+  font-family: Georgia, "Noto Serif TC", "Songti TC", serif;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.nf-rule {
+  width: 2.5rem;
+  margin: 1.75rem 0 1.25rem;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* ⚠ 這兩個灰階（label 與下面的 signature）不能再壓低。
+   原本設 .32 / .26，axe 判定 serious:color-contrast——卡片底是半透明的深色，
+   白字要到大約 alpha 0.45 才過 4.5:1。想要更安靜的話請改別的（字級、間距），
+   不要調淡。 */
+.nf-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.nf-path {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.68);
+  /* 有人會把一整串網址貼進來——讓它換行，不要撐破卡片 */
+  overflow-wrap: anywhere;
 }
 
 .nf-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
+  gap: 1.5rem;
   margin-top: 2rem;
 }
 
-/* ⚠ 這是 <a> 不是 <button>，所以不會撞到 index.css 那條全站的 `button` 規則。
-   如果哪天改成 <button>，記得那條規則在 @layer base（分層），元件 CSS 未分層恆勝，
-   不需要靠 !important 蓋——理由見 CLAUDE.md 的 CSS 那節。 */
-.nf-btn {
+.nf-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.75rem;
-  border-radius: 9999px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+/* 前面那個小方塊：借用核取方塊的樣子，暗示「挑一條路走」。
+   用 span 而不是真的 checkbox——它不是表單，不該被鍵盤當成可勾選的控制項。 */
+.nf-mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
-.nf-btn--primary {
+.nf-link:hover,
+.nf-link:focus-visible {
   color: #fff;
-  background: linear-gradient(135deg, #7f5af0, #2cb67d);
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.3);
 }
 
-.nf-btn--primary:hover,
-.nf-btn--primary:focus-visible {
-  transform: scale(1.04);
-  box-shadow: 0 0 30px rgba(127, 90, 240, 0.5);
+.nf-link:hover .nf-mark,
+.nf-link:focus-visible .nf-mark {
+  background-color: var(--clr-button, #7f5af0);
+  border-color: var(--clr-button, #7f5af0);
 }
 
-.nf-btn--ghost {
-  color: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+.nf-signature {
+  margin: 2rem 0 0;
+  font-family: Georgia, "Noto Serif TC", "Songti TC", serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-.nf-btn--ghost:hover,
-.nf-btn--ghost:focus-visible {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* 手機：場景縮小、間距收緊，避免整頁要捲兩屏才看得到按鈕 */
-@media (max-width: 640px) {
-  .nf-wrap {
-    min-height: 64vh;
-    padding-top: 1rem;
+@media (max-width: 480px) {
+  .nf-card {
+    padding: 2rem 1.5rem 1.5rem;
   }
 
-  .nf-scene {
-    width: 100%;
-    margin-bottom: -0.5rem;
+  .nf-code {
+    font-size: 2.75rem;
   }
 }
 
-/* ⚠ 這幾條要蓋掉上面所有 keyframes，而動畫是宣告在元件自己的規則上（未分層），
-   所以必須用 !important——這跟 cascade layer 怎麼排無關，是同層同特異性的覆蓋。
-   測試瀏覽器預設不會觸發這個 media query（見 CLAUDE.md），所以它量不到，要靠讀規則確認。 */
+/* 無 GPU 的機器：blur 退場，改用不透明底色。
+   不這樣做的話 backdrop-filter 會在那些機器上變成明顯的掉幀來源。 */
+html.no-gpu .nf-card {
+  background: #12121c;
+  backdrop-filter: none;
+}
+
+/* ⚠ 這條要蓋掉 .nf-card 自己的 transform，同層同特異性，所以需要 !important。
+   跟 cascade layer 無關。測試瀏覽器預設不觸發這個 media query（見 CLAUDE.md），
+   量不到，只能靠讀規則確認。 */
 @media (prefers-reduced-motion: reduce) {
-  .nf-astronaut,
-  .nf-book,
-  .nf-route,
-  .nf-constellation {
-    animation: none !important;
+  .nf-card {
+    transform: none !important;
   }
 
-  .nf-btn {
+  .nf-link,
+  .nf-mark {
     transition: none !important;
   }
 }

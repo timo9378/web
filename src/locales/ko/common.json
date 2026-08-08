@@ -133,7 +133,9 @@
     "seoDescription": "길을 잃으셨나요? 이 페이지는 존재하지 않습니다.",
     "lostMessage": "별들 사이에서 길을 잃은 것 같아요.",
     "subMessage": "이 페이지는 존재하지 않거나 삭제되었습니다.",
-    "backHome": "홈으로 돌아가기"
+    "backHome": "홈으로 돌아가기",
+    "requested": "찾으시던 위치",
+    "signature": "— 길을 잃은 어느 방문자"
   },
   "home": {
     "aboutMe": {

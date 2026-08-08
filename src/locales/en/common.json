@@ -133,7 +133,9 @@
     "seoDescription": "Looks like you're lost. This page doesn't exist.",
     "lostMessage": "Looks like you're drifting between stars.",
     "subMessage": "This page doesn't exist, or has been removed.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "requested": "You were looking for",
+    "signature": "— a wandering visitor"
   },
   "home": {
     "aboutMe": {
