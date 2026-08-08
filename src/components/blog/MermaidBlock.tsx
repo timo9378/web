@@ -13,9 +13,9 @@
  * ⚠ 這是**純搬移**：所有程式碼與註解逐字照搬，只補了 import 與 export。
  * 驗證方式是把兩個檔接回去跟搬移前逐字元 diff（除了那行改過的 BlogImage import 之外一致）。
  *
- * ⚠ CSS 沒有跟著搬。mermaid 的樣式與文章內文的 cascade 交錯在 BlogPost.css 裡，
- * 拆出來會動到規則順序，而順序正是 `tests/e2e/computed-style.spec.ts` 在守的東西。
- * 那是另一件事，不該跟這次的純搬移混在一起。
+ * CSS 當時沒有跟著搬（見 MermaidBlock.css 的檔頭），因為改 CSS 的風險是「規則順序變了」，
+ * 而那要靠 computed-style 守門才驗得出來——當時那道守門**沒有涵蓋文章內頁**。
+ * 先補了 `/blog/5` 進去，才把樣式也搬過來。
  */
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, useId } from 'react';
 import ReactDOM from 'react-dom';
@@ -26,6 +26,10 @@ import type { Mermaid } from 'mermaid';
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { parseMermaidFrontmatter } from '@/lib/mdx/mermaidFrontmatter';
 import { lookup } from '@/lib/tableLookup';
+// 圖表樣式跟著元件走（同名檔）。⚠ 這行會讓這份 CSS 排在 BlogPost.css **之前**——
+// BlogPost.tsx 的 import 清單裡 `./MermaidBlock` 在 `./BlogPost.css` 前面。
+// 理由與驗證方式見 MermaidBlock.css 的檔頭。
+import './MermaidBlock.css';
 
 interface MermaidOption { value: string; label: string; icon?: string }
 
