@@ -106,6 +106,96 @@ function copyExcalidrawFonts(): Plugin {
   };
 }
 
+/**
+ * 讓 `@animateicons/react` 搖得動 —— 它的 barrel 沒有 `/*#__PURE__*\/` 註解。
+ *
+ * 症狀（實測，不是推測）：`dist/lucide.js` 一個檔裡有 **248 個 icon**，每個都寫成
+ * `var XxxIcon = forwardRef((props, ref) => …)`。專案只 import 其中 **17 個**
+ * （Header 3 個、HomeMenu 12 個、MoreMenu 2 個、BackToTopButton 1 個），
+ * 但整包 248 個都會進 bundle。
+ *
+ * 代價是實測出來的：把那 4 個 import 換成本地空殼再 build，entry chunk
+ * **1313 KB → 842 KB**。也就是這一包佔了 entry 的 **471 KB（36%）**，
+ * 而 entry 是**每一頁**都要載的——首頁全部 JS 才 2143 KB。
+ *
+ * ⚠ 這個專案的 bundler 是 **rolldown**（vite 7 內建，rollup 相容），下面講的
+ * tree-shaking 語意兩邊一致，但 guard 的錯誤訊息會是 `RolldownError`。
+ *
+ * 為什麼搖不掉，以及為什麼「加 PURE 註解」單獨做沒有用（這段是量出來的，
+ * 不要照直覺改）。每個 icon 在檔案裡長這樣：
+ *
+ *     var vo=forwardRef((props,ref)=>{…});vo.displayName="AArrowDownIcon";
+ *
+ * 兩個東西各自把它釘住，少拆一個都不會變小：
+ *
+ *   1. `forwardRef(…)` 是**從 react import 進來的未知函式**，bundler 必須假設
+ *      呼叫可能有副作用 → 不敢刪這個 `var`。
+ *   2. `vo.displayName=…` 是**頂層的屬性寫入**，bundler 預設
+ *      （`treeshake.propertyWriteSideEffects`）假設寫屬性可能觸發 setter →
+ *      這個敘述留著，而它引用了 `vo`，於是 `vo` 也跟著活下來。
+ *
+ * 實測四種組合的 entry 大小：
+ *
+ *     原樣                                    1313 KB
+ *     只加 PURE 註解                          1313 KB   ← 完全沒用
+ *     只設 propertyWriteSideEffects:false     1302 KB   ← 也幾乎沒用
+ *     兩個一起                                 934 KB
+ *     本檔現在的作法                            942 KB
+ *
+ * 所以這裡把 displayName **併進同一個純運算式**，而不是去動全域的 treeshake 設定：
+ *
+ *     var vo=PURE Object.assign(PURE forwardRef(…),{displayName:"AArrowDownIcon"});
+ *
+ * 效果一樣（942 vs 934 KB），但影響範圍只有這個套件。
+ * `propertyWriteSideEffects:false` 是**全域**的，等於叫 bundler 對整個 bundle
+ * 的每一個屬性寫入都假設沒有副作用——為了一個相依放寬全站的正確性假設不划算。
+ *
+ * ⚠ 內外**兩個** PURE 都需要。只註解外層的 `Object.assign` 沒用：bundler 仍然要
+ *   求值它的引數，而引數就是那個 `forwardRef(…)` 呼叫。實測只加外層是 1305 KB。
+ * ⚠ 248 個裡有 3 個沒有 displayName，所以後面補一條單純加 PURE 的 replace。
+ * ⚠ 不能改成「只 import 需要的 icon 的子路徑」：套件的 `exports` 只開了
+ *   `.` / `./lucide` / `./huge`，沒有每個 icon 的進入點。
+ * ⚠ 回傳 `map: null` 是刻意的：這是第三方 barrel，而且目的正是把它絕大部分刪掉，
+ *   為它保留精確的 source map 沒有意義。
+ * ⚠ 這是**上游的問題**。哪天它自己加了 PURE 註解，第一行的 guard 會讓這個 plugin
+ *   直接跳過（不會重複加、也不會壞），那時就可以整個拿掉。
+ *   同理，升級 `@animateicons/react` 之後 minify 出來的寫法可能一變，這兩條 regex
+ *   就配不到——而配不到**沒有任何徵兆**，只是每頁又胖回 371 KB。
+ *   所以函式最後有一道 guard：蓋不滿就 `this.error()` 擋掉 build。
+ */
+function pureAnnotateAnimateIcons(): Plugin {
+  return {
+    name: 'pure-annotate-animateicons',
+    transform(code, id) {
+      if (!id.includes('@animateicons/react/dist/')) return null;
+      if (code.includes('__PURE__')) return null; // 上游自己加了 → 這個 plugin 可以拿掉
+      const out = code
+        .replace(
+          /var (\w+)=forwardRef\((.*?)\);\1\.displayName="([^"]+)";/gs,
+          'var $1=/*#__PURE__*/Object.assign(/*#__PURE__*/forwardRef($2),{displayName:"$3"});',
+        )
+        // 沒有 displayName 的（實測 248 個裡有 3 個）只要註解掉 forwardRef 本身
+        .replace(/([=,(:]\s*)forwardRef\(/g, '$1/*#__PURE__*/forwardRef(');
+
+      // 守門：配不到就**擋掉 build**，不要靜靜地胖回去。
+      //
+      // 這條存在的理由是這個 plugin 的失敗模式：升級套件之後 minify 的寫法一改，
+      // 兩條 regex 就可能一個都配不到，而結果只是 entry chunk 悄悄多 371 KB
+      // ——沒有錯誤、沒有測試會紅、CI 全綠，只有使用者每頁多下載。
+      const declared = (code.match(/forwardRef\(/g) ?? []).length;
+      const annotated = (out.match(/__PURE__/g) ?? []).length;
+      if (declared > 10 && annotated < declared) {
+        this.error(
+          `@animateicons 的 PURE 標註只蓋到 ${annotated}/${declared} 個 forwardRef（${id.split('/').pop()}）。\n` +
+            '套件大概升級了、minify 出來的寫法變了 → 上面那兩條 regex 要跟著調。\n' +
+            '不修的話 entry chunk 會胖回 1313 KB（每一頁都多 371 KB），而那不會有任何其他徵兆。',
+        );
+      }
+      return out === code ? null : { code: out, map: null };
+    },
+  };
+}
+
 // 不做 prerender,改走 ISR(見下方 routeRules)。理由是實測出來的,不是偏好:
 //   在 nitro/vite + TanStack Start 下,prerender 產出的 HTML 寫進 .output/public 後
 //   *不會被 nitro 註冊成靜態資產* —— /assets/*.css 與 /favicon.ico 都 200,唯獨
@@ -202,6 +292,7 @@ export default defineConfig({
   plugins: [
     copyMonacoAssets(),
     copyExcalidrawFonts(),
+    pureAnnotateAnimateIcons(),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
