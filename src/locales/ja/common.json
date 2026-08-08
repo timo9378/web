@@ -133,7 +133,9 @@
     "seoDescription": "迷子になりましたか？このページは存在しません。",
     "lostMessage": "宇宙のどこかで迷子になったみたい。",
     "subMessage": "このページは存在しないか、削除されました。",
-    "backHome": "ホームに戻る"
+    "backHome": "ホームに戻る",
+    "requested": "お探しの場所",
+    "signature": "— 道に迷った訪問者より"
   },
   "home": {
     "aboutMe": {

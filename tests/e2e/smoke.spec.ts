@@ -123,7 +123,10 @@ test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   // 場景一個元素都沒渲染出來，只要 header/footer 還在，body 就不是空的。
   // 404 又是最少人打開的頁面，壞了不會有人回報。所以改成釘三件實際的事：
   await expect(page.locator('.nf-code'), '要看得到 404 這個字').toHaveText('404');
-  await expect(page.locator('.nf-scene'), '插畫場景要在').toBeVisible();
+  // 卡片會把「你要找的位置」印出來——那是這一頁唯一有功能性的東西，
+  // 印錯或沒印（例如哪天改成讀 state 而不是 location）從畫面上看不出來
+  await expect(page.locator('.nf-path'), '要印出使用者要找的路徑')
+    .toHaveText('/this-route-does-not-exist');
   // 兩個出口都要在：只給「回首頁」的話，從舊連結進來想找文章的人得自己再找一次
   await expect(page.locator('.nf-actions a'), '要有回首頁與手記兩個出口').toHaveCount(2);
 });
