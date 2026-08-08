@@ -299,6 +299,29 @@ body,
   background-color: transparent;
 }
 
+/* ⚠ 視窗底色必須自己指定，不能靠 `.App` 撐著。
+ *
+ * CSS 規範：視窗（畫布）的底色取自 `html` 的背景；`html` 沒有就往 `body` 拿；
+ * **兩個都透明時用瀏覽器的預設值**。而上面那條規則把三個都設成了 transparent，
+ * 所以這個站的深色一直是 `.App` 給的——那是個 `position: relative` 的一般流元素。
+ * 只要有任何一幀 `.App` 沒被繪製，露出來的就是瀏覽器預設底色。
+ *
+ * 那個預設值**跟著使用者的系統主題走**（`color-scheme: light dark` + prefers-color-scheme）：
+ * 深色系統看到深色，看不出問題；**淺色系統看到純白**。實測把 `.App`、canvas 與
+ * 幾層 DOM 特效一起 `visibility: hidden`，深色機器截出來是 #151515，
+ * 把 `color-scheme` 改成 `light` 再截一次就是全白——同一份頁面、同一個瞬間。
+ *
+ * 什麼時候會出現那一幀：GPU device lost 之後的重建（見 StarfieldGpu 的 `recover`）。
+ * device 掉了瀏覽器會重建整個 compositor，`.App` 與所有 fixed 圖層都要重新 raster，
+ * 那個空檔就是使用者回報的「3D 背景恢復時整頁白閃一下」。
+ *
+ * 給 `html` 一個底色之後，同樣的空檔露出來的是深色，看不出來。
+ * 這不改變任何正常狀態下的外觀——`.App` 照樣蓋在上面，顏色也刻意取一樣的值。
+ */
+html {
+  background-color: #000010;
+}
+
 *,
 *::before,
 *::after {

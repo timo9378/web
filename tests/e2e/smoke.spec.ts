@@ -118,7 +118,14 @@ for (const path of A11Y_PAGES) {
 test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   const resp = await page.goto('/this-route-does-not-exist', { waitUntil: 'domcontentloaded' });
   expect(resp?.status()).toBe(404);
-  await expect(page.locator('body'), '404 頁也該有內容').not.toBeEmpty();
+
+  // ⚠ 原本這裡只有 `body` 不是空的。那條**幾乎擋不住任何東西**——版面全掛、
+  // 場景一個元素都沒渲染出來，只要 header/footer 還在，body 就不是空的。
+  // 404 又是最少人打開的頁面，壞了不會有人回報。所以改成釘三件實際的事：
+  await expect(page.locator('.nf-code'), '要看得到 404 這個字').toHaveText('404');
+  await expect(page.locator('.nf-scene'), '插畫場景要在').toBeVisible();
+  // 兩個出口都要在：只給「回首頁」的話，從舊連結進來想找文章的人得自己再找一次
+  await expect(page.locator('.nf-actions a'), '要有回首頁與手記兩個出口').toHaveCount(2);
 });
 
 test('草稿不會出現在公開清單', async ({ page }) => {
