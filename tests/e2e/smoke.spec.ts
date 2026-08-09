@@ -122,7 +122,9 @@ test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   // ⚠ 原本這裡只有 `body` 不是空的。那條**幾乎擋不住任何東西**——版面全掛、
   // 場景一個元素都沒渲染出來，只要 header/footer 還在，body 就不是空的。
   // 404 又是最少人打開的頁面，壞了不會有人回報。所以改成釘三件實際的事：
-  await expect(page.locator('.nf-eyebrow'), '要看得到 404 這個狀態碼').toContainText('404');
+  await expect(page.locator('.nf-code'), '要看得到大字 404').toBeVisible();
+  // 大字是圖像（aria-hidden），狀態碼要有一份給輔助技術讀得到的
+  await expect(page.locator('.nf-sr'), '要有給輔助技術的 404').toHaveText('404');
   // 把「你要找的位置」印出來是這一頁唯一有功能性的東西，印錯或沒印
   //（例如哪天改成讀 state 而不是 location）從畫面上看不出來
   await expect(page.locator('.nf-addr-path'), '要印出使用者要找的路徑')
