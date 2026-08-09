@@ -132,7 +132,7 @@ test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   await expect(page.locator('.nf-scrim'), '要有壓暗星空的前景濾鏡').toBeAttached();
 
   // 搜尋鈕要真的打得開命令面板——手機沒有 ⌘K，這是它們唯一的入口
-  await page.locator('.nf-btn--primary').click();
+  await page.locator('.nf-btn').click();
   await expect(page.locator('.cmdk-wrap'), '搜尋鈕要打得開命令面板').toBeVisible();
 });
 
