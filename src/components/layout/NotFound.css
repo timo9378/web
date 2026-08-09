@@ -1,22 +1,20 @@
 /**
  * 404 頁。
  *
- * ## 這一版是重寫的，前兩版都不算數
+ * ## 前一版錯在哪（這一版在修的東西）
  *
- * 第一版：原本的置中巨大漸層 404 + 兩行字 + 藥丸按鈕，上面黏一張太空人插畫。
- *   → 那是加裝飾，構圖跟原本一模一樣。
- * 第二版：照著別人的站做了一張紙條卡片（紙膠帶、襯線斜體、右下簽名）。
- *   → 那是抄，不是參考。做出來的東西不屬於這個站。
+ * 「一個 44rem 寬的盒子裡放四個字的路徑」+「三顆一模一樣的圓角矩形」+ 全部垂直堆疊。
+ * 那不是版面，是元件疊起來。兩個具體問題：
  *
- * 這一版改用**站上自己的排版慣例**：
- *   · 內容直接放在星空上，不做卡片——`/about`、`/watch`、`/thinking` 都是這樣
- *   · 配一層 scrim 壓暗星空（同 `.about-scrim` / `.w-scrim` / `.wl-scrim`）
- *   · 漸層只當細部點綴（那顆小圓點），不拿來灌一個巨大的數字
+ *   1. `.nf-addr` 是撐滿寬度的方塊，而它的內容通常只有 `/404` 這種長度——
+ *      大部分面積是空的，在寬螢幕上尤其明顯。改成**貼著內容**的行內標記。
+ *   2. 三顆同樣大小、同樣邊框的按鈕，沒有主次。改成一顆實心的主要動作 +
+ *      兩個帶箭頭的文字連結。
  *
- * ## 主角是那句話，不是那個數字
+ * ## 這一版的構圖
  *
- * 404 只是狀態碼。讀者要知道的是「這裡沒有東西、接下來能去哪」，所以數字縮成
- * 一行小小的 eyebrow，訊息用大字。
+ * 左邊一條漸層縱軸把內容串起來，右邊一組同心軌道與一顆脫離軌道的光點。
+ * 軌道刻意很淡並且**溢出畫面右緣**——要的是深度與方向感，不是第二個視覺焦點。
  */
 
 .nf-page {
@@ -24,8 +22,9 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  min-height: 78vh;
+  min-height: 80vh;
   padding: 96px 1.5rem 64px; /* 上方留 fixed header 的位置 */
+  overflow: hidden; /* 軌道刻意溢出，不要讓它撐出橫向捲軸 */
 }
 
 /* 前景濾鏡：壓暗亮星空。
@@ -40,25 +39,47 @@
 }
 
 .nf-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
   width: 100%;
-  max-width: 44rem;
+  max-width: 68rem;
   margin: 0 auto;
 }
 
-/* ── eyebrow：404 · 找不到頁面 ── */
+/* ── 左側縱軸 ──
+   內容掛在一條線上，而不是浮在空白裡。這是整頁唯一的結構線。 */
+.nf-body {
+  position: relative;
+  padding-left: 1.75rem;
+  max-width: 38rem;
+}
+
+.nf-body::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #7f5af0, rgba(44, 182, 125, 0.5) 55%, rgba(255, 255, 255, 0));
+}
+
+/* ── eyebrow ── */
 .nf-eyebrow {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8rem;
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* 站上的主色漸層在這裡只出現這麼一點。
-   把它灌進一個 clamp(5rem,15vw,10rem) 的數字是上一版做的事，太吵。 */
 .nf-dot {
   width: 0.5rem;
   height: 0.5rem;
@@ -69,118 +90,197 @@
 
 .nf-title {
   margin: 0;
-  font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.4;
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.96);
+  /* ⚠ 這行在修一個實際看得到的醜：預設斷行會讓
+     「看起來你迷失在星際之間」/「了。」——最後兩個字單獨掉一行。
+     `balance` 讓瀏覽器把各行長度攤平，標題就不會有孤字尾巴。
+     只對短文字有效（規範限制行數），標題正好是它的適用範圍。 */
+  text-wrap: balance;
 }
 
 .nf-sub {
   margin: 0.75rem 0 0;
-  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  font-size: clamp(0.95rem, 1.6vw, 1.05rem);
   line-height: 1.8;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.58);
 }
 
-/* ── 你要找的位置 ── */
+/* ── 路徑：行內，不是方塊 ──
+   `display: inline` 的 wrapper + 只在字上加底色，所以它的寬度跟著內容走。
+   前一版是 block + border + padding，四個字的路徑撐出一整條空盒子。 */
 .nf-addr {
-  margin-top: 2.25rem;
-  padding: 0.9rem 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 2px solid rgba(127, 90, 240, 0.65);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin: 1.75rem 0 0;
 }
 
 .nf-addr-label {
-  display: block;
-  margin-bottom: 0.35rem;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  /* ⚠ 不要再壓低這個灰階。上一版設 .32，axe 判定 serious:color-contrast——
+  /* ⚠ 不要再壓低這個灰階。曾經設 .32，axe 判定 serious:color-contrast——
      白字在這個底色上大約要 alpha 0.45 才過 4.5:1。要更安靜請改字級或間距。 */
   color: rgba(255, 255, 255, 0.55);
 }
 
 .nf-addr-path {
-  display: block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 6px;
+  border-left: 2px solid rgba(127, 90, 240, 0.8);
+  background: rgba(127, 90, 240, 0.12);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
   /* 有人會把一整串網址貼進來——換行，不要撐破版面 */
   overflow-wrap: anywhere;
 }
 
-/* ── 出口 ── */
+/* ── 動作：一顆主要按鈕 + 兩個文字連結 ── */
 .nf-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
   margin-top: 2.25rem;
 }
 
-/* ⚠ 這裡有 <button> 也有 <a>，而 index.css 的 `@layer base` 有一條全站的
+/* ⚠ 這是 <button>，而 index.css 的 `@layer base` 有一條全站的
    `button { 紫底 + hover 光暈 }`。元件 CSS 是**未分層**的，未分層恆勝過分層，
    所以直接寫就會贏，不需要 !important——理由見 CLAUDE.md 的 CSS 那節。 */
 .nf-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0.7rem 1.35rem;
+  border: 1px solid rgba(127, 90, 240, 0.55);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.78);
-  text-decoration: none;
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.34), rgba(44, 182, 125, 0.18));
+  box-shadow: 0 6px 24px rgba(127, 90, 240, 0.22);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
   cursor: pointer;
   transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .nf-btn:hover,
 .nf-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff;
-}
-
-.nf-btn--primary {
-  border-color: rgba(127, 90, 240, 0.5);
-  background: rgba(127, 90, 240, 0.16);
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.nf-btn--primary:hover,
-.nf-btn--primary:focus-visible {
-  background: rgba(127, 90, 240, 0.3);
-  border-color: rgba(127, 90, 240, 0.85);
+  transform: translateY(-1px);
+  border-color: rgba(127, 90, 240, 0.9);
+  box-shadow: 0 10px 32px rgba(127, 90, 240, 0.38);
 }
 
 .nf-kbd {
   padding: 0.1rem 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 4px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* ⌘K 在手機上按不到，藏起來——但按鈕本身留著（它會打開同一個面板）。
-   這就是把面板的開關搬進 store 的理由。 */
+.nf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.66);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.nf-link:hover,
+.nf-link:focus-visible {
+  color: #fff;
+}
+
+.nf-arrow {
+  transition: transform 0.18s ease;
+}
+
+.nf-link:hover .nf-arrow,
+.nf-link:focus-visible .nf-arrow {
+  transform: translateX(3px);
+}
+
+/* ── 軌道 ──
+   往右溢出畫面：它是背景元素，被裁掉一部分才不會變成第二個焦點。 */
+.nf-orbit {
+  flex: 0 0 auto;
+  width: clamp(18rem, 30vw, 26rem);
+  height: auto;
+  margin-right: -8%;
+  opacity: 0.9;
+}
+
+/* 脫離軌道那顆光點很慢地漂。9s 是刻意的：短週期會讓人一直注意到它在動。 */
+.nf-stray {
+  animation: nf-drift 9s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nf-stray-path {
+  animation: nf-dash 3s linear infinite;
+}
+
+@keyframes nf-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(4px, -6px);
+  }
+}
+
+@keyframes nf-dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+/* 窄畫面：軌道收到文字後面當背景，不再佔一欄——並排會把文字擠成細長條。 */
+@media (max-width: 900px) {
+  .nf-inner {
+    display: block;
+  }
+
+  .nf-body {
+    max-width: none;
+  }
+
+  .nf-orbit {
+    position: absolute;
+    top: 50%;
+    right: -22%;
+    z-index: -1;
+    width: 22rem;
+    margin: 0;
+    transform: translateY(-50%);
+    opacity: 0.4;
+  }
+}
+
 @media (max-width: 640px) {
   .nf-page {
-    min-height: 70vh;
+    min-height: 72vh;
     padding-top: 72px;
   }
 
+  /* ⌘K 在手機上按不到，藏起來——按鈕本身留著（它打開同一個面板）。
+     這就是把面板開關搬進 store 的理由。 */
   .nf-kbd {
     display: none;
   }
@@ -189,7 +289,14 @@
 @media (prefers-reduced-motion: reduce) {
   /* ⚠ 同層同特異性的覆蓋，所以要 !important；跟 cascade layer 無關。
      測試瀏覽器預設不觸發這個 media query（見 CLAUDE.md），量不到，只能讀規則確認。 */
-  .nf-btn {
+  .nf-stray,
+  .nf-stray-path {
+    animation: none !important;
+  }
+
+  .nf-btn,
+  .nf-link,
+  .nf-arrow {
     transition: none !important;
   }
 }
