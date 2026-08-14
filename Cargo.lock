@@ -175,7 +175,7 @@ dependencies = [
  "log",
  "num-rational",
  "num-traits",
- "pastey",
+ "pastey 0.1.1",
  "rayon",
  "thiserror 2.0.19",
  "v_frame",
@@ -1909,6 +1909,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "imagesize"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65b27460c2c92b037f3f94c538ed9a3342f3fdf923606781629ccb35f82d042a"
+
+[[package]]
 name = "imgref"
 version = "1.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2859,6 +2865,12 @@ name = "pastey"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
+
+[[package]]
+name = "pastey"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "pem"
@@ -4680,20 +4692,20 @@ dependencies = [
 
 [[package]]
 name = "takumi"
-version = "2.5.11"
+version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4e4dd4b5f14afae5db550b2e5702d7ec8e29760ef95311f527164289325c0b8"
+checksum = "4ef83e468d5be742d8fe5293a8c816c5faaadcefc5c512cd7a62d09a4b9f94cf"
 dependencies = [
- "takumi-core",
+ "takumi-core 0.19.1",
  "takumi-html",
  "takumi-raster",
 ]
 
 [[package]]
 name = "takumi-core"
-version = "0.16.0"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2c6fd820fb35e98abbe3df2cbbd2f481a1ed410230243b27b82d88093eb5508"
+checksum = "4892211b6604712f3d2b1e8bbe53eb306a14445feca92526d3f1be89ee45203c"
 dependencies = [
  "bitflags",
  "bytemuck",
@@ -4707,7 +4719,7 @@ dependencies = [
  "libwebp-sys 0.14.4",
  "log",
  "parley",
- "paste",
+ "pastey 0.2.3",
  "phf",
  "png",
  "precomputed-hash",
@@ -4733,23 +4745,62 @@ dependencies = [
 ]
 
 [[package]]
-name = "takumi-html"
-version = "0.1.23"
+name = "takumi-core"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b61661609200999ce39624b9af25c6bd87b171a299ad1ae4a8d54578729a5a1"
+checksum = "20b14f8de11e2149a54ca37c771e6a4029339575245c9fa7f24cddff725e80ba"
+dependencies = [
+ "bitflags",
+ "bytemuck",
+ "color",
+ "cssparser",
+ "data-url",
+ "image",
+ "imagesize",
+ "kurbo",
+ "log",
+ "parley",
+ "pastey 0.2.3",
+ "phf",
+ "png",
+ "precomputed-hash",
+ "quick_cache",
+ "roxmltree",
+ "selectors",
+ "serde",
+ "serde_bytes",
+ "simplecss",
+ "siphasher",
+ "skrifa",
+ "smallvec",
+ "strict-num",
+ "svgtypes",
+ "taffy",
+ "thiserror 2.0.19",
+ "tiny-skia",
+ "tiny-skia-path",
+ "typed-builder",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "takumi-html"
+version = "0.1.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "283000bee588631105ac8e93f17f63cfc84bd885dbeca000a99cb1b17a1f9391"
 dependencies = [
  "html5ever",
  "markup5ever_rcdom",
- "takumi-core",
+ "takumi-core 0.19.1",
  "thiserror 2.0.19",
  "typed-builder",
 ]
 
 [[package]]
 name = "takumi-raster"
-version = "0.4.11"
+version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e47925d63778908a4561c8e357716b5b452e8462f2f4eab6d4cbcd35df9ea91"
+checksum = "00f4f67ee5b12e9c3cc3710c7be51931dcba336dd79775f818f2f9789f68dd9b"
 dependencies = [
  "bytemuck",
  "color",
@@ -4762,8 +4813,7 @@ dependencies = [
  "serde",
  "skrifa",
  "smallvec",
- "svgtypes",
- "takumi-core",
+ "takumi-core 0.23.0",
  "tiny-skia",
  "typed-builder",
  "xxhash-rust",
