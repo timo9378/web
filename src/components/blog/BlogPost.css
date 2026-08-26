@@ -85,8 +85,6 @@
    原生控制列會失去互動——hover 不浮出、點擊沒反應（但程式呼叫 play() 仍可播，所以很容易誤判成
    「被東西蓋住」）。媒體元素一律豁免。 */
 .blog-post-container .mdx-video,
-.blog-post-container .mdx-video-frame,
-.blog-post-container .mdx-video-el,
 .blog-post-container video,
 .blog-post-container audio {
   -webkit-user-select: auto;
@@ -453,40 +451,10 @@
   line-height: 1.5;
 }
 
-.posts-nav-category-link {
-  color: var(--post-accent);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.posts-nav-category-link:hover {
-  color: #fff;
-}
-
-.posts-nav-label {
-  font-size: 0.72rem;
-  color: var(--white-30);
-  margin-bottom: 0.5rem;
-}
-
 .posts-nav-list {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-}
-
-.posts-nav-year-group {
-  margin-bottom: 0.25rem;
-}
-
-.posts-nav-year {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--white-20);
-  font-weight: 600;
-  margin-bottom: 0.1rem;
-  letter-spacing: 0.05em;
 }
 
 .posts-nav-item {
@@ -514,12 +482,6 @@
   gap: 0.3rem;
   white-space: nowrap;
   overflow: hidden;
-}
-
-.posts-nav-item.current .posts-nav-indicator {
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  line-height: 1;
 }
 
 /* Highlighted current item in nearby posts list。
@@ -2531,39 +2493,6 @@ a.series-nav-title:hover {
 /* ═══════════════════════
    Loading Animation
    ═══════════════════════ */
-.loading-indicator {
-  text-align: center;
-  color: var(--post-muted);
-  z-index: 1;
-}
-
-.cosmic-loader {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 1rem;
-  position: relative;
-}
-
-.cosmic-loader .planet {
-  width: 16px;
-  height: 16px;
-  background: var(--post-accent);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 20px var(--post-accent-glow);
-}
-
-.cosmic-loader .orbit {
-  width: 100%;
-  height: 100%;
-  border: 2px solid rgba(var(--brand-rgb), 0.2);
-  border-top-color: var(--post-accent);
-  border-radius: 50%;
-  animation: orbit-spin 1.2s linear infinite;
-}
 
 @keyframes orbit-spin {
   to {

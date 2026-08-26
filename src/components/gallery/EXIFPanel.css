@@ -81,11 +81,6 @@
   word-break: break-word;
 }
 
-.exif-live-photo {
-  color: #10b981;
-  font-weight: 600;
-}
-
 /* 標籤 */
 .exif-tags {
   display: flex;

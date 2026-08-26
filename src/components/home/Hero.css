@@ -1,39 +1,8 @@
 /* 現代化 Hero Section */
-.hero-section-modern {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: transparent;
-  padding: 0 2rem;
-}
 
 /* 網格背景效果 (受 shadcn/ui 啟發) */
-.grid-background {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, var(--white-03) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--white-03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  mask-image: radial-gradient(ellipse 80% 50% at 50% 50%, black 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 50%, black 40%, transparent 100%);
-}
 
 /* 滑鼠跟隨光暈效果 (受 Aceternity UI 啟發) */
-.cursor-glow {
-  position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(var(--clr-button-rgb), 0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  transition: opacity 0.3s;
-}
 
 /* 主容器 */
 .hero-container {
@@ -45,28 +14,6 @@
 }
 
 /* 狀態徽章 (受 Magic UI 啟發) */
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--white-05);
-  border: 1px solid var(--white-10);
-  border-radius: 100px;
-  font-size: 0.875rem;
-  color: var(--clr-paragraph);
-  margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.badge-dot {
-  width: 8px;
-  height: 8px;
-  background: #22c55e;
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-}
 
 @keyframes pulse-dot {
   0%,
@@ -82,232 +29,24 @@
 }
 
 /* 主要內容區 */
-.home-hero-content-modern {
-  text-align: center;
-  margin-bottom: 4rem;
-}
 
 /* 標題 (受 shadcn/ui 啟發) */
-.hero-title-modern {
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(to bottom right, #fff, #a0a0a0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  white-space: pre-wrap;
-}
 
 /* 副標題 */
-.hero-subtitle-modern {
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  font-style: italic;
-  color: var(--clr-button);
-  margin-bottom: 1rem;
-  font-weight: 500;
-  white-space: pre-wrap;
-}
 
 /* 描述文字 */
-.hero-description-modern {
-  font-size: 1.125rem;
-  color: var(--white-70);
-  margin-bottom: 2.5rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
 
 /* 行動按鈕區 (受 Radix UI / shadcn 啟發) */
-.hero-actions-modern {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
 
 /* 主要 CTA 按鈕 (受 Magic UI 啟發) */
-.cta-button-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: var(--clr-button);
-  color: #000;
-  font-weight: 600;
-  border-radius: 12px;
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(var(--clr-button-rgb), 0.4);
-}
-
-.cta-button-primary::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, var(--white-30), transparent);
-  transition: left 0.5s;
-}
-
-.cta-button-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(var(--clr-button-rgb), 0.6);
-}
-
-.cta-button-primary:hover::before {
-  left: 100%;
-}
 
 /* 次要按鈕 (受 shadcn/ui 啟發) */
-.cta-button-secondary {
-  display: inline-flex;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: transparent;
-  color: var(--clr-paragraph);
-  font-weight: 500;
-  border: 2px solid var(--white-10);
-  border-radius: 12px;
-  text-decoration: none;
-  transition: all 0.3s;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.cta-button-secondary:hover {
-  background: var(--white-05);
-  border-color: var(--white-20);
-  transform: translateY(-2px);
-}
 
 /* 社交連結 (受 Aceternity UI 啟發) */
-.social-links-modern {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  align-items: center;
-}
-
-.social-icon-modern {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: var(--white-05);
-  border: 1px solid var(--white-10);
-  border-radius: 12px;
-  color: var(--clr-paragraph);
-  font-size: 1.25rem;
-  text-decoration: none;
-  transition: all 0.3s;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.social-icon-modern:hover {
-  background: var(--white-10);
-  border-color: var(--clr-button);
-  color: var(--clr-button);
-  box-shadow: 0 0 20px rgba(var(--clr-button-rgb), 0.3);
-}
 
 /* 特色卡片網格 (受 Magic UI / Bento Grid 啟發) */
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-top: 4rem;
-}
-
-.feature-card {
-  padding: 2rem;
-  background: var(--white-03);
-  border: 1px solid var(--white-08);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
-}
-
-.feature-card:hover {
-  background: var(--white-05);
-  border-color: var(--white-15);
-  box-shadow: 0 8px 32px var(--black-30);
-}
-
-.feature-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--clr-button), var(--clr-tertiary));
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: #000;
-  margin-bottom: 1rem;
-}
-
-.feature-card h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--clr-headline);
-  margin-bottom: 0.5rem;
-}
-
-.feature-card p {
-  font-size: 0.9rem;
-  color: var(--white-60);
-  margin: 0;
-}
 
 /* 裝飾性元素 (受 Aceternity UI 啟發) */
-.hero-decoration-modern {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.2;
-  pointer-events: none;
-  animation: float 20s ease-in-out infinite;
-}
-
-.hero-decoration-1 {
-  width: 500px;
-  height: 500px;
-  background: var(--clr-button);
-  top: -10%;
-  right: -10%;
-  animation-delay: 0s;
-}
-
-.hero-decoration-2 {
-  width: 400px;
-  height: 400px;
-  background: var(--clr-tertiary);
-  bottom: -10%;
-  left: -10%;
-  animation-delay: -10s;
-}
-
-.hero-decoration-3 {
-  width: 300px;
-  height: 300px;
-  background: var(--clr-accent);
-  top: 50%;
-  left: 50%;
-  animation-delay: -5s;
-}
 
 @keyframes float {
   0%,
@@ -731,23 +470,6 @@
 }
 
 /* Typing effect styles */
-.typing-text::after {
-  content: "|";
-  /* Blinking cursor */
-  display: inline-block;
-  margin-left: 2px;
-  animation: blink 0.7s infinite;
-  opacity: 1;
-  font-weight: bold;
-  /* Make cursor bolder */
-}
-
-.typing-text.typing-complete::after {
-  content: "";
-  /* Hide cursor when complete */
-  animation: none;
-  opacity: 0;
-}
 
 @keyframes blink {
   0%,
@@ -822,116 +544,11 @@
 }
 
 /* CTA 按鈕 — 玻璃化：透明底 + 強 blur + 細白邊，hover 才浮現紫色 */
-.cta-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 11px 26px;
-  background: var(--white-04);
-  color: rgba(244, 244, 245, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 9999px;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  transition:
-    background 0.3s ease,
-    border-color 0.3s ease,
-    box-shadow 0.3s ease,
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: 0 1px 0 var(--white-08) inset;
-}
-
-.cta-button::after {
-  content: "→";
-  display: inline-block;
-  margin-left: 0.15rem;
-  transition: transform 0.3s ease;
-}
-
-.cta-button:hover {
-  background: rgba(var(--brand-rgb), 0.18);
-  border-color: rgba(var(--brand-rgb), 0.5);
-  color: #fff;
-  box-shadow:
-    0 0 0 4px rgba(var(--brand-rgb), 0.1),
-    0 8px 22px rgba(var(--brand-rgb), 0.18);
-  transform: translateY(-2px);
-}
-.cta-button:hover::after {
-  transform: translateX(3px);
-}
-
-.cta-button:active {
-  transform: translateY(-1px) scale(0.98);
-}
 
 /* 移除不再需要的動畫定義 */
 /* @keyframes move-gradient { ... } */
 
-.hero-image-container {
-  /* max-width: 40%; */
-  /* 移除 max-width，改用固定尺寸 */
-  width: 300px;
-  /* 設定固定寬度 */
-  height: 300px;
-  /* 設定固定高度 */
-  border-radius: 50%;
-  /* 使容器本身變圓 */
-  /* overflow: hidden; */
-  /* 移除 overflow: hidden 以顯示偽元素邊框 */
-  display: flex;
-  /* 保持 flex 以便內部對齊 (雖然現在只有 img) */
-  justify-content: center;
-  align-items: center;
-  z-index: 2;
-  flex-shrink: 0;
-  /* 防止容器在 flex 佈局中縮小 */
-  position: relative;
-  /* 為了定位偽元素 */
-  /* 移除舊的 box-shadow */
-  /* box-shadow: 0 0 15px 3px rgba(var(--clr-button-rgb), 0.6); */
-  transition: transform 0.3s ease;
-  /* 添加 transform 過渡 */
-}
-
 /* 新增：漸層邊框偽元素 */
-.hero-image-container::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  /* 邊框寬度 */
-  border-radius: 50%;
-  /* 保持圓形 */
-  background: linear-gradient(45deg, var(--clr-button), var(--clr-tertiary), var(--clr-accent));
-  /* 使用主題顏色創建漸層 */
-  /* background-size: 200% 200%; */
-  /* 移除 background-size */
-  z-index: 1;
-  /* 調整 z-index，使其在容器之上但在圖片之下 */
-  transition:
-    filter 0.5s ease,
-    opacity 0.5s ease;
-  /* 恢復 transition */
-  filter: blur(3px);
-  /* 恢復並稍微增加初始模糊 */
-  opacity: 0.9;
-  /* 稍微提高初始透明度 */
-  /* 新增：外發光效果 (極度增強) */
-  box-shadow: 0 0 25px 8px rgba(var(--clr-button-rgb), 0.75);
-  /* 大幅加大基礎光暈 */
-  /* 新增：持續脈衝光暈動畫 和 背景旋轉動畫 */
-  animation:
-    pulse-glow 2.8s infinite alternate ease-in-out,
-    /* 調整脈衝速度 */
-    rotate-gradient 12s linear infinite;
-  /* 調整背景旋轉速度 */
-  background-size: 300% 300%;
-  /* 增加背景尺寸以獲得更平滑的漸變 */
-}
 
 /* 定義脈衝光暈動畫 (色彩呼吸 + 模擬尾跡) */
 @keyframes pulse-glow {
@@ -977,43 +594,7 @@
 
 /* 修正：移除多餘的括號 */
 
-.hero-image-container:hover {
-  /* 懸停時容器稍微放大 */
-  transform: scale(1.03);
-  /* 移除舊的 box-shadow 增強效果 */
-  /* box-shadow: 0 0 25px 5px rgba(var(--clr-button-rgb), 0.8); */
-}
-
 /* 懸停時偽元素效果 - 熾熱的靜態光暈 */
-.hero-image-container:hover::before {
-  filter: blur(12px);
-  /* 懸停時更模糊 */
-  opacity: 1;
-  /* 懸停時完全不透明 */
-  /* 變為熾熱的黃白色光暈 */
-  box-shadow: 0 0 70px 25px rgba(255, 255, 220, 0.95);
-  /* 熾熱的淺黃色 */
-  /* 懸停時移除所有動畫，顯示最強的靜態效果 */
-  animation: none;
-}
-
-.hero-image {
-  /* 新增 img 的樣式 */
-  position: relative;
-  /* 確保 z-index 生效 */
-  z-index: 2;
-  /* 確保圖片在邊框之上 */
-  display: block;
-  /* 移除圖片底部可能的空隙 */
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  /* 將圖片本身也裁切成圓形 */
-  object-fit: cover;
-  /* 保持圖片比例，填滿容器 */
-  transform: scale(1.2);
-  /* 將圖片放大 20% */
-}
 
 /* scroll 提示 — 底部中央一條細線，光點往下流動，打字結束後淡入 */
 .hero-scroll-cue {
@@ -1138,19 +719,6 @@
 }
 
 /* 新增：裝飾元素樣式 */
-.hero-decoration {
-  position: absolute;
-  border-radius: 50%;
-  /* 可以是圓形或其他形狀 */
-  z-index: 1;
-  /* 調整 z-index */
-  opacity: 0.08;
-  /* 稍微降低透明度 */
-  pointer-events: none;
-  /* 防止干擾滑鼠事件 */
-  animation: pulse 10s infinite alternate ease-in-out;
-  /* 添加脈衝動畫 */
-}
 
 /* 定義脈衝動畫 */
 @keyframes pulse {
@@ -1163,32 +731,6 @@
     transform: scale(1.05);
     opacity: 0.1;
   }
-}
-
-.hero-decoration-1 {
-  animation-delay: 0s;
-  /* 錯開動畫開始時間 */
-  width: 400px;
-  height: 400px;
-  background-color: var(--clr-button);
-  /* 使用按鈕/高亮色 */
-  top: 10%;
-  right: 5%;
-  transform: translate(20%, -20%);
-  /* 調整位置 */
-}
-
-.hero-decoration-2 {
-  animation-delay: -5s;
-  /* 錯開動畫開始時間 */
-  width: 250px;
-  height: 250px;
-  background-color: var(--clr-tertiary);
-  /* 使用第三點綴綠 */
-  bottom: 15%;
-  right: 25%;
-  /* transform: translate(10%, 10%); */
-  /* 移除靜態 transform，讓動畫控制 */
 }
 
 /* 移除粒子背景樣式 */
@@ -1249,13 +791,6 @@
     justify-content: center;
   }
 
-  .hero-image-container {
-    width: 200px;
-    height: 200px;
-    max-width: 90%;
-    margin-bottom: 30px;
-  }
-
   .background-text {
     /* 調整小螢幕下的背景文字 */
     font-size: 22vw;
@@ -1265,10 +800,6 @@
   }
 
   /* 隱藏或調整小螢幕下的裝飾元素 */
-  .hero-decoration {
-    display: none;
-    /* 預設在小螢幕隱藏 */
-  }
 }
 /* 名字+emoji 黏在一起換行（避免 👋 自己掉到下一行） */
 .hero-name-wrap {

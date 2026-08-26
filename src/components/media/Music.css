@@ -21,23 +21,6 @@
 }
 
 /* ── Loading ── */
-.music-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  gap: 2rem;
-  position: relative;
-  z-index: 2;
-}
-
-.vinyl-loader {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  animation: spin 2s linear infinite;
-}
 
 @keyframes spin {
   from {
@@ -47,47 +30,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-.vinyl-disc {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #2a2a2a, #111);
-  box-shadow:
-    0 0 20px rgba(var(--brand-rgb), 0.4),
-    inset 0 0 20px var(--black-50);
-}
-
-.vinyl-disc::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, #1a1a1a 0deg 5deg, #222 5deg 10deg);
-}
-
-.vinyl-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand), var(--brand-light));
-  box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.6);
-}
-
-.music-loading p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  font-weight: 300;
-  letter-spacing: 1px;
 }
 
 /* ── Content Wrapper ── */

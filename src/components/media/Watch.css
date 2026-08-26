@@ -83,15 +83,6 @@
   letter-spacing: 0.06em;
 }
 
-.w-stats-year {
-  font-size: 0.74rem;
-  color: rgba(216, 180, 254, 0.55);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-left: auto;
-  padding-bottom: 2px;
-}
-
 /* ── eyebrow ── */
 .w-eyebrow {
   display: inline-block;
@@ -592,10 +583,6 @@
   }
   .w-stat-num {
     font-size: 1.2rem;
-  }
-  .w-stats-year {
-    margin-left: 0;
-    width: 100%;
   }
   /* 手機沒 hover：碎念常駐淡淡顯示 */
   .w-fav-quote {
