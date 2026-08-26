@@ -152,10 +152,6 @@
 }
 
 /* 更多 menu（含在看後）：3 欄 生活／收藏／個人 */
-.mega-menu-panel--more {
-  grid-template-columns: 172px 162px 162px;
-  padding: 14px 16px;
-}
 
 /* ───── Column ───── */
 .mega-menu-column {
@@ -303,21 +299,10 @@
   stroke-dashoffset: 0;
   animation: none;
 }
-.mega-menu-link-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
 .mega-menu-link-title {
   font-weight: 500;
   color: rgba(244, 244, 245, 0.95);
   line-height: 1.2;
-}
-.mega-menu-link-desc {
-  font-size: 0.74rem;
-  color: rgba(161, 161, 170, 0.65);
-  line-height: 1.3;
 }
 
 /* ───── Profile card (for 首頁 menu compact) ───── */
@@ -426,19 +411,6 @@
 .mega-menu-stat {
   text-align: center;
   flex: 1;
-}
-.mega-menu-stat-num {
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f4f4f5;
-  line-height: 1.1;
-}
-.mega-menu-stat-label {
-  display: block;
-  font-size: 0.65rem;
-  color: rgba(161, 161, 170, 0.65);
-  margin-top: 2px;
 }
 
 .mega-menu-social {
@@ -551,10 +523,6 @@
 
 /* ───── Mobile fallback：menu 退化為 accordion 在 mobile bar 內 ───── */
 @media (max-width: 768px) {
-  .mega-menu-panel-wrapper {
-    position: static;
-    transform-origin: top center;
-  }
   .mega-menu-panel {
     min-width: 0;
     grid-auto-flow: row;

@@ -223,11 +223,6 @@
   box-shadow: none;
 }
 
-.anon-btn {
-  font-size: 0.78rem;
-  padding: 4px 12px;
-}
-
 /* ── Form Fields ── */
 .form-fields {
   display: grid;

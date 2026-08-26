@@ -18,7 +18,6 @@
   justify-content: center;
 }
 
-.progressive-image-placeholder,
 .progressive-image-thumb,
 .progressive-image-full {
   max-width: 100%;
@@ -28,10 +27,6 @@
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
-}
-
-.progressive-image-placeholder {
-  z-index: 1;
 }
 
 .progressive-image-thumb {

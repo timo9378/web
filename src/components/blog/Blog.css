@@ -749,16 +749,6 @@
   color: var(--white-50);
 }
 
-.blog-loader {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--white-08);
-  border-top-color: var(--brand);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);

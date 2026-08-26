@@ -106,46 +106,13 @@ body {
 }
 
 /* primary — 漸層滿底 */
-.koim-btn--primary {
-  color: #fff;
-  background: linear-gradient(135deg, var(--brand) 0%, #a45cf0 50%, #dc3278 100%);
-  border-color: transparent;
-  box-shadow:
-    inset 0 1px 0 var(--white-20),
-    0 8px 26px rgba(var(--brand-rgb), 0.32);
-}
-.koim-btn--primary::before {
-  display: none;
-}
-.koim-btn--primary:hover {
-  box-shadow:
-    inset 0 1px 0 var(--white-25),
-    0 12px 34px rgba(var(--brand-rgb), 0.42),
-    0 0 42px rgba(220, 50, 120, 0.22);
-}
 
 /* ghost — 最低調 */
-.koim-btn--ghost {
-  background: transparent;
-  border-color: var(--white-10);
-  box-shadow: none;
-  backdrop-filter: none;
-}
-.koim-btn--ghost:hover {
-  background: rgba(var(--brand-rgb), 0.08);
-  border-color: rgba(var(--brand-rgb), 0.3);
-  box-shadow: 0 4px 14px rgba(var(--brand-rgb), 0.1);
-}
 
 .koim-btn--sm {
   padding: 0.45rem 0.95rem;
   font-size: 0.8rem;
   border-radius: 9px;
-}
-.koim-btn--lg {
-  padding: 0.95rem 1.7rem;
-  font-size: 0.95rem;
-  border-radius: 14px;
 }
 
 /* icon — 圓形純圖示按鈕（hover 才出現紫光暈 + 漸層描邊） */
@@ -158,10 +125,6 @@ body {
 .koim-btn--icon.koim-btn--sm {
   width: 32px;
   height: 32px;
-}
-.koim-btn--icon.koim-btn--lg {
-  width: 46px;
-  height: 46px;
 }
 .koim-btn--icon svg,
 .koim-btn--icon img {
