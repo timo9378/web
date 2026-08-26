@@ -86,7 +86,7 @@
     color 0.18s ease;
 }
 .info-page-content a:hover {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   border-bottom-color: rgba(244, 244, 245, 0.7);
 }
 
@@ -96,7 +96,7 @@
   border-radius: 4px;
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 
 /* timeline list (歷史用) */
@@ -126,7 +126,7 @@
   color: rgba(229, 229, 245, 0.86);
 }
 .info-page-timeline-text strong {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   font-weight: 600;
 }
 .info-page-timeline-item--big {
@@ -134,7 +134,7 @@
 }
 .info-page-timeline-item--big .info-page-timeline-text {
   font-weight: 600;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 /* signature — 跟 BlogPost 的 .blog-signature 一樣靠右浮、30% 寬度 */
@@ -198,7 +198,7 @@
   color: rgba(229, 229, 245, 0.92);
 }
 .info-page-pager-link:hover .info-page-pager-title {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 /* ── comments 區與 BlogPost 一致 ──────────── */
@@ -396,7 +396,7 @@
 .friends-modal-submit {
   padding: 9px 22px;
   background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.85), rgba(var(--brand-rgb), 0.6));
-  color: #ffffff;
+  color: #fff;
   border: 1px solid rgba(var(--brand-rgb), 0.5);
   border-radius: 9999px;
   font-size: 0.9rem;
@@ -426,7 +426,7 @@
   background: rgba(var(--brand-rgb), 0.16);
   padding: 2px 6px;
   border-radius: 4px;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 
 @media (max-width: 600px) {

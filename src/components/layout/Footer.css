@@ -83,7 +83,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(216, 180, 254, 0.95) 100%);
+  background: linear-gradient(135deg, #fff 0%, rgba(216, 180, 254, 0.95) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -107,7 +107,7 @@
   transition: color 0.18s ease;
 }
 .app-footer-copy a:hover {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 .app-footer-meta {
   margin-top: 0.75rem;
@@ -165,7 +165,7 @@
   width: fit-content;
 }
 .app-footer-link:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   transform: translateX(2px);
 }
 

@@ -81,7 +81,7 @@
   pointer-events: none;
   background: radial-gradient(
     circle at center,
-    #ffffff 0%,
+    #fff 0%,
     rgba(232, 238, 255, 0.92) 14%,
     rgba(190, 215, 255, 0.5) 32%,
     rgba(130, 165, 230, 0.18) 55%,

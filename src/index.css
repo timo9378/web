@@ -542,7 +542,7 @@ body::after {
   font-weight: 700;
   line-height: 1.18;
   margin: 0 0 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #c7b8ff 100%);
+  background: linear-gradient(135deg, #fff 0%, #c7b8ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

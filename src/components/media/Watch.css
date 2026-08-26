@@ -194,7 +194,7 @@
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   line-height: 1.15;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   margin: 10px 0 8px;
   text-shadow: 0 2px 18px var(--black-55);
 }
@@ -285,7 +285,7 @@
   background: rgba(216, 180, 254, 0.12);
   border-color: rgba(216, 180, 254, 0.5);
   box-shadow: none;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 .w-share-btn:focus-visible {
   outline: none;
@@ -302,7 +302,7 @@
   white-space: nowrap;
 }
 .w-section-link:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   border-bottom-color: rgba(216, 180, 254, 0.5);
 }
 

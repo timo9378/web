@@ -288,7 +288,7 @@
 .orbit-month-dot--icy {
   background: radial-gradient(
     circle at 34% 26%,
-    #ffffff 0%,
+    #fff 0%,
     hsl(var(--planet-hue, 260) 40% 88%) 30%,
     hsl(var(--planet-hue, 260) 35% 70%) 62%,
     hsl(var(--planet-hue, 260) 30% 42%) 100%
@@ -424,7 +424,7 @@
   background:
     linear-gradient(90deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%) center / 100% 1px no-repeat,
     linear-gradient(180deg, transparent 0%, rgba(233, 213, 255, 0.95) 50%, transparent 100%) center / 1px 100% no-repeat,
-    radial-gradient(circle, #ffffff 0%, #e9d5ff 30%, rgba(216, 180, 254, 0) 62%) center / 9px 9px no-repeat;
+    radial-gradient(circle, #fff 0%, #e9d5ff 30%, rgba(216, 180, 254, 0) 62%) center / 9px 9px no-repeat;
   animation: orbit-now-pulse 3.4s ease-in-out infinite;
 }
 

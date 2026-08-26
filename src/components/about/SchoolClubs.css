@@ -43,7 +43,7 @@
 .clubs-v2 .club-row.open .club-icon-wrap {
   background: rgba(var(--brand-rgb), 0.18);
   border-color: rgba(var(--brand-rgb), 0.45);
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 0 18px rgba(var(--brand-rgb), 0.25);
 }
 

@@ -42,7 +42,7 @@
     border-color 0.2s ease;
 }
 .wl-back:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   border-bottom-color: rgba(216, 180, 254, 0.5);
 }
 
@@ -93,7 +93,7 @@
 }
 
 .wl-tab.active {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-tab.active::after {
@@ -190,7 +190,7 @@
 .wl-sort-trigger[aria-expanded="true"] {
   border-color: rgba(216, 180, 254, 0.4);
   background: rgba(216, 180, 254, 0.06);
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-sort-chev {
@@ -241,7 +241,7 @@
 
 .wl-sort-item:hover {
   background: rgba(216, 180, 254, 0.1);
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-sort-item.active {

@@ -46,7 +46,7 @@
 .back-to-top:hover {
   background: rgba(var(--brand-rgb), 0.18);
   border-color: rgba(199, 184, 255, 0.55);
-  color: #ffffff;
+  color: #fff;
   box-shadow:
     0 6px 22px rgba(0, 0, 0, 0.35),
     0 0 0 4px rgba(var(--brand-rgb), 0.1);

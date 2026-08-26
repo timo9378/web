@@ -75,8 +75,8 @@
   transform: translate(-50%, -50%);
   background: radial-gradient(
     circle at center,
-    #000000 0%,
-    #000000 40%,
+    #000 0%,
+    #000 40%,
     rgba(0, 0, 0, 0.9) 55%,
     var(--black-50) 70%,
     transparent 85%

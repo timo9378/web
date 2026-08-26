@@ -327,7 +327,7 @@
   transform: translateX(0);
 }
 .tk-view:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 
 /* admin 發文框 */
@@ -462,7 +462,7 @@
 }
 .tk-act--del:hover,
 .tk-act--del:focus {
-  color: rgba(255, 120, 120, 1);
+  color: #ff7878;
 }
 
 /* inline 編輯 */
@@ -650,7 +650,7 @@
   transition: color 0.2s ease;
 }
 .tk-back:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 .tk-comments {
   margin-top: 28px;

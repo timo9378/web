@@ -93,7 +93,7 @@
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 1.5rem;
-  background: linear-gradient(to bottom right, #ffffff, #a0a0a0);
+  background: linear-gradient(to bottom right, #fff, #a0a0a0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -414,12 +414,12 @@
   box-shadow:
     inset 0 1px 0 var(--white-08),
     0 0 16px var(--white-06);
-  color: #ffffff;
+  color: #fff;
   overflow: hidden; /* 撕裂重影不溢出框外 */
 }
 
 .hero-chip--rift .hero-chip-spark {
-  color: #ffffff;
+  color: #fff;
   text-shadow: 0 0 8px var(--white-70);
   animation: rift-spark 5s steps(1) infinite;
 }
@@ -434,7 +434,7 @@
 }
 
 .hero-chip--rift .hero-caret {
-  background: #ffffff;
+  background: #fff;
   box-shadow: 0 0 8px var(--white-80);
 }
 
@@ -449,7 +449,7 @@
 
 .hero-chip--rift .hero-chip-text {
   position: relative;
-  color: #ffffff;
+  color: #fff;
   /* 基準文字：閃回時抖動 + 白光爆閃 + 短暫熄滅 */
   animation: rift-base 5s steps(1) infinite;
 }
@@ -479,7 +479,7 @@
 }
 
 .hero-chip--rift .hero-chip-text::before {
-  color: #ffffff;
+  color: #fff;
   text-shadow: -2px 0 var(--white-60);
   animation: rift-top 5s steps(1) infinite;
 }
@@ -815,7 +815,7 @@
 }
 
 .social-links a:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   border-color: rgba(216, 180, 254, 0.45);
   box-shadow: 0 0 0 4px rgba(var(--brand-rgb), 0.08);
   transform: translateY(-3px);
@@ -855,7 +855,7 @@
 .cta-button:hover {
   background: rgba(var(--brand-rgb), 0.18);
   border-color: rgba(var(--brand-rgb), 0.5);
-  color: #ffffff;
+  color: #fff;
   box-shadow:
     0 0 0 4px rgba(var(--brand-rgb), 0.1),
     0 8px 22px rgba(var(--brand-rgb), 0.18);

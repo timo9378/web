@@ -158,7 +158,7 @@
 .afilmory-hero-title {
   font-size: 3.5rem;
   font-weight: 300;
-  color: #ffffff;
+  color: #fff;
   margin-bottom: 1rem;
   letter-spacing: 0.05em;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -227,7 +227,7 @@
 
 .category-tab.active {
   background: rgba(var(--brand-rgb), 0.3);
-  color: #ffffff;
+  color: #fff;
   border-color: rgba(var(--brand-rgb), 0.5);
   box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.2);
 }
