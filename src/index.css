@@ -160,7 +160,7 @@
     --clr-bg-secondary: #242629;
     --clr-headline: #fffffe;
     --clr-paragraph: #94a1b2;
-    --clr-button: #7f5af0;
+    --clr-button: var(--brand);
     --clr-button-text: #fffffe;
     --clr-stroke: #010101;
     --clr-secondary: #72757e;
@@ -168,29 +168,22 @@
     --clr-white: #fffffe;
     --clr-light-gray: #f8f9fa;
 
-    /* 深空玻璃質感的共用 token。
-       ⚠️ 這組原本在 `.bookshelf-container` 與 `.music-page` 各**逐字複製了一份**，
-       而其餘 50 幾個 CSS 檔則是把同樣的值直接硬寫（`rgba(255,255,255,0.08)` 全站
-       出現 82 次、`0.06` 77 次、`#7f5af0` 37 次）。收斂到這裡是為了讓「改一次」成立。
+    /* 深空玻璃質感的共用 token。元件 CSS 用這裡的名字，不要各自複製一份。
 
        ⚠️ **品牌紫不能叫 `--accent`。** 上面 shadcn 的 `--accent` 是 HSL 三元組
        （`216 34% 17%`），`@theme` 拿它做 `hsl(var(--accent))`；把 `#7f5af0` 塞進同一個
-       名字會讓全站 shadcn accent 變成 `hsl(#7f5af0)` 這種無效值。所以叫 `--brand`。
-       `--clr-button` 是它的舊名（Happy Hues 調色板留下的），指向同一個值。 */
+       名字會讓全站 shadcn accent 變成 `hsl(#7f5af0)` 這種無效值。所以叫 `--brand`。 */
     --brand: #7f5af0;
     --brand-light: #c4b5fd;
     --starlight: #ede9fe;
 
-    /* 白／黑透明度階梯。全站 855 次白色 rgba 散在 **55 種** alpha 上，其中 26 種
-       出現 10 次以上（佔 86%），剩下 29 種是只用過一兩次的一次性數值。
-
-       ⚠️ **只收「常用的」是刻意的。** 把 55 種全部命名等於把雜訊合法化；留著長尾當
-       字面值，它們反而會在 diff 裡自己浮出來（0.012 / 0.045 / 0.085 / 0.66… 這種
-       八成是隨手打的），之後要收斂級距時就是現成的清單。
+    /* 白／黑透明度階梯。只收全站用過 10 次以上的級距——把每一種 alpha 都命名等於把
+       雜訊合法化；用不到 10 次的維持字面值，它們在 diff 裡會自己浮出來，就是之後要
+       收斂級距時的清單。
 
        ⚠️ 名字用數字不用語意（不是 `--border-subtle` 這種），因為同一個 alpha 同時被
        拿來當邊框、底色與文字色——套語意名會騙人。語意層是下面 `--glass-*`／
-       `--text-*` 那幾個，它們指向這裡的階梯，改一次全站跟著動。 */
+       `--text-*` 那幾個，它們指向這裡的階梯。 */
     --white-02: rgba(255, 255, 255, 0.02);
     --white-03: rgba(255, 255, 255, 0.03);
     --white-04: rgba(255, 255, 255, 0.04);

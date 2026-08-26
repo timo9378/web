@@ -7,7 +7,6 @@
   --glow-r: 127;
   --glow-g: 90;
   --glow-b: 240;
-  /* 共用的玻璃／文字／品牌 token 已收斂到 index.css 的 :root。 */
   --feat-energy: linear-gradient(90deg, #f97316, #fb923c);
   --feat-dance: linear-gradient(90deg, #8b5cf6, #a78bfa);
   --feat-valence: linear-gradient(90deg, #10b981, #34d399);

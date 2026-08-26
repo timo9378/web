@@ -2,8 +2,6 @@
    知識星圖 — 書架頁面（星域風格 / 與 Music 統一）
    ═══════════════════════════════════════════════════ */
 
-/* CSS Variables 已收斂到 index.css 的 :root（原本這裡與 Music.css 各複製了一份）。 */
-
 /* ── Page Container ── */
 .bookshelf-container {
   position: relative;
