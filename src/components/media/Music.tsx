@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import KoimLoader from '@/components/common/KoimLoader';
+import NebulaBackground from '@/components/backdrop/NebulaBackground';
 import './Music.css';
 import type {
   NowPlayingResponse, RecentPlayItem, SpotifyTrack, TopGenre,
@@ -147,7 +148,7 @@ const Music = () => {
   if (loading) {
     return (
       <div className="music-page" style={glowStyle}>
-        <div className="music-dim-overlay" />
+        <NebulaBackground />
         <KoimLoader fullscreen text={t('music.loading')} />
       </div>
     );
@@ -159,14 +160,7 @@ const Music = () => {
 
   return (
     <div className="music-page" ref={containerRef} style={glowStyle}>
-      <div className="music-dim-overlay" />
-
-      {/* ═══ 星雲背景 ═══ */}
-      <div className="music-nebula-bg">
-        <div className="nebula-layer music-nebula-1" />
-        <div className="nebula-layer music-nebula-2" />
-        <div className="nebula-layer music-nebula-3" />
-      </div>
+      <NebulaBackground />
 
       <div className="music-content-wrapper">
         {/* ═══ Header ═══ */}
