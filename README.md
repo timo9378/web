@@ -57,7 +57,7 @@ Koimsurai 的個人網站原始碼。一個 full-stack blog + portfolio + 多平
 
 ### Frontend
 - **React 19** + **TanStack Start**（SSG + SSR）+ **Vite**
-- **Tailwind CSS** + 大量 scoped CSS modules
+- **Tailwind CSS v4**（設定在 `src/index.css` 的 `@theme`，無 config 檔）+ 元件同名 scoped CSS
 - **Three.js / @react-three/fiber** for 3D scenes
 - **Framer Motion** + **React Spring** for animations
 - **Monaco Editor** with monaco-vim for blog editing
@@ -102,7 +102,7 @@ cp backend/.env.example .env.backend
 # 安裝
 pnpm install
 
-# 開發模式（單獨跑 frontend，後端打 13588）
+# 開發模式（frontend dev server 起在 :13998，API 打本機後端 :3009）
 pnpm dev
 ```
 
@@ -126,17 +126,21 @@ docker compose logs -f frontend backend-rs
 │   ├── src/bin/export_types.rs  # specta → packages/api-types
 │   └── STRANGLER.md         # Express→Rust 遷移全記錄
 ├── packages/
-│   └── api-types/           # Rust struct 生成的 TS 型別（勿手改）
+│   ├── api-types/           # Rust struct 生成的 TS 型別（勿手改）
+│   ├── mdx-core/            # 前後端共用的 MDX 編譯核心
+│   └── mcp-server/          # 後台 admin API 的 MCP server（stdio）
 ├── src/
-│   ├── components/
-│   │   ├── animate-ui/      # shadcn animate-ui icons
-│   │   ├── article-preview/ # hover sidebar 文章 preview 卡片
-│   │   ├── mega-menu/       # 三欄式 mega menu 系統
-│   │   ├── BlogPost.jsx     # 主文章頁
-│   │   ├── InfoPage.jsx     # 此站點 / 歷史 / 留言 / 友鏈 layout
-│   │   └── admin/           # 後台
-│   ├── hooks/
-│   └── lib/
+│   ├── components/          # 依「功能領域」分組，不是依元件型別（見 CLAUDE.md）
+│   │   ├── layout/          # AppShell、Header/MobileNav、Footer、命令面板
+│   │   ├── backdrop/        # 太空背景與轉場特效
+│   │   ├── home/ about/     # 首頁、關於／資訊頁
+│   │   ├── blog/ mdx/       # 文章頁與 MDX block 元件
+│   │   ├── gallery/ media/  # 照片牆、收藏庫（影劇／音樂／書）
+│   │   ├── admin/           # 後台（含 monaco-editor/）
+│   │   └── ui/ animate-ui/  # shadcn 產生的檔案，勿手動整理
+│   ├── data/ i18n/ seo/     # API 查詢、語系路由、meta / JSON-LD
+│   ├── hooks/ store/
+│   └── lib/                 # 純工具（含 lib/mdx/ 編譯鏈）
 ├── public/
 ├── Dockerfile
 └── docker-compose.yml

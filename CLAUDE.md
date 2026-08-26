@@ -153,8 +153,11 @@ biome check --config-path=.config/biome.json .                   # 已包成 pnp
 
 留在根目錄的是**搬了得不償失**的，不是搬不動的：`components.json`（shadcn 只有 `--cwd`
 沒有 `--config`，搬了要把裡面每條路徑改成 `../…` 還得在旁邊放 tsconfig）、`vitest.config.ts`
-與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）、`tailwind.config.js` 與
-`postcss.config.js`（Tailwind 還是 v3，升 v4 才能 CSS-first 免掉這兩個）。
+與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）。
+
+⚠️ 這裡原本還列了 `tailwind.config.js` 與 `postcss.config.js`，理由是「Tailwind 還是 v3」
+——**已經不是了**。升上 v4 之後那兩個檔就沒有了（設定進 `src/index.css` 的 `@theme`），
+見下一節。不要再去找它們。
 
 ## CSS
 
@@ -187,9 +190,11 @@ pnpm format:css    # 自動修格式
 另外 v4 的 `@plugin` / `@custom-variant` 要開 `css.parser.tailwindDirectives`，
 否則會被當成語法錯誤。
 
-⚠️ **CI 刻意不加 `--error-on-warnings`**：目前有 190 個 `!important` 與 21 個
-`noDescendingSpecificity` 沒清。它們會出現在 CI 輸出但不擋——跟 knip 當初的處理一樣，
-用 ignore 藏起來就沒有人會回來清。這道門檻擋的是格式漂移與 error 類。
+⚠️ **CI 刻意不加 `--error-on-warnings`**：目前 `pnpm lint:css` 是 **27 個 warning，全部是
+`noImportantStyles`**（`noDescendingSpecificity` 已清完，剩 5 處用 `biome-ignore` 標了理由）。
+warning 會出現在 CI 輸出但不擋——跟 knip 當初的處理一樣，用 ignore 藏起來就沒有人會回來清。
+**格式漂移不一樣，它是 error，會直接讓 CI 紅**（實測：故意塞一個沒排版的規則，
+`Found 1 error` 且 exit≠0）。
 
 `noDescendingSpecificity` **不是**在抓「覆蓋失效」——高特異性的規則不管寫在前面還是
 後面都會贏，行為是對的。它守的是**可讀性**：覆蓋用的選擇器應該寫在被覆蓋者之後，
@@ -197,19 +202,23 @@ pnpm format:css    # 自動修格式
 設到同一批屬性（例如 `.club-icon-wrap` 的 base 寫在 `.open` 狀態之後），但那是排版
 問題不是 bug。要清的話是把 base 規則搬到狀態變體前面，純搬移、零行為變化。
 
-### 剩下的 43 個 `!important` 都是查過的，不要再清一次
+### 剩下的 27 個 `!important` 都是查過的，不要再清一次
 
-原本 190 個，清到 43。**剩下的每一個都有註解寫明理由**，看到 linter 報 warning 不要
-直接拿掉——先讀那條規則上面的註解。分佈：
+原本 190 個，清到 27。**剩下的每一個都有註解寫明理由**，看到 linter 報 warning 不要
+直接拿掉——先讀那條規則上面的註解。分佈（以 biome 實際回報的位置為準）：
 
 | 類別 | 數量 | 為什麼留 |
 |---|---|---|
-| `@media (prefers-reduced-motion)` | 10 | 要蓋過全站元件動畫；**測試瀏覽器不會觸發** |
-| `html.no-gpu *` | 5 | 無 GPU 機器的降級；同樣不會被觸發 |
+| `@media (prefers-reduced-motion)` | 8 | 要蓋過全站元件動畫；**測試瀏覽器不會觸發** |
+| `html.no-gpu *` | 6 | 無 GPU 機器的降級；同樣不會被觸發 |
 | `html.fs-active` | 1 | 全螢幕影片的 GPU 爭用修正；同上 |
-| shiki 背景、`.toc-bottom-link` 邊框 | 9 | 壓 shiki 自己的主題／全域 button 規則 |
+| shiki 背景、`.toc-bottom-link` 邊框 | 4 | 壓 shiki 自己的主題／全域 button 規則 |
 | 後台表單邊框、monaco 捲軸與行號 | 6 | 壓 shadcn utility 與 monaco 注入的樣式 |
 | `.galaxy-bubble`（手機版） | 2 | 壓元件用 inline style 算出來的泡泡大小 |
+
+⚠️ **不要用 `grep -c '!important'` 數它**——那會數到 42，多出來的 15 筆是**註解裡在
+討論** `!important` 的句子，不是宣告。以前這份文件寫的「43 個」就是這樣數出來的。
+要數就跑 `pnpm lint:css`，biome 認的是語法樹。
 
 **壓 inline style 是最常見的正當理由**（shiki、monaco、galaxy-bubble 都是這類）——
 inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。
