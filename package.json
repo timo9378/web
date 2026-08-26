@@ -79,7 +79,7 @@
     "katex": "^0.18.1",
     "lucide-react": "^0.468.0",
     "masonic": "^4.1.0",
-    "mermaid": "^11.15.0",
+    "mermaid": "^11.16.1",
     "monaco-editor": "0.55.1",
     "monaco-vim": "^0.4.4",
     "pangu": "^9.1.0",

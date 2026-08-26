@@ -23,7 +23,7 @@ overrides:
   # （`TypeError: Ajv is not a constructor` —— v6 是 CJS 預設匯出，v8 不是）。
   # 跟上面兩條一樣是範圍例外，不動全域那條。
   '@stryker-mutator/core>ajv': '^8.17.1'
-  dompurify: '>=3.4.11'
+  dompurify: '>=3.4.13'
   picomatch: '^4.0.4'
   minimatch: '^9.0.7'
   trim-newlines: '^3.0.1'
@@ -37,10 +37,24 @@ overrides:
   serialize-javascript: '^7.0.5'
   uuid: '^14.0.0'
   postcss: '^8.5.25'
-  'nanoid@3': '^3.3.8'
+  'nanoid@3': '^3.3.18'
   'nanoid@>=4.0.0 <5.0.9': '^5.0.9'
-  'brace-expansion@>=2.0.0 <2.1.2': '^2.1.2'
+  'brace-expansion@>=2.0.0 <2.1.4': '^2.1.4'
   '@hono/node-server': '^2.0.5'
+  # @modelcontextprotocol/sdk 直接與經 @hono/node-server 兩條路徑都拉到 hono，
+  # 四筆公告（CORS ReDoS、memo() 跨請求殘留 SSR 輸出、語言中介層複雜度 DoS、
+  # proxy helper 不清 Connection 標頭）在 4.12.34 一起修掉。
+  hono: '^4.12.34'
+  # @lhci/cli → lighthouse → puppeteer-core 這條 devDependency 鏈。
+  ip-address: '^10.3.1'
+  # ⚠️ 同一條鏈上的 extract-zip（GHSA-jmr9-qjv8-65gv，symlink 路徑穿越）**沒得修**：
+  # 公告寫「patched >=2.0.2」，但上游最新就是 2.0.1，那個版本沒有發布過。
+  # 它的用途是解壓 puppeteer 從 Google CDN 抓下來的 Chrome，輸入不是外部可控。
+  # 這裡刻意不加 dependabot ignore——沒有修補版它本來就不會開 PR，
+  # 而修補真的發布時我們要收得到通知。
+  # @stryker-mutator/core 那條鏈（ajv → fast-uri、typed-rest-client → qs）。
+  fast-uri: '^3.1.5'
+  qs: '^6.15.2'
   sharp: '^0.35.0'
   # @lhci/cli 透過 inquirer → external-editor 拉進 tmp@0.0.33 與 tmp@0.1.0，
   # 兩者都有 Dependabot 警示（高：prefix/postfix 未消毒造成路徑穿越；
