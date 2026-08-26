@@ -2,18 +2,7 @@
    知識星圖 — 書架頁面（星域風格 / 與 Music 統一）
    ═══════════════════════════════════════════════════ */
 
-/* ── CSS Variables ── */
-.bookshelf-container {
-  --accent: #7f5af0;
-  --accent-light: #c4b5fd;
-  --starlight: #ede9fe;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-border: rgba(127, 90, 240, 0.35);
-  --text-primary: #fffffe;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --text-tertiary: rgba(255, 255, 255, 0.35);
-}
+/* CSS Variables 已收斂到 index.css 的 :root（原本這裡與 Music.css 各複製了一份）。 */
 
 /* ── Page Container ── */
 .bookshelf-container {
@@ -204,7 +193,7 @@
 .stats-strip-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--accent-light);
+  color: var(--brand-light);
   line-height: 1.2;
 }
 
@@ -238,7 +227,7 @@
 .search-icon {
   position: absolute;
   left: 1rem;
-  color: var(--accent);
+  color: var(--brand);
   opacity: 0.5;
   pointer-events: none;
   z-index: 1;
@@ -264,7 +253,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--brand);
   background: rgba(127, 90, 240, 0.06);
   box-shadow: 0 0 20px rgba(127, 90, 240, 0.15);
 }
@@ -274,7 +263,7 @@
   right: 0.75rem;
   background: none;
   border: none;
-  color: var(--accent-light);
+  color: var(--brand-light);
   cursor: pointer;
   padding: 0.25rem;
   opacity: 0.5;
@@ -295,7 +284,7 @@
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: var(--accent-light);
+  color: var(--brand-light);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -345,7 +334,7 @@
 
 .filter-group label {
   font-size: 0.65rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -364,7 +353,7 @@
 
 .filter-group select:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--brand);
   box-shadow: 0 0 12px rgba(127, 90, 240, 0.12);
 }
 
@@ -373,7 +362,7 @@
   background: rgba(127, 90, 240, 0.06);
   border: 1px solid rgba(127, 90, 240, 0.2);
   border-radius: 8px;
-  color: var(--accent-light);
+  color: var(--brand-light);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.8rem;
@@ -384,7 +373,7 @@
 
 .clear-filters:hover {
   background: rgba(127, 90, 240, 0.12);
-  border-color: var(--accent);
+  border-color: var(--brand);
   box-shadow: none;
 }
 
@@ -581,14 +570,14 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 .spinning-book {
   font-size: 3rem;
   animation: spin 2s linear infinite;
   margin-bottom: 1rem;
-  color: var(--accent);
+  color: var(--brand);
   filter: drop-shadow(0 0 20px rgba(127, 90, 240, 0.4));
 }
 
@@ -700,7 +689,7 @@
 
 .modal-author {
   font-size: 0.95rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 1.25rem;
   opacity: 0.8;
 }
@@ -721,7 +710,7 @@
 }
 
 .meta-item strong {
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-right: 0.5rem;
 }
 
@@ -749,7 +738,7 @@
 .modal-description h3,
 .modal-notes h3 {
   font-size: 1rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 0.6rem;
   font-weight: 600;
 }
@@ -780,7 +769,7 @@
 }
 
 .modal-dates strong {
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 /* ══════════════════════════════════════

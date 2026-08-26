@@ -167,6 +167,26 @@
     --clr-tertiary: #2cb67d;
     --clr-white: #fffffe;
     --clr-light-gray: #f8f9fa;
+
+    /* 深空玻璃質感的共用 token。
+       ⚠️ 這組原本在 `.bookshelf-container` 與 `.music-page` 各**逐字複製了一份**，
+       而其餘 50 幾個 CSS 檔則是把同樣的值直接硬寫（`rgba(255,255,255,0.08)` 全站
+       出現 82 次、`0.06` 77 次、`#7f5af0` 37 次）。收斂到這裡是為了讓「改一次」成立。
+
+       ⚠️ **品牌紫不能叫 `--accent`。** 上面 shadcn 的 `--accent` 是 HSL 三元組
+       （`216 34% 17%`），`@theme` 拿它做 `hsl(var(--accent))`；把 `#7f5af0` 塞進同一個
+       名字會讓全站 shadcn accent 變成 `hsl(#7f5af0)` 這種無效值。所以叫 `--brand`。
+       `--clr-button` 是它的舊名（Happy Hues 調色板留下的），指向同一個值。 */
+    --brand: #7f5af0;
+    --brand-light: #c4b5fd;
+    --starlight: #ede9fe;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-hover-bg: rgba(255, 255, 255, 0.05);
+    --glass-hover-border: rgba(127, 90, 240, 0.35);
+    --text-primary: #fffffe;
+    --text-secondary: rgba(255, 255, 255, 0.5);
+    --text-tertiary: rgba(255, 255, 255, 0.35);
   }
 
   /* 亮色模式備選（如果需要切換） */

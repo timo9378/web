@@ -7,15 +7,7 @@
   --glow-r: 127;
   --glow-g: 90;
   --glow-b: 240;
-  --accent: #7f5af0;
-  --accent-light: #c4b5fd;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-bg: rgba(255, 255, 255, 0.05);
-  --glass-hover-border: rgba(127, 90, 240, 0.35);
-  --text-primary: #fffffe;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --text-tertiary: rgba(255, 255, 255, 0.35);
+  /* 共用的玻璃／文字／品牌 token 已收斂到 index.css 的 :root。 */
   --feat-energy: linear-gradient(90deg, #f97316, #fb923c);
   --feat-dance: linear-gradient(90deg, #8b5cf6, #a78bfa);
   --feat-valence: linear-gradient(90deg, #10b981, #34d399);
@@ -181,7 +173,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   box-shadow: 0 0 15px rgba(127, 90, 240, 0.6);
 }
 
@@ -306,7 +298,7 @@
 .eq-bar {
   width: 4px;
   border-radius: 2px;
-  background: var(--accent-light);
+  background: var(--brand-light);
   height: 6px;
   opacity: 0.4;
   transition: height 0.3s ease;
@@ -371,7 +363,7 @@
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 10px;
   letter-spacing: 0.04em;
 }
@@ -444,7 +436,7 @@
 
 .np-progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--brand);
   border-radius: 2px;
   transition: width 1s linear;
 }
@@ -459,7 +451,7 @@
 
 .np-last-played {
   font-size: 0.82rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin: 0;
   opacity: 0.8;
 }
@@ -515,7 +507,7 @@
 .music-tab-btn.active {
   background: rgba(127, 90, 240, 0.15);
   border-color: rgba(127, 90, 240, 0.35);
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 .music-tab-btn:hover:not(.active) {
@@ -529,7 +521,7 @@
   left: 10%;
   right: 10%;
   height: 2px;
-  background: var(--accent);
+  background: var(--brand);
   border-radius: 2px;
 }
 
@@ -661,7 +653,7 @@
   width: 80px;
   text-align: right;
   font-size: 0.78rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   opacity: 0.7;
   flex-shrink: 0;
 }
@@ -772,7 +764,7 @@
 .bubble-rank {
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 4px;
   letter-spacing: 0.05em;
 }
@@ -844,7 +836,7 @@
 .range-pill.active {
   background: rgba(127, 90, 240, 0.15);
   border-color: rgba(127, 90, 240, 0.35);
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 .range-pill:hover:not(.active) {
@@ -981,7 +973,7 @@
 
 .gauge-fill {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--brand);
   stroke-width: 4;
   stroke-linecap: round;
 }
@@ -1075,18 +1067,18 @@
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-family: "JetBrains Mono", "Courier New", monospace;
-  color: var(--accent-light);
+  color: var(--brand-light);
   font-size: 0.85rem;
 }
 
 .config-hint a {
-  color: var(--accent);
+  color: var(--brand);
   text-decoration: none;
   font-weight: 600;
 }
 
 .config-hint a:hover {
-  color: var(--accent-light);
+  color: var(--brand-light);
   text-decoration: underline;
 }
 
