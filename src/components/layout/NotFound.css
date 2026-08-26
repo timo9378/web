@@ -172,7 +172,7 @@
 .nf-addr-label {
   /* ⚠ 不要再壓低這個灰階。曾經設 .32，axe 判定 serious:color-contrast——
      白字在這個底色上大約要 alpha 0.45 才過 4.5:1。要更安靜請改字級或間距。 */
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 
 .nf-addr-path {
@@ -233,7 +233,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.76rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
 }
 
 .nf-link {

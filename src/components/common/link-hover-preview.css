@@ -10,7 +10,7 @@
   overflow: hidden;
   background: rgba(18, 18, 26, 0.96);
   border: 1px solid rgba(127, 90, 240, 0.22);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 12px 32px var(--black-45);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   pointer-events: auto;
@@ -27,7 +27,7 @@
 
 .lhp-img {
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 
 .lhp-fallback {
@@ -36,7 +36,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  background: linear-gradient(140deg, rgba(127, 90, 240, 0.14), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(140deg, rgba(127, 90, 240, 0.14), var(--white-03));
 }
 
 .lhp-favicon {
@@ -47,7 +47,7 @@
 
 .lhp-site {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   letter-spacing: 0.02em;
 }
 
@@ -81,7 +81,7 @@
 .lhp-desc {
   margin-top: 0.3rem;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;

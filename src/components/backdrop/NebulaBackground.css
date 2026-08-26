@@ -68,10 +68,10 @@ body.intro-animation-active .nebula-dim-overlay {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 65%, rgba(255, 255, 255, 0.06) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.08) 0%, transparent 100%),
-    radial-gradient(1px 1px at 75% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 20%, var(--white-10) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 65%, var(--white-06) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, var(--white-08) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 50%, var(--white-05) 0%, transparent 100%),
     radial-gradient(1.2px 1.2px at 18% 85%, rgba(127, 90, 240, 0.1) 0%, transparent 100%),
     radial-gradient(1.2px 1.2px at 90% 12%, rgba(200, 50, 140, 0.07) 0%, transparent 100%);
 }

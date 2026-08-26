@@ -180,13 +180,56 @@
     --brand: #7f5af0;
     --brand-light: #c4b5fd;
     --starlight: #ede9fe;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-hover-bg: rgba(255, 255, 255, 0.05);
+
+    /* 白／黑透明度階梯。全站 855 次白色 rgba 散在 **55 種** alpha 上，其中 26 種
+       出現 10 次以上（佔 86%），剩下 29 種是只用過一兩次的一次性數值。
+
+       ⚠️ **只收「常用的」是刻意的。** 把 55 種全部命名等於把雜訊合法化；留著長尾當
+       字面值，它們反而會在 diff 裡自己浮出來（0.012 / 0.045 / 0.085 / 0.66… 這種
+       八成是隨手打的），之後要收斂級距時就是現成的清單。
+
+       ⚠️ 名字用數字不用語意（不是 `--border-subtle` 這種），因為同一個 alpha 同時被
+       拿來當邊框、底色與文字色——套語意名會騙人。語意層是下面 `--glass-*`／
+       `--text-*` 那幾個，它們指向這裡的階梯，改一次全站跟著動。 */
+    --white-02: rgba(255, 255, 255, 0.02);
+    --white-03: rgba(255, 255, 255, 0.03);
+    --white-04: rgba(255, 255, 255, 0.04);
+    --white-05: rgba(255, 255, 255, 0.05);
+    --white-06: rgba(255, 255, 255, 0.06);
+    --white-07: rgba(255, 255, 255, 0.07);
+    --white-08: rgba(255, 255, 255, 0.08);
+    --white-10: rgba(255, 255, 255, 0.1);
+    --white-12: rgba(255, 255, 255, 0.12);
+    --white-15: rgba(255, 255, 255, 0.15);
+    --white-20: rgba(255, 255, 255, 0.2);
+    --white-22: rgba(255, 255, 255, 0.22);
+    --white-25: rgba(255, 255, 255, 0.25);
+    --white-30: rgba(255, 255, 255, 0.3);
+    --white-35: rgba(255, 255, 255, 0.35);
+    --white-40: rgba(255, 255, 255, 0.4);
+    --white-45: rgba(255, 255, 255, 0.45);
+    --white-50: rgba(255, 255, 255, 0.5);
+    --white-55: rgba(255, 255, 255, 0.55);
+    --white-60: rgba(255, 255, 255, 0.6);
+    --white-70: rgba(255, 255, 255, 0.7);
+    --white-80: rgba(255, 255, 255, 0.8);
+    --white-82: rgba(255, 255, 255, 0.82);
+    --white-85: rgba(255, 255, 255, 0.85);
+    --white-90: rgba(255, 255, 255, 0.9);
+    --white-95: rgba(255, 255, 255, 0.95);
+    --black-30: rgba(0, 0, 0, 0.3);
+    --black-40: rgba(0, 0, 0, 0.4);
+    --black-45: rgba(0, 0, 0, 0.45);
+    --black-50: rgba(0, 0, 0, 0.5);
+    --black-55: rgba(0, 0, 0, 0.55);
+
+    --glass-bg: var(--white-03);
+    --glass-border: var(--white-08);
+    --glass-hover-bg: var(--white-05);
     --glass-hover-border: rgba(127, 90, 240, 0.35);
     --text-primary: #fffffe;
-    --text-secondary: rgba(255, 255, 255, 0.5);
-    --text-tertiary: rgba(255, 255, 255, 0.35);
+    --text-secondary: var(--white-50);
+    --text-tertiary: var(--white-35);
   }
 
   /* 亮色模式備選（如果需要切換） */
@@ -370,7 +413,7 @@ html {
   transition: background-color 0.2s;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--white-30);
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-corner {
@@ -463,7 +506,7 @@ body::after {
   max-width: 1080px;
   margin: 0 auto;
   padding: 96px 32px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
 }
 
 .home-section-eyebrow {
@@ -488,7 +531,7 @@ body::after {
   display: inline-block;
   font-size: 0.7rem;
   letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -511,13 +554,13 @@ body::after {
 
 .glass-card {
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
   border-radius: 18px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   /* 玻璃寫實感：頂緣一條受光高光 + 下方柔和落影（拉出與星空背景的層次） */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 var(--white-06),
     0 18px 50px -22px rgba(0, 0, 0, 0.6);
 }
 

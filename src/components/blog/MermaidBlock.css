@@ -28,8 +28,8 @@
   position: relative;
   margin: 1.5rem 0;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--white-06);
+  background: var(--black-40);
   overflow: hidden;
   height: 420px;
   cursor: grab;
@@ -53,14 +53,14 @@
   background: rgba(20, 20, 30, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 9999px;
   opacity: 0;
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 24px var(--black-40);
 }
 
 .mm-toolbar--visible {
@@ -77,10 +77,10 @@
 
 .mm-toolbar-hint {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   white-space: nowrap;
   padding-left: 0.4rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--white-08);
   margin-left: 0.2rem;
 }
 
@@ -99,7 +99,7 @@
   border-radius: 9px;
   background: transparent;
   border: 1px solid transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   cursor: pointer;
   transition:
     background 0.15s,
@@ -108,9 +108,9 @@
 }
 
 .mm-menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--white-08);
+  border-color: var(--white-12);
+  color: var(--white-90);
 }
 
 .mm-menu-trigger--open {
@@ -135,7 +135,7 @@
   transform: translateX(-50%);
   padding: 4px 10px;
   background: rgba(10, 10, 20, 0.95);
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-size: 0.65rem;
   font-weight: 500;
   border-radius: 6px;
@@ -144,7 +144,7 @@
   pointer-events: none;
   transition: opacity 0.15s ease;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px var(--black-30);
 }
 
 .mm-menu-trigger[data-tooltip]:not(.mm-menu-trigger--open):hover::after {
@@ -160,10 +160,10 @@
   background: rgba(22, 22, 35, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 10px;
   padding: 0.3rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px var(--black-50);
   z-index: 50;
   animation: mmDropIn 0.15s ease-out;
 }
@@ -181,7 +181,7 @@
 
 .mm-menu-label {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   padding: 0.2rem 0.5rem 0.3rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -196,7 +196,7 @@
   padding: 0.4rem 0.5rem;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   font-size: 0.75rem;
   cursor: pointer;
   border-radius: 6px;
@@ -236,7 +236,7 @@
   border-radius: 9px;
   background: rgba(20, 20, 30, 0.9);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
   transition:
@@ -271,7 +271,7 @@
   transform: translateX(-50%);
   padding: 4px 10px;
   background: rgba(10, 10, 20, 0.95);
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-size: 0.65rem;
   font-weight: 500;
   border-radius: 6px;
@@ -280,7 +280,7 @@
   pointer-events: none;
   transition: opacity 0.15s ease;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px var(--black-30);
 }
 
 .mm-expand-btn:hover[data-tooltip]::after {
@@ -321,7 +321,7 @@
   border-radius: 16px;
   overflow: hidden;
   background: #141420;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 }
 
@@ -331,7 +331,7 @@
   justify-content: space-between;
   padding: 0.5rem 1rem;
   background: rgba(20, 20, 30, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
   flex-shrink: 0;
 }
 
@@ -354,9 +354,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
+  color: var(--white-50);
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.15s;
@@ -399,7 +399,7 @@
 }
 
 .mermaid-error pre {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-size: 0.8rem;
   white-space: pre-wrap;
   margin: 0;
@@ -435,7 +435,7 @@
   gap: 0.1rem;
   padding-left: 0.3rem;
   margin-left: 0.15rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid var(--white-12);
 }
 .mm-action-btn {
   display: inline-flex;
@@ -456,7 +456,7 @@
 .mm-action-btn:hover,
 .mm-action-btn:focus,
 .mm-action-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   color: #fff;
   box-shadow: none;
   border-color: transparent;

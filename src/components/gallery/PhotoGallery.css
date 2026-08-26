@@ -103,7 +103,11 @@
 .photo-info-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  /* ⚠ 這條的 computed value 會因為 `var()` 而跟其他檔長得不一樣，不是 bug：
+     Lightning CSS 會把 `to top` 的漸層翻成預設方向 + 反轉色停（等價但更短），
+     而只要式子裡有 `var()` 它就放棄這個最佳化、原樣輸出。所以 computed-style
+     基準在這裡從「反轉版」變成「原式」——渲染結果一模一樣，只有字串不同。 */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, var(--black-40) 50%, transparent 100%);
   opacity: 0;
   transition: opacity 0.4s ease;
   display: flex;
@@ -135,7 +139,7 @@
   font-size: 1.25rem;
   font-weight: 600;
   opacity: 0.95;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px var(--black-50);
   line-height: 1.2;
   letter-spacing: 0.02em;
 }
@@ -159,14 +163,14 @@
   letter-spacing: 0.05em;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-shadow:
-    0 0 15px rgba(255, 255, 255, 0.6),
+    0 0 15px var(--white-60),
     0 0 30px rgba(127, 90, 240, 0.4),
     0 0 50px rgba(127, 90, 240, 0.2);
 }
 
 .afilmory-hero-subtitle {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   line-height: 1.6;
   margin-bottom: 2rem;
   max-width: 600px;
@@ -178,10 +182,10 @@
   display: inline-flex;
   align-items: center;
   padding: 0.4rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--white-05);
+  border: 1px solid var(--white-10);
   border-radius: 9999px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-size: 0.85rem;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -204,10 +208,10 @@
 
 .category-tab {
   padding: 0.5rem 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-03);
+  border: 1px solid var(--white-08);
   border-radius: 9999px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -216,9 +220,9 @@
 }
 
 .category-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--white-08);
+  color: var(--white-90);
+  border-color: var(--white-20);
 }
 
 .category-tab.active {

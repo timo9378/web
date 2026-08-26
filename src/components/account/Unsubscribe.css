@@ -12,13 +12,13 @@
   max-width: 460px;
   padding: 40px 36px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 20px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   text-align: center;
   color: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 60px var(--black-45);
 }
 
 .unsubscribe-brand {
@@ -62,7 +62,7 @@
 .unsubscribe-status {
   margin: 0;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-style: italic;
 }
 
@@ -109,8 +109,8 @@
 }
 
 .unsubscribe-btn--ghost {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--white-04);
+  border-color: var(--white-10);
   color: rgba(255, 255, 255, 0.78);
 }
 .unsubscribe-btn--ghost:hover {

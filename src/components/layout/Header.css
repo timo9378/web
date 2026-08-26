@@ -47,7 +47,7 @@
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   background: rgba(18, 18, 24, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -116,8 +116,8 @@
   gap: 2px;
   margin: 0;
   padding: 5px 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
   border-radius: 9999px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -150,7 +150,7 @@
   border-radius: 9999px;
   font-size: 0.88rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   text-decoration: none;
   border: none;
   background: transparent;
@@ -168,8 +168,8 @@
 }
 
 .nav-link:hover {
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--white-95);
+  background: var(--white-06);
 }
 
 .nav-link:hover .nav-icon {
@@ -218,12 +218,12 @@
   background: rgba(14, 12, 24, 0.94);
   backdrop-filter: saturate(180%) blur(28px);
   -webkit-backdrop-filter: saturate(180%) blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 16px;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 20px 60px var(--black-50),
+    0 0 0 1px var(--white-06),
+    inset 0 1px 0 var(--white-08);
   padding: 8px;
   z-index: 1001;
 }
@@ -239,8 +239,8 @@
   width: 12px;
   height: 12px;
   background: rgba(14, 12, 24, 0.94);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid var(--white-10);
+  border-top: 1px solid var(--white-10);
 }
 
 .dropdown-item {
@@ -250,7 +250,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   transition: all 0.2s ease;
 }
 
@@ -287,13 +287,13 @@
 .dd-desc {
   display: block;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   margin-top: 1px;
   white-space: nowrap;
 }
 
 .dropdown-item:hover .dd-desc {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
 }
 
 /* ── Resume button ── */
@@ -342,8 +342,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--white-12);
+  background: var(--white-06);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -360,7 +360,7 @@
 .user-avatar-btn:focus {
   border-color: rgba(127, 90, 240, 0.5);
   box-shadow: 0 0 12px rgba(127, 90, 240, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
 }
 
 .user-avatar-img {
@@ -372,7 +372,7 @@
 
 .user-avatar-icon {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 
 .user-dropdown {
@@ -383,11 +383,11 @@
   background: rgba(15, 15, 25, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   padding: 8px 0;
   z-index: 1001;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px var(--black-40);
 }
 
 .user-dropdown-header {
@@ -405,12 +405,12 @@
 
 .user-dropdown-provider {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 
 .user-dropdown-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   margin: 4px 0;
 }
 
@@ -421,7 +421,7 @@
   width: 100%;
   padding: 9px 16px;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   background: none;
   border: none;
   border-radius: 0;
@@ -441,20 +441,20 @@
 }
 
 .user-dropdown-item.disabled {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   cursor: default;
 }
 
 .user-dropdown-item.disabled:hover {
   background: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
 }
 
 /* ── Modal Backdrop ── */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--black-50);
   backdrop-filter: blur(4px);
   z-index: 999;
 }
@@ -468,11 +468,11 @@
   background: rgba(14, 12, 24, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 16px;
   padding: 24px;
   z-index: 1001;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px var(--black-50);
 }
 
 .download-popover h3 {
@@ -489,7 +489,7 @@
   padding: 12px 16px;
   border-radius: 10px;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
   background: rgba(127, 90, 240, 0.08);
   border: 1px solid rgba(127, 90, 240, 0.15);
   transition: all 0.2s ease;
@@ -508,9 +508,9 @@
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--white-10);
+  background: var(--white-04);
+  color: var(--white-50);
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -518,8 +518,8 @@
 }
 
 .popover-close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  background: var(--white-08);
+  color: var(--white-80);
 }
 
 /* ── Mobile Toggle ── */
@@ -531,8 +531,8 @@
   gap: 5px;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--white-06);
+  border: 1px solid var(--white-10);
   border-radius: 8px;
   cursor: pointer;
   z-index: 1002;
@@ -540,14 +540,14 @@
 }
 
 .mobile-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
 }
 
 .mobile-toggle span {
   display: block;
   width: 18px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--white-80);
   border-radius: 2px;
   transition: all 0.3s ease;
 }

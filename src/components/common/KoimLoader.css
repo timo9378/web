@@ -154,12 +154,7 @@
   margin: 0;
   font-size: 0.92rem;
   letter-spacing: 0.08em;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(224, 195, 252, 0.95) 50%,
-    rgba(255, 255, 255, 0.45) 100%
-  );
+  background: linear-gradient(90deg, var(--white-45) 0%, rgba(224, 195, 252, 0.95) 50%, var(--white-45) 100%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

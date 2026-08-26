@@ -31,11 +31,11 @@
   width: 200%;
   height: 200%;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.12) 0%, transparent 100%),
-    radial-gradient(1px 1px at 70% 40%, rgba(255, 255, 255, 0.08) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 20%, var(--white-15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 60%, var(--white-10) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, var(--white-12) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 40%, var(--white-08) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, var(--white-10) 0%, transparent 100%),
     radial-gradient(1.5px 1.5px at 15% 85%, rgba(127, 90, 240, 0.15) 0%, transparent 100%),
     radial-gradient(1.5px 1.5px at 85% 15%, rgba(44, 182, 125, 0.1) 0%, transparent 100%);
   animation: dust-drift 60s linear infinite;
@@ -78,13 +78,13 @@
     #000000 0%,
     #000000 40%,
     rgba(0, 0, 0, 0.9) 55%,
-    rgba(0, 0, 0, 0.5) 70%,
+    var(--black-50) 70%,
     transparent 85%
   );
   border-radius: 50%;
   box-shadow:
     0 0 80px 30px rgba(0, 0, 0, 0.8),
-    0 0 120px 60px rgba(0, 0, 0, 0.4);
+    0 0 120px 60px var(--black-40);
   z-index: 3;
   animation: core-pulse 8s ease-in-out infinite;
 }
@@ -242,8 +242,8 @@
 .setup-category-tab {
   padding: 8px 18px;
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--white-08);
+  background: var(--white-03);
   color: rgba(148, 161, 178, 0.7);
   cursor: pointer;
   font-size: 0.85rem;
@@ -256,9 +256,9 @@
 }
 
 .setup-category-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--white-06);
+  border-color: var(--white-15);
+  color: var(--white-90);
 }
 
 .setup-category-tab.active {
@@ -275,7 +275,7 @@
 
 .setup-category-tab .tab-count {
   font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   padding: 1px 7px;
   border-radius: 10px;
   min-width: 20px;
@@ -297,7 +297,7 @@
   gap: 14px;
   margin-bottom: 24px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
 }
 
 .setup-category-number {
@@ -336,7 +336,7 @@
 .setup-card {
   position: relative;
   background: rgba(18, 18, 22, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   border-radius: 14px;
   padding: 20px;
   cursor: default;
@@ -345,9 +345,9 @@
 }
 
 .setup-card:hover {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--white-12);
   transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px var(--black-40);
 }
 
 .setup-card-image-wrapper {
@@ -358,7 +358,7 @@
   justify-content: center;
   margin-bottom: 14px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   border-radius: 10px;
   transition: transform 0.3s ease;
 }
@@ -371,7 +371,7 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 8px var(--black-40));
   transition: filter 0.3s ease;
 }
 
@@ -422,7 +422,7 @@
 .setup-base-card {
   position: relative;
   background: rgba(18, 18, 22, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   border-radius: 16px;
   padding: 40px 36px;
   overflow: hidden;
@@ -459,9 +459,9 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--white-04);
   transition: all 0.3s ease;
 }
 
@@ -481,14 +481,14 @@
 
 .setup-base-spec-value {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
 }
 
 /* Retired Section */
 .setup-retired-section {
   margin-top: 24px;
   padding-top: 18px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  border-top: 1px dashed var(--white-06);
 }
 
 .setup-retired-title {

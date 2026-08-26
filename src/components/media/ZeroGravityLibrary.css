@@ -61,7 +61,7 @@
 
 .zg-brand-sub {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   letter-spacing: 0.5px;
 }
 
@@ -70,10 +70,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--white-04);
+  border: 1px solid var(--white-10);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -98,10 +98,10 @@
   padding: 8px 20px;
   background: rgba(6, 5, 14, 0.6);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   border-radius: 20px;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   letter-spacing: 0.3px;
 }
 
@@ -109,7 +109,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--white-15);
   flex-shrink: 0;
 }
 
@@ -123,7 +123,7 @@
   max-height: 75vh;
   background: rgba(6, 5, 14, 0.85);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 16px;
   padding: 1.5rem;
   overflow-y: auto;
@@ -158,10 +158,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-05);
+  border: 1px solid var(--white-08);
   border-radius: 50%;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -176,7 +176,7 @@
   max-height: 300px;
   object-fit: cover;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   margin-bottom: 1rem;
 }
 
@@ -197,7 +197,7 @@
 
 .zg-detail-desc {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   line-height: 1.7;
   max-height: 160px;
   overflow-y: auto;
@@ -208,9 +208,9 @@
   display: flex;
   gap: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
 }
 
 /* ── Book hover label (inside 3D scene) ── */

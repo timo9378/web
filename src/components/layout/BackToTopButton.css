@@ -78,7 +78,7 @@
 }
 
 .back-to-top-ring-track {
-  stroke: rgba(255, 255, 255, 0.05);
+  stroke: var(--white-05);
 }
 
 .back-to-top-ring-progress {

@@ -87,14 +87,14 @@
 
 .blog-title-sub {
   font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-weight: 400;
   font-style: italic;
 }
 
 .blog-hero-desc {
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   line-height: 1.7;
   max-width: 520px;
   margin: 0 auto;
@@ -113,7 +113,7 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
   font-size: 0.85rem;
 }
 
@@ -122,7 +122,7 @@
   padding: 10px 32px 10px 26px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid var(--white-12);
   border-radius: 0;
   color: #fff;
   font-size: 0.95rem;
@@ -132,7 +132,7 @@
 }
 
 .blog-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
 }
 .blog-search-input:focus {
   border-bottom-color: rgba(127, 90, 240, 0.5);
@@ -145,7 +145,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   cursor: pointer;
   font-size: 0.85rem;
   padding: 4px;
@@ -172,9 +172,9 @@
   border-radius: 20px;
   font-size: 0.82rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--white-08);
+  background: var(--white-03);
+  color: var(--white-55);
   cursor: pointer;
   transition: all 0.25s ease;
   backdrop-filter: blur(8px);
@@ -189,9 +189,9 @@
 
 .sort-pill:hover:not(.active),
 .sort-pill:focus:not(.active) {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--white-15);
   color: rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
   box-shadow: none;
 }
 
@@ -229,7 +229,7 @@
 .clear-all-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   cursor: pointer;
   font-size: 0.8rem;
   text-decoration: underline;
@@ -237,7 +237,7 @@
 }
 
 .clear-all-btn:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 
 /* ══════════════════════════
@@ -255,12 +255,12 @@
 .timeline-group-label {
   font-size: 0.85rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--white-08);
 }
 
 /* ══════════════════════════
@@ -289,15 +289,15 @@
 
 .note-month {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   font-weight: 500;
 }
 
 .note-body {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-03);
+  border: 1px solid var(--white-08);
   border-radius: 16px;
   padding: 22px 24px;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -309,8 +309,8 @@
   border-color: rgba(127, 90, 240, 0.35);
   box-shadow:
     0 0 20px rgba(127, 90, 240, 0.08),
-    0 8px 32px rgba(0, 0, 0, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+    0 8px 32px var(--black-30);
+  background: var(--white-05);
   transform: translateY(-2px);
 }
 
@@ -325,7 +325,7 @@
 
 .note-full-date {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 
 .note-category {
@@ -360,7 +360,7 @@
 .note-excerpt {
   font-size: 0.92rem;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin: 0 0 14px 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -382,9 +382,9 @@
   font-weight: 500;
   padding: 3px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
+  color: var(--white-50);
   transition: all 0.25s ease;
 }
 
@@ -399,7 +399,7 @@
   align-items: center;
   gap: 4px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
 }
 
 .note-action-btn {
@@ -409,7 +409,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   background: none;
   border: none;
   cursor: pointer;
@@ -418,8 +418,8 @@
 }
 
 .note-action-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--white-05);
+  color: var(--white-70);
 }
 
 .note-action-btn.liked {
@@ -431,7 +431,7 @@
   align-items: center;
   gap: 5px;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
   margin-left: auto;
 }
 
@@ -474,7 +474,7 @@
   border-color: rgba(168, 85, 247, 0.3);
   box-shadow:
     0 0 24px rgba(168, 85, 247, 0.12),
-    0 8px 32px rgba(0, 0, 0, 0.3);
+    0 8px 32px var(--black-30);
 }
 
 /* 專欄小點底座（替代日期區） */
@@ -516,7 +516,7 @@
 .sidebar-section {
   padding-bottom: 1.5rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--white-04);
 }
 
 .sidebar-section:last-child {
@@ -529,10 +529,10 @@
 .sidebar-heading {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   margin: 0 0 0.75rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
   letter-spacing: 0.02em;
 }
 
@@ -542,7 +542,7 @@
   align-items: center;
   gap: 0;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 
 .stats-inline em {
@@ -554,7 +554,7 @@
 
 .stats-sep {
   margin: 0 8px;
-  color: rgba(255, 255, 255, 0.15);
+  color: var(--white-15);
 }
 
 /* Category — 去背景 */
@@ -571,7 +571,7 @@
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   background: none;
   border: none;
   cursor: pointer;
@@ -582,7 +582,7 @@
 
 .category-item:hover,
 .category-item:focus {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   background: none;
   box-shadow: none;
   border-color: transparent;
@@ -594,7 +594,7 @@
 
 .cat-count {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
 }
 
 /* Tag Cloud — 輕量化：純文字 + 淡邊框 */
@@ -609,9 +609,9 @@
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   cursor: pointer;
   transition:
     color 0.2s ease,
@@ -637,9 +637,9 @@
   gap: 4px;
   margin-top: 8px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 500;
@@ -689,7 +689,7 @@
 
 .featured-text {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -703,7 +703,7 @@
 
 .featured-date {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   flex-shrink: 0;
 }
 
@@ -718,10 +718,10 @@
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   text-decoration: none;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   transition:
     color 0.2s ease,
     border-color 0.2s ease;
@@ -746,13 +746,13 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 
 .blog-loader {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.08);
+  border: 3px solid var(--white-08);
   border-top-color: #7f5af0;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -780,12 +780,12 @@
 
 .blog-empty h3 {
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   margin-bottom: 10px;
 }
 
 .blog-empty p {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-size: 0.95rem;
   margin-bottom: 24px;
 }
@@ -941,7 +941,7 @@
   border: 1px solid rgba(127, 90, 240, 0.18);
   border-radius: 16px;
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 24px 64px var(--black-50),
     0 0 0 1px rgba(127, 90, 240, 0.08);
   overflow: hidden;
 }
@@ -951,13 +951,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
 }
 
 .floating-comments-header h3 {
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -972,8 +972,8 @@
   width: 30px;
   height: 30px;
   border: none;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--white-06);
+  color: var(--white-50);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s;
@@ -981,7 +981,7 @@
 }
 
 .floating-comments-close:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--white-12);
   color: white;
 }
 
@@ -1021,7 +1021,7 @@
   letter-spacing: 0.02em;
 }
 .activity-heatmap .heatmap-total-label {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-size: 0.78rem;
 }
 .activity-heatmap .heatmap-grid {
@@ -1039,7 +1039,7 @@
 .activity-heatmap .heatmap-cell {
   aspect-ratio: 1 / 1;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
   transition:
     transform 0.18s ease,
     background 0.18s ease;
@@ -1049,7 +1049,7 @@
   z-index: 2;
 }
 .activity-heatmap .heatmap-level-0 {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
 }
 .activity-heatmap .heatmap-level-1 {
   background: rgba(127, 90, 240, 0.32);
@@ -1066,7 +1066,7 @@
 }
 .activity-heatmap .heatmap-level--1 {
   background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border: 1px dashed var(--white-06);
 }
 .activity-heatmap .heatmap-legend {
   display: flex;
@@ -1074,7 +1074,7 @@
   gap: 4px;
   margin-top: 0.4rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 .activity-heatmap .heatmap-legend .heatmap-cell {
   width: 10px;

@@ -76,9 +76,9 @@
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   background: transparent;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: none;
@@ -87,7 +87,7 @@
 .mode-btn:hover,
 .mode-btn:focus {
   border-color: rgba(127, 90, 240, 0.3);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   background: transparent;
   box-shadow: none;
 }
@@ -129,9 +129,9 @@
   max-width: 160px;
   padding: 10px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--white-08);
+  background: var(--white-03);
+  color: var(--white-70);
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -169,7 +169,7 @@
 
 .back-btn {
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   background: none;
   border: none;
   cursor: pointer;
@@ -180,14 +180,14 @@
 
 .back-btn:hover,
 .back-btn:focus {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   background: none;
   box-shadow: none;
 }
 
 .login-label {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 
 .login-providers {
@@ -202,7 +202,7 @@
   gap: 8px;
   padding: 10px 24px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--white-12);
   background: transparent;
   color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
@@ -239,7 +239,7 @@
   width: 100%;
   padding: 0.45rem 0.7rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   background: transparent;
   color: #e2e0ea;
   font-size: 0.82rem;
@@ -252,7 +252,7 @@
 }
 
 .field-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
 }
 
 /* ── Reply Indicator ── */
@@ -271,7 +271,7 @@
 .reply-indicator button {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   cursor: pointer;
   font-size: 0.72rem;
   padding: 0 2px;
@@ -292,7 +292,7 @@
   width: 100%;
   padding: 0.65rem 0.8rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   background: transparent;
   color: #e2e0ea;
   font-size: 0.88rem;
@@ -327,7 +327,7 @@
 
 .captcha-q {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   font-family: "SF Mono", "Fira Code", monospace;
 }
 
@@ -335,7 +335,7 @@
   width: 48px;
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   background: transparent;
   color: #e2e0ea;
   font-size: 0.82rem;
@@ -385,7 +385,7 @@
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--white-30);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -484,10 +484,10 @@
 .comments-header h2 {
   font-size: 0.88rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   margin: 0 0 1.2rem;
   padding-bottom: 0.6rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--white-04);
   letter-spacing: 0.02em;
 }
 
@@ -509,7 +509,7 @@
   width: 1.5px;
   flex: 1;
   margin-top: 6px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
   border-radius: 999px;
 }
 
@@ -533,7 +533,7 @@
 
 .comment-time {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--white-22);
 }
 
 .comment-text {
@@ -564,7 +564,7 @@
   border-radius: 5px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
   font-size: 0.75rem;
   cursor: pointer;
   transition:
@@ -573,8 +573,8 @@
 }
 
 .action-btn:hover {
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--white-55);
+  background: var(--white-04);
 }
 
 .action-btn.like.liked {
@@ -594,7 +594,7 @@
 
 .no-comments p {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--white-22);
 }
 
 /* ── Mobile ── */
@@ -647,8 +647,8 @@
   margin: 1.5rem 0 2rem;
   padding: 14px 18px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-03);
+  border: 1px solid var(--white-08);
   color: rgba(229, 229, 245, 0.55);
   font-size: 0.9rem;
   text-align: center;

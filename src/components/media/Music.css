@@ -150,7 +150,7 @@
   background: radial-gradient(circle at 30% 30%, #2a2a2a, #111);
   box-shadow:
     0 0 20px rgba(127, 90, 240, 0.4),
-    inset 0 0 20px rgba(0, 0, 0, 0.5);
+    inset 0 0 20px var(--black-50);
 }
 
 .vinyl-disc::before {
@@ -219,7 +219,7 @@
 
 .music-title-sub {
   font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-weight: 400;
   font-style: italic;
 }
@@ -281,7 +281,7 @@
   height: 160px;
   border-radius: 12px;
   object-fit: cover;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px var(--black-50);
 }
 
 /* ── Audio Visualizer ── */
@@ -372,7 +372,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--white-30);
 }
 
 .np-dot.live {
@@ -428,7 +428,7 @@
 .np-progress-bar {
   width: 100%;
   height: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 4px;
@@ -511,7 +511,7 @@
 }
 
 .music-tab-btn:hover:not(.active) {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--white-15);
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -535,10 +535,10 @@
 .section-heading {
   font-size: 1.1rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   margin: 0 0 20px 0;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
   letter-spacing: 0.02em;
 }
 
@@ -571,7 +571,7 @@
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
   padding-bottom: 8px;
   margin-bottom: 4px;
 }
@@ -597,7 +597,7 @@
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px var(--black-30);
 }
 
 .tr-title-col {
@@ -634,7 +634,7 @@
 }
 
 .tr-no-feat {
-  color: rgba(255, 255, 255, 0.15);
+  color: var(--white-15);
   font-size: 0.8rem;
 }
 
@@ -689,7 +689,7 @@
 .feat-bar-track {
   flex: 1;
   height: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -743,7 +743,7 @@
   border-color: var(--glass-hover-border);
   box-shadow:
     0 0 30px rgba(127, 90, 240, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.3);
+    0 8px 32px var(--black-30);
   background: var(--glass-hover-bg);
 }
 
@@ -840,7 +840,7 @@
 }
 
 .range-pill:hover:not(.active) {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--white-15);
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -872,7 +872,7 @@
 .decade-chart-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   margin: 0 0 1rem;
 }
 
@@ -899,7 +899,7 @@
 .decade-bar-track {
   height: 10px;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   overflow: hidden;
 }
 
@@ -933,14 +933,14 @@
   border-color: var(--glass-hover-border);
   box-shadow:
     0 0 20px rgba(127, 90, 240, 0.08),
-    0 8px 32px rgba(0, 0, 0, 0.3);
+    0 8px 32px var(--black-30);
   background: var(--glass-hover-bg);
 }
 
 .analytic-label {
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   margin-bottom: 2px;
 }
 
@@ -967,7 +967,7 @@
 
 .gauge-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.06);
+  stroke: var(--white-06);
   stroke-width: 4;
 }
 
@@ -1045,7 +1045,7 @@
 .config-hint {
   margin-top: 1.5rem;
   text-align: left;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
   padding: 1.5rem;
   border-radius: 8px;
   border: 1px solid var(--glass-border);
@@ -1054,7 +1054,7 @@
 .config-hint p {
   font-weight: 600;
   margin-bottom: 1rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
 }
 
 .config-hint ol {

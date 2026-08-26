@@ -36,7 +36,7 @@
 
 .lately-empty {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   margin: 0;
 }
 
@@ -61,7 +61,7 @@
 }
 
 .lately-post:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 
 .lately-post-no {
@@ -107,7 +107,7 @@
 
 .lately-divider {
   height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+  background: linear-gradient(90deg, var(--white-10), transparent);
 }
 
 .lately-murmurs,
@@ -132,7 +132,7 @@
 
 .lately-murmur:hover,
 .lately-echo:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 
 .lately-murmur-text,
@@ -174,10 +174,10 @@
   height: 1px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04),
+    var(--white-04),
     rgba(255, 255, 255, 0.16) 12%,
     rgba(255, 255, 255, 0.16) 88%,
-    rgba(255, 255, 255, 0.04)
+    var(--white-04)
   );
 }
 
@@ -198,7 +198,7 @@
   top: calc(var(--orbit-line-y) + 20px);
   transform: translateX(-50%);
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -332,8 +332,8 @@
   padding: 8px;
   border-radius: 12px;
   background: rgba(18, 14, 30, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--white-10);
+  box-shadow: 0 12px 34px var(--black-50);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 8;
@@ -353,7 +353,7 @@
   font-size: 0.64rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   padding: 2px 8px 6px;
 }
 .orbit-month-pop-list {
@@ -367,14 +367,14 @@
   border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   text-decoration: none;
   transition:
     background 0.14s ease,
     color 0.14s ease;
 }
 .orbit-month-link:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   color: #fff;
 }
 
@@ -392,10 +392,10 @@
   padding: 6px 12px;
   border-radius: 9px;
   font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   background: rgba(18, 14, 30, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--white-10);
+  box-shadow: 0 8px 24px var(--black-40);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -439,8 +439,8 @@
   padding: 8px;
   border-radius: 12px;
   background: rgba(18, 14, 30, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--white-10);
+  box-shadow: 0 12px 34px var(--black-50);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 8;
@@ -460,7 +460,7 @@
   font-size: 0.64rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   padding: 2px 8px 6px;
 }
 .orbit-month-pop-list {
@@ -474,14 +474,14 @@
   border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   text-decoration: none;
   transition:
     background 0.14s ease,
     color 0.14s ease;
 }
 .orbit-month-link:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   color: #fff;
 }
 
@@ -491,7 +491,7 @@
     filter: brightness(0.82) drop-shadow(0 0 3px rgba(233, 213, 255, 0.5));
   }
   50% {
-    filter: brightness(1.4) drop-shadow(0 0 9px rgba(255, 255, 255, 0.9));
+    filter: brightness(1.4) drop-shadow(0 0 9px var(--white-90));
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -509,7 +509,7 @@
 
 .orbit-stat-dot {
   margin: 0 8px;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
 }
 
 /* ── 今日訊號（收尾，承接 #contact 錨點）── */
@@ -532,7 +532,7 @@
   font-size: clamp(1.1rem, 2vw, 1.45rem);
   font-weight: 500;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   max-width: 38em;
   /* 背景土星視差經過時保持可讀 */
   text-shadow: 0 1px 20px rgba(2, 1, 8, 0.85);
@@ -540,7 +540,7 @@
 
 .signal-from {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 
 .signal-contact {
@@ -548,7 +548,7 @@
   display: inline-flex;
   align-items: center;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
 }
 
 .signal-dot {

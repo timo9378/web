@@ -56,7 +56,7 @@
   font-size: 0.78rem;
   letter-spacing: 1.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-variant-numeric: tabular-nums;
 }
 
@@ -95,9 +95,9 @@
   font-size: 0.7rem;
   padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
+  color: var(--white-60);
 }
 
 /* 未來項：虛線弱化，留「未完待續」感 */

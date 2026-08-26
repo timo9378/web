@@ -28,9 +28,9 @@
   display: flex;
   flex-direction: column;
   background: rgba(17, 13, 28, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 30px 80px var(--black-55);
   animation: fe-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
@@ -51,7 +51,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--white-07);
 }
 
 .fe-head h3 {
@@ -64,7 +64,7 @@
 .fe-close {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-size: 1rem;
   cursor: pointer;
   padding: 4px 8px;
@@ -76,7 +76,7 @@
 .fe-close:hover,
 .fe-close:focus {
   color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   box-shadow: none;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .fe-empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-size: 0.88rem;
   margin: 4px 0;
 }
@@ -99,7 +99,7 @@
   display: flex;
   gap: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--white-05);
 }
 .fe-item:last-child {
   border-bottom: none;
@@ -112,14 +112,14 @@
   flex-shrink: 0;
   object-fit: cover;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
 }
 .fe-item-poster--blank {
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 
 .fe-item-body {
@@ -139,7 +139,7 @@
 .fe-item-title {
   font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -152,8 +152,8 @@
 }
 .fe-item-actions button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--white-10);
+  color: var(--white-60);
   width: 26px;
   height: 26px;
   border-radius: 7px;
@@ -190,7 +190,7 @@
   font-size: 1.05rem;
   line-height: 1;
   padding: 0 1px;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   transition: color 0.15s;
 }
 .fe-star.on {
@@ -207,14 +207,14 @@
   width: 100%;
   min-height: 38px;
   resize: vertical;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-03);
+  border: 1px solid var(--white-08);
   border-radius: 9px;
   padding: 7px 10px;
   font: inherit;
   font-size: 0.84rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
 }
 .fe-quote:focus {
   outline: none;
@@ -223,7 +223,7 @@
 
 /* ── 新增區 ── */
 .fe-add {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--white-07);
   padding: 16px 22px 20px;
 }
 
@@ -238,12 +238,12 @@
   flex-shrink: 0;
   border-radius: 9px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
 }
 .fe-kind button {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   padding: 8px 12px;
   font-size: 0.82rem;
   cursor: pointer;
@@ -254,14 +254,14 @@
   color: #fff;
 }
 .fe-kind button:hover:not(.on) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
   box-shadow: none;
 }
 
 .fe-search {
   flex: 1;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--white-03);
+  border: 1px solid var(--white-10);
   border-radius: 9px;
   padding: 9px 12px;
   font: inherit;
@@ -275,7 +275,7 @@
 
 .fe-searching {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   margin: 10px 0 0;
 }
 
@@ -305,7 +305,7 @@
   text-align: left;
 }
 .fe-result:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border-color: rgba(216, 180, 254, 0.25);
   box-shadow: none;
 }
@@ -320,11 +320,11 @@
   width: 36px;
   height: 54px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   flex-shrink: 0;
 }
 .fe-result-meta {
@@ -335,14 +335,14 @@
 }
 .fe-result-title {
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .fe-result-year {
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 .fe-result-add {
   font-size: 1.1rem;

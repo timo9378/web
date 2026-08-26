@@ -31,10 +31,10 @@
 }
 
 .photo-title {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--white-95);
   font-size: 16px;
   font-weight: 600;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 8px var(--black-50);
   letter-spacing: 0.5px;
 }
 
@@ -56,9 +56,9 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--black-50);
   backdrop-filter: blur(20px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--white-20);
   color: white;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -75,9 +75,9 @@
 
 .action-btn:hover {
   background: rgba(0, 0, 0, 0.7);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--white-40);
   transform: scale(1.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px var(--black-40);
 }
 
 .action-btn:active {
@@ -158,10 +158,10 @@
   transform: translateY(-50%);
   width: 52px;
   height: 52px;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--black-50);
   backdrop-filter: blur(20px);
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--white-20);
   cursor: pointer;
   z-index: 20;
   display: flex;
@@ -190,10 +190,10 @@
 .custom-swiper-button-prev:hover,
 .custom-swiper-button-next:hover {
   background: rgba(0, 0, 0, 0.7);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--white-40);
   opacity: 1;
   transform: translateY(-50%) scale(1.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px var(--black-40);
 }
 
 .custom-swiper-button-prev:active,
@@ -211,15 +211,15 @@
 .custom-swiper-button-prev.swiper-button-disabled:hover,
 .custom-swiper-button-next.swiper-button-disabled:hover {
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--black-50);
+  border-color: var(--white-20);
 }
 
 /* Spinner 動畫 */
 .spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 3px solid var(--white-10);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -359,6 +359,6 @@
   font-size: 14px;
   font-weight: 600;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--white-20);
+  box-shadow: 0 2px 8px var(--black-30);
 }

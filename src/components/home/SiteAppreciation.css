@@ -12,12 +12,12 @@
   align-items: center;
   gap: 0.42rem;
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.78rem;
   font-family: inherit;
   text-decoration: none;
@@ -30,8 +30,8 @@
 .site-appr-item:hover:not(:disabled),
 .site-appr-item:focus-visible:not(:disabled) {
   color: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--white-22);
+  background: var(--white-05);
   box-shadow: none;
   outline: none;
 }
@@ -44,7 +44,7 @@
 }
 /* 按過之後：心變粉紅、留著（表示這台瀏覽器已經按過） */
 .site-appr-item--liked {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   border-color: rgba(244, 114, 182, 0.35);
 }
 .site-appr-item--liked .site-appr-icon {
@@ -53,15 +53,15 @@
 }
 .site-appr-count {
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 .site-appr-item--liked .site-appr-count {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 .site-appr-sep {
   width: 1px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--white-12);
 }
 @media (max-width: 480px) {
   .site-appr-sep {
