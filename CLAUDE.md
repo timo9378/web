@@ -397,7 +397,7 @@ cd .. && cargo shear    # 未使用的 Rust 相依
 `error: not found: Couldn't load Cargo.lock`。
 
 ```bash
-cd .. && cargo audit    # 目前有 3 個既有的 allowed warnings（unmaintained 類），exit 0
+cd .. && cargo audit    # 目前剩 1 個 allowed warning（paste unmaintained），exit 0
 ```
 
 **覆蓋率不等於測試有效。** `cargo mutants --file <單檔>` 約 4 分鐘，判準是「錯了會不會安靜
