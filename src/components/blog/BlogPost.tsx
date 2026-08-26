@@ -32,6 +32,7 @@ import { BlogImage } from '@/components/blog/BlogImage';
 // BlogPost.css：Tier-2 後本元件直接 SSR（不再靠 BlogPostPage fallback）→ CSS 由這裡匯入。
 // 本元件是路由 eager import（進 /blog/$id 路由 chunk），故 CSS 進「文章路由 chunk」而非全域
 // index.css（首頁等非文章頁不會白背這 2600+ 行）。
+import '@/components/common/article-shell.css';
 import './BlogPost.css';
 import SignatureSVG from '@/components/common/SignatureSVG';
 import { LinkCard } from '@/components/common/LinkCard';

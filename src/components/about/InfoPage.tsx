@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { FaArrowUp } from 'react-icons/fa';
 import SignatureSVG from '@/components/common/SignatureSVG';
 import Comments from '@/components/blog/Comments';
-import '@/components/blog/BlogPost.css';     // 拿 BlogPost 的 dim overlay / post-content-wrapper / TOC 樣式
+import '@/components/common/article-shell.css';
 import './InfoPage.css';
 
 interface PagerLink { to: string; title: string }

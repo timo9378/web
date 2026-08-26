@@ -6,6 +6,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { recentPostsQueryOptions } from '@/data/blogList';
 import { thoughtDetailQueryOptions } from '@/data/thoughtData';
 import { postPath } from '@/lib/postPath';
+import './LinkCard.css';
 
 // 卡片形狀的載入骨架（保留與真卡相同的高度/結構）→ 資料未到時佔位不塌、client 補上時不位移。
 const LinkCardSkeleton = () => (

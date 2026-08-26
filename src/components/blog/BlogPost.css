@@ -13,66 +13,6 @@
   --post-page-bg: rgb(6, 5, 14);
 }
 
-/* ── Global scrollbar for blog post ── */
-.blog-post-container ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-.blog-post-container ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.blog-post-container ::-webkit-scrollbar-thumb {
-  background: rgba(var(--brand-rgb), 0.25);
-  border-radius: 3px;
-}
-
-.blog-post-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--brand-rgb), 0.45);
-}
-
-.blog-post-container * {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
-}
-
-/* ── Container ── */
-.blog-post-container {
-  position: relative;
-  min-height: 100vh;
-  background: transparent;
-  overflow: clip;
-  /* critical: keep sticky working */
-  padding-bottom: 4rem;
-}
-
-/* ── Dim overlay: uniform color over the starfield canvas ── */
-/* ⚠ 這層原本是 position:fixed —— 對 GPU 來說是一個「視窗大小的獨立合成層」。
-   影片在硬體加速下會被丟進自己的 overlay 平面，而這種 viewport 級的固定層會讓 overlay
-   被蓋掉：畫面全黑，但解碼是好的（canvas 取得到正常影像）、控制列也還在。
-   改成 absolute 貼著文章容器（容器本身 position:relative、高度涵蓋整篇），視覺效果一樣，
-   但不再是 viewport 級的合成層。 */
-.blog-post-dim-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(6, 5, 14, 0.75);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Copy protection ──
-   ⚠ 這一組（含下面的 code block 與 video 豁免）刻意留在檔案開頭，而 `.post-content`、
-   `.code-block-wrapper`、`.terminal-block` 的 base 樣式在後面——biome 會為此報三筆
-   noDescendingSpecificity。那是誤判：這裡只設 user-select，base 只設版面與配色，
-   **零屬性重疊**，不是覆蓋關係。
-   不把這組往後搬的理由是它會翻轉與後面三處 user-select 的先後，而防複製是功能不是
-   樣式，不值得為了 lint 冒那個險。三個 base 規則各自帶了 biome-ignore 與說明。 */
-.blog-post-container .post-content {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
 /* code block 與終端機視窗都要能被讀者選取複製（terminal-block 是 console/bash/sh 等語言
    的渲染路徑，先前漏了這條 override → 繼承上面 .post-content 的 none 而選不起來）。 */
 .blog-post-container .code-block-wrapper,
@@ -119,26 +59,6 @@
   height: 100%;
   background: linear-gradient(90deg, var(--post-accent), var(--post-green));
   transition: width 0.15s ease-out;
-}
-
-/* ═══════════════════════
-   Header
-   ═══════════════════════ */
-.post-header {
-  position: relative;
-  z-index: 1;
-  max-width: 838px;
-  margin: 0 auto;
-  padding: 6rem 1.5rem 2rem;
-  text-align: center;
-}
-
-.post-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
 }
 
 /* 副標（標題「主標：副標」的冒號後段）：明顯次於主標——較小、較淡、常規字重。 */
@@ -403,40 +323,6 @@
   border: 1px solid rgba(var(--brand-rgb), 0.2);
   padding: 0.15rem 0.65rem;
   border-radius: 9999px;
-}
-
-/* ═══════════════════════
-   Post Body — Three-column layout
-   ═══════════════════════ */
-.post-body {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  align-items: flex-start;
-}
-
-/* ── Left sidebar: Other posts ── */
-.post-sidebar-left {
-  flex: 0 0 220px;
-  position: sticky;
-  top: 100px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  /* 捲軸隱藏但保留可捲動：內容超過視窗高、或退場動畫收合過程中高度暫時變動時，
-     原本會閃出一條捲軸（使用者回報）。overscroll-behavior 順便擋捲動穿透到主文。 */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overscroll-behavior: contain;
-}
-.post-sidebar-left::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
 }
 
 /* Posts navigation (left sidebar) */
@@ -795,262 +681,10 @@ a.series-nav-title:hover {
   padding-top: 8px;
 }
 
-/* ── Main column ── */
-.post-main-column {
-  flex: 0 0 838px;
-  min-width: 0;
-}
-
-/* ── Content card ── */
-.post-content-wrapper {
-  position: relative;
-  /* 讓 ::before 的 z-index:-1 收在這張卡內，不會掉到祖先背景後面 */
-  isolation: isolate;
-  border: 1px solid var(--post-card-border);
-  border-radius: 16px;
-  padding: 2.5rem;
-}
-/* 底色＋玻璃模糊移到 ::before：filter/backdrop-filter 會把子孫的絕對定位內容裁切到自身邊界，
-   於是 <Annot> 站長註卡片一超出這張卡就被切掉（連 position:fixed 也逃不掉，filter 會變成它的
-   containing block）。改放在「不含卡片」的偽元素上 → wrapper 本身無 filter，卡片能正常溢出。 */
-.post-content-wrapper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--post-card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* ── Right sidebar: TOC ── */
-.post-sidebar-right {
-  flex: 0 0 220px;
-  position: sticky;
-  top: 100px;
-  max-height: calc(100vh - 120px);
-  /* 同左欄：藏捲軸但保留可捲動（長 TOC 仍能捲）。
-     ⚠ `overflow-y` 是這組設定的**必要**成員，不是可選的美化：少了它，max-height
-     不會裁切、藏捲軸的那兩條也沒有東西可藏，內容照樣溢出去。 */
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overscroll-behavior: contain;
-}
-.post-sidebar-right::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-/* Table of Contents */
-.table-of-contents {
-  padding: 0.5rem 0;
-}
-
-.toc-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--white-06);
-}
-
-.toc-header h3 {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--white-70);
-  margin: 0;
-}
-
-/* Reading progress circle */
-.reading-progress-circle {
-  position: relative;
-  width: 32px;
-  height: 32px;
-}
-
-.reading-progress-circle svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.reading-progress-circle .progress-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.55rem;
-  color: var(--post-accent);
-  font-weight: 600;
-}
-
-/* TOC items */
-.toc-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-height: calc(100vh - 260px);
-  /* ⚠ 同上：沒有 overflow-y 的話 max-height 形同虛設。
-     實際後果：標題超過約 20 個時清單溢出容器，把底下的「回到頂端」按鈕整個蓋住
-     ——按鈕看得到、`pointer-events` 也正常，但 elementFromPoint 打到的是 .toc-item，
-     所以點下去沒有反應。線上 25 個標題的文章就是這樣（15 個的那篇則正常）。
-     讓清單自己捲，header 與底部按鈕就固定在上下兩端。 */
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.toc-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.toc-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  background: none;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  text-align: left;
-  color: var(--white-40);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  transition:
-    color 0.2s ease,
-    transform 0.28s cubic-bezier(0.34, 1.25, 0.5, 1);
-  transform-origin: left center;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.toc-item:hover {
-  color: var(--white-80);
-  background: none;
-  outline: none;
-  box-shadow: none;
-  border: none;
-}
-
-.toc-item:focus,
-.toc-item:focus-visible {
-  outline: none;
-  background: none;
-  box-shadow: none;
-  border: none;
-}
-
-.toc-item.active {
-  background: linear-gradient(90deg, var(--post-accent), var(--post-green));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  /* 定位到的那項小小放大，讓 user 意識到自己在哪一段 */
-  transform: scale(1.07);
-}
-.toc-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.toc-item.active .toc-text {
-  font-weight: 600;
-}
-
-.toc-item.active:hover {
-  background: linear-gradient(90deg, var(--post-accent), var(--post-green));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  outline: none;
-  box-shadow: none;
-  border: none;
-}
-
-.toc-item.active:focus,
-.toc-item.active:focus-visible {
-  outline: none;
-  box-shadow: none;
-  border: none;
-  background: linear-gradient(90deg, var(--post-accent), var(--post-green));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
 .toc-item.level-3,
 .toc-item.level-4 {
   padding-left: 1rem;
   font-size: 0.74rem;
-}
-
-.toc-bullet {
-  flex-shrink: 0;
-  width: 5px;
-  height: 5px;
-  margin-top: 0.4rem;
-  border-radius: 50%;
-  background: var(--white-15);
-  transition: all 0.2s ease;
-}
-
-.toc-item.active .toc-bullet {
-  background: var(--post-accent);
-  box-shadow: 0 0 6px var(--post-accent-glow);
-  transform: scale(1.3);
-}
-
-.toc-item:hover .toc-bullet {
-  background: var(--white-40);
-}
-
-.toc-bottom-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 1rem;
-  padding: 0.75rem 0 0;
-  /* ⚠ 這兩條的 !important 不能拿掉：這是個 <button>，而 index.css 的 @layer base 有
-     全站 button 邊框規則。v4 的 cascade layer 讓「分層」輸給「未分層」——但那只對
-     一般宣告成立，**!important 的優先序是反過來的**（低層的 !important 贏過未分層），
-     所以那條 base 規則在 focus 態仍然蓋得過來。實測拿掉之後 focus 時
-     border-top 從 1px rgba(255,255,255,0.06) 變成 0px rgba(255,255,255,0.45)。 */
-  border: none !important;
-  border-top: 1px solid var(--white-06) !important;
-  font-size: 0.75rem;
-  color: var(--post-muted);
-  text-decoration: none;
-  transition: color 0.2s;
-  background: none;
-  outline: none;
-  box-shadow: none;
-  cursor: pointer;
-  width: 100%;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.toc-bottom-link:hover {
-  color: var(--post-accent);
-  background: none;
-  outline: none;
-  box-shadow: none;
-  border: none;
-  border-top: 1px solid var(--white-06);
-}
-
-.toc-bottom-link:focus,
-.toc-bottom-link:focus-visible {
-  outline: none;
-  box-shadow: none;
-  background: none;
 }
 
 /* ═══════════════════════
@@ -1127,42 +761,6 @@ a.series-nav-title:hover {
   text-shadow: 0 0 20px var(--post-accent-glow);
 }
 
-/* ═══════════════════════
-   Markdown Content
-   ═══════════════════════ */
-/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .post-content` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
-.post-content {
-  color: var(--white-82);
-  font-size: 1.05rem;
-  line-height: 1.85;
-  letter-spacing: 0.01em;
-  /* ⚠ 這裡原本是 `content-visibility: auto; contain-intrinsic-size: auto 1200px;`，
-     理由寫「長文章分段延後渲染，大幅改善滾動流暢度」。拿掉的原因是它**量不到效益、
-     但造成 CLS 0.52**（Google 的 poor 門檻是 0.25）。
-
-     成因：整篇文章是**一個** .post-content 元素。content-visibility: auto 在它還沒被
-     渲染時，整篇塌成 contain-intrinsic-size 的 1200px 佔位。於是「捲在深處按 F5」時，
-     瀏覽器拿 docH=2904 的版面還原捲動位置，內容一補上去 docH 變 13157，
-     視口內的東西整批被推走 —— reaction-bar / prev-next-nav / #comments 全部位移。
-
-     實測（tests/e2e/cls.spec.ts 的情境，本機 4~5 次取中位，皆零變異）：
-
-                              CLS      捲動 long task   捲動幀 p95   LCP     load
-       content-visibility: auto   0.5183   200.0ms          63.5ms       376ms   686ms
-       拿掉                       0.0000   199.0ms          61.9ms       372ms   675ms
-
-     捲動與載入兩端都開 6× CPU 節流量過（不節流的桌機量不出差異），四個效能指標
-     全部落在雜訊內甚至略好。也就是說那句「大幅改善滾動流暢度」在這個頁面上不成立
-     —— content-visibility: auto 套在單一巨大容器上本來就是反模式，它的設計場景是
-     「多個大小相近的重複區塊」，套在一個元素上只會得到一次巨大的高度跳動。
-
-     線上同樣重現過（/blog/palworld-dedicated-server-docker：CLS 0.5266，同一個成因）。
-     回歸守門在 tests/e2e/cls.spec.ts。 */
-  /* 中英排版優化：開頭/結尾標點懸掛、字距修整 */
-  hanging-punctuation: first allow-end last;
-  text-spacing-trim: trim-start;
-}
-
 /* 腳註樣式 + hover 浮窗（remark-gfm footnotes） */
 .post-content .footnotes {
   margin-top: 3rem;
@@ -1197,44 +795,6 @@ a.series-nav-title:hover {
 .post-content a.footnote-ref:hover {
   background: rgba(var(--brand-rgb), 0.28);
   color: #fff;
-}
-/* hover 浮窗 — 透過 [data-fn-content] 由 JS 注入文字 */
-.post-content sup a[data-fn-content]::after {
-  content: attr(data-fn-content);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  min-width: 220px;
-  max-width: min(420px, 80vw);
-  padding: 10px 14px;
-  background: rgba(15, 14, 26, 0.96);
-  border: 1px solid rgba(var(--brand-rgb), 0.35);
-  border-radius: 10px;
-  color: var(--white-85);
-  font-size: 0.9rem;
-  font-weight: 400;
-  line-height: 1.55;
-  letter-spacing: 0.01em;
-  text-align: left;
-  white-space: normal;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    visibility 0.2s;
-  box-shadow:
-    0 16px 40px var(--black-50),
-    0 0 24px rgba(var(--brand-rgb), 0.18);
-  z-index: 30;
-}
-.post-content sup a[data-fn-content]:hover::after,
-.post-content sup a[data-fn-content]:focus-visible::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
 }
 
 /* ── View Transitions（路由切換時的淡入淡出 + 微動畫）── */
@@ -1327,36 +887,6 @@ a.series-nav-title:hover {
   --alert-accent: #fca5a5;
   --alert-bg: rgba(252, 165, 165, 0.07);
 }
-
-.post-content h2 {
-  font-size: 1.5rem;
-  margin: 2.5rem 0 1rem;
-  color: #fff;
-  font-weight: 700;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--white-06);
-}
-
-.post-content h3 {
-  font-size: 1.25rem;
-  margin: 2rem 0 0.8rem;
-  color: var(--white-95);
-  font-weight: 600;
-}
-
-.post-content h4 {
-  font-size: 1.1rem;
-  margin: 1.5rem 0 0.6rem;
-  color: var(--white-90);
-}
-
-/* 標題 hover 錨點：字後面浮出 #，點了跳到/複製該段連結。 */
-.post-content h1,
-.post-content h2,
-.post-content h3,
-.post-content h4 {
-  scroll-margin-top: 6rem; /* 錨點跳轉時不被頂部遮住 */
-}
 .heading-anchor {
   margin-left: 0.4em;
   color: var(--post-accent);
@@ -1379,55 +909,6 @@ a.series-nav-title:hover {
   border-bottom: none;
 }
 
-.post-content p {
-  margin: 0 0 1.2rem;
-}
-
-.post-content a {
-  color: var(--post-accent);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(var(--brand-rgb), 0.3);
-  transition: border-color 0.2s;
-}
-
-.post-content a:hover {
-  border-bottom-color: var(--post-accent);
-}
-
-.post-content blockquote {
-  margin: 1.5rem 0;
-  padding: 1rem 1.5rem;
-  border-left: 3px solid var(--post-accent);
-  background: rgba(var(--brand-rgb), 0.05);
-  border-radius: 0 8px 8px 0;
-  color: var(--white-70);
-}
-
-.post-content ul,
-.post-content ol {
-  padding-left: 1.5rem;
-  margin: 1rem 0;
-}
-
-.post-content li {
-  margin: 0.4rem 0;
-}
-
-.post-content code {
-  background: var(--white-08);
-  color: #e8e6ef;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  font-size: 0.9em;
-  font-family: "Fira Code", "JetBrains Mono", var(--cjk-font), monospace;
-}
-
-.post-content img {
-  max-width: 100%;
-  border-radius: 12px;
-  margin: 0;
-}
-
 /* Blog image wrapper — centered with EXIF overlay */
 .blog-image-wrapper {
   display: flex;
@@ -1437,20 +918,6 @@ a.series-nav-title:hover {
   margin: 1.5rem auto;
   width: fit-content;
   max-width: 100%;
-}
-
-.blog-image-clickable {
-  cursor: zoom-in;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-  border-radius: 12px;
-  max-width: 100%;
-}
-
-.blog-image-clickable:hover {
-  transform: scale(1.005);
-  box-shadow: 0 8px 30px var(--black-30);
 }
 
 /* EXIF info overlay — 從下往上滑入 */
@@ -1479,18 +946,6 @@ a.series-nav-title:hover {
     transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.blog-image-exif--visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.blog-image-exif span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  letter-spacing: 0.01em;
-}
-
 /* Image Lightbox */
 .image-lightbox-overlay {
   position: fixed;
@@ -1502,65 +957,6 @@ a.series-nav-title:hover {
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(8px);
   cursor: zoom-out;
-}
-
-.image-lightbox-img {
-  max-width: 92vw;
-  max-height: 92vh;
-  object-fit: contain;
-  border-radius: 8px;
-  cursor: default;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.image-lightbox-close {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--white-10);
-  border: 1px solid var(--white-15);
-  color: var(--white-80);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 10000;
-}
-
-.image-lightbox-close:hover {
-  background: var(--white-20);
-  color: #fff;
-}
-
-.post-content hr {
-  border: none;
-  border-top: 1px solid var(--white-06);
-  margin: 2rem 0;
-}
-
-.post-content table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1.5rem 0;
-}
-
-.post-content th,
-.post-content td {
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--white-08);
-  text-align: left;
-  font-size: 0.92rem;
-}
-
-.post-content th {
-  background: rgba(var(--brand-rgb), 0.08);
-  color: var(--white-80);
-  font-weight: 600;
 }
 
 /* ═══════════════════════
@@ -1764,53 +1160,9 @@ a.series-nav-title:hover {
   overflow-x: auto;
   padding: 1.1rem 1.3rem 1.3rem;
 }
-.code-surface-body .shiki-output pre.shiki {
-  margin: 0;
-  padding: 0;
-  /* ⚠ 同上：shiki 的主題背景要壓掉，背景由外層 .code-surface-body 畫 */
-  background: transparent !important;
-  font-size: 0.9rem;
-  line-height: 1.7;
-  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
-  width: max-content;
-  min-width: 100%;
-  box-sizing: border-box;
-}
-.code-surface-body .shiki-output code {
-  background: none;
-  padding: 0;
-  border: 0; /* 防呆：不吃 .post-content code 的 inline 樣式（框線/底） */
-  font-family: inherit;
-  display: block;
-  counter-reset: shiki-ln;
-}
 /* 行號：CSS counter 掛在每行 .line 前 */
 .code-surface-body .shiki-output .line {
   counter-increment: shiki-ln;
-}
-.code-surface-body .shiki-output .line::before {
-  content: counter(shiki-ln);
-  display: inline-block;
-  width: 1.6rem;
-  margin-right: 1.3rem;
-  text-align: right;
-  color: var(--white-22);
-  user-select: none;
-  -webkit-user-select: none;
-}
-.code-surface-body .shiki-fallback {
-  color: var(--white-70);
-  white-space: pre;
-  font-size: 0.9rem;
-  line-height: 1.7;
-  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
-  animation: shikiPulse 1.4s ease-in-out infinite;
-}
-.code-surface-body .shiki-fallback code {
-  background: none;
-  padding: 0;
-  border: 0;
-  font-family: inherit;
 }
 @keyframes shikiPulse {
   0%,
@@ -1821,12 +1173,6 @@ a.series-nav-title:hover {
     opacity: 0.85;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .code-surface-body .shiki-fallback {
-    animation: none;
-    opacity: 0.7;
-  }
-}
 
 /* ── 長碼收合：超過門檻先夾住高度，底部漸層淡出 + 「展開程式碼(共N行)」條 ── */
 /* 收合高度限制＋過場放在 .code-surface-clip（包住 shiki-output 的外層）：
@@ -1834,30 +1180,6 @@ a.series-nav-title:hover {
 .code-surface-clip {
   overflow: hidden;
   transition: max-height 0.42s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.code-surface-body--collapsed .code-surface-clip {
-  max-height: 20rem;
-}
-.code-surface-toggle {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45em;
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 0;
-  background: var(--white-03);
-  box-shadow: none;
-  outline: none;
-  color: var(--white-55);
-  font-size: 0.76rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    color 0.18s ease;
 }
 /* 蓋掉全域 button{紫底}＋button:hover{紫底+光暈}（specificity 0,2,0 > 0,1,1） */
 .code-surface-toggle:hover,
@@ -1868,20 +1190,6 @@ a.series-nav-title:hover {
   box-shadow: none;
   border-color: transparent;
   outline: none;
-}
-.code-surface-toggle-chevron {
-  font-size: 0.7em;
-  opacity: 0.7;
-}
-.code-surface-body--collapsed .code-surface-toggle::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: 3.5rem;
-  background: linear-gradient(to top, var(--black-50), transparent);
-  pointer-events: none;
 }
 /* emoji 語言標頭（小寫，跟參考一致；覆蓋原本的 uppercase） */
 .language-name {
@@ -1904,81 +1212,9 @@ a.series-nav-title:hover {
   margin: 0.5rem 0;
 }
 
-.link-card-with-text > p {
-  margin-bottom: 0.4rem;
-  font-size: 0.95rem;
-  color: var(--post-text);
-}
-
-.link-card {
-  display: flex;
-  align-items: stretch;
-  border: 1px solid var(--white-08);
-  border-radius: 12px;
-  overflow: hidden;
-  text-decoration: none;
-  margin: 1.2rem 0;
-  background: var(--white-03);
-  transition: all 0.25s ease;
-  max-width: 100%;
-}
-
-.link-card:hover {
-  border-color: rgba(var(--brand-rgb), 0.3);
-  background: rgba(var(--brand-rgb), 0.05);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px var(--black-30);
-}
-
-.link-card-thumb {
-  flex: 0 0 160px;
-  background: var(--black-30);
-  overflow: hidden;
-}
-
-.link-card-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  margin: 0;
-  border-radius: 0;
-}
-
-.link-card-body {
-  flex: 1;
-  min-width: 0;
-  padding: 1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.link-card-site {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--white-70);
-}
-
-.link-card-url {
-  font-size: 0.78rem;
-  color: var(--post-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* YouTube card styling */
 .link-card-youtube {
   border-color: rgba(255, 0, 0, 0.15);
-}
-
-.link-card-youtube:hover {
-  border-color: rgba(255, 0, 0, 0.35);
-  background: rgba(255, 0, 0, 0.04);
 }
 
 /* GitHub card styling */
@@ -1986,18 +1222,9 @@ a.series-nav-title:hover {
   border-color: var(--white-10);
 }
 
-.link-card-github:hover {
-  border-color: var(--white-20);
-}
-
 /* Instagram card styling */
 .link-card-instagram {
   border-color: rgba(228, 64, 95, 0.15);
-}
-
-.link-card-instagram:hover {
-  border-color: rgba(228, 64, 95, 0.35);
-  background: rgba(228, 64, 95, 0.04);
 }
 
 /* Spotify card styling */
@@ -2007,58 +1234,11 @@ a.series-nav-title:hover {
   overflow: hidden;
 }
 
-.link-card-spotify:hover {
-  border-color: rgba(29, 185, 84, 0.35);
-  background: rgba(29, 185, 84, 0.04);
-}
-
-.link-card-spotify iframe {
-  display: block;
-  border-radius: 12px;
-}
-
 /* Bilibili card styling */
 .link-card-bilibili {
   border-color: rgba(0, 161, 214, 0.15);
   flex-direction: column;
   overflow: hidden;
-}
-
-.link-card-bilibili:hover {
-  border-color: rgba(0, 161, 214, 0.35);
-  background: rgba(0, 161, 214, 0.04);
-}
-
-.link-card-embed-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;
-  /* 16:9 */
-  overflow: hidden;
-}
-
-.link-card-bilibili-iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.link-card-embed-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
-  font-size: 0.82rem;
-  color: var(--white-60);
-  text-decoration: none;
-  border-top: 1px solid var(--white-06);
-  transition: color 0.2s;
-}
-
-.link-card-embed-link:hover {
-  color: var(--white-90);
 }
 
 /* ═══════════════════════
@@ -2136,6 +1316,7 @@ a.series-nav-title:hover {
   transition: opacity 0.35s ease;
   pointer-events: none;
 }
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.float-btn::after` 是按鈕自己的光暈偽元素，這裡是按鈕**裡面**的圖示與文字，不同節點、零屬性重疊。 */
 .float-btn > svg,
 .float-btn > span {
   position: relative;
@@ -2233,6 +1414,7 @@ a.series-nav-title:hover {
   background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.18), rgba(220, 50, 120, 0.1));
   color: #fff;
 }
+/* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.share-menu button:hover` 設按鈕自己的底色與字色，這裡設的是按鈕裡面的 svg，不同節點。 */
 .share-menu button svg {
   color: var(--brand-light);
 }
@@ -2461,15 +1643,6 @@ a.series-nav-title:hover {
   background: rgba(var(--brand-rgb), 0.1);
 }
 
-/* ═══════════════════════
-   Comments / Extras
-   ═══════════════════════ */
-.post-extras {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--white-06);
-}
-
 /* Back to blog link (error page) */
 .back-to-blog-link {
   display: inline-flex;
@@ -2522,31 +1695,7 @@ a.series-nav-title:hover {
   margin-bottom: 1rem;
 }
 
-/* ═══════════════════════
-   Responsive
-   ═══════════════════════ */
-@media (max-width: 1300px) {
-  .post-sidebar-left {
-    display: none;
-  }
-}
-
-@media (max-width: 1100px) {
-  .post-sidebar-right {
-    display: none;
-  }
-}
-
 @media (max-width: 950px) {
-  .post-main-column {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .post-content-wrapper {
-    padding: 1.5rem;
-  }
-
   .post-ai-summary-inline {
     margin: -1.5rem -1.5rem 1.5rem -1.5rem;
     padding: 1.5rem 1.5rem 2rem;
@@ -2559,14 +1708,6 @@ a.series-nav-title:hover {
   .font-switcher {
     bottom: 1rem;
     right: 1rem;
-  }
-
-  .post-header {
-    padding: 5rem 1rem 1.5rem;
-  }
-
-  .post-title {
-    font-size: 1.6rem;
   }
 
   .post-subtitle {
@@ -2583,66 +1724,6 @@ a.series-nav-title:hover {
 .link-card-internal {
   border-color: rgba(var(--brand-rgb), 0.22);
   background: rgba(var(--brand-rgb), 0.04);
-}
-
-.link-card-internal .link-card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-  margin: 0.2rem 0;
-  line-height: 1.4;
-}
-
-.link-card-internal .link-card-meta {
-  font-size: 0.85rem;
-  color: var(--post-muted);
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* TOC Fixes */
-.toc-item {
-  outline: none;
-  box-shadow: none;
-  border: none;
-}
-
-.toc-item:focus,
-.toc-item:focus-visible,
-.toc-item:hover {
-  outline: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.toc-bottom-link {
-  background: transparent;
-  outline: none;
-  border: none;
-  color: var(--post-muted);
-}
-
-.toc-bottom-link:hover {
-  background: transparent;
-  color: var(--post-accent);
-}
-
-/* ═══════════════════════
-   Custom Signature Embed
-   ═══════════════════════ */
-.blog-signature {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  opacity: 0.85;
-  width: 100%;
-  margin-left: auto;
-}
-
-.blog-signature svg {
-  width: 9rem;
-  max-width: 100%;
 }
 /* ── SSR fallback 的 skeleton 載入（BlogPostPage 側欄/目錄用；FullBlogPost 載入後替換）── */
 @keyframes bp-shimmer {
@@ -2682,15 +1763,6 @@ a.series-nav-title:hover {
   }
 }
 
-.post-header {
-  animation: post-enter 640ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
-
-.post-content-wrapper {
-  /* 晚 90ms 起跑 → 大標先到位、內文隨後，做出層次感 */
-  animation: post-enter 700ms cubic-bezier(0.22, 1, 0.36, 1) 90ms backwards;
-}
-
 /* ── 側欄逐行進場（TOC 由右滑入、左欄由左滑入）──
    每列以 --i（元件 inline style 給的索引）錯開 delay → 瀑布式一行行出現。
    CSS 動畫 SSR 首幀就開跑（不等 JS）；key 綁 post id → 換文章視窗平移時，
@@ -2716,11 +1788,6 @@ a.series-nav-title:hover {
     transform: translateX(0);
   }
 }
-.toc-nav .toc-item {
-  animation: side-in-r 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-  /* min() 上限：長 TOC（15+ 項）別讓瀑布拖到一秒，後段一起進 */
-  animation-delay: calc(120ms + min(var(--i, 0) * 50ms, 600ms));
-}
 .posts-nav .side-item-in {
   animation: side-in-l 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(120ms + min(var(--i, 0) * 50ms, 600ms));
@@ -2732,9 +1799,6 @@ a.series-nav-title:hover {
   min-height: 110px; /* ≈ 真卡（padding + 3 行）高度 → 換成真卡時幾乎不位移 */
   cursor: default;
   pointer-events: none;
-}
-.link-card-skeleton .link-card-body {
-  width: 100%;
 }
 
 /* ── AI 翻譯提示 banner（非原文語系文章頂部）── */

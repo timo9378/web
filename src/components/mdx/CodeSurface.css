@@ -1,0 +1,90 @@
+/* 程式碼區塊本體（一般 code block 與 CodeTabs 共用，見 CodeSurface.tsx）。 */
+
+.code-surface-body .shiki-output pre.shiki {
+  margin: 0;
+  padding: 0;
+  /* ⚠ 同上：shiki 的主題背景要壓掉，背景由外層 .code-surface-body 畫 */
+  background: transparent !important;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+.code-surface-body .shiki-output code {
+  background: none;
+  padding: 0;
+  border: 0; /* 防呆：不吃 .post-content code 的 inline 樣式（框線/底） */
+  font-family: inherit;
+  display: block;
+  counter-reset: shiki-ln;
+}
+.code-surface-body .shiki-output .line::before {
+  content: counter(shiki-ln);
+  display: inline-block;
+  width: 1.6rem;
+  margin-right: 1.3rem;
+  text-align: right;
+  color: var(--white-22);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.code-surface-body .shiki-fallback {
+  color: var(--white-70);
+  white-space: pre;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
+  animation: shikiPulse 1.4s ease-in-out infinite;
+}
+.code-surface-body .shiki-fallback code {
+  background: none;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+}
+@media (prefers-reduced-motion: reduce) {
+  .code-surface-body .shiki-fallback {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+.code-surface-body--collapsed .code-surface-clip {
+  max-height: 20rem;
+}
+.code-surface-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: var(--white-03);
+  box-shadow: none;
+  outline: none;
+  color: var(--white-55);
+  font-size: 0.76rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+.code-surface-toggle-chevron {
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+.code-surface-body--collapsed .code-surface-toggle::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 3.5rem;
+  background: linear-gradient(to top, var(--black-50), transparent);
+  pointer-events: none;
+}
