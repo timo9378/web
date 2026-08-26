@@ -51,9 +51,6 @@ PHOTO_BUILDER_GUIDE.md
 PHOTO_GALLERY_REFACTOR.md
 IMPLEMENTATION_SUMMARY.md
 docs/BLOG_ROADMAP.md
-# 給寫文 agent 的題材清單，每次重產。放在根目錄且未被忽略時，`git add -A` 會把它
-# 掃進不相干的 commit——實際發生過一次。
-test2.md
 .env.docker
 server/db/db.sqlite
 server/db/db.sqlite-shm
@@ -97,7 +94,8 @@ blob-report/
 .hypothesis/
 
 # 工作用的計畫／筆記，不進版控
-# ⚠️ 這行只擋**新檔**。docs/ 下已被追蹤的 5 個檔案不受影響（gitignore 管不到已追蹤的），
+# ⚠️ 這行只擋**新檔**。docs/ 下已被追蹤的 3 個檔案不受影響（gitignore 管不到已追蹤的），
+#    目前是 archive/Setup.md、changelog.txt、seo-baseline-2026-07-28.md。
 #    它們也不會再被推上去，除非有人改動它們。真要讓它們從 repo 消失得跑
 #    `git rm --cached -r docs/`，那會讓它們從 GitHub 上不見——所以沒有自動做。
 docs/
