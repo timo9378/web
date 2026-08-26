@@ -63,7 +63,7 @@
   align-items: flex-start;
   gap: 2px;
   padding-right: 18px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid var(--white-08);
 }
 .w-stat:last-of-type {
   border-right: none;
@@ -124,7 +124,7 @@
   right: 0;
   bottom: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--white-15);
   /* 自己一層 GPU 合成——否則 hover 時 banner-img scale(1.03) 的下緣掃過這條半透明
      進度條會 repaint 閃爍 */
   transform: translateZ(0);
@@ -165,7 +165,7 @@
 
 .w-now-banner:hover {
   transform: translateY(-3px);
-  box-shadow: 0 24px 60px rgba(127, 90, 240, 0.24);
+  box-shadow: 0 24px 60px rgba(var(--brand-rgb), 0.24);
 }
 
 .w-now-banner-img {
@@ -194,9 +194,9 @@
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   line-height: 1.15;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   margin: 10px 0 8px;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 18px var(--black-55);
 }
 
 .w-now-meta {
@@ -204,7 +204,7 @@
   color: rgba(244, 244, 245, 0.78);
   letter-spacing: 0.03em;
   margin: 0;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 8px var(--black-55);
 }
 
 .w-now-cta {
@@ -214,8 +214,8 @@
   padding: 8px 16px;
   font-size: 0.82rem;
   color: rgba(244, 244, 245, 0.95);
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: var(--black-45);
+  border: 1px solid var(--white-25);
   border-radius: 9999px;
   backdrop-filter: blur(8px);
   letter-spacing: 0.03em;
@@ -285,7 +285,7 @@
   background: rgba(216, 180, 254, 0.12);
   border-color: rgba(216, 180, 254, 0.5);
   box-shadow: none;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 .w-share-btn:focus-visible {
   outline: none;
@@ -302,7 +302,7 @@
   white-space: nowrap;
 }
 .w-section-link:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   border-bottom-color: rgba(216, 180, 254, 0.5);
 }
 
@@ -318,7 +318,7 @@
   margin: 0;
   padding: 14px 14px 16px;
   background: rgba(15, 12, 24, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   border-radius: 16px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -334,8 +334,8 @@
   background: rgba(20, 16, 32, 0.7);
   border-color: rgba(216, 180, 254, 0.28);
   box-shadow:
-    0 22px 50px rgba(0, 0, 0, 0.5),
-    0 0 28px rgba(127, 90, 240, 0.12);
+    0 22px 50px var(--black-50),
+    0 0 28px rgba(var(--brand-rgb), 0.12);
 }
 
 .w-fav-poster {
@@ -343,7 +343,7 @@
   aspect-ratio: 2 / 3;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 24px var(--black-50);
 }
 
 .w-fav-poster img {
@@ -429,7 +429,7 @@
 }
 
 .w-recent-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--white-05);
 }
 .w-recent-row:last-child {
   border-bottom: none;
@@ -545,7 +545,7 @@
   white-space: nowrap;
 }
 .w-stars-dim {
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
 }
 
 /* ════════ RWD ════════ */

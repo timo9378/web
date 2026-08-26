@@ -5,8 +5,8 @@
   padding: 0.35rem;
   border-radius: 12px;
   background: rgba(20, 18, 28, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--white-10);
+  box-shadow: 0 14px 44px var(--black-55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   animation: ctx-in 0.13s ease;
@@ -48,7 +48,7 @@
 .ctx-nav-btn:hover,
 .ctx-nav-btn:focus,
 .ctx-nav-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   color: #fff;
   box-shadow: none;
   outline: none;
@@ -65,7 +65,7 @@
   background: transparent;
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   font-size: 0.85rem;
   font-weight: 400;
   font-family: inherit;
@@ -79,7 +79,7 @@
 .ctx-item:hover,
 .ctx-item:focus,
 .ctx-item:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   color: #fff;
   box-shadow: none;
   border-color: transparent;
@@ -94,11 +94,11 @@
 .ctx-divider {
   height: 1px;
   margin: 0.3rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
 }
 .ctx-hint {
   padding: 0.45rem 0.7rem 0.3rem;
   font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   line-height: 1.4;
 }

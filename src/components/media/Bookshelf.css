@@ -2,114 +2,12 @@
    知識星圖 — 書架頁面（星域風格 / 與 Music 統一）
    ═══════════════════════════════════════════════════ */
 
-/* ── CSS Variables ── */
-.bookshelf-container {
-  --accent: #7f5af0;
-  --accent-light: #c4b5fd;
-  --starlight: #ede9fe;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-border: rgba(127, 90, 240, 0.35);
-  --text-primary: #fffffe;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --text-tertiary: rgba(255, 255, 255, 0.35);
-}
-
 /* ── Page Container ── */
 .bookshelf-container {
   position: relative;
   min-height: 100vh;
   background: transparent;
   overflow: hidden;
-}
-
-/* ── Dim Overlay ── */
-.bookshelf-dim-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(6, 5, 14, 0.65);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Nebula Background (shared w/ Music & Blog) ── */
-.bookshelf-nebula-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.bookshelf-nebula-bg .nebula-layer {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(110px);
-  opacity: 0.18;
-  will-change: transform;
-}
-
-.bs-nebula-1 {
-  width: 660px;
-  height: 660px;
-  top: -8%;
-  left: -12%;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
-  animation: bs-neb1 30s ease-in-out infinite;
-}
-
-.bs-nebula-2 {
-  width: 520px;
-  height: 520px;
-  bottom: -6%;
-  right: -8%;
-  background: radial-gradient(circle, rgba(200, 50, 140, 0.4) 0%, rgba(140, 30, 170, 0.2) 45%, transparent 70%);
-  animation: bs-neb2 36s ease-in-out infinite;
-}
-
-.bs-nebula-3 {
-  width: 380px;
-  height: 380px;
-  top: 45%;
-  left: 55%;
-  background: radial-gradient(circle, rgba(56, 178, 172, 0.25) 0%, rgba(44, 182, 125, 0.1) 50%, transparent 70%);
-  animation: bs-neb3 24s ease-in-out infinite;
-}
-
-@keyframes bs-neb1 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(35px, 25px) scale(1.06);
-  }
-  66% {
-    transform: translate(-18px, -12px) scale(0.96);
-  }
-}
-
-@keyframes bs-neb2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  40% {
-    transform: translate(-30px, -20px) scale(1.08);
-  }
-  75% {
-    transform: translate(15px, 10px) scale(0.93);
-  }
-}
-
-@keyframes bs-neb3 {
-  0%,
-  100% {
-    transform: translate(-50%, 0) scale(1);
-  }
-  50% {
-    transform: translate(-50%, 12px) scale(1.1);
-  }
 }
 
 /* ── Content Wrapper ── */
@@ -141,7 +39,7 @@
 }
 
 .bs-title-gradient {
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 40%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 40%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -149,7 +47,7 @@
 
 .bs-title-sub {
   font-size: 1.15rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-weight: 400;
   font-style: italic;
 }
@@ -198,13 +96,13 @@
   top: 20%;
   height: 60%;
   width: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
 }
 
 .stats-strip-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--accent-light);
+  color: var(--brand-light);
   line-height: 1.2;
 }
 
@@ -238,7 +136,7 @@
 .search-icon {
   position: absolute;
   left: 1rem;
-  color: var(--accent);
+  color: var(--brand);
   opacity: 0.5;
   pointer-events: none;
   z-index: 1;
@@ -264,9 +162,9 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: rgba(127, 90, 240, 0.06);
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.15);
+  border-color: var(--brand);
+  background: rgba(var(--brand-rgb), 0.06);
+  box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.15);
 }
 
 .clear-search {
@@ -274,7 +172,7 @@
   right: 0.75rem;
   background: none;
   border: none;
-  color: var(--accent-light);
+  color: var(--brand-light);
   cursor: pointer;
   padding: 0.25rem;
   opacity: 0.5;
@@ -295,7 +193,7 @@
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: var(--accent-light);
+  color: var(--brand-light);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -312,14 +210,14 @@
 .filter-toggle:hover,
 .view-mode-toggle:hover {
   border-color: var(--glass-hover-border);
-  background: rgba(127, 90, 240, 0.08);
-  box-shadow: 0 0 16px rgba(127, 90, 240, 0.12);
+  background: rgba(var(--brand-rgb), 0.08);
+  box-shadow: 0 0 16px rgba(var(--brand-rgb), 0.12);
   color: var(--text-primary);
 }
 
 .view-mode-toggle {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.08), rgba(220, 50, 120, 0.06));
-  border-color: rgba(127, 90, 240, 0.2);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(220, 50, 120, 0.06));
+  border-color: rgba(var(--brand-rgb), 0.2);
 }
 
 /* ── Filter Panel ── */
@@ -345,7 +243,7 @@
 
 .filter-group label {
   font-size: 0.65rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -353,7 +251,7 @@
 
 .filter-group select {
   padding: 0.6rem 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   color: var(--text-primary);
@@ -364,16 +262,16 @@
 
 .filter-group select:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(127, 90, 240, 0.12);
+  border-color: var(--brand);
+  box-shadow: 0 0 12px rgba(var(--brand-rgb), 0.12);
 }
 
 .clear-filters {
   padding: 0.6rem 1rem;
-  background: rgba(127, 90, 240, 0.06);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.06);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 8px;
-  color: var(--accent-light);
+  color: var(--brand-light);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.8rem;
@@ -383,8 +281,8 @@
 }
 
 .clear-filters:hover {
-  background: rgba(127, 90, 240, 0.12);
-  border-color: var(--accent);
+  background: rgba(var(--brand-rgb), 0.12);
+  border-color: var(--brand);
   box-shadow: none;
 }
 
@@ -437,7 +335,7 @@
   transform: translateY(-6px);
   border-color: rgba(var(--cover-r, 127), var(--cover-g, 90), var(--cover-b, 240), 0.3);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.3),
+    0 16px 48px var(--black-30),
     0 0 30px rgba(var(--cover-r, 127), var(--cover-g, 90), var(--cover-b, 240), 0.12);
 }
 
@@ -452,7 +350,7 @@
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 0.75rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   z-index: 1;
 }
 
@@ -475,8 +373,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.08), rgba(220, 50, 120, 0.06));
-  color: rgba(127, 90, 240, 0.3);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(220, 50, 120, 0.06));
+  color: rgba(var(--brand-rgb), 0.3);
   font-size: 2.5rem;
   border-radius: 10px;
 }
@@ -495,7 +393,7 @@
   -webkit-backdrop-filter: blur(8px);
   letter-spacing: 0.5px;
   z-index: 2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px var(--black-40);
 }
 
 .book-info {
@@ -543,7 +441,7 @@
 }
 
 .star-empty {
-  color: rgba(255, 255, 255, 0.1);
+  color: var(--white-10);
 }
 
 .no-rating {
@@ -581,15 +479,15 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 .spinning-book {
   font-size: 3rem;
   animation: spin 2s linear infinite;
   margin-bottom: 1rem;
-  color: var(--accent);
-  filter: drop-shadow(0 0 20px rgba(127, 90, 240, 0.4));
+  color: var(--brand);
+  filter: drop-shadow(0 0 20px rgba(var(--brand-rgb), 0.4));
 }
 
 @keyframes spin {
@@ -627,14 +525,14 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px var(--black-50);
 }
 
 .modal-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
   width: 2.25rem;
@@ -674,7 +572,7 @@
   width: 100%;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 30px var(--black-30);
 }
 
 .modal-cover-placeholder {
@@ -683,10 +581,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.08), rgba(220, 50, 120, 0.06));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(220, 50, 120, 0.06));
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  color: rgba(127, 90, 240, 0.3);
+  color: rgba(var(--brand-rgb), 0.3);
   font-size: 3rem;
 }
 
@@ -700,13 +598,13 @@
 
 .modal-author {
   font-size: 0.95rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 1.25rem;
   opacity: 0.8;
 }
 
 .modal-meta {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   padding: 0.75rem 1rem;
@@ -721,7 +619,7 @@
 }
 
 .meta-item strong {
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-right: 0.5rem;
 }
 
@@ -738,7 +636,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--white-15);
 }
 
 .modal-description,
@@ -749,7 +647,7 @@
 .modal-description h3,
 .modal-notes h3 {
   font-size: 1rem;
-  color: var(--accent-light);
+  color: var(--brand-light);
   margin-bottom: 0.6rem;
   font-weight: 600;
 }
@@ -762,7 +660,7 @@
 }
 
 .modal-dates {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   padding: 0.75rem 1rem;
@@ -780,7 +678,7 @@
 }
 
 .modal-dates strong {
-  color: var(--accent-light);
+  color: var(--brand-light);
 }
 
 /* ══════════════════════════════════════

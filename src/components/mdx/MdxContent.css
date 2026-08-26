@@ -91,8 +91,8 @@
   border-radius: 10px;
   background: rgba(36, 30, 20, 0.97);
   border: 1px solid rgba(252, 211, 77, 0.22);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  color: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 30px var(--black-45);
+  color: var(--white-82);
   font-size: 0.84rem;
   line-height: 1.55;
   text-align: left;
@@ -174,7 +174,7 @@
   cursor: pointer;
   border-radius: 4px;
   padding: 0 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   filter: blur(6px);
   transition:
     filter 0.35s ease,
@@ -184,7 +184,7 @@
   outline: none;
 }
 .spoiler:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
 }
 .spoiler--revealed {
   filter: none;
@@ -200,21 +200,21 @@
   padding: 1rem 0.6rem 0.5rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
 }
 .mdx-chart-title {
   margin: 0 0 0.6rem 0.4rem;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
 }
 .mdx-chart-loading {
   height: 300px;
   margin: 1.75rem 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--white-02);
+  border: 1px solid var(--white-06);
 }
 .mdx-chart-empty {
   margin: 1.75rem 0;
@@ -231,11 +231,11 @@
   border-radius: 8px;
   background: rgba(24, 20, 32, 0.97);
   border: 1px solid rgba(139, 124, 246, 0.3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px var(--black-50);
 }
 .mdx-chart-tip-label {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin-bottom: 0.15rem;
 }
 .mdx-chart-tip-value {
@@ -258,7 +258,7 @@
   flex: 0 0 auto;
 }
 .mdx-chart-tip-name {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   margin-right: 0.6rem;
 }
 .mdx-chart-tip-row .mdx-chart-tip-value {
@@ -268,7 +268,7 @@
 }
 /* recharts 圖例文字改亮 */
 .mdx-chart .recharts-legend-item-text {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
 }
 /* ── 互動圖表：圖 + 滑桿 ── */
 .mdx-chart-interactive {
@@ -276,7 +276,7 @@
   padding: 1rem 0.6rem 1.1rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
 }
 .mdx-chart-interactive .mdx-chart {
   margin: 0;
@@ -294,7 +294,7 @@
   font-size: 0.82rem;
 }
 .mdx-chart-slider-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -306,7 +306,7 @@
 }
 .mdx-chart-slider-value {
   text-align: right;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
 }
@@ -314,7 +314,7 @@
 /* ── <Ruby> CJK 注音 ── */
 .mdx-ruby rt {
   font-size: 0.55em;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-weight: 400;
 }
 
@@ -327,8 +327,8 @@
   padding: 0.05em 0.5em 0.05em 0.42em;
   margin: 0 0.06em;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-05);
+  border: 1px solid var(--white-08);
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.88em;
   font-weight: 500;
@@ -348,7 +348,7 @@
 }
 .mdx-mention:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--white-15);
   color: #fff;
 }
 .mdx-mention:hover svg {
@@ -358,12 +358,12 @@
    提及會變紫字＋多一條紫底線。用 .post-content a.mdx-mention(0,2,1)搶回中性色與四邊一致的細邊。
    圖示以 currentColor 上色 → 一併變中性白，不再是紫的。 */
 .post-content a.mdx-mention {
-  color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--white-90);
+  border: 1px solid var(--white-08);
 }
 .post-content a.mdx-mention:hover {
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--white-15);
 }
 
 /* ── <CodeTabs> 多檔程式碼分頁：一體暗色（比照 .code-block-wrapper），分頁帶檔案類型彩色圖示，
@@ -373,7 +373,7 @@
   margin: 1.5rem 0;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--black-40);
 }
 .mdx-codetabs-bar {
   display: flex;
@@ -392,7 +392,7 @@
   background: transparent;
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-size: 0.8rem;
   font-weight: 500;
   font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
@@ -417,7 +417,7 @@
 }
 .mdx-codetabs-tab:hover {
   background: rgba(255, 255, 255, 0.045);
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
 }
 .mdx-codetabs-tab.active,
 .mdx-codetabs-tab.active:hover,
@@ -440,7 +440,7 @@
   border-radius: 4px;
 }
 .mdx-codetabs ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--white-22);
 }
 .mdx-codetabs * {
   scrollbar-width: thin;
@@ -450,7 +450,7 @@
 /* ── <Tabs>/<Tab> 內容分頁：藥丸切換，每頁放整段內容（prose+code） ── */
 .mdx-tabs {
   margin: 1.75rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.015);
@@ -460,17 +460,17 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   padding: 0.55rem 0.6rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--white-08);
+  background: var(--white-02);
 }
 .mdx-tabs-pill {
   padding: 0.4rem 0.95rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   background: transparent;
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.85rem;
   font-weight: 500;
   font-family: inherit;
@@ -484,9 +484,9 @@
 .mdx-tabs-pill:hover,
 .mdx-tabs-pill:focus,
 .mdx-tabs-pill:focus-visible {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border-color: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   box-shadow: none;
   outline: none;
 }
@@ -494,7 +494,7 @@
 .mdx-tabs-pill.active:hover,
 .mdx-tabs-pill.active:focus {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: var(--white-22);
   color: #fff;
   box-shadow: none;
 }
@@ -518,7 +518,7 @@
   height: 2.4rem;
   margin: 1.5rem 0;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
 }
 .mdx-math-inline {
   white-space: nowrap;
@@ -535,19 +535,19 @@
 .mdx-sketch-canvas--loading {
   min-height: 180px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
 }
 .mdx-sketch-loading {
   min-height: 220px;
   margin: 1.75rem 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--white-02);
+  border: 1px solid var(--white-05);
 }
 .mdx-sketch-caption {
   margin-top: 0.7rem;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 .mdx-sketch-error {
   margin: 1.5rem 0;
@@ -628,7 +628,7 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
 }
 .mdx-imgcompare-frame img {
   display: block;
@@ -642,7 +642,7 @@
   border-radius: 6px;
   font-size: 0.72rem;
   color: #fff;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--black-55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   pointer-events: none;
@@ -656,13 +656,13 @@
 .mdx-imgcompare-loading {
   height: 320px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
 }
 .mdx-imgcompare figcaption {
   margin-top: 0.5rem;
   text-align: center;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 
 /* ── Kbd ── */
@@ -673,18 +673,18 @@
   font-family: inherit;
   font-size: 0.82em;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--white-85);
+  background: var(--white-06);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-bottom-width: 2px;
   border-radius: 6px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 0 var(--black-30);
 }
 
 /* ── Details（段落級收合）── */
 .mdx-details {
   margin: 1.5rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
   overflow: hidden;
@@ -693,7 +693,7 @@
   cursor: pointer;
   padding: 0.75rem 1rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
   list-style: none;
   user-select: none;
   -webkit-user-select: none;
@@ -707,7 +707,7 @@
 .mdx-details-summary::before {
   content: "▶";
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   transition: transform 0.18s ease;
 }
 .mdx-details[open] .mdx-details-summary::before {
@@ -729,7 +729,7 @@
   block-size: auto;
 }
 .mdx-details-summary:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
 }
 .mdx-details-body {
   padding: 0 1rem 0.75rem;
@@ -748,7 +748,7 @@
   position: relative;
   counter-increment: mdx-step;
   padding: 0 0 1.25rem 2.2rem;
-  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  border-left: 2px solid var(--white-10);
 }
 .mdx-step:last-child {
   border-left-color: transparent;
@@ -772,7 +772,7 @@
 }
 .mdx-step-title {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   margin-bottom: 0.35rem;
 }
 .mdx-step-body > :first-child {
@@ -783,7 +783,7 @@
 .mdx-filetree {
   margin: 1.5rem 0;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
   font-family: "Fira Code", "JetBrains Mono", "SF Mono", Consolas, var(--cjk-font), monospace;
@@ -795,7 +795,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   white-space: nowrap;
 }
 .mdx-filetree-row--folder {
@@ -817,9 +817,9 @@
   position: relative;
   flex: 1 1 130px;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
 }
 .mdx-stat-value {
   font-size: 1.7rem;
@@ -831,18 +831,18 @@
 .mdx-stat-unit {
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin-left: 0.2rem;
 }
 .mdx-stat-label {
   margin-top: 0.35rem;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
 }
 .mdx-stat-hint {
   margin-top: 0.15rem;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 .mdx-stat-trend {
   position: absolute;
@@ -866,7 +866,7 @@
 .mdx-stat-trend--flat {
   width: 10px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--white-40);
 }
 
 /* ── Video ── */
@@ -881,7 +881,7 @@
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   background: #000;
 }
 .mdx-youtube-frame {
@@ -935,14 +935,14 @@
   color: #fff;
   font-size: 1.3rem;
   padding-left: 0.25rem;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 24px var(--black-50);
 }
 
 /* ── Refs 參考連結區（文末，標籤 + 品牌 icon 連結，不觸發 hover 卡）── */
 .mdx-refs {
   margin: 1.75rem 0;
   padding: 1rem 1.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
 }
@@ -985,7 +985,7 @@
   align-items: center;
   gap: 0.38rem;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.82); /* 中性文字，讓彩色品牌 icon 跳出來、不打架 */
+  color: var(--white-82); /* 中性文字，讓彩色品牌 icon 跳出來、不打架 */
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition:
@@ -994,7 +994,7 @@
 }
 .mdx-refs-link:hover {
   color: #fff;
-  border-bottom-color: rgba(255, 255, 255, 0.4);
+  border-bottom-color: var(--white-40);
 }
 /* icon 顏色由元件 inline style（品牌色）決定，這裡不設 color */
 .mdx-refs-icon {
@@ -1008,14 +1008,14 @@
 .mdx-poll {
   margin: 1.75rem 0;
   padding: 1rem 1.15rem;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
 }
 .mdx-poll-q {
   font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   margin-bottom: 0.75rem;
 }
 .mdx-poll-list {
@@ -1052,16 +1052,16 @@
 }
 .mdx-poll-opt:hover:not(:disabled),
 .mdx-poll-opt:focus-visible:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   box-shadow: none;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--white-95);
   outline: none;
 }
 .mdx-poll-opt:disabled {
   cursor: default;
 }
 .mdx-poll-opt--mine {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--white-95);
 }
 /* 結果長條：低飽和、鋪在底層，不搶字 */
 .mdx-poll-bar {
@@ -1096,10 +1096,10 @@
   flex: 0 0 auto;
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 .mdx-poll-opt--mine .mdx-poll-pct {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 .mdx-poll-foot {
   display: flex;
@@ -1125,12 +1125,12 @@
 .mdx-poll-peek:focus-visible {
   background: transparent;
   box-shadow: none;
-  color: #c4b5fd;
+  color: var(--brand-light);
   outline: none;
 }
 .mdx-poll-voted {
   margin-left: auto;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 
 /* ⚠ index.css 的 @layer base 有全站 `button:hover, button:focus { background:#6a4acf;
@@ -1151,5 +1151,5 @@
   box-shadow: none;
 }
 .spoiler:focus {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
 }

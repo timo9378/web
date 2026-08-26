@@ -42,7 +42,7 @@
     border-color 0.2s ease;
 }
 .wl-back:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   border-bottom-color: rgba(216, 180, 254, 0.5);
 }
 
@@ -65,7 +65,7 @@
   display: flex;
   gap: 6px;
   margin-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--white-08);
 }
 
 .wl-tab {
@@ -93,7 +93,7 @@
 }
 
 .wl-tab.active {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-tab.active::after {
@@ -132,8 +132,8 @@
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
   border-radius: 10px;
   color: rgba(229, 229, 245, 0.5);
   transition:
@@ -171,8 +171,8 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
   border-radius: 10px;
   color: rgba(244, 244, 245, 0.88);
   font-size: 0.92rem;
@@ -190,7 +190,7 @@
 .wl-sort-trigger[aria-expanded="true"] {
   border-color: rgba(216, 180, 254, 0.4);
   background: rgba(216, 180, 254, 0.06);
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-sort-chev {
@@ -215,7 +215,7 @@
   backdrop-filter: blur(12px);
   border: 1px solid rgba(216, 180, 254, 0.18);
   border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 12px 32px var(--black-55);
   transform-origin: top right;
 }
 
@@ -241,7 +241,7 @@
 
 .wl-sort-item:hover {
   background: rgba(216, 180, 254, 0.1);
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 .wl-sort-item.active {
@@ -272,14 +272,14 @@
   aspect-ratio: 2 / 3;
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  background: var(--white-04);
+  box-shadow: 0 12px 28px var(--black-45);
   margin-bottom: 10px;
   transition: box-shadow 0.3s ease;
 }
 
 .wl-card:hover .wl-card-poster {
-  box-shadow: 0 18px 40px rgba(127, 90, 240, 0.28);
+  box-shadow: 0 18px 40px rgba(var(--brand-rgb), 0.28);
 }
 
 .wl-card-poster img {

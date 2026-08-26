@@ -15,11 +15,11 @@
   background: linear-gradient(
     to right,
     rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.9) 80%,
-    rgba(255, 255, 255, 0.95)
+    var(--white-90) 80%,
+    var(--white-95)
   ); /* 調整漸變，讓亮部更長更亮 */
   border-radius: 2px; /* 配合高度調整 */
   transform: rotate(-45deg); /* 傾斜角度 */
   transform-origin: left top; /* 旋轉基點 */
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); /* 增強發光效果 */
+  filter: drop-shadow(0 0 8px var(--white-80)); /* 增強發光效果 */
 }

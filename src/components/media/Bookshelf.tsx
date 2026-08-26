@@ -10,6 +10,7 @@ import { booksQueryOptions, bookStatsQueryOptions } from '@/data/bookshelfData';
 // 3D 圖書館用 lazy import:three.js/R3F 只在 client 切到 3D 模式時才動態載入,
 // 完全不進 server bundle / SSR render(避免每個請求白跑 three.js 的伺服器負擔)。
 const ZeroGravityLibrary = lazy(() => import('./ZeroGravityLibrary'));
+import NebulaBackground from '@/components/backdrop/NebulaBackground';
 import './Bookshelf.css';
 
 const API_URL: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
@@ -184,13 +185,7 @@ const Bookshelf = () => {
 
   return (
     <div className="bookshelf-container">
-      {/* ── Nebula Background ── */}
-      <div className="bookshelf-dim-overlay" />
-      <div className="bookshelf-nebula-bg">
-        <div className="nebula-layer bs-nebula-1" />
-        <div className="nebula-layer bs-nebula-2" />
-        <div className="nebula-layer bs-nebula-3" />
-      </div>
+      <NebulaBackground />
 
       {/* ── Content ── */}
       <div className="bookshelf-content-wrapper">

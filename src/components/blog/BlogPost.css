@@ -4,12 +4,12 @@
 
 /* ── Variables ── */
 :root {
-  --post-accent: #7f5af0;
-  --post-accent-glow: rgba(127, 90, 240, 0.35);
+  --post-accent: var(--brand);
+  --post-accent-glow: rgba(var(--brand-rgb), 0.35);
   --post-green: #2cb67d;
-  --post-muted: rgba(255, 255, 255, 0.45);
-  --post-card-bg: rgba(255, 255, 255, 0.03);
-  --post-card-border: rgba(255, 255, 255, 0.06);
+  --post-muted: var(--white-45);
+  --post-card-bg: var(--white-03);
+  --post-card-border: var(--white-06);
   --post-page-bg: rgb(6, 5, 14);
 }
 
@@ -24,12 +24,12 @@
 }
 
 .blog-post-container ::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.25);
   border-radius: 3px;
 }
 
 .blog-post-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 90, 240, 0.45);
+  background: rgba(var(--brand-rgb), 0.45);
 }
 
 .blog-post-container * {
@@ -114,7 +114,7 @@
   right: 0;
   height: 2px;
   z-index: 1100;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 
 .reading-progress-fill {
@@ -150,7 +150,7 @@
   font-size: 1.06rem;
   font-weight: 400;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   letter-spacing: 0.01em;
   text-wrap: balance;
 }
@@ -170,7 +170,7 @@
 }
 
 .meta-category {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-weight: 500;
 }
 
@@ -181,10 +181,10 @@
   position: relative;
 }
 .meta-category-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-weight: 500;
   text-decoration: none;
-  background-image: linear-gradient(90deg, rgba(127, 90, 240, 0.6), rgba(220, 50, 120, 0.6));
+  background-image: linear-gradient(90deg, rgba(var(--brand-rgb), 0.6), rgba(220, 50, 120, 0.6));
   background-size: 100% 1px;
   background-position: 0 100%;
   background-repeat: no-repeat;
@@ -216,7 +216,7 @@
   font-weight: 400;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -256,7 +256,7 @@
 .lang-trigger:hover,
 .lang-trigger[aria-expanded="true"] {
   color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
 }
 .lang-icon {
   font-size: 0.92rem;
@@ -286,13 +286,13 @@
 .lang-menu {
   min-width: 180px;
   background: rgba(20, 18, 34, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 14px;
   padding: 6px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 18px 48px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(127, 90, 240, 0.08);
+    inset 0 1px 0 var(--white-06),
+    0 18px 48px var(--black-55),
+    0 0 0 1px rgba(var(--brand-rgb), 0.08);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   z-index: 9999;
@@ -340,7 +340,7 @@
 }
 .lang-item.active {
   /* Active = very low-alpha purple wash, no multi-stop gradient */
-  background: rgba(127, 90, 240, 0.07);
+  background: rgba(var(--brand-rgb), 0.07);
   color: #fff;
 }
 /* active 左側細線提示 — 2px 單色淡紫，不再三色漸層 */
@@ -360,7 +360,7 @@
 }
 .lang-item.disabled:hover {
   background: transparent;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 .lang-badge {
   font-size: 0.66rem;
@@ -368,9 +368,9 @@
   letter-spacing: 0.04em;
   padding: 2px 7px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   color: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
 }
 
 /* toast */
@@ -383,8 +383,8 @@
   color: #fff;
   padding: 10px 18px;
   border-radius: 9999px;
-  border: 1px solid rgba(127, 90, 240, 0.3);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
+  box-shadow: 0 12px 36px var(--black-50);
   font-size: 0.85rem;
   z-index: 9999;
   backdrop-filter: blur(12px);
@@ -401,8 +401,8 @@
 .post-tags .tag {
   font-size: 0.78rem;
   color: var(--post-accent);
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   padding: 0.15rem 0.65rem;
   border-radius: 9999px;
 }
@@ -466,7 +466,7 @@
 
 .posts-nav-label {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   margin-bottom: 0.5rem;
 }
 
@@ -483,7 +483,7 @@
 .posts-nav-year {
   display: block;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   font-weight: 600;
   margin-bottom: 0.1rem;
   letter-spacing: 0.05em;
@@ -493,7 +493,7 @@
   display: block;
   padding: 0.25rem 0;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   text-decoration: none;
   transition: color 0.2s ease;
   line-height: 1.4;
@@ -542,7 +542,7 @@
   height: 70%;
   border-radius: 2px;
   background: var(--post-accent);
-  box-shadow: 0 0 8px rgba(127, 90, 240, 0.3);
+  box-shadow: 0 0 8px rgba(var(--brand-rgb), 0.3);
   animation: indicator-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
@@ -576,9 +576,9 @@
   padding: 14px 18px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   transition:
     border-color 0.3s,
     background 0.3s,
@@ -587,10 +587,10 @@
   min-height: 72px;
 }
 .prev-next-card:hover {
-  border-color: rgba(127, 90, 240, 0.35);
-  background: rgba(127, 90, 240, 0.05);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  background: rgba(var(--brand-rgb), 0.05);
   box-shadow:
-    0 0 20px rgba(127, 90, 240, 0.08),
+    0 0 20px rgba(var(--brand-rgb), 0.08),
     0 8px 24px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
@@ -600,15 +600,15 @@
 }
 .prev-next-label {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   letter-spacing: 0.04em;
 }
 .prev-next-card:hover .prev-next-label {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .prev-next-title {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   font-weight: 500;
   line-height: 1.4;
   display: -webkit-box;
@@ -642,7 +642,7 @@
   gap: 0.35rem;
   padding: 0.32rem 0.7rem;
   background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.92rem;
@@ -654,16 +654,16 @@
     color 0.18s ease;
 }
 .reaction-btn:hover {
-  background: rgba(127, 90, 240, 0.13);
-  border-color: rgba(127, 90, 240, 0.32);
+  background: rgba(var(--brand-rgb), 0.13);
+  border-color: rgba(var(--brand-rgb), 0.32);
   color: #fff;
   transform: translateY(-1px);
 }
 .reaction-btn.is-active {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.22), rgba(220, 50, 120, 0.18));
-  border-color: rgba(127, 90, 240, 0.55);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.22), rgba(220, 50, 120, 0.18));
+  border-color: rgba(var(--brand-rgb), 0.55);
   color: #fff;
-  box-shadow: 0 0 12px rgba(127, 90, 240, 0.25);
+  box-shadow: 0 0 12px rgba(var(--brand-rgb), 0.25);
 }
 .reaction-btn .reaction-emoji {
   font-size: 1.05rem;
@@ -683,8 +683,8 @@
 .series-nav {
   margin: 2.5rem 0 1.5rem;
   padding: 1.4rem 1.6rem;
-  background: rgba(127, 90, 240, 0.05);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.05);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 14px;
   backdrop-filter: blur(8px);
 }
@@ -694,18 +694,18 @@
   gap: 0.25rem;
   margin-bottom: 0.9rem;
   padding-bottom: 0.9rem;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  border-bottom: 1px dashed var(--white-08);
 }
 .series-nav-label {
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .series-nav-name {
   font-size: 1.15rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 60%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 60%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -713,7 +713,7 @@
 }
 .series-nav-progress {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
 }
 .series-nav-list {
   list-style: none;
@@ -734,7 +734,7 @@
   transition: background 0.18s ease;
 }
 .series-nav-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 .series-nav-num {
   width: 26px;
@@ -743,8 +743,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--white-06);
+  color: var(--white-55);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -756,13 +756,13 @@
   transition: color 0.18s ease;
 }
 a.series-nav-title:hover {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .series-nav-item.is-current {
-  background: rgba(127, 90, 240, 0.12);
+  background: rgba(var(--brand-rgb), 0.12);
 }
 .series-nav-item.is-current .series-nav-num {
-  background: linear-gradient(135deg, #7f5af0, #dc3278);
+  background: linear-gradient(135deg, var(--brand), #dc3278);
   color: #fff;
 }
 .series-nav-item.is-current .series-nav-title {
@@ -778,7 +778,7 @@ a.series-nav-title:hover {
 }
 .category-tooltip-short {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
   font-weight: 500;
   margin: 0 0 6px 0;
   line-height: 1.4;
@@ -794,11 +794,11 @@ a.series-nav-title:hover {
   background: rgba(18, 16, 30, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 12px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 16px rgba(127, 90, 240, 0.08);
+    0 8px 32px var(--black-50),
+    0 0 16px rgba(var(--brand-rgb), 0.08);
   z-index: 9999;
   animation: tooltip-in 0.2s ease;
   pointer-events: auto;
@@ -818,7 +818,7 @@ a.series-nav-title:hover {
 
 .category-tooltip-desc {
   font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin: 0 0 10px 0;
   line-height: 1.5;
 }
@@ -828,8 +828,8 @@ a.series-nav-title:hover {
   flex-direction: column;
   gap: 3px;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--white-35);
+  border-top: 1px solid var(--white-06);
   padding-top: 8px;
 }
 
@@ -893,13 +893,13 @@ a.series-nav-title:hover {
   justify-content: space-between;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
 }
 
 .toc-header h3 {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   margin: 0;
 }
 
@@ -956,7 +956,7 @@ a.series-nav-title:hover {
   outline: none;
   cursor: pointer;
   text-align: left;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-size: 0.78rem;
   line-height: 1.45;
   transition:
@@ -967,7 +967,7 @@ a.series-nav-title:hover {
 }
 
 .toc-item:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
   background: none;
   outline: none;
   box-shadow: none;
@@ -1036,7 +1036,7 @@ a.series-nav-title:hover {
   height: 5px;
   margin-top: 0.4rem;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--white-15);
   transition: all 0.2s ease;
 }
 
@@ -1047,7 +1047,7 @@ a.series-nav-title:hover {
 }
 
 .toc-item:hover .toc-bullet {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--white-40);
 }
 
 .toc-bottom-link {
@@ -1062,7 +1062,7 @@ a.series-nav-title:hover {
      所以那條 base 規則在 focus 態仍然蓋得過來。實測拿掉之後 focus 時
      border-top 從 1px rgba(255,255,255,0.06) 變成 0px rgba(255,255,255,0.45)。 */
   border: none !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-top: 1px solid var(--white-06) !important;
   font-size: 0.75rem;
   color: var(--post-muted);
   text-decoration: none;
@@ -1081,7 +1081,7 @@ a.series-nav-title:hover {
   outline: none;
   box-shadow: none;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
 }
 
 .toc-bottom-link:focus,
@@ -1098,7 +1098,12 @@ a.series-nav-title:hover {
   position: relative;
   margin: -2.5rem -2.5rem 2rem -2.5rem;
   padding: 2rem 2.5rem 2.5rem;
-  background: linear-gradient(180deg, rgba(127, 90, 240, 0.08) 0%, rgba(127, 90, 240, 0.03) 60%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--brand-rgb), 0.08) 0%,
+    rgba(var(--brand-rgb), 0.03) 60%,
+    transparent 100%
+  );
   border-radius: 16px 16px 0 0;
   border-bottom: none;
   overflow: hidden;
@@ -1114,7 +1119,7 @@ a.series-nav-title:hover {
 .ai-summary-top-row h2 {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   font-weight: 600;
 }
 
@@ -1122,7 +1127,7 @@ a.series-nav-title:hover {
   font-size: 0.65rem;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  background: rgba(127, 90, 240, 0.15);
+  background: rgba(var(--brand-rgb), 0.15);
   color: var(--post-accent);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -1131,7 +1136,7 @@ a.series-nav-title:hover {
 .post-ai-summary-inline p {
   margin: 0;
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   line-height: 1.7;
 }
 
@@ -1165,7 +1170,7 @@ a.series-nav-title:hover {
    ═══════════════════════ */
 /* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .post-content` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
 .post-content {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   font-size: 1.05rem;
   line-height: 1.85;
   letter-spacing: 0.01em;
@@ -1200,7 +1205,7 @@ a.series-nav-title:hover {
 .post-content .footnotes {
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  border-top: 1px dashed var(--white-15);
   font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.65);
 }
@@ -1208,7 +1213,7 @@ a.series-nav-title:hover {
   font-size: 1rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin-bottom: 0.75rem;
 }
 .post-content sup a[data-footnote-ref],
@@ -1219,8 +1224,8 @@ a.series-nav-title:hover {
   padding: 0 4px;
   margin: 0 1px;
   border-radius: 4px;
-  background: rgba(127, 90, 240, 0.12);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.12);
+  color: var(--brand-light);
   text-decoration: none;
   font-size: 0.78em;
   font-weight: 600;
@@ -1228,7 +1233,7 @@ a.series-nav-title:hover {
 }
 .post-content sup a[data-footnote-ref]:hover,
 .post-content a.footnote-ref:hover {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   color: #fff;
 }
 /* hover 浮窗 — 透過 [data-fn-content] 由 JS 注入文字 */
@@ -1242,9 +1247,9 @@ a.series-nav-title:hover {
   max-width: min(420px, 80vw);
   padding: 10px 14px;
   background: rgba(15, 14, 26, 0.96);
-  border: 1px solid rgba(127, 90, 240, 0.35);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-size: 0.9rem;
   font-weight: 400;
   line-height: 1.55;
@@ -1259,8 +1264,8 @@ a.series-nav-title:hover {
     transform 0.2s ease,
     visibility 0.2s;
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.5),
-    0 0 24px rgba(127, 90, 240, 0.18);
+    0 16px 40px var(--black-50),
+    0 0 24px rgba(var(--brand-rgb), 0.18);
   z-index: 30;
 }
 .post-content sup a[data-fn-content]:hover::after,
@@ -1310,10 +1315,10 @@ a.series-nav-title:hover {
 .post-content .markdown-alert {
   padding: 12px 16px;
   margin: 1.5rem 0;
-  border-left: 3px solid var(--alert-accent, rgba(127, 90, 240, 0.6));
+  border-left: 3px solid var(--alert-accent, rgba(var(--brand-rgb), 0.6));
   border-radius: 0 10px 10px 0;
-  background: var(--alert-bg, rgba(127, 90, 240, 0.06));
-  color: rgba(255, 255, 255, 0.82);
+  background: var(--alert-bg, rgba(var(--brand-rgb), 0.06));
+  color: var(--white-82);
 }
 .post-content .markdown-alert-title {
   display: flex;
@@ -1322,14 +1327,14 @@ a.series-nav-title:hover {
   font-weight: 600;
   font-size: 0.92rem;
   margin-bottom: 4px;
-  color: var(--alert-accent, #c4b5fd);
+  color: var(--alert-accent, var(--brand-light));
   letter-spacing: 0.02em;
 }
 .post-content .markdown-alert-title svg,
 .post-content .markdown-alert-title svg path {
   flex-shrink: 0;
   /* icon 之前沒設 fill → 用預設黑色；強制跟著該類型的 accent 色（藍/綠/紫/琥珀/紅） */
-  fill: var(--alert-accent, #c4b5fd);
+  fill: var(--alert-accent, var(--brand-light));
 }
 .post-content .markdown-alert p {
   margin: 4px 0;
@@ -1349,7 +1354,7 @@ a.series-nav-title:hover {
   --alert-bg: rgba(134, 239, 172, 0.06);
 }
 .post-content .markdown-alert-important {
-  --alert-accent: #c4b5fd;
+  --alert-accent: var(--brand-light);
   --alert-bg: rgba(196, 181, 253, 0.08);
 }
 .post-content .markdown-alert-warning {
@@ -1367,20 +1372,20 @@ a.series-nav-title:hover {
   color: #fff;
   font-weight: 700;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
 }
 
 .post-content h3 {
   font-size: 1.25rem;
   margin: 2rem 0 0.8rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--white-95);
   font-weight: 600;
 }
 
 .post-content h4 {
   font-size: 1.1rem;
   margin: 1.5rem 0 0.6rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
 }
 
 /* 標題 hover 錨點：字後面浮出 #，點了跳到/複製該段連結。 */
@@ -1419,7 +1424,7 @@ a.series-nav-title:hover {
 .post-content a {
   color: var(--post-accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(127, 90, 240, 0.3);
+  border-bottom: 1px solid rgba(var(--brand-rgb), 0.3);
   transition: border-color 0.2s;
 }
 
@@ -1431,9 +1436,9 @@ a.series-nav-title:hover {
   margin: 1.5rem 0;
   padding: 1rem 1.5rem;
   border-left: 3px solid var(--post-accent);
-  background: rgba(127, 90, 240, 0.05);
+  background: rgba(var(--brand-rgb), 0.05);
   border-radius: 0 8px 8px 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 
 .post-content ul,
@@ -1447,7 +1452,7 @@ a.series-nav-title:hover {
 }
 
 .post-content code {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   color: #e8e6ef;
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
@@ -1483,7 +1488,7 @@ a.series-nav-title:hover {
 
 .blog-image-clickable:hover {
   transform: scale(1.005);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 30px var(--black-30);
 }
 
 /* EXIF info overlay — 從下往上滑入 */
@@ -1500,7 +1505,7 @@ a.series-nav-title:hover {
   backdrop-filter: blur(16px);
   border-radius: 10px;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   white-space: nowrap;
   pointer-events: none;
   z-index: 5;
@@ -1554,9 +1559,9 @@ a.series-nav-title:hover {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.8);
+  background: var(--white-10);
+  border: 1px solid var(--white-15);
+  color: var(--white-80);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1566,13 +1571,13 @@ a.series-nav-title:hover {
 }
 
 .image-lightbox-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--white-20);
   color: #fff;
 }
 
 .post-content hr {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
   margin: 2rem 0;
 }
 
@@ -1585,14 +1590,14 @@ a.series-nav-title:hover {
 .post-content th,
 .post-content td {
   padding: 0.6rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   text-align: left;
   font-size: 0.92rem;
 }
 
 .post-content th {
-  background: rgba(127, 90, 240, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(var(--brand-rgb), 0.08);
+  color: var(--white-80);
   font-weight: 600;
 }
 
@@ -1603,7 +1608,7 @@ a.series-nav-title:hover {
 .code-block-wrapper {
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--black-40);
   margin: 1.5rem 0;
 }
 
@@ -1614,7 +1619,7 @@ a.series-nav-title:hover {
 }
 
 .code-block-wrapper ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
   border-radius: 3px;
 }
 
@@ -1625,7 +1630,7 @@ a.series-nav-title:hover {
 }
 
 .code-block-wrapper ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--white-22);
 }
 
 .code-block-wrapper * {
@@ -1649,9 +1654,9 @@ a.series-nav-title:hover {
 }
 
 .copy-button {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--white-05);
+  border: 1px solid var(--white-10);
+  color: var(--white-60);
   padding: 0.2rem 0.6rem;
   border-radius: 6px;
   font-size: 0.72rem;
@@ -1666,7 +1671,7 @@ a.series-nav-title:hover {
 .copy-button:hover,
 .copy-button:focus,
 .copy-button:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
   border-color: rgba(255, 255, 255, 0.18);
   color: #fff;
   box-shadow: none;
@@ -1680,7 +1685,7 @@ a.series-nav-title:hover {
   border-radius: 12px;
   overflow: hidden;
   background: #0b0c11;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
 }
 .terminal-bar {
   display: flex;
@@ -1688,7 +1693,7 @@ a.series-nav-title:hover {
   gap: 0.55rem;
   padding: 0.5rem 0.85rem;
   background: rgba(255, 255, 255, 0.035);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--white-05);
 }
 /* 左側提示符（取代紅黃綠燈）：綠色 ❯_ ，乾淨的終端機味 */
 .terminal-glyph {
@@ -1827,12 +1832,12 @@ a.series-nav-title:hover {
   width: 1.6rem;
   margin-right: 1.3rem;
   text-align: right;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--white-22);
   user-select: none;
   -webkit-user-select: none;
 }
 .code-surface-body .shiki-fallback {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   white-space: pre;
   font-size: 0.9rem;
   line-height: 1.7;
@@ -1881,10 +1886,10 @@ a.series-nav-title:hover {
   padding: 0.5rem;
   border: none;
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-size: 0.76rem;
   font-family: inherit;
   cursor: pointer;
@@ -1896,7 +1901,7 @@ a.series-nav-title:hover {
 .code-surface-toggle:hover,
 .code-surface-toggle:focus,
 .code-surface-toggle:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   color: #fff;
   box-shadow: none;
   border-color: transparent;
@@ -1913,7 +1918,7 @@ a.series-nav-title:hover {
   right: 0;
   bottom: 100%;
   height: 3.5rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+  background: linear-gradient(to top, var(--black-50), transparent);
   pointer-events: none;
 }
 /* emoji 語言標頭（小寫，跟參考一致；覆蓋原本的 uppercase） */
@@ -1946,26 +1951,26 @@ a.series-nav-title:hover {
 .link-card {
   display: flex;
   align-items: stretch;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 12px;
   overflow: hidden;
   text-decoration: none;
   margin: 1.2rem 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--white-03);
   transition: all 0.25s ease;
   max-width: 100%;
 }
 
 .link-card:hover {
-  border-color: rgba(127, 90, 240, 0.3);
-  background: rgba(127, 90, 240, 0.05);
+  border-color: rgba(var(--brand-rgb), 0.3);
+  background: rgba(var(--brand-rgb), 0.05);
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px var(--black-30);
 }
 
 .link-card-thumb {
   flex: 0 0 160px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--black-30);
   overflow: hidden;
 }
 
@@ -1993,7 +1998,7 @@ a.series-nav-title:hover {
   gap: 0.5rem;
   font-size: 0.82rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 
 .link-card-url {
@@ -2016,11 +2021,11 @@ a.series-nav-title:hover {
 
 /* GitHub card styling */
 .link-card-github {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--white-10);
 }
 
 .link-card-github:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--white-20);
 }
 
 /* Instagram card styling */
@@ -2084,14 +2089,14 @@ a.series-nav-title:hover {
   gap: 0.4rem;
   padding: 0.6rem 1rem;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   text-decoration: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
   transition: color 0.2s;
 }
 
 .link-card-embed-link:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white-90);
 }
 
 /* ═══════════════════════
@@ -2122,12 +2127,12 @@ a.series-nav-title:hover {
   cursor: pointer;
   text-decoration: none;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   background:
-    linear-gradient(135deg, rgba(127, 90, 240, 0.12) 0%, rgba(220, 50, 120, 0.08) 100%), rgba(20, 18, 38, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.12) 0%, rgba(220, 50, 120, 0.08) 100%), rgba(20, 18, 38, 0.55);
+  border: 1px solid var(--white-07);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 var(--white-07),
     0 4px 14px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -2148,7 +2153,7 @@ a.series-nav-title:hover {
   background: linear-gradient(
     135deg,
     rgba(224, 195, 252, 0.55),
-    rgba(127, 90, 240, 0.45) 45%,
+    rgba(var(--brand-rgb), 0.45) 45%,
     rgba(220, 50, 120, 0.35)
   );
   -webkit-mask:
@@ -2164,7 +2169,7 @@ a.series-nav-title:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 120%, rgba(127, 90, 240, 0.35), transparent 60%);
+  background: radial-gradient(120% 90% at 50% 120%, rgba(var(--brand-rgb), 0.35), transparent 60%);
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
@@ -2183,8 +2188,8 @@ a.series-nav-title:hover {
   border-color: transparent;
   transform: translateX(-2px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 6px 20px rgba(127, 90, 240, 0.3),
+    inset 0 1px 0 var(--white-15),
+    0 6px 20px rgba(var(--brand-rgb), 0.3),
     0 0 28px rgba(220, 50, 120, 0.12);
 }
 .float-btn:hover::before {
@@ -2231,7 +2236,7 @@ a.series-nav-title:hover {
   top: 50%;
   transform: translateY(-50%);
   background: rgba(20, 18, 34, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 12px;
   padding: 0.35rem;
   display: flex;
@@ -2241,8 +2246,8 @@ a.series-nav-title:hover {
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 14px 40px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 var(--white-06),
+    0 14px 40px var(--black-50);
   z-index: 110;
 }
 
@@ -2263,11 +2268,11 @@ a.series-nav-title:hover {
   white-space: nowrap;
 }
 .share-menu button:hover {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.18), rgba(220, 50, 120, 0.1));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.18), rgba(220, 50, 120, 0.1));
   color: #fff;
 }
 .share-menu button svg {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 /* ═══════════════════════
@@ -2290,7 +2295,7 @@ a.series-nav-title:hover {
   width: 90%;
   max-width: 400px;
   background: rgba(20, 18, 34, 0.95);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 16px;
   padding: 2rem;
   text-align: center;
@@ -2344,8 +2349,8 @@ a.series-nav-title:hover {
 .subscribe-form input {
   padding: 0.7rem 1rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--white-10);
+  background: var(--white-04);
   color: #fff;
   font-size: 0.9rem;
   outline: none;
@@ -2380,8 +2385,8 @@ a.series-nav-title:hover {
 /* Secondary ghost button used for the "已訂閱" → 退訂 action */
 .subscribe-form button.subscribe-secondary {
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--white-55);
+  border: 1px solid var(--white-12);
 }
 .subscribe-form button.subscribe-secondary:hover {
   background: rgba(220, 50, 80, 0.1);
@@ -2394,8 +2399,8 @@ a.series-nav-title:hover {
 .subscribe-email-chip {
   display: inline-block;
   padding: 1px 8px;
-  background: rgba(127, 90, 240, 0.12);
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.12);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   border-radius: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
@@ -2419,7 +2424,7 @@ a.series-nav-title:hover {
 .subscribe-privacy {
   margin-top: 0.75rem;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
 }
 
 /* ═══════════════════════
@@ -2436,9 +2441,9 @@ a.series-nav-title:hover {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--white-06);
+  border: 1px solid var(--white-10);
+  color: var(--white-60);
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -2451,8 +2456,8 @@ a.series-nav-title:hover {
 }
 
 .font-switcher-btn:hover {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.3);
   color: var(--post-accent);
 }
 
@@ -2461,7 +2466,7 @@ a.series-nav-title:hover {
   bottom: 48px;
   right: 0;
   background: rgba(20, 18, 34, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   border-radius: 12px;
   padding: 0.5rem;
   display: flex;
@@ -2476,7 +2481,7 @@ a.series-nav-title:hover {
   padding: 0.5rem 0.8rem;
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.85rem;
   cursor: pointer;
   border-radius: 8px;
@@ -2485,13 +2490,13 @@ a.series-nav-title:hover {
 }
 
 .font-option:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
   color: #fff;
 }
 
 .font-option.active {
   color: var(--post-accent);
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
 }
 
 /* ═══════════════════════
@@ -2500,7 +2505,7 @@ a.series-nav-title:hover {
 .post-extras {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
 }
 
 /* Back to blog link (error page) */
@@ -2511,8 +2516,8 @@ a.series-nav-title:hover {
   margin-top: 1.5rem;
   padding: 0.6rem 1.5rem;
   border-radius: 8px;
-  background: rgba(127, 90, 240, 0.15);
-  border: 1px solid rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.15);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
   color: var(--post-accent);
   text-decoration: none;
   font-size: 0.9rem;
@@ -2520,7 +2525,7 @@ a.series-nav-title:hover {
 }
 
 .back-to-blog-link:hover {
-  background: rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.25);
 }
 
 /* ═══════════════════════
@@ -2554,7 +2559,7 @@ a.series-nav-title:hover {
 .cosmic-loader .orbit {
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(127, 90, 240, 0.2);
+  border: 2px solid rgba(var(--brand-rgb), 0.2);
   border-top-color: var(--post-accent);
   border-radius: 50%;
   animation: orbit-spin 1.2s linear infinite;
@@ -2647,8 +2652,8 @@ a.series-nav-title:hover {
 
 /* Internal Link Card */
 .link-card-internal {
-  border-color: rgba(127, 90, 240, 0.22);
-  background: rgba(127, 90, 240, 0.04);
+  border-color: rgba(var(--brand-rgb), 0.22);
+  background: rgba(var(--brand-rgb), 0.04);
 }
 
 .link-card-internal .link-card-title {

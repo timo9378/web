@@ -23,7 +23,7 @@
 .portfolio-page-sub {
   margin: 0 0 2.4rem;
   font-size: 0.92rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
 }
 
 /* 卡片 hover：浮起 + 邊框亮（跟全站卡片語言一致） */
@@ -140,8 +140,8 @@
   justify-content: center;
   background:
     radial-gradient(rgba(216, 180, 254, 0.07) 1px, transparent 1.5px) 0 0 / 22px 22px,
-    linear-gradient(135deg, rgba(127, 90, 240, 0.07), rgba(127, 90, 240, 0.015));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.07), rgba(var(--brand-rgb), 0.015));
+  border-bottom: 1px solid var(--white-04);
   overflow: hidden;
 }
 
@@ -149,7 +149,7 @@
   content: "";
   position: absolute;
   inset: -30%;
-  background: radial-gradient(ellipse at center, rgba(127, 90, 240, 0.14) 0%, transparent 60%);
+  background: radial-gradient(ellipse at center, rgba(var(--brand-rgb), 0.14) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -164,11 +164,11 @@
   font-weight: 300;
   line-height: 1;
   color: rgba(216, 180, 254, 0.95);
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 12px 32px -12px rgba(127, 90, 240, 0.4);
+    inset 0 1px 0 var(--white-08),
+    0 12px 32px -12px rgba(var(--brand-rgb), 0.4);
   transition:
     transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
     box-shadow 260ms ease;
@@ -177,8 +177,8 @@
 .portfolio-secondary:hover .portfolio-glyph-tile {
   transform: scale(1.08) rotate(-3deg);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 16px 40px -12px rgba(127, 90, 240, 0.6);
+    inset 0 1px 0 var(--white-08),
+    0 16px 40px -12px rgba(var(--brand-rgb), 0.6);
 }
 
 .portfolio-glyph-cat {
@@ -188,7 +188,7 @@
   font-size: 0.66rem;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--white-22);
   user-select: none;
 }
 
@@ -253,9 +253,9 @@
   font-size: 0.7rem;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
+  color: var(--white-70);
   letter-spacing: 0.02em;
 }
 
@@ -268,9 +268,9 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px 9px 20px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--white-04);
+  border: 1px solid var(--white-12);
+  color: var(--white-90);
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -295,7 +295,7 @@
   background: rgba(199, 184, 255, 0.08);
   border-color: rgba(199, 184, 255, 0.35);
   color: #fff;
-  box-shadow: 0 0 0 4px rgba(127, 90, 240, 0.08);
+  box-shadow: 0 0 0 4px rgba(var(--brand-rgb), 0.08);
 }
 
 .portfolio-link:hover::after {

@@ -17,9 +17,9 @@
   width: 1px;
   background: linear-gradient(
     180deg,
-    rgba(127, 90, 240, 0.5) 0%,
-    rgba(127, 90, 240, 0.2) 50%,
-    rgba(127, 90, 240, 0.05) 100%
+    rgba(var(--brand-rgb), 0.5) 0%,
+    rgba(var(--brand-rgb), 0.2) 50%,
+    rgba(var(--brand-rgb), 0.05) 100%
   );
 }
 
@@ -48,17 +48,17 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: #7f5af0;
+  background: var(--brand);
   box-shadow:
-    0 0 0 4px rgba(127, 90, 240, 0.15),
-    0 0 16px rgba(127, 90, 240, 0.6);
+    0 0 0 4px rgba(var(--brand-rgb), 0.15),
+    0 0 16px rgba(var(--brand-rgb), 0.6);
 }
 
 .work-period {
   font-size: 0.78rem;
   letter-spacing: 1.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-variant-numeric: tabular-nums;
 }
 
@@ -77,7 +77,7 @@
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--white-95);
   letter-spacing: 0.01em;
 }
 
@@ -97,8 +97,8 @@
 .work-tag {
   font-size: 0.72rem;
   padding: 3px 9px;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.22);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.22);
   color: rgba(199, 184, 255, 0.85);
   border-radius: 999px;
   font-weight: 500;
@@ -144,7 +144,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(127, 90, 240, 0.65);
+  background: rgba(var(--brand-rgb), 0.65);
 }
 
 .work-bullets-flat li {

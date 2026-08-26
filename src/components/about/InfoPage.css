@@ -86,17 +86,17 @@
     color 0.18s ease;
 }
 .info-page-content a:hover {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   border-bottom-color: rgba(244, 244, 245, 0.7);
 }
 
 .info-page-content code {
   padding: 2px 6px;
-  background: rgba(127, 90, 240, 0.16);
+  background: rgba(var(--brand-rgb), 0.16);
   border-radius: 4px;
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 
 /* timeline list (歷史用) */
@@ -126,7 +126,7 @@
   color: rgba(229, 229, 245, 0.86);
 }
 .info-page-timeline-text strong {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   font-weight: 600;
 }
 .info-page-timeline-item--big {
@@ -134,7 +134,7 @@
 }
 .info-page-timeline-item--big .info-page-timeline-text {
   font-weight: 600;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 /* signature — 跟 BlogPost 的 .blog-signature 一樣靠右浮、30% 寬度 */
@@ -161,7 +161,7 @@
   gap: 1.5rem;
   margin: 3rem 0;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--white-06);
 }
 .info-page-pager-side {
   min-width: 0;
@@ -198,7 +198,7 @@
   color: rgba(229, 229, 245, 0.92);
 }
 .info-page-pager-link:hover .info-page-pager-title {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 
 /* ── comments 區與 BlogPost 一致 ──────────── */
@@ -218,8 +218,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--white-03);
+  border: 1px solid var(--white-06);
   border-radius: 12px;
   text-decoration: none;
   border-bottom: none;
@@ -229,8 +229,8 @@
     transform 0.2s ease;
 }
 .friend-card:hover {
-  background: rgba(127, 90, 240, 0.08);
-  border-color: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.08);
+  border-color: rgba(var(--brand-rgb), 0.3);
   transform: translateY(-1px);
 }
 .friend-card-avatar {
@@ -262,9 +262,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 10px 22px;
-  background: rgba(127, 90, 240, 0.14);
+  background: rgba(var(--brand-rgb), 0.14);
   color: rgba(244, 244, 245, 0.95);
-  border: 1px solid rgba(127, 90, 240, 0.45);
+  border: 1px solid rgba(var(--brand-rgb), 0.45);
   border-radius: 9999px;
   font-size: 0.92rem;
   font-weight: 500;
@@ -276,9 +276,9 @@
     transform 0.2s ease;
 }
 .friends-apply-btn:hover {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   border-color: rgba(216, 180, 254, 0.7);
-  box-shadow: 0 0 0 4px rgba(127, 90, 240, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--brand-rgb), 0.12);
   transform: translateY(-1px);
 }
 
@@ -299,11 +299,11 @@
   width: 100%;
   max-width: 540px;
   background: rgba(18, 18, 24, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 18px;
   box-shadow:
     0 24px 64px -16px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 0 var(--white-05);
   overflow: hidden;
   color: rgba(228, 228, 231, 0.95);
 }
@@ -312,7 +312,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--white-06);
 }
 .friends-modal-header h3 {
   margin: 0;
@@ -323,7 +323,7 @@
 .friends-modal-close {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   cursor: pointer;
   font-size: 1rem;
   width: 28px;
@@ -337,8 +337,8 @@
     color 0.2s ease;
 }
 .friends-modal-close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.95);
+  background: var(--white-08);
+  color: var(--white-95);
 }
 
 .friends-modal-form {
@@ -369,8 +369,8 @@
 }
 .friends-modal-field input {
   padding: 9px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--white-04);
+  border: 1px solid var(--white-08);
   border-radius: 8px;
   color: rgba(244, 244, 245, 0.95);
   font-size: 0.88rem;
@@ -382,7 +382,7 @@
 .friends-modal-field input:focus {
   outline: none;
   border-color: rgba(216, 180, 254, 0.55);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
 }
 .friends-modal-field input::placeholder {
   color: rgba(229, 229, 245, 0.3);
@@ -395,9 +395,9 @@
 }
 .friends-modal-submit {
   padding: 9px 22px;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.85), rgba(127, 90, 240, 0.6));
-  color: #ffffff;
-  border: 1px solid rgba(127, 90, 240, 0.5);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.85), rgba(var(--brand-rgb), 0.6));
+  color: #fff;
+  border: 1px solid rgba(var(--brand-rgb), 0.5);
   border-radius: 9999px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -408,8 +408,8 @@
     transform 0.2s ease;
 }
 .friends-modal-submit:hover {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.95), rgba(127, 90, 240, 0.7));
-  box-shadow: 0 6px 18px rgba(127, 90, 240, 0.25);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.95), rgba(var(--brand-rgb), 0.7));
+  box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.25);
   transform: translateY(-1px);
 }
 
@@ -423,10 +423,10 @@
 }
 .friends-modal-success code {
   font-size: 0.85rem;
-  background: rgba(127, 90, 240, 0.16);
+  background: rgba(var(--brand-rgb), 0.16);
   padding: 2px 6px;
   border-radius: 4px;
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
 }
 
 @media (max-width: 600px) {

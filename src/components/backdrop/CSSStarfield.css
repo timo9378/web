@@ -19,10 +19,10 @@
 /* 遠景：細密小星，慢漂 */
 .css-stars--far {
   background-image:
-    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 20px 30px, var(--white-70), transparent),
     radial-gradient(1px 1px at 80px 120px, rgba(199, 184, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 160px 60px, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 230px 180px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 160px 60px, var(--white-50), transparent),
+    radial-gradient(1px 1px at 230px 180px, var(--white-60), transparent),
     radial-gradient(1px 1px at 300px 90px, rgba(216, 180, 254, 0.5), transparent);
   background-size: 340px 240px;
   animation: starfield-drift 140s linear infinite;
@@ -32,9 +32,9 @@
 /* 近景：稀疏亮星，稍快、帶呼吸 */
 .css-stars--near {
   background-image:
-    radial-gradient(1.6px 1.6px at 50px 80px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(1.6px 1.6px at 50px 80px, var(--white-95), transparent),
     radial-gradient(1.6px 1.6px at 200px 150px, rgba(216, 180, 254, 0.85), transparent),
-    radial-gradient(2px 2px at 320px 40px, rgba(255, 255, 255, 0.9), transparent);
+    radial-gradient(2px 2px at 320px 40px, var(--white-90), transparent);
   background-size: 420px 320px;
   animation:
     starfield-drift 90s linear infinite,

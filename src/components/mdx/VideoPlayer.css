@@ -65,7 +65,7 @@
   width: 3.4rem;
   height: 3.4rem;
   padding: 0 0 0 0.18rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--white-25);
   border-radius: 50%;
   background: rgba(18, 14, 30, 0.7);
   backdrop-filter: blur(6px);
@@ -73,7 +73,7 @@
   color: #fff;
   font-size: 1.05rem;
   cursor: pointer;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 22px var(--black-45);
   transition:
     background 0.16s ease,
     transform 0.16s ease;
@@ -82,9 +82,9 @@
 .vp-bigplay:focus,
 .vp-bigplay:focus-visible {
   background: rgba(139, 124, 246, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: var(--white-25);
   transform: translate(-50%, -50%) scale(1.08);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 22px var(--black-45);
   outline: none;
 }
 .vp-bigplay:focus:not(:focus-visible) {
@@ -107,7 +107,7 @@
   background: rgba(14, 12, 22, 0.72);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   line-height: 1;
   opacity: 0;
   transform: translateY(4px);
@@ -135,7 +135,7 @@
   background: transparent;
   box-shadow: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   font-size: 0.8rem;
   cursor: pointer;
   text-decoration: none;
@@ -158,7 +158,7 @@
 .vp-btn:focus,
 .vp-btn:active,
 .vp-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
   border-color: transparent;
   color: #fff;
   box-shadow: none;
@@ -166,10 +166,10 @@
 }
 .vp-btn:focus:not(:focus-visible) {
   background: transparent;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
 }
 .vp-btn:focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline: 1px solid var(--white-50);
   outline-offset: -1px;
 }
 /* 下載鍵是 <a>：全站 `a { color: var(--clr-button) }` 跟 `a:hover,a:focus { text-shadow: … }`
@@ -178,7 +178,7 @@ a.vp-btn,
 a.vp-btn:hover,
 a.vp-btn:focus,
 a.vp-btn:active {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--white-82);
   text-shadow: none;
   text-decoration: none;
 }
@@ -207,10 +207,10 @@ a.vp-btn:focus-visible {
 }
 .vp-progress-track {
   right: 0;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--white-22);
 }
 .vp-progress-fill {
-  background: #c4b5fd;
+  background: var(--brand-light);
 }
 .vp-progress-knob {
   position: absolute;
@@ -219,7 +219,7 @@ a.vp-btn:focus-visible {
   border-radius: 50%;
   background: #fff;
   transform: translateX(-50%);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 4px var(--black-50);
   opacity: 0;
   transition: opacity 0.14s ease;
 }
@@ -235,7 +235,7 @@ a.vp-btn:focus-visible {
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   white-space: nowrap;
 }
 @media (max-width: 480px) {
@@ -252,8 +252,8 @@ a.vp-btn:focus-visible {
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.55);
-  color: rgba(255, 255, 255, 0.8);
+  background: var(--black-55);
+  color: var(--white-80);
   font-size: 0.68rem;
   line-height: 1.5;
   white-space: pre-wrap;

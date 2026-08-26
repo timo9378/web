@@ -7,7 +7,7 @@
   border-radius: 0.75rem;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 var(--white-04);
   overflow: hidden;
 }
 
@@ -65,7 +65,7 @@
 /* 行號 —— ⚠ !important 不能拿掉：monaco 自己會注入行號顏色，
    實測拿掉之後 rgba(255,255,255,0.3) 變成 rgba(133,133,133,0.4)。 */
 .monaco-editor-glass .line-numbers {
-  color: rgba(255, 255, 255, 0.3) !important;
+  color: var(--white-30) !important;
 }
 
 /* 滾動條 */
@@ -77,12 +77,12 @@
    實測拿掉之後 rgba(255,255,255,0.15) 變成 rgba(121,121,121,0.4)——捲軸會變成 monaco
    預設的灰，跟玻璃質感的編輯器外框對不上。 */
 .monaco-editor-glass .monaco-scrollable-element .slider {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: var(--white-15) !important;
   border-radius: 8px;
 }
 
 .monaco-editor-glass .monaco-scrollable-element .slider:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
+  background: var(--white-25) !important;
 }
 
 /* 懸停提示 */
@@ -91,7 +91,7 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px var(--black-50);
 }
 
 /* 建議框 */
@@ -100,7 +100,7 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(39, 39, 42, 0.6);
   border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px var(--black-50);
 }
 
 /* 響應式調整 */
@@ -112,9 +112,9 @@
 
 /* 拖放圖片時的視覺提示（domNode 是 monaco 內部容器，加 class 切換） */
 .monaco-drop-active {
-  outline: 2px dashed rgba(127, 90, 240, 0.6);
+  outline: 2px dashed rgba(var(--brand-rgb), 0.6);
   outline-offset: -4px;
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   transition: background 0.15s ease;
 }
 

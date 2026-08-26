@@ -8,7 +8,7 @@
   width: 400px;
   background: rgba(10, 10, 10, 0.98);
   backdrop-filter: blur(30px);
-  border-left: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-left: 1.5px solid var(--white-10);
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 30;
@@ -21,16 +21,16 @@
 }
 
 .exif-panel::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
 }
 
 .exif-panel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--white-20);
   border-radius: 3px;
 }
 
 .exif-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--white-30);
 }
 
 .exif-panel-content {
@@ -41,7 +41,7 @@
 .exif-section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--white-10);
 }
 
 .exif-section:last-child {
@@ -67,7 +67,7 @@
 }
 
 .exif-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.875rem;
   font-weight: 500;
   flex-shrink: 0;
@@ -111,16 +111,16 @@
 }
 
 .exif-panel::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--white-05);
 }
 
 .exif-panel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--white-20);
   border-radius: 3px;
 }
 
 .exif-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--white-30);
 }
 
 /* 響應式設計 */

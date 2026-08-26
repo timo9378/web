@@ -47,8 +47,8 @@
   height: 90%;
   background: radial-gradient(
     ellipse at top,
-    rgba(127, 90, 240, 0.08) 0%,
-    rgba(127, 90, 240, 0.025) 35%,
+    rgba(var(--brand-rgb), 0.08) 0%,
+    rgba(var(--brand-rgb), 0.025) 35%,
     transparent 70%
   );
   filter: blur(50px);
@@ -83,7 +83,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(216, 180, 254, 0.95) 100%);
+  background: linear-gradient(135deg, #fff 0%, rgba(216, 180, 254, 0.95) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -92,13 +92,13 @@
   margin: 0;
   font-style: italic;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   letter-spacing: 0.02em;
 }
 .app-footer-copy {
   margin: 0.5rem 0 0;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   line-height: 1.6;
 }
 .app-footer-copy a {
@@ -107,12 +107,12 @@
   transition: color 0.18s ease;
 }
 .app-footer-copy a:hover {
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
 }
 .app-footer-meta {
   margin-top: 0.75rem;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 .app-footer-viewers {
   display: inline-flex;
@@ -157,7 +157,7 @@
   display: inline-flex;
   align-items: center;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   text-decoration: none;
   transition:
     color 0.18s ease,
@@ -165,20 +165,14 @@
   width: fit-content;
 }
 .app-footer-link:hover {
-  color: rgba(216, 180, 254, 1);
+  color: #d8b4fe;
   transform: translateX(2px);
 }
 
 /* ── 分隔線 ── */
 .app-footer-divider {
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 20%,
-    rgba(255, 255, 255, 0.08) 80%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, var(--white-08) 20%, var(--white-08) 80%, transparent 100%);
   margin-bottom: 1.25rem;
 }
 
@@ -190,7 +184,7 @@
   gap: 1rem;
   flex-wrap: wrap;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 .app-footer-bottom-left,
 .app-footer-bottom-right {
@@ -200,7 +194,7 @@
   flex-wrap: wrap;
 }
 .app-footer-bottom-link {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   text-decoration: none;
   transition: color 0.18s ease;
 }
@@ -211,7 +205,7 @@
   opacity: 0.4;
 }
 .app-footer-bottom-meta {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 
 /* ── Responsive ── */

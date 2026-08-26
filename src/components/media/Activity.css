@@ -43,7 +43,7 @@
   height: 660px;
   top: -8%;
   left: -12%;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
   animation: a-neb1 30s ease-in-out infinite;
 }
 .activity-nebula-2 {
@@ -66,11 +66,11 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 65%, rgba(255, 255, 255, 0.06) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.08) 0%, transparent 100%),
-    radial-gradient(1px 1px at 75% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 18% 85%, rgba(127, 90, 240, 0.1) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 20%, var(--white-10) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 65%, var(--white-06) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, var(--white-08) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 50%, var(--white-05) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 18% 85%, rgba(var(--brand-rgb), 0.1) 0%, transparent 100%),
     radial-gradient(1.2px 1.2px at 90% 12%, rgba(200, 50, 140, 0.07) 0%, transparent 100%);
 }
 
@@ -130,11 +130,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   border-radius: 40px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--white-02);
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -169,17 +169,17 @@
 
 .status-bar-text {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   letter-spacing: 0.3px;
 }
 
 .status-bar-meta {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 
 .status-bar-time {
   font-family: "Courier New", monospace;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-weight: 500;
 }
 
@@ -206,7 +206,7 @@
 .hero-num {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 800;
-  background: linear-gradient(135deg, #fffffe 20%, #c4b5fd 80%);
+  background: linear-gradient(135deg, #fffffe 20%, var(--brand-light) 80%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -216,7 +216,7 @@
 
 .hero-label {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   font-weight: 500;
@@ -225,7 +225,7 @@
 .hero-divider {
   width: 1px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-08);
   flex-shrink: 0;
 }
 
@@ -240,7 +240,7 @@
   text-decoration: none;
   isolation: isolate;
   min-height: 140px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   background: rgba(20, 18, 38, 0.55);
   transition:
     transform 0.25s ease,
@@ -249,10 +249,10 @@
 }
 .steam-profile-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127, 90, 240, 0.5);
+  border-color: rgba(var(--brand-rgb), 0.5);
   box-shadow:
-    0 16px 50px rgba(127, 90, 240, 0.22),
-    0 0 0 1px rgba(127, 90, 240, 0.25) inset;
+    0 16px 50px rgba(var(--brand-rgb), 0.22),
+    0 0 0 1px rgba(var(--brand-rgb), 0.25) inset;
 }
 
 .steam-profile-bg {
@@ -282,7 +282,7 @@
   align-items: center;
   gap: 1.4rem;
   padding: 1.6rem 1.8rem;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 4px var(--black-55);
 }
 
 .steam-profile-avatar-wrap {
@@ -297,7 +297,7 @@
   position: absolute;
   inset: 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.25), rgba(220, 50, 120, 0.18));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.25), rgba(220, 50, 120, 0.18));
   filter: blur(12px);
   opacity: 0.7;
   z-index: 0;
@@ -317,8 +317,8 @@
 /* 沒有頭像框時，給頭像本身一道極淡的內陰影界線而不是粗白邊 */
 .steam-profile-avatar-wrap:not(:has(.steam-profile-avatar-frame)) .steam-profile-avatar {
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 6px 20px rgba(0, 0, 0, 0.45);
+    inset 0 0 0 1px var(--white-08),
+    0 6px 20px var(--black-45);
 }
 /* 頭像框：放在最上層覆蓋頭像邊緣，PNG 中央透明 */
 .steam-profile-avatar-frame {
@@ -371,7 +371,7 @@
   align-items: center;
   gap: 0.45rem;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
 }
 .steam-profile-dot {
   width: 8px;
@@ -393,7 +393,7 @@
   box-shadow: none;
 }
 .steam-profile-divider {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   margin: 0 2px;
 }
 
@@ -403,8 +403,8 @@
   gap: 0.45rem;
   margin-top: 0.2rem;
   padding: 0.25rem 0.7rem 0.25rem 0.4rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--black-30);
+  border: 1px solid var(--white-10);
   border-radius: 999px;
   font-size: 0.74rem;
   color: rgba(255, 255, 255, 0.78);
@@ -471,7 +471,7 @@
 }
 .steam-recent-count {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   font-variant-numeric: tabular-nums;
 }
 
@@ -486,7 +486,7 @@
   padding: 4px 4px 12px;
   margin: -4px -4px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127, 90, 240, 0.4) transparent;
+  scrollbar-color: rgba(var(--brand-rgb), 0.4) transparent;
 }
 .steam-recent-scroll::-webkit-scrollbar {
   height: 6px;
@@ -495,11 +495,11 @@
   background: transparent;
 }
 .steam-recent-scroll::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.35);
   border-radius: 3px;
 }
 .steam-recent-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 90, 240, 0.55);
+  background: rgba(var(--brand-rgb), 0.55);
 }
 
 .steam-recent-card {
@@ -511,7 +511,7 @@
   overflow: hidden;
   text-decoration: none;
   isolation: isolate;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-06);
   transition:
     transform 0.25s ease,
     border-color 0.25s ease,
@@ -519,12 +519,12 @@
 }
 .steam-recent-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127, 90, 240, 0.45);
-  box-shadow: 0 10px 28px rgba(127, 90, 240, 0.2);
+  border-color: rgba(var(--brand-rgb), 0.45);
+  box-shadow: 0 10px 28px rgba(var(--brand-rgb), 0.2);
 }
 .steam-recent-card.is-featured {
   grid-row: span 1;
-  border-color: rgba(127, 90, 240, 0.25);
+  border-color: rgba(var(--brand-rgb), 0.25);
 }
 .steam-recent-card.is-current {
   border-color: rgba(144, 186, 60, 0.55);
@@ -540,7 +540,7 @@
   /* Fallback gradient shown when both header.jpg and capsule fail
      (.is-fallback class added by onError once <img> is hidden) */
   background:
-    radial-gradient(120% 80% at 50% 35%, rgba(127, 90, 240, 0.28) 0%, transparent 65%),
+    radial-gradient(120% 80% at 50% 35%, rgba(var(--brand-rgb), 0.28) 0%, transparent 65%),
     linear-gradient(135deg, #1a1530 0%, #0d0a1c 100%);
 }
 .steam-recent-cover img {
@@ -558,10 +558,10 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1.5px 1.5px at 18% 30%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 72% 22%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 18% 30%, var(--white-50) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 22%, var(--white-35) 0%, transparent 100%),
     radial-gradient(1.5px 1.5px at 88% 70%, rgba(199, 184, 255, 0.4) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 30% 78%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 78%, var(--white-30) 0%, transparent 100%),
     radial-gradient(1.5px 1.5px at 56% 50%, rgba(199, 184, 255, 0.45) 0%, transparent 100%);
 }
 .steam-recent-overlay {
@@ -591,13 +591,13 @@
 }
 .steam-recent-stats {
   font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
 }
 .steam-recent-divider {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
 }
 
 .steam-recent-pulse {
@@ -638,7 +638,7 @@
   gap: 3rem;
   align-items: flex-start;
   padding: 2.5rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--white-04);
 }
 
 .code-pulse-left {
@@ -651,7 +651,7 @@
 .code-pulse-today {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 800;
-  background: linear-gradient(135deg, #7f5af0, #c4b5fd);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -660,7 +660,7 @@
 
 .code-pulse-sub {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 
 .code-pulse-right {
@@ -688,18 +688,18 @@
 
 .lang-bar-name {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
 }
 
 .lang-bar-time {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   font-family: "Courier New", monospace;
   font-size: 0.75rem;
 }
 
 .lang-bar-track {
   height: 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -735,14 +735,14 @@
   transition: color 0.2s;
 }
 .heatmap-profile:hover {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 .heatmap-avatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
 }
 
 .heatmap-total {
@@ -755,7 +755,7 @@
 .heatmap-total-num {
   font-size: 1.3rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #7f5af0, #c4b5fd);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -763,7 +763,7 @@
 
 .heatmap-total-label {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 
 .refresh-icon-btn {
@@ -773,8 +773,8 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 50%;
   cursor: pointer;
   color: rgba(196, 181, 253, 0.9);
@@ -793,8 +793,8 @@
 }
 .refresh-icon-btn:hover {
   color: #fffffe;
-  background: rgba(127, 90, 240, 0.18);
-  border-color: rgba(127, 90, 240, 0.45);
+  background: rgba(var(--brand-rgb), 0.18);
+  border-color: rgba(var(--brand-rgb), 0.45);
   transform: rotate(180deg);
 }
 .refresh-icon-btn.spinning {
@@ -809,9 +809,9 @@
 .year-btn {
   padding: 4px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   background: transparent;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -819,13 +819,13 @@
   letter-spacing: 0.3px;
 }
 .year-btn:hover {
-  border-color: rgba(127, 90, 240, 0.3);
+  border-color: rgba(var(--brand-rgb), 0.3);
   color: rgba(255, 255, 255, 0.65);
 }
 .year-btn.active {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.4);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.4);
+  color: var(--brand-light);
 }
 
 .heatmap-grid-wrapper {
@@ -835,7 +835,7 @@
   padding: 2.5rem 1.2rem 0;
   margin: 0 -1.2rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127, 90, 240, 0.25) transparent;
+  scrollbar-color: rgba(var(--brand-rgb), 0.25) transparent;
   transition:
     opacity 0.3s ease,
     filter 0.3s ease;
@@ -915,16 +915,16 @@
   pointer-events: none;
 }
 .heatmap-day.level-0 {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 .heatmap-day.level-1 {
-  background: rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.2);
 }
 .heatmap-day.level-2 {
-  background: rgba(127, 90, 240, 0.4);
+  background: rgba(var(--brand-rgb), 0.4);
 }
 .heatmap-day.level-3 {
-  background: rgba(127, 90, 240, 0.6);
+  background: rgba(var(--brand-rgb), 0.6);
 }
 .heatmap-day.level-4 {
   background: rgba(200, 50, 140, 0.65);
@@ -945,7 +945,7 @@
   z-index: 100;
   opacity: 0;
   transition: all 0.12s;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
 }
 .day-tooltip::before {
   content: "";
@@ -962,7 +962,7 @@
 }
 .tooltip-date {
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
   margin-top: 1px;
 }
 
@@ -973,7 +973,7 @@
   gap: 0.4rem;
   margin-top: 0.75rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
 }
 .legend-squares {
   display: flex;
@@ -985,16 +985,16 @@
   border-radius: 2px;
 }
 .legend-square.level-0 {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 .legend-square.level-1 {
-  background: rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.2);
 }
 .legend-square.level-2 {
-  background: rgba(127, 90, 240, 0.4);
+  background: rgba(var(--brand-rgb), 0.4);
 }
 .legend-square.level-3 {
-  background: rgba(127, 90, 240, 0.6);
+  background: rgba(var(--brand-rgb), 0.6);
 }
 .legend-square.level-4 {
   background: rgba(200, 50, 140, 0.65);
@@ -1014,7 +1014,7 @@
 
 .commit-event {
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--white-04);
 }
 .commit-event:last-child {
   border-bottom: none;
@@ -1031,19 +1031,19 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7f5af0;
+  background: var(--brand);
   flex-shrink: 0;
 }
 
 .commit-repo {
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--white-80);
 }
 
 .commit-when {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
   white-space: nowrap;
   margin-left: auto;
   flex-shrink: 0;
@@ -1067,22 +1067,22 @@
   transition: background 0.15s;
 }
 .commit-msg-row:hover {
-  background: rgba(127, 90, 240, 0.06);
+  background: rgba(var(--brand-rgb), 0.06);
 }
 
 .commit-sha {
   font-size: 0.72rem;
   font-family: "Courier New", monospace;
-  color: #7f5af0;
+  color: var(--brand);
   flex-shrink: 0;
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   padding: 1px 6px;
   border-radius: 4px;
 }
 
 .commit-msg {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1091,7 +1091,7 @@
 
 .commit-more {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
   padding-left: 0.25rem;
 }
 
@@ -1123,25 +1123,25 @@
 
 .project-row-name {
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white-70);
 }
 
 .project-row-time {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   font-family: "Courier New", monospace;
   font-size: 0.75rem;
 }
 
 .project-row-track {
   height: 5px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .project-row-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(127, 90, 240, 0.6), rgba(200, 50, 140, 0.5));
+  background: linear-gradient(90deg, rgba(var(--brand-rgb), 0.6), rgba(200, 50, 140, 0.5));
   border-radius: 3px;
 }
 
@@ -1158,7 +1158,7 @@
   display: block;
   font-size: 0.68rem;
   letter-spacing: 2.5px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 1rem;
@@ -1184,7 +1184,7 @@
 
 .game-gallery-count {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-25);
 }
 
 .game-marquee-wrapper {
@@ -1253,7 +1253,7 @@
 
 .game-gallery-time {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1274,7 +1274,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--white-04);
   text-decoration: none;
   color: inherit;
   transition: opacity 0.2s;
@@ -1294,13 +1294,13 @@
 .repo-row-left h4 {
   font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   margin-bottom: 0.15rem;
 }
 
 .repo-row-left p {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1312,7 +1312,7 @@
   gap: 0.75rem;
   flex-shrink: 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-40);
 }
 
 .repo-lang {
@@ -1333,7 +1333,7 @@
 .no-data-small {
   text-align: center;
   padding: 2rem 1rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   font-size: 0.85rem;
 }
 
@@ -1453,7 +1453,7 @@
   display: inline-block;
   height: 0.85em;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(90deg, var(--white-04), var(--white-10), var(--white-04));
   background-size: 200% 100%;
   animation: activity-sk-shimmer 1.4s ease-in-out infinite;
 }

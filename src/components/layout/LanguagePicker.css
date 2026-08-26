@@ -27,8 +27,8 @@
 
 .lang-picker-trigger:hover {
   color: rgba(244, 244, 245, 0.95);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--white-04);
+  border-color: var(--white-08);
 }
 
 .lang-picker-icon {
@@ -49,10 +49,10 @@
   min-width: 160px;
   border-radius: 12px;
   background: rgba(15, 15, 22, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--white-10);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 18px 50px var(--black-45);
   animation: lang-picker-fade-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -88,7 +88,7 @@
 }
 
 .lang-picker-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--white-06);
   color: rgba(244, 244, 245, 0.98);
 }
 

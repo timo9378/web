@@ -12,13 +12,13 @@
   max-width: 460px;
   padding: 40px 36px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 20px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   text-align: center;
   color: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 60px var(--black-45);
 }
 
 .unsubscribe-brand {
@@ -36,7 +36,7 @@
   font-size: 1.6rem;
   font-weight: 700;
   margin: 0 0 16px;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: 0.01em;
 }
 
@@ -50,8 +50,8 @@
 .unsubscribe-email {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.22);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.22);
   border-radius: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
@@ -62,7 +62,7 @@
 .unsubscribe-status {
   margin: 0;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   font-style: italic;
 }
 
@@ -105,16 +105,16 @@
 .unsubscribe-btn--danger:hover {
   background: rgba(220, 50, 80, 0.22);
   border-color: rgba(220, 50, 80, 0.55);
-  color: #ffffff;
+  color: #fff;
 }
 
 .unsubscribe-btn--ghost {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--white-04);
+  border-color: var(--white-10);
   color: rgba(255, 255, 255, 0.78);
 }
 .unsubscribe-btn--ghost:hover {
   background: rgba(199, 184, 255, 0.08);
   border-color: rgba(199, 184, 255, 0.35);
-  color: #ffffff;
+  color: #fff;
 }

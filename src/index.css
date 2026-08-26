@@ -160,13 +160,72 @@
     --clr-bg-secondary: #242629;
     --clr-headline: #fffffe;
     --clr-paragraph: #94a1b2;
-    --clr-button: #7f5af0;
+    --clr-button: var(--brand);
     --clr-button-text: #fffffe;
     --clr-stroke: #010101;
     --clr-secondary: #72757e;
     --clr-tertiary: #2cb67d;
     --clr-white: #fffffe;
     --clr-light-gray: #f8f9fa;
+
+    /* 深空玻璃質感的共用 token。元件 CSS 用這裡的名字，不要各自複製一份。
+
+       ⚠️ **品牌紫不能叫 `--accent`。** 上面 shadcn 的 `--accent` 是 HSL 三元組
+       （`216 34% 17%`），`@theme` 拿它做 `hsl(var(--accent))`；把 `#7f5af0` 塞進同一個
+       名字會讓全站 shadcn accent 變成 `hsl(#7f5af0)` 這種無效值。所以叫 `--brand`。 */
+    --brand: #7f5af0;
+    --brand-light: #c4b5fd;
+    /* 帶透明度的品牌紫寫 `rgba(var(--brand-rgb), 0.3)`。分成三個分量是因為 alpha
+       有 37 種,一一命名沒有意義——真正要單一來源的是色相本身。 */
+    --brand-rgb: 127, 90, 240;
+    --starlight: #ede9fe;
+
+    /* 白／黑透明度階梯。只收全站用過 10 次以上的級距——把每一種 alpha 都命名等於把
+       雜訊合法化；用不到 10 次的維持字面值，它們在 diff 裡會自己浮出來，就是之後要
+       收斂級距時的清單。
+
+       ⚠️ 名字用數字不用語意（不是 `--border-subtle` 這種），因為同一個 alpha 同時被
+       拿來當邊框、底色與文字色——套語意名會騙人。語意層是下面 `--glass-*`／
+       `--text-*` 那幾個，它們指向這裡的階梯。 */
+    --white-02: rgba(255, 255, 255, 0.02);
+    --white-03: rgba(255, 255, 255, 0.03);
+    --white-04: rgba(255, 255, 255, 0.04);
+    --white-05: rgba(255, 255, 255, 0.05);
+    --white-06: rgba(255, 255, 255, 0.06);
+    --white-07: rgba(255, 255, 255, 0.07);
+    --white-08: rgba(255, 255, 255, 0.08);
+    --white-10: rgba(255, 255, 255, 0.1);
+    --white-12: rgba(255, 255, 255, 0.12);
+    --white-15: rgba(255, 255, 255, 0.15);
+    --white-20: rgba(255, 255, 255, 0.2);
+    --white-22: rgba(255, 255, 255, 0.22);
+    --white-25: rgba(255, 255, 255, 0.25);
+    --white-30: rgba(255, 255, 255, 0.3);
+    --white-35: rgba(255, 255, 255, 0.35);
+    --white-40: rgba(255, 255, 255, 0.4);
+    --white-45: rgba(255, 255, 255, 0.45);
+    --white-50: rgba(255, 255, 255, 0.5);
+    --white-55: rgba(255, 255, 255, 0.55);
+    --white-60: rgba(255, 255, 255, 0.6);
+    --white-70: rgba(255, 255, 255, 0.7);
+    --white-80: rgba(255, 255, 255, 0.8);
+    --white-82: rgba(255, 255, 255, 0.82);
+    --white-85: rgba(255, 255, 255, 0.85);
+    --white-90: rgba(255, 255, 255, 0.9);
+    --white-95: rgba(255, 255, 255, 0.95);
+    --black-30: rgba(0, 0, 0, 0.3);
+    --black-40: rgba(0, 0, 0, 0.4);
+    --black-45: rgba(0, 0, 0, 0.45);
+    --black-50: rgba(0, 0, 0, 0.5);
+    --black-55: rgba(0, 0, 0, 0.55);
+
+    --glass-bg: var(--white-03);
+    --glass-border: var(--white-08);
+    --glass-hover-bg: var(--white-05);
+    --glass-hover-border: rgba(var(--brand-rgb), 0.35);
+    --text-primary: #fffffe;
+    --text-secondary: var(--white-50);
+    --text-tertiary: var(--white-35);
   }
 
   /* 亮色模式備選（如果需要切換） */
@@ -350,7 +409,7 @@ html {
   transition: background-color 0.2s;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--white-30);
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-corner {
@@ -443,7 +502,7 @@ body::after {
   max-width: 1080px;
   margin: 0 auto;
   padding: 96px 32px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
 }
 
 .home-section-eyebrow {
@@ -460,15 +519,15 @@ body::after {
   height: 1px;
   align-self: center;
   flex-shrink: 0;
-  background: linear-gradient(90deg, rgba(127, 90, 240, 0.9), rgba(216, 180, 254, 0.25));
-  box-shadow: 0 0 8px rgba(127, 90, 240, 0.5);
+  background: linear-gradient(90deg, rgba(var(--brand-rgb), 0.9), rgba(216, 180, 254, 0.25));
+  box-shadow: 0 0 8px rgba(var(--brand-rgb), 0.5);
 }
 
 .section-label {
   display: inline-block;
   font-size: 0.7rem;
   letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -483,7 +542,7 @@ body::after {
   font-weight: 700;
   line-height: 1.18;
   margin: 0 0 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #c7b8ff 100%);
+  background: linear-gradient(135deg, #fff 0%, #c7b8ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -491,13 +550,13 @@ body::after {
 
 .glass-card {
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--white-07);
   border-radius: 18px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   /* 玻璃寫實感：頂緣一條受光高光 + 下方柔和落影（拉出與星空背景的層次） */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 var(--white-06),
     0 18px 50px -22px rgba(0, 0, 0, 0.6);
 }
 

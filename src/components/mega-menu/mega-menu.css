@@ -39,19 +39,19 @@
   white-space: nowrap;
 }
 .mega-menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(244, 244, 245, 1);
+  background: var(--white-05);
+  color: #f4f4f5;
 }
 .mega-menu-trigger--open {
-  background: rgba(127, 90, 240, 0.14);
-  color: rgba(244, 244, 245, 1);
-  border-color: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.14);
+  color: #f4f4f5;
+  border-color: rgba(var(--brand-rgb), 0.28);
 }
 .mega-menu-trigger--active {
   color: rgba(196, 181, 253, 0.95);
 }
 .mega-menu-trigger--active:hover {
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
 }
 
 /* Icon hover 動畫：scale + 微微 wiggle + 紫色 tint
@@ -133,11 +133,11 @@
   background: rgba(15, 15, 22, 0.82);
   backdrop-filter: blur(64px) saturate(180%);
   -webkit-backdrop-filter: blur(64px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--white-08);
   border-radius: 14px;
   box-shadow:
-    0 24px 64px -16px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 24px 64px -16px var(--black-55),
+    inset 0 1px 0 var(--white-06);
   color: rgba(228, 228, 231, 0.92);
 }
 /* 首頁：profile + 頁面 + 站點，3 欄 */
@@ -167,7 +167,7 @@
   overflow: hidden; /* 內容超出 grid 欄寬時 clip，避免溢出 panel */
 }
 .mega-menu-column--accent {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.08), rgba(127, 90, 240, 0.02));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(var(--brand-rgb), 0.02));
   border-radius: 12px;
   padding: 16px;
   margin: -4px;
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: rgba(127, 90, 240, 0.12);
+  background: rgba(var(--brand-rgb), 0.12);
   color: rgba(167, 139, 250, 0.95);
   font-size: 0.85rem;
   /* 外框「不動」，只變色 */
@@ -231,13 +231,13 @@
   font-size: 0.8rem;
 }
 .mega-menu-link:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(244, 244, 245, 1);
+  background: var(--white-06);
+  color: #f4f4f5;
   transform: translateX(2px);
 }
 .mega-menu-link:hover .mega-menu-link-icon {
-  background: rgba(127, 90, 240, 0.28);
-  color: rgba(216, 180, 254, 1);
+  background: rgba(var(--brand-rgb), 0.28);
+  color: #d8b4fe;
 }
 
 /* SVG 本體：scale + slight rotate（在外框內動，外框靜止） */
@@ -336,7 +336,7 @@
 .mega-menu-stats-line {
   margin: 0;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
@@ -353,7 +353,7 @@
 
 .mega-menu-stats-dot {
   margin: 0 6px;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--white-22);
 }
 
 /* RSS = Wifi 轉 45°（沒有現成的 rss 動畫 icon） */
@@ -378,7 +378,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7f5af0, #5096ff);
+  background: linear-gradient(135deg, var(--brand), #5096ff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -396,7 +396,7 @@
 .mega-menu-profile-name {
   font-weight: 600;
   font-size: 0.95rem;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   line-height: 1.2;
 }
 .mega-menu-profile-status {
@@ -420,8 +420,8 @@
   gap: 10px;
   margin: 4px 0 10px;
   padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--white-05);
+  border-bottom: 1px solid var(--white-05);
 }
 .mega-menu-stat {
   text-align: center;
@@ -431,7 +431,7 @@
   display: block;
   font-size: 1.1rem;
   font-weight: 700;
-  color: rgba(244, 244, 245, 1);
+  color: #f4f4f5;
   line-height: 1.1;
 }
 .mega-menu-stat-label {
@@ -449,7 +449,7 @@
   align-items: center;
   justify-content: center;
   color: rgba(161, 161, 170, 0.7);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
   transition:
     background 0.15s,
     color 0.15s,
@@ -458,8 +458,8 @@
   font-size: 0.8rem;
 }
 .mega-menu-social:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(244, 244, 245, 1);
+  background: var(--white-10);
+  color: #f4f4f5;
   transform: translateY(-1px);
 }
 
@@ -481,7 +481,7 @@
 }
 .mega-menu-category:hover,
 .mega-menu-category--active {
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
   color: rgba(244, 244, 245, 0.98);
 }
 .mega-menu-category-count {
@@ -508,7 +508,7 @@
   transition: background 0.15s;
 }
 .mega-menu-post:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--white-04);
 }
 .mega-menu-post-title {
   font-size: 0.85rem;

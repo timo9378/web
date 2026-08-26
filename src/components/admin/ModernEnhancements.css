@@ -6,9 +6,9 @@
 .admin-layout [class*="card"]:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 8px 28px var(--black-40),
     0 0 0 1px rgba(63, 63, 70, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 var(--white-04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -89,7 +89,7 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(39, 39, 42, 0.6);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px var(--black-50);
 }
 
 /* ── Pagination ── */
