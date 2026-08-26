@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import { thumbHashToDataURL, thumbHashToApproximateAspectRatio } from 'thumbhash';
+import './BlogImage.css';
 
 /**
  * `BlogImage` — 文章內文的 `<img>` 渲染器（ReactMarkdown / MDX 的 `img` 元件）。

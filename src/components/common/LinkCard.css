@@ -1,0 +1,148 @@
+/* 連結卡（LinkCard）。站內文章／碎念卡、Spotify 與 bilibili 內嵌、外部連結卡。
+   ⚠ 不是 blog 專屬——/history、/friends 也在用，所以歸 common/。 */
+
+.link-card-with-text > p {
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+  color: var(--post-text);
+}
+
+.link-card {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--white-08);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  margin: 1.2rem 0;
+  background: var(--white-03);
+  transition: all 0.25s ease;
+  max-width: 100%;
+}
+
+.link-card:hover {
+  border-color: rgba(var(--brand-rgb), 0.3);
+  background: rgba(var(--brand-rgb), 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--black-30);
+}
+
+.link-card-thumb {
+  flex: 0 0 160px;
+  background: var(--black-30);
+  overflow: hidden;
+}
+
+.link-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+  border-radius: 0;
+}
+
+.link-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.link-card-site {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--white-70);
+}
+
+.link-card-url {
+  font-size: 0.78rem;
+  color: var(--post-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-card-youtube:hover {
+  border-color: rgba(255, 0, 0, 0.35);
+  background: rgba(255, 0, 0, 0.04);
+}
+
+.link-card-github:hover {
+  border-color: var(--white-20);
+}
+
+.link-card-instagram:hover {
+  border-color: rgba(228, 64, 95, 0.35);
+  background: rgba(228, 64, 95, 0.04);
+}
+
+.link-card-spotify:hover {
+  border-color: rgba(29, 185, 84, 0.35);
+  background: rgba(29, 185, 84, 0.04);
+}
+
+.link-card-spotify iframe {
+  display: block;
+  border-radius: 12px;
+}
+
+.link-card-bilibili:hover {
+  border-color: rgba(0, 161, 214, 0.35);
+  background: rgba(0, 161, 214, 0.04);
+}
+
+.link-card-embed-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  /* 16:9 */
+  overflow: hidden;
+}
+
+.link-card-bilibili-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.link-card-embed-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+  color: var(--white-60);
+  text-decoration: none;
+  border-top: 1px solid var(--white-06);
+  transition: color 0.2s;
+}
+
+.link-card-embed-link:hover {
+  color: var(--white-90);
+}
+
+.link-card-internal .link-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0.2rem 0;
+  line-height: 1.4;
+}
+
+.link-card-internal .link-card-meta {
+  font-size: 0.85rem;
+  color: var(--post-muted);
+  display: flex;
+  gap: 0.5rem;
+}
+.link-card-skeleton .link-card-body {
+  width: 100%;
+}

@@ -2,6 +2,7 @@
 //   CodeBody：shiki 高亮輸出（或 fallback）+ 長碼「展開程式碼」收合（平滑過場）。行號由 CSS counter 加。
 // 語言 emoji（標頭用）在 ../lib/langEmoji（單獨成檔，避免與元件同檔觸發 fast-refresh 警告）。
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import './CodeSurface.css';
 
 // 超過這行數的程式碼才可收合。
 const COLLAPSE_THRESHOLD = 15;

@@ -1,0 +1,60 @@
+/* 文章內文圖片與點擊放大的燈箱（見 BlogImage.tsx）。 */
+
+.blog-image-clickable {
+  cursor: zoom-in;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.blog-image-clickable:hover {
+  transform: scale(1.005);
+  box-shadow: 0 8px 30px var(--black-30);
+}
+
+.blog-image-exif--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.blog-image-exif span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.01em;
+}
+
+.image-lightbox-img {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.image-lightbox-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--white-10);
+  border: 1px solid var(--white-15);
+  color: var(--white-80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10000;
+}
+
+.image-lightbox-close:hover {
+  background: var(--white-20);
+  color: #fff;
+}
