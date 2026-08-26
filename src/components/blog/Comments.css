@@ -13,7 +13,7 @@
   display: block;
   width: 48px;
   height: 2px;
-  background: rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.2);
   border-radius: 2px;
   margin: 0 auto 2.5rem;
 }
@@ -25,13 +25,13 @@
   padding: 1.25rem 1.4rem 1.4rem;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(127, 90, 240, 0.06);
+  border: 1px solid rgba(var(--brand-rgb), 0.06);
   margin-bottom: 2.5rem;
   transition: border-color 0.3s;
 }
 
 .comment-form-card:focus-within {
-  border-color: rgba(127, 90, 240, 0.18);
+  border-color: rgba(var(--brand-rgb), 0.18);
 }
 
 /* ── Form Avatar ── */
@@ -86,16 +86,16 @@
 
 .mode-btn:hover,
 .mode-btn:focus {
-  border-color: rgba(127, 90, 240, 0.3);
+  border-color: rgba(var(--brand-rgb), 0.3);
   color: var(--white-70);
   background: transparent;
   box-shadow: none;
 }
 
 .mode-btn.active {
-  border-color: rgba(127, 90, 240, 0.4);
-  color: #c4b5fd;
-  background: rgba(127, 90, 240, 0.08);
+  border-color: rgba(var(--brand-rgb), 0.4);
+  color: var(--brand-light);
+  background: rgba(var(--brand-rgb), 0.08);
 }
 
 .mode-avatar {
@@ -144,9 +144,9 @@
 
 .mode-btn--login:hover,
 .mode-btn--anon:hover {
-  border-color: rgba(127, 90, 240, 0.4);
-  color: #c4b5fd;
-  background: rgba(127, 90, 240, 0.06);
+  border-color: rgba(var(--brand-rgb), 0.4);
+  color: var(--brand-light);
+  background: rgba(var(--brand-rgb), 0.06);
   box-shadow: none;
 }
 
@@ -217,9 +217,9 @@
 
 .provider-btn:hover,
 .provider-btn:focus {
-  border-color: rgba(127, 90, 240, 0.5);
-  color: #c4b5fd;
-  background: rgba(127, 90, 240, 0.08);
+  border-color: rgba(var(--brand-rgb), 0.5);
+  color: var(--brand-light);
+  background: rgba(var(--brand-rgb), 0.08);
   box-shadow: none;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .field-input:focus {
-  border-color: rgba(127, 90, 240, 0.35);
+  border-color: rgba(var(--brand-rgb), 0.35);
 }
 
 .field-input::placeholder {
@@ -263,7 +263,7 @@
   padding: 0.3rem 0.65rem;
   margin-bottom: 0.35rem;
   border-radius: 6px;
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   font-size: 0.78rem;
   color: #a78bfa;
 }
@@ -305,7 +305,7 @@
 }
 
 .comment-textarea:focus {
-  border-color: rgba(127, 90, 240, 0.35);
+  border-color: rgba(var(--brand-rgb), 0.35);
 }
 
 .comment-textarea::placeholder {
@@ -351,14 +351,14 @@
 }
 
 .captcha-input:focus {
-  border-color: rgba(127, 90, 240, 0.35);
+  border-color: rgba(var(--brand-rgb), 0.35);
 }
 
 .submit-btn {
   padding: 0.42rem 1.4rem;
   border-radius: 8px;
   border: none;
-  background: #7f5af0;
+  background: var(--brand);
   color: #fff;
   font-size: 0.85rem;
   font-weight: 600;
@@ -423,9 +423,9 @@
   border-radius: 4px;
   font-size: 0.68rem;
   font-weight: 700;
-  background: rgba(127, 90, 240, 0.15);
+  background: rgba(var(--brand-rgb), 0.15);
   color: #a78bfa;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   letter-spacing: 0.03em;
 }
 
@@ -445,7 +445,7 @@
 
 /* Admin comment card */
 .comment-card--admin .comment-avatar {
-  background: #7f5af0;
+  background: var(--brand);
   font-style: normal;
 }
 
@@ -455,7 +455,7 @@
 
 .comment-reply-to {
   font-size: 0.72rem;
-  color: rgba(127, 90, 240, 0.6);
+  color: rgba(var(--brand-rgb), 0.6);
   font-weight: 400;
 }
 

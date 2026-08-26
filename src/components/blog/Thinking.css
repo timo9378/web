@@ -408,7 +408,7 @@
   padding: 8px 20px;
   border: none;
   border-radius: 9999px;
-  background: #7f5af0;
+  background: var(--brand);
   color: #fff;
   font-weight: 600;
   font-size: 0.88rem;
@@ -496,7 +496,7 @@
   cursor: pointer;
 }
 .tk-edit-save {
-  background: #7f5af0;
+  background: var(--brand);
   color: #fff;
 }
 .tk-edit-save:hover,

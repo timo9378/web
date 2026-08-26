@@ -53,7 +53,7 @@
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 50%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 50%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -81,9 +81,9 @@
   backdrop-filter: blur(8px);
 }
 .zg-close-btn:hover {
-  background: rgba(127, 90, 240, 0.12);
-  border-color: rgba(127, 90, 240, 0.35);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.12);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  color: var(--brand-light);
 }
 
 /* ── Hints ── */
@@ -145,7 +145,7 @@
   width: 4px;
 }
 .zg-detail-panel::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.25);
   border-radius: 2px;
 }
 
@@ -166,9 +166,9 @@
   transition: all 0.2s;
 }
 .zg-detail-close:hover {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.35);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  color: var(--brand-light);
 }
 
 .zg-detail-cover {
@@ -190,7 +190,7 @@
 
 .zg-detail-author {
   font-size: 0.85rem;
-  color: #c4b5fd;
+  color: var(--brand-light);
   font-weight: 500;
   margin-bottom: 0.75rem;
 }
@@ -217,9 +217,9 @@
 .book-label {
   padding: 6px 12px;
   background: rgba(6, 5, 14, 0.9);
-  border: 1px solid rgba(127, 90, 240, 0.35);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 8px;
-  color: #c4b5fd;
+  color: var(--brand-light);
   font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;

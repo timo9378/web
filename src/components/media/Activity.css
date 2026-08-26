@@ -43,7 +43,7 @@
   height: 660px;
   top: -8%;
   left: -12%;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
   animation: a-neb1 30s ease-in-out infinite;
 }
 .activity-nebula-2 {
@@ -70,7 +70,7 @@
     radial-gradient(1px 1px at 30% 65%, var(--white-06) 0%, transparent 100%),
     radial-gradient(1px 1px at 50% 10%, var(--white-08) 0%, transparent 100%),
     radial-gradient(1px 1px at 75% 50%, var(--white-05) 0%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 18% 85%, rgba(127, 90, 240, 0.1) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 18% 85%, rgba(var(--brand-rgb), 0.1) 0%, transparent 100%),
     radial-gradient(1.2px 1.2px at 90% 12%, rgba(200, 50, 140, 0.07) 0%, transparent 100%);
 }
 
@@ -206,7 +206,7 @@
 .hero-num {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 800;
-  background: linear-gradient(135deg, #fffffe 20%, #c4b5fd 80%);
+  background: linear-gradient(135deg, #fffffe 20%, var(--brand-light) 80%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -249,10 +249,10 @@
 }
 .steam-profile-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127, 90, 240, 0.5);
+  border-color: rgba(var(--brand-rgb), 0.5);
   box-shadow:
-    0 16px 50px rgba(127, 90, 240, 0.22),
-    0 0 0 1px rgba(127, 90, 240, 0.25) inset;
+    0 16px 50px rgba(var(--brand-rgb), 0.22),
+    0 0 0 1px rgba(var(--brand-rgb), 0.25) inset;
 }
 
 .steam-profile-bg {
@@ -297,7 +297,7 @@
   position: absolute;
   inset: 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.25), rgba(220, 50, 120, 0.18));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.25), rgba(220, 50, 120, 0.18));
   filter: blur(12px);
   opacity: 0.7;
   z-index: 0;
@@ -486,7 +486,7 @@
   padding: 4px 4px 12px;
   margin: -4px -4px 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127, 90, 240, 0.4) transparent;
+  scrollbar-color: rgba(var(--brand-rgb), 0.4) transparent;
 }
 .steam-recent-scroll::-webkit-scrollbar {
   height: 6px;
@@ -495,11 +495,11 @@
   background: transparent;
 }
 .steam-recent-scroll::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.35);
   border-radius: 3px;
 }
 .steam-recent-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 90, 240, 0.55);
+  background: rgba(var(--brand-rgb), 0.55);
 }
 
 .steam-recent-card {
@@ -519,12 +519,12 @@
 }
 .steam-recent-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(127, 90, 240, 0.45);
-  box-shadow: 0 10px 28px rgba(127, 90, 240, 0.2);
+  border-color: rgba(var(--brand-rgb), 0.45);
+  box-shadow: 0 10px 28px rgba(var(--brand-rgb), 0.2);
 }
 .steam-recent-card.is-featured {
   grid-row: span 1;
-  border-color: rgba(127, 90, 240, 0.25);
+  border-color: rgba(var(--brand-rgb), 0.25);
 }
 .steam-recent-card.is-current {
   border-color: rgba(144, 186, 60, 0.55);
@@ -540,7 +540,7 @@
   /* Fallback gradient shown when both header.jpg and capsule fail
      (.is-fallback class added by onError once <img> is hidden) */
   background:
-    radial-gradient(120% 80% at 50% 35%, rgba(127, 90, 240, 0.28) 0%, transparent 65%),
+    radial-gradient(120% 80% at 50% 35%, rgba(var(--brand-rgb), 0.28) 0%, transparent 65%),
     linear-gradient(135deg, #1a1530 0%, #0d0a1c 100%);
 }
 .steam-recent-cover img {
@@ -651,7 +651,7 @@
 .code-pulse-today {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 800;
-  background: linear-gradient(135deg, #7f5af0, #c4b5fd);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -735,14 +735,14 @@
   transition: color 0.2s;
 }
 .heatmap-profile:hover {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 .heatmap-avatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
 }
 
 .heatmap-total {
@@ -755,7 +755,7 @@
 .heatmap-total-num {
   font-size: 1.3rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #7f5af0, #c4b5fd);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -773,8 +773,8 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 50%;
   cursor: pointer;
   color: rgba(196, 181, 253, 0.9);
@@ -793,8 +793,8 @@
 }
 .refresh-icon-btn:hover {
   color: #fffffe;
-  background: rgba(127, 90, 240, 0.18);
-  border-color: rgba(127, 90, 240, 0.45);
+  background: rgba(var(--brand-rgb), 0.18);
+  border-color: rgba(var(--brand-rgb), 0.45);
   transform: rotate(180deg);
 }
 .refresh-icon-btn.spinning {
@@ -819,13 +819,13 @@
   letter-spacing: 0.3px;
 }
 .year-btn:hover {
-  border-color: rgba(127, 90, 240, 0.3);
+  border-color: rgba(var(--brand-rgb), 0.3);
   color: rgba(255, 255, 255, 0.65);
 }
 .year-btn.active {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.4);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.4);
+  color: var(--brand-light);
 }
 
 .heatmap-grid-wrapper {
@@ -835,7 +835,7 @@
   padding: 2.5rem 1.2rem 0;
   margin: 0 -1.2rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127, 90, 240, 0.25) transparent;
+  scrollbar-color: rgba(var(--brand-rgb), 0.25) transparent;
   transition:
     opacity 0.3s ease,
     filter 0.3s ease;
@@ -918,13 +918,13 @@
   background: var(--white-04);
 }
 .heatmap-day.level-1 {
-  background: rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.2);
 }
 .heatmap-day.level-2 {
-  background: rgba(127, 90, 240, 0.4);
+  background: rgba(var(--brand-rgb), 0.4);
 }
 .heatmap-day.level-3 {
-  background: rgba(127, 90, 240, 0.6);
+  background: rgba(var(--brand-rgb), 0.6);
 }
 .heatmap-day.level-4 {
   background: rgba(200, 50, 140, 0.65);
@@ -945,7 +945,7 @@
   z-index: 100;
   opacity: 0;
   transition: all 0.12s;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
 }
 .day-tooltip::before {
   content: "";
@@ -988,13 +988,13 @@
   background: var(--white-04);
 }
 .legend-square.level-1 {
-  background: rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.2);
 }
 .legend-square.level-2 {
-  background: rgba(127, 90, 240, 0.4);
+  background: rgba(var(--brand-rgb), 0.4);
 }
 .legend-square.level-3 {
-  background: rgba(127, 90, 240, 0.6);
+  background: rgba(var(--brand-rgb), 0.6);
 }
 .legend-square.level-4 {
   background: rgba(200, 50, 140, 0.65);
@@ -1031,7 +1031,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7f5af0;
+  background: var(--brand);
   flex-shrink: 0;
 }
 
@@ -1067,15 +1067,15 @@
   transition: background 0.15s;
 }
 .commit-msg-row:hover {
-  background: rgba(127, 90, 240, 0.06);
+  background: rgba(var(--brand-rgb), 0.06);
 }
 
 .commit-sha {
   font-size: 0.72rem;
   font-family: "Courier New", monospace;
-  color: #7f5af0;
+  color: var(--brand);
   flex-shrink: 0;
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -1141,7 +1141,7 @@
 
 .project-row-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(127, 90, 240, 0.6), rgba(200, 50, 140, 0.5));
+  background: linear-gradient(90deg, rgba(var(--brand-rgb), 0.6), rgba(200, 50, 140, 0.5));
   border-radius: 3px;
 }
 

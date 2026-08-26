@@ -114,9 +114,9 @@
 }
 
 .mm-menu-trigger--open {
-  background: rgba(127, 90, 240, 0.12);
-  border-color: rgba(127, 90, 240, 0.25);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.12);
+  border-color: rgba(var(--brand-rgb), 0.25);
+  color: var(--brand-light);
 }
 
 .mm-menu-trigger svg {
@@ -205,13 +205,13 @@
 }
 
 .mm-menu-item:hover {
-  background: rgba(127, 90, 240, 0.15);
+  background: rgba(var(--brand-rgb), 0.15);
   color: #fff;
 }
 
 .mm-menu-item--active {
-  background: rgba(127, 90, 240, 0.2);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.2);
+  color: var(--brand-light);
 }
 
 .mm-menu-item-icon {
@@ -248,9 +248,9 @@
 
 .mm-expand-btn:hover,
 .mm-expand-btn:focus {
-  color: #c4b5fd;
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.3);
+  color: var(--brand-light);
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.3);
   box-shadow: none;
 }
 

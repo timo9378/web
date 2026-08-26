@@ -175,6 +175,9 @@
        名字會讓全站 shadcn accent 變成 `hsl(#7f5af0)` 這種無效值。所以叫 `--brand`。 */
     --brand: #7f5af0;
     --brand-light: #c4b5fd;
+    /* 帶透明度的品牌紫寫 `rgba(var(--brand-rgb), 0.3)`。分成三個分量是因為 alpha
+       有 37 種,一一命名沒有意義——真正要單一來源的是色相本身。 */
+    --brand-rgb: 127, 90, 240;
     --starlight: #ede9fe;
 
     /* 白／黑透明度階梯。只收全站用過 10 次以上的級距——把每一種 alpha 都命名等於把
@@ -219,7 +222,7 @@
     --glass-bg: var(--white-03);
     --glass-border: var(--white-08);
     --glass-hover-bg: var(--white-05);
-    --glass-hover-border: rgba(127, 90, 240, 0.35);
+    --glass-hover-border: rgba(var(--brand-rgb), 0.35);
     --text-primary: #fffffe;
     --text-secondary: var(--white-50);
     --text-tertiary: var(--white-35);
@@ -516,8 +519,8 @@ body::after {
   height: 1px;
   align-self: center;
   flex-shrink: 0;
-  background: linear-gradient(90deg, rgba(127, 90, 240, 0.9), rgba(216, 180, 254, 0.25));
-  box-shadow: 0 0 8px rgba(127, 90, 240, 0.5);
+  background: linear-gradient(90deg, rgba(var(--brand-rgb), 0.9), rgba(216, 180, 254, 0.25));
+  box-shadow: 0 0 8px rgba(var(--brand-rgb), 0.5);
 }
 
 .section-label {

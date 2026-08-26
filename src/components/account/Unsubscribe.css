@@ -50,8 +50,8 @@
 .unsubscribe-email {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.22);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.22);
   border-radius: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;

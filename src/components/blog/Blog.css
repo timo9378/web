@@ -48,14 +48,14 @@
   flex-direction: column;
   gap: 18px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(127, 90, 240, 0.3) transparent;
+  scrollbar-color: rgba(var(--brand-rgb), 0.3) transparent;
 }
 
 .blog-sidebar::-webkit-scrollbar {
   width: 4px;
 }
 .blog-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.3);
   border-radius: 2px;
 }
 
@@ -79,7 +79,7 @@
 }
 
 .blog-title-gradient {
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 40%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 40%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -135,7 +135,7 @@
   color: var(--white-25);
 }
 .blog-search-input:focus {
-  border-bottom-color: rgba(127, 90, 240, 0.5);
+  border-bottom-color: rgba(var(--brand-rgb), 0.5);
 }
 
 .search-clear {
@@ -182,9 +182,9 @@
 }
 
 .sort-pill.active {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.35);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  color: var(--brand-light);
 }
 
 .sort-pill:hover:not(.active),
@@ -211,9 +211,9 @@
   padding: 5px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.25);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
+  color: var(--brand-light);
 }
 
 .active-filter-chip button {
@@ -306,9 +306,9 @@
 }
 
 .note-body:hover {
-  border-color: rgba(127, 90, 240, 0.35);
+  border-color: rgba(var(--brand-rgb), 0.35);
   box-shadow:
-    0 0 20px rgba(127, 90, 240, 0.08),
+    0 0 20px rgba(var(--brand-rgb), 0.08),
     0 8px 32px var(--black-30);
   background: var(--white-05);
   transform: translateY(-2px);
@@ -333,9 +333,9 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 12px;
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.2);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
+  color: var(--brand-light);
 }
 
 /* Title */
@@ -353,7 +353,7 @@
 }
 
 .note-title-link:hover .note-title {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 /* Excerpt */
@@ -389,8 +389,8 @@
 }
 
 .note-tag:hover {
-  border-color: rgba(127, 90, 240, 0.3);
-  color: #c4b5fd;
+  border-color: rgba(var(--brand-rgb), 0.3);
+  color: var(--brand-light);
 }
 
 /* Actions */
@@ -457,7 +457,7 @@
   background: linear-gradient(
     135deg,
     rgba(168, 85, 247, 0.12) 0%,
-    rgba(127, 90, 240, 0.06) 50%,
+    rgba(var(--brand-rgb), 0.06) 50%,
     rgba(168, 85, 247, 0.12) 100%
   );
   z-index: -1;
@@ -548,7 +548,7 @@
 .stats-inline em {
   font-style: normal;
   font-weight: 700;
-  color: #c4b5fd;
+  color: var(--brand-light);
   margin-left: 4px;
 }
 
@@ -589,7 +589,7 @@
 }
 
 .category-item.active {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 .cat-count {
@@ -620,15 +620,15 @@
 
 .cloud-tag:hover,
 .cloud-tag:focus {
-  border-color: rgba(127, 90, 240, 0.3);
-  color: #c4b5fd;
+  border-color: rgba(var(--brand-rgb), 0.3);
+  color: var(--brand-light);
   background: transparent;
   box-shadow: none;
 }
 
 .cloud-tag.active {
-  border-color: rgba(127, 90, 240, 0.4);
-  color: #c4b5fd;
+  border-color: rgba(var(--brand-rgb), 0.4);
+  color: var(--brand-light);
 }
 
 .tags-toggle {
@@ -651,8 +651,8 @@
 
 .tags-toggle:hover,
 .tags-toggle:focus {
-  border-color: rgba(127, 90, 240, 0.3);
-  color: #c4b5fd;
+  border-color: rgba(var(--brand-rgb), 0.3);
+  color: var(--brand-light);
   background: transparent;
   box-shadow: none;
 }
@@ -698,7 +698,7 @@
 }
 
 .featured-link:hover .featured-text {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 .featured-date {
@@ -729,8 +729,8 @@
 
 .nav-pill:hover,
 .nav-pill:focus {
-  border-color: rgba(127, 90, 240, 0.3);
-  color: #c4b5fd;
+  border-color: rgba(var(--brand-rgb), 0.3);
+  color: var(--brand-light);
   background: transparent;
   box-shadow: none;
 }
@@ -753,7 +753,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid var(--white-08);
-  border-top-color: #7f5af0;
+  border-top-color: var(--brand);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 16px;
@@ -795,16 +795,16 @@
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
-  background: rgba(127, 90, 240, 0.15);
-  border: 1px solid rgba(127, 90, 240, 0.3);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.15);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
+  color: var(--brand-light);
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
 .empty-clear-btn:hover {
-  background: rgba(127, 90, 240, 0.25);
-  border-color: rgba(127, 90, 240, 0.5);
+  background: rgba(var(--brand-rgb), 0.25);
+  border-color: rgba(var(--brand-rgb), 0.5);
 }
 
 /* ══════════════════════════
@@ -938,11 +938,11 @@
   display: flex;
   flex-direction: column;
   background: rgba(18, 18, 30, 0.95);
-  border: 1px solid rgba(127, 90, 240, 0.18);
+  border: 1px solid rgba(var(--brand-rgb), 0.18);
   border-radius: 16px;
   box-shadow:
     0 24px 64px var(--black-50),
-    0 0 0 1px rgba(127, 90, 240, 0.08);
+    0 0 0 1px rgba(var(--brand-rgb), 0.08);
   overflow: hidden;
 }
 
@@ -993,7 +993,7 @@
 
 /* shared toast on note-action-btn */
 .note-action-btn.shared {
-  color: #7f5af0;
+  color: var(--brand);
 }
 
 /* ════════════════════════════════════════════════
@@ -1012,7 +1012,7 @@
   margin-bottom: 0.25rem;
 }
 .activity-heatmap .heatmap-total {
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 60%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 60%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1052,17 +1052,17 @@
   background: var(--white-05);
 }
 .activity-heatmap .heatmap-level-1 {
-  background: rgba(127, 90, 240, 0.32);
+  background: rgba(var(--brand-rgb), 0.32);
 }
 .activity-heatmap .heatmap-level-2 {
-  background: rgba(127, 90, 240, 0.55);
+  background: rgba(var(--brand-rgb), 0.55);
 }
 .activity-heatmap .heatmap-level-3 {
-  background: rgba(127, 90, 240, 0.78);
+  background: rgba(var(--brand-rgb), 0.78);
 }
 .activity-heatmap .heatmap-level-4 {
-  background: linear-gradient(135deg, #7f5af0, #dc3278);
-  box-shadow: 0 0 8px rgba(127, 90, 240, 0.4);
+  background: linear-gradient(135deg, var(--brand), #dc3278);
+  box-shadow: 0 0 8px rgba(var(--brand-rgb), 0.4);
 }
 .activity-heatmap .heatmap-level--1 {
   background: transparent;

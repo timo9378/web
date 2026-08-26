@@ -1125,7 +1125,7 @@
 .mdx-poll-peek:focus-visible {
   background: transparent;
   box-shadow: none;
-  color: #c4b5fd;
+  color: var(--brand-light);
   outline: none;
 }
 .mdx-poll-voted {

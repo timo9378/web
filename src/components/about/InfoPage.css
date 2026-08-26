@@ -92,7 +92,7 @@
 
 .info-page-content code {
   padding: 2px 6px;
-  background: rgba(127, 90, 240, 0.16);
+  background: rgba(var(--brand-rgb), 0.16);
   border-radius: 4px;
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
@@ -229,8 +229,8 @@
     transform 0.2s ease;
 }
 .friend-card:hover {
-  background: rgba(127, 90, 240, 0.08);
-  border-color: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.08);
+  border-color: rgba(var(--brand-rgb), 0.3);
   transform: translateY(-1px);
 }
 .friend-card-avatar {
@@ -262,9 +262,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 10px 22px;
-  background: rgba(127, 90, 240, 0.14);
+  background: rgba(var(--brand-rgb), 0.14);
   color: rgba(244, 244, 245, 0.95);
-  border: 1px solid rgba(127, 90, 240, 0.45);
+  border: 1px solid rgba(var(--brand-rgb), 0.45);
   border-radius: 9999px;
   font-size: 0.92rem;
   font-weight: 500;
@@ -276,9 +276,9 @@
     transform 0.2s ease;
 }
 .friends-apply-btn:hover {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   border-color: rgba(216, 180, 254, 0.7);
-  box-shadow: 0 0 0 4px rgba(127, 90, 240, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--brand-rgb), 0.12);
   transform: translateY(-1px);
 }
 
@@ -395,9 +395,9 @@
 }
 .friends-modal-submit {
   padding: 9px 22px;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.85), rgba(127, 90, 240, 0.6));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.85), rgba(var(--brand-rgb), 0.6));
   color: #ffffff;
-  border: 1px solid rgba(127, 90, 240, 0.5);
+  border: 1px solid rgba(var(--brand-rgb), 0.5);
   border-radius: 9999px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -408,8 +408,8 @@
     transform 0.2s ease;
 }
 .friends-modal-submit:hover {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.95), rgba(127, 90, 240, 0.7));
-  box-shadow: 0 6px 18px rgba(127, 90, 240, 0.25);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.95), rgba(var(--brand-rgb), 0.7));
+  box-shadow: 0 6px 18px rgba(var(--brand-rgb), 0.25);
   transform: translateY(-1px);
 }
 
@@ -423,7 +423,7 @@
 }
 .friends-modal-success code {
   font-size: 0.85rem;
-  background: rgba(127, 90, 240, 0.16);
+  background: rgba(var(--brand-rgb), 0.16);
   padding: 2px 6px;
   border-radius: 4px;
   color: rgba(216, 180, 254, 1);

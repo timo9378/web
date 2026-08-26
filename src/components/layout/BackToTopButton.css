@@ -44,12 +44,12 @@
 }
 
 .back-to-top:hover {
-  background: rgba(127, 90, 240, 0.18);
+  background: rgba(var(--brand-rgb), 0.18);
   border-color: rgba(199, 184, 255, 0.55);
   color: #ffffff;
   box-shadow:
     0 6px 22px rgba(0, 0, 0, 0.35),
-    0 0 0 4px rgba(127, 90, 240, 0.1);
+    0 0 0 4px rgba(var(--brand-rgb), 0.1);
 }
 
 .back-to-top-icon {
@@ -84,7 +84,7 @@
 .back-to-top-ring-progress {
   stroke: rgba(199, 184, 255, 0.85);
   transition: stroke-dashoffset 120ms linear;
-  filter: drop-shadow(0 0 4px rgba(127, 90, 240, 0.5));
+  filter: drop-shadow(0 0 4px rgba(var(--brand-rgb), 0.5));
 }
 
 @media (max-width: 768px) {

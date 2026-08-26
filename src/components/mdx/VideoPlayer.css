@@ -210,7 +210,7 @@ a.vp-btn:focus-visible {
   background: var(--white-22);
 }
 .vp-progress-fill {
-  background: #c4b5fd;
+  background: var(--brand-light);
 }
 .vp-progress-knob {
   position: absolute;

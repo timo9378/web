@@ -68,7 +68,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 1px;
-  color: rgba(127, 90, 240, 0.85);
+  color: rgba(var(--brand-rgb), 0.85);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }

@@ -112,9 +112,9 @@
 
 /* 拖放圖片時的視覺提示（domNode 是 monaco 內部容器，加 class 切換） */
 .monaco-drop-active {
-  outline: 2px dashed rgba(127, 90, 240, 0.6);
+  outline: 2px dashed rgba(var(--brand-rgb), 0.6);
   outline-offset: -4px;
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   transition: background 0.15s ease;
 }
 

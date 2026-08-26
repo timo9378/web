@@ -24,7 +24,8 @@ body {
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   cursor: pointer;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.16) 0%, rgba(220, 50, 120, 0.1) 100%), rgba(20, 18, 38, 0.5);
+  background:
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.16) 0%, rgba(220, 50, 120, 0.1) 100%), rgba(20, 18, 38, 0.5);
   border: 1px solid var(--white-07);
   box-shadow:
     inset 0 1px 0 var(--white-07),
@@ -49,7 +50,7 @@ body {
   background: linear-gradient(
     135deg,
     rgba(224, 195, 252, 0.55),
-    rgba(127, 90, 240, 0.45) 45%,
+    rgba(var(--brand-rgb), 0.45) 45%,
     rgba(220, 50, 120, 0.35)
   );
   -webkit-mask:
@@ -67,7 +68,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 80% at 50% 120%, rgba(127, 90, 240, 0.32), transparent 60%);
+  background: radial-gradient(120% 80% at 50% 120%, rgba(var(--brand-rgb), 0.32), transparent 60%);
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
@@ -83,7 +84,7 @@ body {
   border-color: transparent;
   box-shadow:
     inset 0 1px 0 var(--white-15),
-    0 8px 24px rgba(127, 90, 240, 0.22),
+    0 8px 24px rgba(var(--brand-rgb), 0.22),
     0 0 32px rgba(220, 50, 120, 0.1);
 }
 .koim-btn:hover::before {
@@ -100,18 +101,18 @@ body {
   outline: none;
   box-shadow:
     inset 0 1px 0 var(--white-15),
-    0 0 0 2px rgba(127, 90, 240, 0.5),
-    0 8px 24px rgba(127, 90, 240, 0.22);
+    0 0 0 2px rgba(var(--brand-rgb), 0.5),
+    0 8px 24px rgba(var(--brand-rgb), 0.22);
 }
 
 /* primary — 漸層滿底 */
 .koim-btn--primary {
   color: #fff;
-  background: linear-gradient(135deg, #7f5af0 0%, #a45cf0 50%, #dc3278 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, #a45cf0 50%, #dc3278 100%);
   border-color: transparent;
   box-shadow:
     inset 0 1px 0 var(--white-20),
-    0 8px 26px rgba(127, 90, 240, 0.32);
+    0 8px 26px rgba(var(--brand-rgb), 0.32);
 }
 .koim-btn--primary::before {
   display: none;
@@ -119,7 +120,7 @@ body {
 .koim-btn--primary:hover {
   box-shadow:
     inset 0 1px 0 var(--white-25),
-    0 12px 34px rgba(127, 90, 240, 0.42),
+    0 12px 34px rgba(var(--brand-rgb), 0.42),
     0 0 42px rgba(220, 50, 120, 0.22);
 }
 
@@ -131,9 +132,9 @@ body {
   backdrop-filter: none;
 }
 .koim-btn--ghost:hover {
-  background: rgba(127, 90, 240, 0.08);
-  border-color: rgba(127, 90, 240, 0.3);
-  box-shadow: 0 4px 14px rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.08);
+  border-color: rgba(var(--brand-rgb), 0.3);
+  box-shadow: 0 4px 14px rgba(var(--brand-rgb), 0.1);
 }
 
 .koim-btn--sm {
@@ -172,10 +173,11 @@ body {
 .koim-btn.is-active {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.5) 0%, rgba(220, 50, 120, 0.35) 100%), rgba(20, 18, 38, 0.6);
+  background:
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.5) 0%, rgba(220, 50, 120, 0.35) 100%), rgba(20, 18, 38, 0.6);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 6px 20px rgba(127, 90, 240, 0.28);
+    0 6px 20px rgba(var(--brand-rgb), 0.28);
 }
 .koim-btn.is-active::before {
   opacity: 1;

@@ -279,7 +279,7 @@
 }
 
 .wl-card:hover .wl-card-poster {
-  box-shadow: 0 18px 40px rgba(127, 90, 240, 0.28);
+  box-shadow: 0 18px 40px rgba(var(--brand-rgb), 0.28);
 }
 
 .wl-card-poster img {

@@ -164,8 +164,8 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-shadow:
     0 0 15px var(--white-60),
-    0 0 30px rgba(127, 90, 240, 0.4),
-    0 0 50px rgba(127, 90, 240, 0.2);
+    0 0 30px rgba(var(--brand-rgb), 0.4),
+    0 0 50px rgba(var(--brand-rgb), 0.2);
 }
 
 .afilmory-hero-subtitle {
@@ -226,10 +226,10 @@
 }
 
 .category-tab.active {
-  background: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.3);
   color: #ffffff;
-  border-color: rgba(127, 90, 240, 0.5);
-  box-shadow: 0 0 15px rgba(127, 90, 240, 0.2);
+  border-color: rgba(var(--brand-rgb), 0.5);
+  box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.2);
 }
 
 /* Dark Mode Support (Adjustments if needed) */

@@ -43,15 +43,15 @@
   color: rgba(244, 244, 245, 1);
 }
 .mega-menu-trigger--open {
-  background: rgba(127, 90, 240, 0.14);
+  background: rgba(var(--brand-rgb), 0.14);
   color: rgba(244, 244, 245, 1);
-  border-color: rgba(127, 90, 240, 0.28);
+  border-color: rgba(var(--brand-rgb), 0.28);
 }
 .mega-menu-trigger--active {
   color: rgba(196, 181, 253, 0.95);
 }
 .mega-menu-trigger--active:hover {
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
 }
 
 /* Icon hover 動畫：scale + 微微 wiggle + 紫色 tint
@@ -167,7 +167,7 @@
   overflow: hidden; /* 內容超出 grid 欄寬時 clip，避免溢出 panel */
 }
 .mega-menu-column--accent {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.08), rgba(127, 90, 240, 0.02));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(var(--brand-rgb), 0.02));
   border-radius: 12px;
   padding: 16px;
   margin: -4px;
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: rgba(127, 90, 240, 0.12);
+  background: rgba(var(--brand-rgb), 0.12);
   color: rgba(167, 139, 250, 0.95);
   font-size: 0.85rem;
   /* 外框「不動」，只變色 */
@@ -236,7 +236,7 @@
   transform: translateX(2px);
 }
 .mega-menu-link:hover .mega-menu-link-icon {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   color: rgba(216, 180, 254, 1);
 }
 
@@ -378,7 +378,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7f5af0, #5096ff);
+  background: linear-gradient(135deg, var(--brand), #5096ff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -481,7 +481,7 @@
 }
 .mega-menu-category:hover,
 .mega-menu-category--active {
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
   color: rgba(244, 244, 245, 0.98);
 }
 .mega-menu-category-count {

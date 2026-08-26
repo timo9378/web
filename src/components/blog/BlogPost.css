@@ -4,8 +4,8 @@
 
 /* ── Variables ── */
 :root {
-  --post-accent: #7f5af0;
-  --post-accent-glow: rgba(127, 90, 240, 0.35);
+  --post-accent: var(--brand);
+  --post-accent-glow: rgba(var(--brand-rgb), 0.35);
   --post-green: #2cb67d;
   --post-muted: var(--white-45);
   --post-card-bg: var(--white-03);
@@ -24,12 +24,12 @@
 }
 
 .blog-post-container ::-webkit-scrollbar-thumb {
-  background: rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.25);
   border-radius: 3px;
 }
 
 .blog-post-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 90, 240, 0.45);
+  background: rgba(var(--brand-rgb), 0.45);
 }
 
 .blog-post-container * {
@@ -184,7 +184,7 @@
   color: var(--white-85);
   font-weight: 500;
   text-decoration: none;
-  background-image: linear-gradient(90deg, rgba(127, 90, 240, 0.6), rgba(220, 50, 120, 0.6));
+  background-image: linear-gradient(90deg, rgba(var(--brand-rgb), 0.6), rgba(220, 50, 120, 0.6));
   background-size: 100% 1px;
   background-position: 0 100%;
   background-repeat: no-repeat;
@@ -216,7 +216,7 @@
   font-weight: 400;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -292,7 +292,7 @@
   box-shadow:
     inset 0 1px 0 var(--white-06),
     0 18px 48px var(--black-55),
-    0 0 0 1px rgba(127, 90, 240, 0.08);
+    0 0 0 1px rgba(var(--brand-rgb), 0.08);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   z-index: 9999;
@@ -340,7 +340,7 @@
 }
 .lang-item.active {
   /* Active = very low-alpha purple wash, no multi-stop gradient */
-  background: rgba(127, 90, 240, 0.07);
+  background: rgba(var(--brand-rgb), 0.07);
   color: #fff;
 }
 /* active 左側細線提示 — 2px 單色淡紫，不再三色漸層 */
@@ -383,7 +383,7 @@
   color: #fff;
   padding: 10px 18px;
   border-radius: 9999px;
-  border: 1px solid rgba(127, 90, 240, 0.3);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
   box-shadow: 0 12px 36px var(--black-50);
   font-size: 0.85rem;
   z-index: 9999;
@@ -401,8 +401,8 @@
 .post-tags .tag {
   font-size: 0.78rem;
   color: var(--post-accent);
-  background: rgba(127, 90, 240, 0.1);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.1);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   padding: 0.15rem 0.65rem;
   border-radius: 9999px;
 }
@@ -542,7 +542,7 @@
   height: 70%;
   border-radius: 2px;
   background: var(--post-accent);
-  box-shadow: 0 0 8px rgba(127, 90, 240, 0.3);
+  box-shadow: 0 0 8px rgba(var(--brand-rgb), 0.3);
   animation: indicator-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
@@ -587,10 +587,10 @@
   min-height: 72px;
 }
 .prev-next-card:hover {
-  border-color: rgba(127, 90, 240, 0.35);
-  background: rgba(127, 90, 240, 0.05);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  background: rgba(var(--brand-rgb), 0.05);
   box-shadow:
-    0 0 20px rgba(127, 90, 240, 0.08),
+    0 0 20px rgba(var(--brand-rgb), 0.08),
     0 8px 24px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
@@ -604,7 +604,7 @@
   letter-spacing: 0.04em;
 }
 .prev-next-card:hover .prev-next-label {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .prev-next-title {
   font-size: 0.95rem;
@@ -654,16 +654,16 @@
     color 0.18s ease;
 }
 .reaction-btn:hover {
-  background: rgba(127, 90, 240, 0.13);
-  border-color: rgba(127, 90, 240, 0.32);
+  background: rgba(var(--brand-rgb), 0.13);
+  border-color: rgba(var(--brand-rgb), 0.32);
   color: #fff;
   transform: translateY(-1px);
 }
 .reaction-btn.is-active {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.22), rgba(220, 50, 120, 0.18));
-  border-color: rgba(127, 90, 240, 0.55);
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.22), rgba(220, 50, 120, 0.18));
+  border-color: rgba(var(--brand-rgb), 0.55);
   color: #fff;
-  box-shadow: 0 0 12px rgba(127, 90, 240, 0.25);
+  box-shadow: 0 0 12px rgba(var(--brand-rgb), 0.25);
 }
 .reaction-btn .reaction-emoji {
   font-size: 1.05rem;
@@ -683,8 +683,8 @@
 .series-nav {
   margin: 2.5rem 0 1.5rem;
   padding: 1.4rem 1.6rem;
-  background: rgba(127, 90, 240, 0.05);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  background: rgba(var(--brand-rgb), 0.05);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 14px;
   backdrop-filter: blur(8px);
 }
@@ -700,12 +700,12 @@
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .series-nav-name {
   font-size: 1.15rem;
   font-weight: 600;
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 60%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 60%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -756,13 +756,13 @@
   transition: color 0.18s ease;
 }
 a.series-nav-title:hover {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 .series-nav-item.is-current {
-  background: rgba(127, 90, 240, 0.12);
+  background: rgba(var(--brand-rgb), 0.12);
 }
 .series-nav-item.is-current .series-nav-num {
-  background: linear-gradient(135deg, #7f5af0, #dc3278);
+  background: linear-gradient(135deg, var(--brand), #dc3278);
   color: #fff;
 }
 .series-nav-item.is-current .series-nav-title {
@@ -794,11 +794,11 @@ a.series-nav-title:hover {
   background: rgba(18, 16, 30, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 12px;
   box-shadow:
     0 8px 32px var(--black-50),
-    0 0 16px rgba(127, 90, 240, 0.08);
+    0 0 16px rgba(var(--brand-rgb), 0.08);
   z-index: 9999;
   animation: tooltip-in 0.2s ease;
   pointer-events: auto;
@@ -1098,7 +1098,12 @@ a.series-nav-title:hover {
   position: relative;
   margin: -2.5rem -2.5rem 2rem -2.5rem;
   padding: 2rem 2.5rem 2.5rem;
-  background: linear-gradient(180deg, rgba(127, 90, 240, 0.08) 0%, rgba(127, 90, 240, 0.03) 60%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--brand-rgb), 0.08) 0%,
+    rgba(var(--brand-rgb), 0.03) 60%,
+    transparent 100%
+  );
   border-radius: 16px 16px 0 0;
   border-bottom: none;
   overflow: hidden;
@@ -1122,7 +1127,7 @@ a.series-nav-title:hover {
   font-size: 0.65rem;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  background: rgba(127, 90, 240, 0.15);
+  background: rgba(var(--brand-rgb), 0.15);
   color: var(--post-accent);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -1219,8 +1224,8 @@ a.series-nav-title:hover {
   padding: 0 4px;
   margin: 0 1px;
   border-radius: 4px;
-  background: rgba(127, 90, 240, 0.12);
-  color: #c4b5fd;
+  background: rgba(var(--brand-rgb), 0.12);
+  color: var(--brand-light);
   text-decoration: none;
   font-size: 0.78em;
   font-weight: 600;
@@ -1228,7 +1233,7 @@ a.series-nav-title:hover {
 }
 .post-content sup a[data-footnote-ref]:hover,
 .post-content a.footnote-ref:hover {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   color: #fff;
 }
 /* hover 浮窗 — 透過 [data-fn-content] 由 JS 注入文字 */
@@ -1242,7 +1247,7 @@ a.series-nav-title:hover {
   max-width: min(420px, 80vw);
   padding: 10px 14px;
   background: rgba(15, 14, 26, 0.96);
-  border: 1px solid rgba(127, 90, 240, 0.35);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 10px;
   color: var(--white-85);
   font-size: 0.9rem;
@@ -1260,7 +1265,7 @@ a.series-nav-title:hover {
     visibility 0.2s;
   box-shadow:
     0 16px 40px var(--black-50),
-    0 0 24px rgba(127, 90, 240, 0.18);
+    0 0 24px rgba(var(--brand-rgb), 0.18);
   z-index: 30;
 }
 .post-content sup a[data-fn-content]:hover::after,
@@ -1310,9 +1315,9 @@ a.series-nav-title:hover {
 .post-content .markdown-alert {
   padding: 12px 16px;
   margin: 1.5rem 0;
-  border-left: 3px solid var(--alert-accent, rgba(127, 90, 240, 0.6));
+  border-left: 3px solid var(--alert-accent, rgba(var(--brand-rgb), 0.6));
   border-radius: 0 10px 10px 0;
-  background: var(--alert-bg, rgba(127, 90, 240, 0.06));
+  background: var(--alert-bg, rgba(var(--brand-rgb), 0.06));
   color: var(--white-82);
 }
 .post-content .markdown-alert-title {
@@ -1322,14 +1327,14 @@ a.series-nav-title:hover {
   font-weight: 600;
   font-size: 0.92rem;
   margin-bottom: 4px;
-  color: var(--alert-accent, #c4b5fd);
+  color: var(--alert-accent, var(--brand-light));
   letter-spacing: 0.02em;
 }
 .post-content .markdown-alert-title svg,
 .post-content .markdown-alert-title svg path {
   flex-shrink: 0;
   /* icon 之前沒設 fill → 用預設黑色；強制跟著該類型的 accent 色（藍/綠/紫/琥珀/紅） */
-  fill: var(--alert-accent, #c4b5fd);
+  fill: var(--alert-accent, var(--brand-light));
 }
 .post-content .markdown-alert p {
   margin: 4px 0;
@@ -1349,7 +1354,7 @@ a.series-nav-title:hover {
   --alert-bg: rgba(134, 239, 172, 0.06);
 }
 .post-content .markdown-alert-important {
-  --alert-accent: #c4b5fd;
+  --alert-accent: var(--brand-light);
   --alert-bg: rgba(196, 181, 253, 0.08);
 }
 .post-content .markdown-alert-warning {
@@ -1419,7 +1424,7 @@ a.series-nav-title:hover {
 .post-content a {
   color: var(--post-accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(127, 90, 240, 0.3);
+  border-bottom: 1px solid rgba(var(--brand-rgb), 0.3);
   transition: border-color 0.2s;
 }
 
@@ -1431,7 +1436,7 @@ a.series-nav-title:hover {
   margin: 1.5rem 0;
   padding: 1rem 1.5rem;
   border-left: 3px solid var(--post-accent);
-  background: rgba(127, 90, 240, 0.05);
+  background: rgba(var(--brand-rgb), 0.05);
   border-radius: 0 8px 8px 0;
   color: var(--white-70);
 }
@@ -1591,7 +1596,7 @@ a.series-nav-title:hover {
 }
 
 .post-content th {
-  background: rgba(127, 90, 240, 0.08);
+  background: rgba(var(--brand-rgb), 0.08);
   color: var(--white-80);
   font-weight: 600;
 }
@@ -1957,8 +1962,8 @@ a.series-nav-title:hover {
 }
 
 .link-card:hover {
-  border-color: rgba(127, 90, 240, 0.3);
-  background: rgba(127, 90, 240, 0.05);
+  border-color: rgba(var(--brand-rgb), 0.3);
+  background: rgba(var(--brand-rgb), 0.05);
   transform: translateY(-1px);
   box-shadow: 0 4px 20px var(--black-30);
 }
@@ -2124,7 +2129,7 @@ a.series-nav-title:hover {
   font-size: 0.9rem;
   color: var(--white-70);
   background:
-    linear-gradient(135deg, rgba(127, 90, 240, 0.12) 0%, rgba(220, 50, 120, 0.08) 100%), rgba(20, 18, 38, 0.55);
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.12) 0%, rgba(220, 50, 120, 0.08) 100%), rgba(20, 18, 38, 0.55);
   border: 1px solid var(--white-07);
   box-shadow:
     inset 0 1px 0 var(--white-07),
@@ -2148,7 +2153,7 @@ a.series-nav-title:hover {
   background: linear-gradient(
     135deg,
     rgba(224, 195, 252, 0.55),
-    rgba(127, 90, 240, 0.45) 45%,
+    rgba(var(--brand-rgb), 0.45) 45%,
     rgba(220, 50, 120, 0.35)
   );
   -webkit-mask:
@@ -2164,7 +2169,7 @@ a.series-nav-title:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 120%, rgba(127, 90, 240, 0.35), transparent 60%);
+  background: radial-gradient(120% 90% at 50% 120%, rgba(var(--brand-rgb), 0.35), transparent 60%);
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
@@ -2184,7 +2189,7 @@ a.series-nav-title:hover {
   transform: translateX(-2px);
   box-shadow:
     inset 0 1px 0 var(--white-15),
-    0 6px 20px rgba(127, 90, 240, 0.3),
+    0 6px 20px rgba(var(--brand-rgb), 0.3),
     0 0 28px rgba(220, 50, 120, 0.12);
 }
 .float-btn:hover::before {
@@ -2263,11 +2268,11 @@ a.series-nav-title:hover {
   white-space: nowrap;
 }
 .share-menu button:hover {
-  background: linear-gradient(135deg, rgba(127, 90, 240, 0.18), rgba(220, 50, 120, 0.1));
+  background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.18), rgba(220, 50, 120, 0.1));
   color: #fff;
 }
 .share-menu button svg {
-  color: #c4b5fd;
+  color: var(--brand-light);
 }
 
 /* ═══════════════════════
@@ -2290,7 +2295,7 @@ a.series-nav-title:hover {
   width: 90%;
   max-width: 400px;
   background: rgba(20, 18, 34, 0.95);
-  border: 1px solid rgba(127, 90, 240, 0.2);
+  border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 16px;
   padding: 2rem;
   text-align: center;
@@ -2394,8 +2399,8 @@ a.series-nav-title:hover {
 .subscribe-email-chip {
   display: inline-block;
   padding: 1px 8px;
-  background: rgba(127, 90, 240, 0.12);
-  border: 1px solid rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.12);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   border-radius: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
@@ -2451,8 +2456,8 @@ a.series-nav-title:hover {
 }
 
 .font-switcher-btn:hover {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.3);
   color: var(--post-accent);
 }
 
@@ -2491,7 +2496,7 @@ a.series-nav-title:hover {
 
 .font-option.active {
   color: var(--post-accent);
-  background: rgba(127, 90, 240, 0.1);
+  background: rgba(var(--brand-rgb), 0.1);
 }
 
 /* ═══════════════════════
@@ -2511,8 +2516,8 @@ a.series-nav-title:hover {
   margin-top: 1.5rem;
   padding: 0.6rem 1.5rem;
   border-radius: 8px;
-  background: rgba(127, 90, 240, 0.15);
-  border: 1px solid rgba(127, 90, 240, 0.3);
+  background: rgba(var(--brand-rgb), 0.15);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
   color: var(--post-accent);
   text-decoration: none;
   font-size: 0.9rem;
@@ -2520,7 +2525,7 @@ a.series-nav-title:hover {
 }
 
 .back-to-blog-link:hover {
-  background: rgba(127, 90, 240, 0.25);
+  background: rgba(var(--brand-rgb), 0.25);
 }
 
 /* ═══════════════════════
@@ -2554,7 +2559,7 @@ a.series-nav-title:hover {
 .cosmic-loader .orbit {
   width: 100%;
   height: 100%;
-  border: 2px solid rgba(127, 90, 240, 0.2);
+  border: 2px solid rgba(var(--brand-rgb), 0.2);
   border-top-color: var(--post-accent);
   border-radius: 50%;
   animation: orbit-spin 1.2s linear infinite;
@@ -2647,8 +2652,8 @@ a.series-nav-title:hover {
 
 /* Internal Link Card */
 .link-card-internal {
-  border-color: rgba(127, 90, 240, 0.22);
-  background: rgba(127, 90, 240, 0.04);
+  border-color: rgba(var(--brand-rgb), 0.22);
+  background: rgba(var(--brand-rgb), 0.04);
 }
 
 .link-card-internal .link-card-title {

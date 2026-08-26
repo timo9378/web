@@ -9,7 +9,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: rgba(18, 18, 26, 0.96);
-  border: 1px solid rgba(127, 90, 240, 0.22);
+  border: 1px solid rgba(var(--brand-rgb), 0.22);
   box-shadow: 0 12px 32px var(--black-45);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -36,7 +36,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  background: linear-gradient(140deg, rgba(127, 90, 240, 0.14), var(--white-03));
+  background: linear-gradient(140deg, rgba(var(--brand-rgb), 0.14), var(--white-03));
 }
 
 .lhp-favicon {

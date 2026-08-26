@@ -250,7 +250,7 @@
   transition: all 0.2s;
 }
 .fe-kind button.on {
-  background: rgba(127, 90, 240, 0.28);
+  background: rgba(var(--brand-rgb), 0.28);
   color: #fff;
 }
 .fe-kind button:hover:not(.on) {

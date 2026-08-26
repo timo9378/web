@@ -54,7 +54,7 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(127, 90, 240, 0.6) 110deg,
+    rgba(var(--brand-rgb), 0.6) 110deg,
     rgba(220, 50, 120, 0.85) 200deg,
     transparent 240deg
   );
@@ -81,7 +81,7 @@
     from 180deg,
     transparent 0deg,
     rgba(224, 195, 252, 0.85) 90deg,
-    rgba(127, 90, 240, 0.55) 180deg,
+    rgba(var(--brand-rgb), 0.55) 180deg,
     transparent 220deg
   );
   animation: koimSpinReverse 2.4s linear infinite;
@@ -99,9 +99,9 @@
 .koim-loader-core {
   position: relative;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 50%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 50%, #dc3278 100%);
   box-shadow:
-    0 0 14px rgba(127, 90, 240, 0.7),
+    0 0 14px rgba(var(--brand-rgb), 0.7),
     0 0 28px rgba(220, 50, 120, 0.35);
   z-index: 2;
 }
@@ -121,7 +121,7 @@
 .koim-loader-glow {
   position: absolute;
   inset: -20px;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.18) 0%, transparent 65%);
   pointer-events: none;
   filter: blur(4px);
   animation: koimLoaderBreath 2.4s ease-in-out infinite reverse;
@@ -183,7 +183,7 @@
 .koim-loader-dots i {
   width: 4px;
   height: 4px;
-  background: linear-gradient(135deg, #e0c3fc, #7f5af0);
+  background: linear-gradient(135deg, #e0c3fc, var(--brand));
   border-radius: 50%;
   display: inline-block;
   animation: koimDot 1.2s ease-in-out infinite;

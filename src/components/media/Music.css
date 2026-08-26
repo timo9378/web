@@ -50,7 +50,7 @@
   height: 660px;
   top: -8%;
   left: -12%;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.5) 0%, rgba(180, 60, 200, 0.25) 40%, transparent 70%);
   animation: m-neb1 30s ease-in-out infinite;
 }
 
@@ -148,7 +148,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #2a2a2a, #111);
   box-shadow:
-    0 0 20px rgba(127, 90, 240, 0.4),
+    0 0 20px rgba(var(--brand-rgb), 0.4),
     inset 0 0 20px var(--black-50);
 }
 
@@ -173,7 +173,7 @@
   height: 24px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--brand), var(--brand-light));
-  box-shadow: 0 0 15px rgba(127, 90, 240, 0.6);
+  box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.6);
 }
 
 .music-loading p {
@@ -210,7 +210,7 @@
 }
 
 .music-title-gradient {
-  background: linear-gradient(135deg, #e0c3fc 0%, #7f5af0 40%, #dc3278 100%);
+  background: linear-gradient(135deg, #e0c3fc 0%, var(--brand) 40%, #dc3278 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -504,8 +504,8 @@
 }
 
 .music-tab-btn.active {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.35);
   color: var(--brand-light);
 }
 
@@ -741,7 +741,7 @@
 .galaxy-bubble:hover {
   border-color: var(--glass-hover-border);
   box-shadow:
-    0 0 30px rgba(127, 90, 240, 0.15),
+    0 0 30px rgba(var(--brand-rgb), 0.15),
     0 8px 32px var(--black-30);
   background: var(--glass-hover-bg);
 }
@@ -750,7 +750,7 @@
   position: absolute;
   inset: -20%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(127, 90, 240, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.08) 0%, transparent 70%);
   pointer-events: none;
   transition: opacity 0.3s ease;
   opacity: 0.5;
@@ -833,8 +833,8 @@
 }
 
 .range-pill.active {
-  background: rgba(127, 90, 240, 0.15);
-  border-color: rgba(127, 90, 240, 0.35);
+  background: rgba(var(--brand-rgb), 0.15);
+  border-color: rgba(var(--brand-rgb), 0.35);
   color: var(--brand-light);
 }
 
@@ -904,7 +904,7 @@
 
 .decade-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(127, 90, 240, 0.8), rgba(220, 50, 120, 0.8));
+  background: linear-gradient(90deg, rgba(var(--brand-rgb), 0.8), rgba(220, 50, 120, 0.8));
   border-radius: 5px;
 }
 
@@ -931,7 +931,7 @@
 .analytic-card:hover {
   border-color: var(--glass-hover-border);
   box-shadow:
-    0 0 20px rgba(127, 90, 240, 0.08),
+    0 0 20px rgba(var(--brand-rgb), 0.08),
     0 8px 32px var(--black-30);
   background: var(--glass-hover-bg);
 }
@@ -1062,7 +1062,7 @@
 }
 
 .config-hint code {
-  background: rgba(127, 90, 240, 0.15);
+  background: rgba(var(--brand-rgb), 0.15);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-family: "JetBrains Mono", "Courier New", monospace;

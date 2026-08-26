@@ -67,7 +67,7 @@
   letter-spacing: -0.04em;
   color: rgba(255, 255, 255, 0.96);
   /* 讓數字跟土星在同一個「發光」的世界裡，不然它會像貼上去的 */
-  text-shadow: 0 0 60px rgba(127, 90, 240, 0.45);
+  text-shadow: 0 0 60px rgba(var(--brand-rgb), 0.45);
   user-select: none;
 }
 
@@ -82,7 +82,7 @@
   width: clamp(6rem, 20vw, 13rem);
   height: auto;
   overflow: visible;
-  filter: drop-shadow(0 0 40px rgba(127, 90, 240, 0.5));
+  filter: drop-shadow(0 0 40px rgba(var(--brand-rgb), 0.5));
   animation: nf-bob 11s ease-in-out infinite;
 }
 
@@ -225,7 +225,7 @@
 .nf-btn:focus-visible {
   transform: translateY(-1px);
   background: #6d4bd6;
-  box-shadow: 0 8px 24px rgba(127, 90, 240, 0.4);
+  box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.4);
 }
 
 /* kbd 不再是「按鈕裡的小按鈕」——拿掉邊框與底色，只用透明度把它推到次要層次 */
