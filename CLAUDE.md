@@ -155,10 +155,6 @@ biome check --config-path=.config/biome.json .                   # 已包成 pnp
 沒有 `--config`，搬了要把裡面每條路徑改成 `../…` 還得在旁邊放 tsconfig）、`vitest.config.ts`
 與 `playwright.config.ts`（內部相對路徑相對設定檔目錄解析）。
 
-⚠️ 這裡原本還列了 `tailwind.config.js` 與 `postcss.config.js`，理由是「Tailwind 還是 v3」
-——**已經不是了**。升上 v4 之後那兩個檔就沒有了（設定進 `src/index.css` 的 `@theme`），
-見下一節。不要再去找它們。
-
 ## CSS
 
 Tailwind 是 **v4**，設定在 `src/index.css` 的 `@theme` 裡，**沒有 tailwind.config.js
@@ -217,8 +213,8 @@ warning 會出現在 CI 輸出但不擋——跟 knip 當初的處理一樣，�
 | `.galaxy-bubble`（手機版） | 2 | 壓元件用 inline style 算出來的泡泡大小 |
 
 ⚠️ **不要用 `grep -c '!important'` 數它**——那會數到 42，多出來的 15 筆是**註解裡在
-討論** `!important` 的句子，不是宣告。以前這份文件寫的「43 個」就是這樣數出來的。
-要數就跑 `pnpm lint:css`，biome 認的是語法樹。
+討論** `!important` 的句子，不是宣告。要數就跑 `pnpm lint:css`，biome 認的是語法樹。
+同一個坑也會發生在數色彩字面值上。
 
 **壓 inline style 是最常見的正當理由**（shiki、monaco、galaxy-bubble 都是這類）——
 inline style 只有 `!important` 蓋得過，這種情況不管 cascade layer 怎麼排都一樣。

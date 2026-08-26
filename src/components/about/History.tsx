@@ -206,7 +206,7 @@ function History() {
   const extras = lookupOr(HISTORY_EXTRAS, lang, HISTORY_EXTRAS['zh-TW']);
   const uptimeUnits = lookupOr(UPTIME_UNITS, lang, UPTIME_UNITS['zh-TW']);
   const texts = lookupOr(MILESTONE_TEXTS, lang, MILESTONE_TEXTS['zh-TW']);
-  // ⚠ 同一天可以有兩個里程碑（2026-04-26 一度就是這樣，該筆已下架），所以 key 不能只用 date——
+  // ⚠ 同一天可以有兩個里程碑，所以 key 不能只用 date——
   //   React 會因為 key 重複而無法區分那兩項，重繪時可能重用到錯的節點。
   //   MILESTONE_META 是靜態陣列、順序固定，所以在這裡一次配好 id 就是穩定的。
   const milestones = MILESTONE_META.map((m, i) => ({ ...m, text: texts[i], key: `${m.date}-${i}` }));
