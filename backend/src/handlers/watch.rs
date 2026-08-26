@@ -707,7 +707,10 @@ fn timing_safe_eq(a: &[u8], b: &[u8]) -> bool {
 }
 
 /// bahamutPushAuth：X-Bahamut-Token（constant-time）或 admin JWT。
-async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response> {
+///
+/// ⚠️ `Err` 裝 `Box<Response>`，理由同 `handlers/bahamut.rs` 的 `push_auth`：
+/// rust 1.98 起 clippy 的 `result_large_err` 會咬 128 bytes 的 `axum::Response`。
+async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Box<Response>> {
     if let Ok(token) = std::env::var("BAHAMUT_PUSH_TOKEN")
         && !token.is_empty()
     {
@@ -716,7 +719,7 @@ async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), 
             return Ok(());
         }
     }
-    crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
+    crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| Box::new(e.into_response()))
 }
 
 /// TTL 的邊界判定，抽出來只為了讓它可測：夾在 `now_ms()` 裡面的話，`<` 與 `<=` 的差別
@@ -751,7 +754,7 @@ pub async fn heartbeat(
     crate::error::JsonBody(b): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     if let Err(resp) = bahamut_push_auth(&headers, &state).await {
-        return resp;
+        return *resp;
     }
     // playing === false（嚴格 boolean）→ 只清 bahamut 那條
     if b.get("playing") == Some(&Value::Bool(false)) {

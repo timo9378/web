@@ -82,7 +82,11 @@ fn now_ms() -> i64 {
 }
 
 /// bahamutPushAuth：X-Bahamut-Token（constant-time）或 admin JWT。
-async fn push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response> {
+///
+/// ⚠️ `Err` 裝 `Box<Response>` 而不是裸的 `Response`：rust 1.98 起 clippy 的
+/// `result_large_err` 會咬 128 bytes 的 `axum::Response`，而 CI 是 `-D warnings`。
+/// 這條路徑一次請求最多走一次，多一層 Box 的代價可以忽略。
+async fn push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Box<Response>> {
     if let Ok(token) = std::env::var("BAHAMUT_PUSH_TOKEN")
         && !token.is_empty()
     {
@@ -97,7 +101,7 @@ async fn push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), Response
             }
         }
     }
-    crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| e.into_response())
+    crate::auth::require_admin(headers, state).await.map(|_| ()).map_err(|e| Box::new(e.into_response()))
 }
 
 /// `jwtStatus` → (jwtExpiresAt ISO|null, daysLeft|null)。
@@ -116,7 +120,7 @@ fn jwt_fields(state: &AppState) -> (Value, Value) {
     responses((status = 200, description = "動畫瘋 cookie/JWT 狀態（動態 JSON）"), (status = 401, description = "未授權")))]
 pub async fn status(State(state): State<AppState>, headers: HeaderMap) -> Response {
     if let Err(r) = push_auth(&headers, &state).await {
-        return r;
+        return *r;
     }
     let (ok, missing) = state.bahamut.client.validate();
     let (jwt_at, days) = jwt_fields(&state);
@@ -132,7 +136,7 @@ pub async fn cookie(
     crate::error::JsonBody(body): crate::error::JsonBody<Map<String, Value>>,
 ) -> Response {
     if let Err(r) = push_auth(&headers, &state).await {
-        return r;
+        return *r;
     }
     // input：body.jar（object）或 body.cookie（string）
     let jar = if let Some(obj) = body.get("jar").and_then(|v| v.as_object()) {
