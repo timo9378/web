@@ -470,3 +470,58 @@
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+
+/* ══════════════════════════════════════
+   圖表配色 —— SVG 內部用 var(--fg) / var(--surface, …) 上色，值在這裡給。
+   ⚠ 渲染器產出的 SVG 已把根元素的 inline style 剝掉（見 lib/mdx/mermaidSvg.ts），
+   否則 inline style 會贏過這裡。換主題＝換 class，不重新渲染。
+   ══════════════════════════════════════ */
+.mm-theme-deep {
+  --fg: #e5e5f5;
+  --bg: transparent;
+  --surface: #1c1830;
+  --border: #7f5af0;
+  --line: #7f5af0;
+  --accent: #c4b5fd;
+  --muted: #9a93b8;
+}
+
+.mm-theme-zinc {
+  --fg: #e4e4e7;
+  --bg: transparent;
+  --surface: #27272a;
+  --border: #52525b;
+  --line: #a1a1aa;
+  --accent: #d4d4d8;
+  --muted: #a1a1aa;
+}
+
+.mm-theme-tokyo {
+  --fg: #a9b1d6;
+  --bg: transparent;
+  --surface: #292e42;
+  --border: #3d59a1;
+  --line: #3d59a1;
+  --accent: #7aa2f7;
+  --muted: #565f89;
+}
+
+.mm-theme-nord {
+  --fg: #d8dee9;
+  --bg: transparent;
+  --surface: #3b4252;
+  --border: #5e81ac;
+  --line: #81a1c1;
+  --accent: #88c0d0;
+  --muted: #7b88a1;
+}
+
+.mm-theme-light {
+  --fg: #24292f;
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --border: #d0d7de;
+  --line: #57606a;
+  --accent: #0969da;
+  --muted: #6e7781;
+}

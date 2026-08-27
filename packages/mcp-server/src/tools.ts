@@ -145,7 +145,9 @@ const AUTHORING_GUIDE = `# koimsurai 文章撰寫指南（給 AI）
 ${renderBlocksForGuide()}
 
 其他：行內算式（在文章裡求值，少用）\`今天 {new Date().getFullYear()} 年\`。
-**圖表怎麼挑**：精確的技術圖（流程／時序／狀態／ER／架構）一律用 \`\`\`mermaid 圍籬——有工具列（切 theme/look/layout/方向、縮放平移、下載 SVG/PNG）。只有「概念草圖／比喻」且節點少時才用 <Sketch>。
+**圖表怎麼挑**：精確的技術圖（流程／時序／狀態／ER／架構）一律用 \`\`\`mermaid 圍籬——有工具列（切配色、縮放平移、全螢幕、下載 SVG/PNG）。只有「概念草圖／比喻」且節點少、或想要手繪風時才用 <Sketch>。
+
+⚠️ mermaid 支援的圖表是 flowchart / sequenceDiagram / stateDiagram / classDiagram / erDiagram / xychart 六類。gantt、pie、mindmap、timeline、journey、gitGraph **不會渲染**。方向寫在語法裡（\`flowchart LR\`），沒有讀者端切換。
 mermaid 可用 frontmatter 預設外觀，例如手繪風：\`\`\`mermaid 後接 \`---\` / \`config:\` / \`  look: handDrawn\` / \`  theme: dark\` / \`---\`。
 
 ## 5. ⚠️ MDX 的坑（format='mdx' 一定遵守，寫錯會編譯失敗）

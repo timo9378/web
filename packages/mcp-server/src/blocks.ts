@@ -177,7 +177,7 @@ export const BLOCKS: BlockDef[] = [
     whenToUse: '**概念草圖／比喻／心智模型**——像在白板上隨手畫的示意圖。節點少（≤6）、不需要讀者操作時用它。',
     props: 'chart（mermaid 定義，單行用 ; 分隔）、title',
     example: '<Sketch chart="graph TD; A[想法] --> B[草稿]; B --> C[成品]" title="心智模型" />',
-    note: '**精確的技術圖用 ```mermaid 圍籬，不要用這個**：流程／時序／狀態／ER／架構、節點多、讀者可能想放大細看或下載時——mermaid 有工具列（可切 theme/look/layout/方向、縮放平移、下載 SVG/PNG），Sketch 是靜態的、寬度上限 440px。',
+    note: '**精確的技術圖用 ```mermaid 圍籬，不要用這個**：流程／時序／狀態／ER／架構、節點多、讀者可能想放大細看或下載時——mermaid 有工具列（切配色、縮放平移、全螢幕、下載 SVG/PNG），Sketch 是靜態的、寬度上限 440px。手繪風只有 Sketch 有。',
   },
   {
     name: 'Video',
