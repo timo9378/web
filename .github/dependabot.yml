@@ -24,6 +24,30 @@ updates:
       production-dependencies:
         dependency-type: production
         update-types: [minor, patch]
+    # ⚠️ 以下每一個都**實測過升上去會壞**，不是懶得升。理由與「解除條件」在
+    #    CLAUDE.md 的「這幾個相依刻意釘死」那張表，package.json 裡也對應地寫死版本。
+    #
+    #    ⚠️ 忽略 = 上游修好的那天不會有東西提醒你。解除條件成立與否要**人主動去看**
+    #    （例如 monaco-vim 出新版時順手試一次 monaco-editor）。這是刻意的取捨：
+    #    每週固定收到幾個「確認過不能合」的 PR，久了就沒有人會認真看任何一個。
+    ignore:
+      # Excalidraw 的字型 subsetting 用 eval，撞全站 CSP（只有 e2e 看得到）
+      - dependency-name: vite
+      # 1.80 預設開 React Compiler 診斷，25 個 warning 撞 --max-warnings 0；本專案沒跑 compiler
+      - dependency-name: oxlint
+      # 5.7 移除 SiOpenai、SiCss3 改名；要先決定 /about 的 GPT 換什麼圖示
+      - dependency-name: react-icons
+      # 0.56 的 exports 收窄，monaco-vim 0.4.4 被擋
+      - dependency-name: monaco-editor
+      # 三個要一起升，且傳遞相依 router-core / start-plugin-core 會弄壞 SSR 的 query 串流
+      - dependency-name: "@tanstack/react-router"
+      - dependency-name: "@tanstack/react-start"
+      - dependency-name: "@tanstack/react-query"
+      # 單獨升每一個都過、四個一起升就讓後台編輯器打字掉字（共用 primitive 跟著浮）
+      - dependency-name: "@radix-ui/react-select"
+      - dependency-name: "@radix-ui/react-separator"
+      - dependency-name: "@radix-ui/react-slot"
+      - dependency-name: "@radix-ui/react-switch"
 
   # Rust：cargo audit 只擋「已知漏洞」，這裡管日常版本更新。
   - package-ecosystem: cargo
