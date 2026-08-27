@@ -525,3 +525,18 @@
   --accent: #0969da;
   --muted: #6e7781;
 }
+
+/* SSR 的靜態圖：沒有 zoom 容器，讓 SVG 自己縮進固定高的沙盒裡置中。
+   hydration 後互動層接手，盒子高度不變 → 版面不動。 */
+.mm-sandbox--static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.mm-sandbox--static .mermaid-render svg {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
