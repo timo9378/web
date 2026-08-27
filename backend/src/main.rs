@@ -50,7 +50,10 @@ fn init_sentry() -> Option<sentry::ClientInitGuard> {
     // 結構化日誌。要的不是「多一份 log」——docker logs 本來就有——而是**錯誤的前後文**：
     // 點進一個 issue 能看到那次請求前後發生什麼，不必回頭去 grep 容器日誌對時間。
     // 量的上限靠 GLITCHTIP_LOG_HOT_DAYS（預設 7 天後轉冷儲存）控制。
-    opts.enable_logs = true;
+    //
+    // ⚠️ 這裡不需要設 `opts.enable_logs`：sentry 0.49 起它已 deprecated，而且**預設就是
+    // true**。它現在只控制「整合的自動捕獲」（本專案是 sentry-tracing 的 logs feature），
+    // 要調整送什麼要去該整合自己的選項或 before_send_log，不是這個旗標。
 
     Some(sentry::init((dsn, opts)))
 }
