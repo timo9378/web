@@ -6,7 +6,7 @@
 const MERMAID_START =
   /^(---|graph\s|flowchart\s|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|sankey)/m;
 
-export function looksLikeMermaid(body: string): boolean {
+function looksLikeMermaid(body: string): boolean {
   return MERMAID_START.test(body.trim());
 }
 
