@@ -186,11 +186,10 @@ body {
       rgba(60, 60, 175, 0.356) 55%,
       transparent 65%
     ),
-    /* 現有的星雲效果 */
-    radial-gradient(ellipse at 70% 30%, rgba(100, 80, 150, 0.15) 0%, transparent 70%), /* 深紫 */
-    radial-gradient(ellipse at 30% 70%, rgba(200, 80, 120, 0.1) 0%, transparent 60%), /* 暗粉 */
-    radial-gradient(ellipse at 50% 50%, rgba(80, 150, 180, 0.12) 0%, transparent 80%), /* 薄藍綠 */
-    linear-gradient(to bottom right, rgba(50, 30, 80, 0.1) 0%, transparent 100%); /* 對角線漸層 */
+    /* 現有的星雲效果 */ radial-gradient(ellipse at 70% 30%, rgba(100, 80, 150, 0.15) 0%, transparent 70%),
+    /* 深紫 */ radial-gradient(ellipse at 30% 70%, rgba(200, 80, 120, 0.1) 0%, transparent 60%),
+    /* 暗粉 */ radial-gradient(ellipse at 50% 50%, rgba(80, 150, 180, 0.12) 0%, transparent 80%),
+    /* 薄藍綠 */ linear-gradient(to bottom right, rgba(50, 30, 80, 0.1) 0%, transparent 100%); /* 對角線漸層 */
   background-blend-mode: screen; /* 使用 screen 混合模式 */
   background-attachment: fixed; /* 固定背景，防止閃爍/移動 */
   min-height: 100vh; /* 確保背景至少填滿視窗高度 */
