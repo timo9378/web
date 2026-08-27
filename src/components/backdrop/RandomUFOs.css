@@ -9,8 +9,8 @@
   background-color: #a0e0ff; /* 淡藍色或淡綠色 */
   border-radius: 50%; /* 使其成為橢圓 */
   box-shadow:
-    0 0 8px 3px rgba(160, 224, 255, 0.7), /* 主光暈 */
-    inset 0 0 3px 1px var(--white-80); /* 內部亮點 */
+    0 0 8px 3px rgba(160, 224, 255, 0.7),
+    /* 主光暈 */ inset 0 0 3px 1px var(--white-80); /* 內部亮點 */
   /* 添加輕微的閃爍動畫 */
   animation: ufo-pulse 3s infinite alternate ease-in-out;
 }

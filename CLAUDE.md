@@ -317,6 +317,20 @@ pnpm test          # vitest
 pnpm build         # vite + nitro
 ```
 
+⚠️ **`vite` 釘死在 8.0.16，不要升。** 8.2.2 會讓 Excalidraw 的字型 subsetting 那條
+路徑進到 bundle，而它用 `eval` —— 全站 CSP 沒有 `'unsafe-eval'`，於是瀏覽器擋掉、
+console 冒出 `Skipped glyph subsetting EvalError`。抓到它的是
+`tests/e2e/mdx-blocks.spec.ts` 的「這些資源被 CSP 擋掉了」那條斷言；
+`tsc` / `oxlint` / `build` 全部都是綠的，**只有 e2e 看得到**。
+真要升就得先確認 Excalidraw 那條路徑不再需要 `eval`，或改成不載字型 subsetting。
+
+⚠️ **`oxlint` 也釘在 lockfile 的 1.75.0。** 1.80 預設開了一組 React Compiler 診斷
+（`react(purity)` / `react(refs)` / `react(immutability)` /
+`react(preserve-manual-memoization)` / `react(incompatible-library)`），一次冒出 25 個
+warning，而 CI 是 `--max-warnings 0`。這個專案**沒有在跑 React Compiler**
+（`babel-plugin-react-compiler` 在 devDependencies 但沒接進任何 build），所以那組診斷
+談的是一個不存在的最佳化器。要升 oxlint 就得先在 `.oxlintrc.json` 明確關掉它們。
+
 ### 覆蓋率有三個數字，量的是不同的東西
 
 | Codecov flag | 量什麼 | 目前 |
