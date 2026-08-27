@@ -739,7 +739,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
       # cache-to 只在 push 到 main 開：PR 不該把未合併的狀態寫進主快取，
       # 而且 fork PR 的 token 本來就寫不進去。
       # image-manifest=true + oci-mediatypes=true 是 GHCR 相容 registry 快取的必要設定。
