@@ -331,6 +331,24 @@ warning，而 CI 是 `--max-warnings 0`。這個專案**沒有在跑 React Compi
 （`babel-plugin-react-compiler` 在 devDependencies 但沒接進任何 build），所以那組診斷
 談的是一個不存在的最佳化器。要升 oxlint 就得先在 `.oxlintrc.json` 明確關掉它們。
 
+### 這幾個相依刻意釘死，Dependabot 開 PR 也不要合
+
+`package.json` 裡沒有 `^` 的那些不是手滑，是驗證過會壞。每一條都附了「要升的前提」，
+條件成立之前不用重試——下面的結論都是實測出來的，不是看 changelog 猜的。
+
+| 套件 | 釘在 | 升上去會怎樣 | 解除條件 |
+|---|---|---|---|
+| `vite` | 8.0.16 | Excalidraw 字型 subsetting 用 `eval`，撞 CSP | 該路徑不再需要 `eval` |
+| `oxlint` | 1.75.0（lockfile） | 25 個 React Compiler 診斷撞 `--max-warnings 0` | `.oxlintrc.json` 先關掉那五條 |
+| `react-icons` | 5.5.0 | 5.7 移除 `SiOpenai`、`SiCss3` 改名 → tsc 紅 | 先決定 `/about` 的 GPT 用什麼圖示 |
+| `monaco-editor` | 0.55.1 | 0.56 的 `exports` 收窄，`monaco-vim` 0.4.4 被擋 | `monaco-vim` 跟上，或換掉它 |
+| `@tanstack/react-router` `@tanstack/react-start` `@tanstack/react-query` | 各自現值 | 傳遞相依 `router-core` / `start-plugin-core` 跟著浮，SSR 的 query 串流壞掉（20 條 smoke 全紅） | 整組一起升並確認串流相容 |
+| `@radix-ui/react-select` `-separator` `-slot` `-switch` | 各自現值 | **單獨升每一個都過，四個一起升就壞**：21 個共用 primitive 跟著浮，後台編輯器打字掉字 | 找出是哪個 primitive |
+
+⚠️ **Radix 那條是這裡最值得記的一個形狀**：逐一驗證全綠、組合起來才壞。而且唯一抓得到
+它的是 `tests/e2e/post-editor.spec.ts` 的「語系分頁」那一條——47 條 smoke、`tsc`、
+`build` 全部沉默。升相依時「一個一個測都過」不構成「一起升沒問題」。
+
 ### 覆蓋率有三個數字，量的是不同的東西
 
 | Codecov flag | 量什麼 | 目前 |
