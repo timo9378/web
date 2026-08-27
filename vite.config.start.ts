@@ -42,10 +42,19 @@ function copyMonacoAssets(): Plugin {
     // buildStart 在 build 與 dev server 啟動時都會跑
     buildStart() {
       const require = createRequire(import.meta.url);
-      // 用 resolve 而不是寫死 node_modules 路徑——pnpm 的實際位置在 .pnpm/ 底下
-      const pkgPath = require.resolve('monaco-editor/package.json');
-      const version = (JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as { version: string }).version;
-      const src = path.join(path.dirname(pkgPath), 'min/vs');
+      // 用 resolve 而不是寫死 node_modules 路徑——pnpm 的實際位置在 .pnpm/ 底下。
+      // ⚠ 不能 resolve 'monaco-editor/package.json'：0.56 起它的 exports 只放行
+      //   `.`／`./*.js`／`./*`，那條路徑會被改寫成 `…/package.json.js` 而找不到。
+      //   改從進入點往上走到套件根，這樣不依賴 exports 怎麼寫。
+      const entry = require.resolve('monaco-editor');
+      let pkgDir = path.dirname(entry);
+      while (!fs.existsSync(path.join(pkgDir, 'package.json'))) {
+        const up = path.dirname(pkgDir);
+        if (up === pkgDir) throw new Error('找不到 monaco-editor 的 package.json');
+        pkgDir = up;
+      }
+      const version = (JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8')) as { version: string }).version;
+      const src = path.join(pkgDir, 'min/vs');
       const destRoot = path.resolve(import.meta.dirname, 'public/monaco');
       const stamp = path.join(destRoot, '.version');
 
