@@ -12,6 +12,8 @@ import { CodeBlock, CustomParagraph } from '@/components/blog/BlogPost';
 import { BlogImage } from '@/components/blog/BlogImage';
 import { LinkHoverPreview } from '@/components/common/LinkHoverPreview';
 import { compileMdx } from '@/lib/mdx/mdx-compile';
+import { renderMermaidSvgs } from '@/lib/mdx/mermaidRender';
+import { MermaidSvgContext } from '@/contexts/mermaidSvgs';
 
 // 行內連結 → hover 預覽卡（跟前台一致）；錨點（#foo）不預覽。
 const Anchor = ({ href, children, ...rest }: { href?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLAnchorElement>) => {
@@ -31,6 +33,19 @@ interface Compiled { src: string; code?: string; error?: string }
 export function PostPreview({ content, format }: { content: string; format?: string }) {
   const isMdx = format === 'mdx';
   const [compiled, setCompiled] = useState<Compiled | null>(null);
+
+  // mermaid 也在 server 端渲染（渲染器不進 client bundle），跟編譯一樣 debounce 後 RPC。
+  // markdown 與 mdx 都要——mermaid 圍籬兩種格式都能寫。
+  const [mermaidSvgs, setMermaidSvgs] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(() => {
+      renderMermaidSvgs({ data: content })
+        .then((m) => { if (!cancelled) setMermaidSvgs(m); })
+        .catch(() => { if (!cancelled) setMermaidSvgs({}); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [content]);
 
   // MDX 才需要編譯；debounce 400ms 避免每次打字都 RPC。setState 都在 async callback 內（非 effect 同步體）。
   useEffect(() => {
@@ -64,5 +79,9 @@ export function PostPreview({ content, format }: { content: string; format?: str
     return <p className="text-muted-foreground text-sm">{content ? '準備預覽…' : '尚無內容'}</p>;
   }, [isMdx, content, compiled]);
 
-  return <article className="post-content">{body}</article>;
+  return (
+    <MermaidSvgContext value={mermaidSvgs}>
+      <article className="post-content">{body}</article>
+    </MermaidSvgContext>
+  );
 }

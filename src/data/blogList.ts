@@ -14,10 +14,11 @@ import type {
 } from '@koimsurai/api-types';
 import { apiUrl } from '@/lib/api';
 import { compileMdx } from '@/lib/mdx/mdx-compile';
+import { renderMermaidSvgs } from '@/lib/mdx/mermaidRender';
 import type { Post } from '@/components/blog/Blog';
 
 // format='mdx' 的文章多帶一個 server 端編譯好的 function-body（前端用 runSync 執行）。
-export type PostDetail = PostDetailResponse & { compiledMdx?: string };
+export type PostDetail = PostDetailResponse & { compiledMdx?: string; mermaidSvgs?: Record<string, string> };
 
 // 單篇文章（/api/posts/:id?lang=）。route loader 用 ensureQueryData 預取 → SSR head +
 // dehydrate；BlogPost（ClientOnly）hydrate 後 useQuery 讀同一份快取，消掉「loader + 元件
@@ -36,16 +37,24 @@ export const postDetailQueryOptions = (id: string | number, lang: string) =>
       if (data.message !== 'success') throw new Error('Post not found');
       // MDX 文章：server 端編譯（compiler 不進 client bundle），結果隨 query dehydrate 到 client。
       // 編譯失敗（Agent 寫錯語法，如 prose 裡有裸 <Tag>）→ 不 404 整篇，退回 markdown 渲染（至少可讀）。
+      // mermaid 圖同樣在 server 端渲染（渲染器約 1.5 MB，不進 client bundle），
+      // 對照表隨 query dehydrate 到 client；markdown 與 mdx 兩種格式都要，所以放在分支之前。
+      let mermaidSvgs: Record<string, string> | undefined;
+      try {
+        mermaidSvgs = await renderMermaidSvgs({ data: data.content });
+      } catch (e) {
+        console.error('[mermaid] 伺服器渲染失敗：', e);
+      }
       if (data.format === 'mdx') {
         try {
           const compiledMdx = await compileMdx({ data: data.content });
-          return { ...data, compiledMdx };
+          return { ...data, compiledMdx, mermaidSvgs };
         } catch (e) {
           console.error('[mdx] 編譯失敗，退回 markdown 渲染：', e);
-          return data;
+          return { ...data, mermaidSvgs };
         }
       }
-      return data;
+      return { ...data, mermaidSvgs };
     },
     staleTime: 5 * 60 * 1000,
   });

@@ -15,6 +15,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 // 的位移，也不需要為了 lazy-load 維護一個 singleton。
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { parseMermaidFrontmatter } from '@/lib/mdx/mermaidFrontmatter';
+import { mermaidKey } from '@/lib/mdx/mermaidFences';
+import { useMermaidSvgs } from '@/contexts/mermaidSvgs';
 import { lookup } from '@/lib/tableLookup';
 // 圖表樣式跟著元件走（同名檔）。⚠ 這行會讓這份 CSS 排在 BlogPost.css **之前**——
 // BlogPost.tsx 的 import 清單裡 `./MermaidBlock` 在 `./BlogPost.css` 前面。
@@ -169,35 +171,43 @@ function downloadMermaidPng(ref: ReactZoomPanPinchRef | null): void {
 /* ── MermaidDiagram (shared renderer used in inline + fullscreen) ── */
 const MermaidDiagram = ({ code, theme, onError, onRendered }: { code: string; theme: string; onError?: (err: string | null) => void; onRendered?: () => void }) => {
   const parsed = useMemo(() => parseMermaidFrontmatter(code), [code]);
-
-  /* 渲染器**只用動態 import**。試過在 SSR 分支加靜態 import 想讓首屏就有圖，但同一個模組
-     同時被靜態與動態 import 時 rollup 會把它併回主 chunk——實測 BlogPost 路由 chunk
-     從 127 KB 變成 1613 KB，等於每篇沒有圖的文章也要背 1.5 MB。要 SSR 就得把渲染搬到
-     loader／server function 那一層，不是在元件裡分支。 */
-  const [svg, setSvg] = useState<string>('');
-  const [err, setErr] = useState<string | null>(null);
+  /* SVG 由伺服器預先渲染好（見 lib/mdx/mermaidRender.ts），這裡只查表。
+     渲染器約 1.5 MB，讓它留在伺服器端，client 一個 byte 都不必背。 */
+  const svgs = useMermaidSvgs();
+  const svg = svgs[mermaidKey(parsed.body)] ?? '';
 
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
   const onRenderedRef = useRef(onRendered);
   onRenderedRef.current = onRendered;
-
   useEffect(() => {
-    let alive = true;
-    if (svg) { onErrorRef.current?.(null); onRenderedRef.current?.(); return; }
-    void import('@/lib/mdx/mermaidSvg')
-      .then(m => { if (alive) { setSvg(m.renderMermaidSvg(parsed.body)); setErr(null); } })
-      .catch((e: unknown) => { if (alive) setErr(e instanceof Error ? e.message : 'Mermaid 渲染失敗'); });
-    return () => { alive = false; };
-  }, [parsed.body, svg]);
+    // 查不到＝伺服器渲染那張圖時失敗（語法壞掉），或對照表沒帶下來。
+    onErrorRef.current?.(svg ? null : 'Mermaid 圖表解析失敗');
+    if (svg) onRenderedRef.current?.();
+  }, [svg]);
 
-  useEffect(() => { onErrorRef.current?.(err); }, [err]);
-
-  if (err) return null;
+  if (!svg) return null;
   /* SVG 由 beautiful-mermaid 從語法樹產生（無 <script>、無 foreignObject），來源是自家 CMS
      的文章內容——與換掉之前 mermaid 走 `container.innerHTML = svg` 的信任邊界相同。 */
   // eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml
   return <div className={`mermaid-render mm-theme-${theme}`} dangerouslySetInnerHTML={{ __html: svg }} />;
+};
+
+/* ── SSR 用的靜態圖 ──
+   互動層（react-zoom-pan-pinch）在 render 期碰 window，不是 SSR-safe，所以 MermaidBlock
+   整顆包在 ClientOnly 裡。但**圖本身**只是一段 SVG 字串（伺服器已經渲染好），可以在 SSR
+   就畫出來當 fallback：首屏直接看得到圖，hydration 後互動層原地接手。
+   ⚠ .mm-sandbox 是固定高度，所以這個接手不會改變盒子外的版面。 */
+export const MermaidStatic = ({ code }: { code: string }) => {
+  const svgs = useMermaidSvgs();
+  const svg = svgs[mermaidKey(parseMermaidFrontmatter(code).body)] ?? '';
+  if (!svg) return <div className="mm-sandbox" />;
+  return (
+    <div className="mm-sandbox mm-sandbox--static">
+      {/* eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml */}
+      <div className="mermaid-render mm-theme-deep" dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
+  );
 };
 
 /* ── Toolbar icon menu ── */

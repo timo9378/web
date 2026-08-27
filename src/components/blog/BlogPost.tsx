@@ -18,7 +18,8 @@ import { CodeBody } from '@/components/mdx/CodeSurface';
 // 圖表整套（渲染、工具列、主題／版面切換、全螢幕、mermaid+ELK 的延遲載入）在 MermaidBlock.tsx。
 // 這裡只是把它掛進 ReactMarkdown 的元件表——mermaid 那顆 lib 由 MermaidBlock 自己動態載入，
 // 沒有圖的文章連 import 都不會觸發。
-import { MermaidBlock } from './MermaidBlock';
+import { MermaidBlock, MermaidStatic } from './MermaidBlock';
+import { MermaidSvgContext } from '@/contexts/mermaidSvgs';
 import ReactDOM from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation, Trans } from 'react-i18next';
@@ -172,7 +173,7 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
     // mermaid 用 react-zoom-pan-pinch（render 期碰 window，非 SSR-safe）→ 只把這個島包 ClientOnly。
     // fallback 是固定高 .mm-sandbox 空殼（CSS height:420px）→ SSR 佔位穩定、client 接手渲染圖時不 reflow。
     return (
-      <ClientOnly fallback={<div className="mm-sandbox" />}>
+      <ClientOnly fallback={<MermaidStatic code={codeText} />}>
         <MermaidBlock code={codeText} />
       </ClientOnly>
     );
@@ -1602,6 +1603,9 @@ function BlogPost() {
               )}
 
               <article className="post-content drop-cap-first" ref={contentRef}>
+                {/* 伺服器預渲染的 mermaid SVG 對照表。CodeBlock 是頂層 export（後台預覽也重用），
+                    中間又隔著 ReactMarkdown 的內部結構，所以只能走 context。 */}
+                <MermaidSvgContext value={postData?.mermaidSvgs ?? {}}>
                 {postData?.compiledMdx ? (
                   // format='mdx'：server 端已編譯，這裡 runSync 執行成 React 元件（自訂 block +
                   // 與 markdown 共用的 code/link/img/heading override）。
@@ -1628,6 +1632,7 @@ function BlogPost() {
                     {post.content}
                   </ReactMarkdown>
                 )}
+              </MermaidSvgContext>
               </article>
               <SignatureSVG className="blog-signature" />
             </div>
