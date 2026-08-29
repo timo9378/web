@@ -427,7 +427,26 @@ cargo llvm-cov nextest --locked --fail-under-regions 78   # 門檻以 ci.yml 為
 
 ⚠️ **nursery 整組不要開**：`option_if_let_else`（56 個）這類公認會讓程式更難讀的都在
 裡面。**`clippy::cargo` 也不要開**：246 個全是 `cargo_common_metadata` /
-`multiple_crate_versions`，對私有 binary 沒有意義。
+`multiple_crate_versions`，對私有 binary 沒有意義。**`restriction` 更不能整組開**
+（連「不准用 `else`」都在裡面），只個別挑：`todo` / `unimplemented` / `dbg_macro` /
+`print_stdout` / `print_stderr` 是 deny，因為現存數量本來就是 0，等於純畫一條線。
+
+### `unwrap_used` 寫在 crate root，不在 `[workspace.lints]`
+
+`src/lib.rs`、`src/main.rs`、`src/bin/export_types.rs` 各有一行 `#![deny(clippy::unwrap_used)]`。
+**不要「順手」把它搬進 `Cargo.toml`**——那是 package 層級的，會連 `tests/` 一起管。
+
+而 `clippy.toml` 的 `allow-unwrap-in-tests` 救不了那些：它認的是 `#[cfg(test)]` 與
+`#[test]`，`tests/common/mod.rs` 那種**非 `#[test]` 的 setup helper** 兩者都不是
+（實測搬進 `[lints]` 會剩 20 個擋在 5 個測試檔裡）。寫在 crate root 才精確涵蓋正式碼。
+
+`expect_used` 刻意**不開**：`.unwrap()` 是「沒想過會不會失敗」，`.expect(m)` 是「我斷言
+它不會失敗，理由是 m」——後者留著當有文件的逃生口。正式碼原有的 10 個 unwrap 全是
+`LazyLock` 裡的 `Regex::new(字面值)`，已換成帶訊息的 expect。
+
+⚠️ `clippy.toml`（repo 根目錄）放的是 lint 的**設定值**，開關在 `Cargo.toml`。兩個檔案
+要一起看。它現在只有那五個 `allow-*-in-tests`，而那正是 `unwrap_used` 能開起來的前提：
+CI 是 `-D warnings`，**warn 在合流那一刻等同 deny**，所以「只設 warn 讓測試能用」是行不通的。
 
 ⚠️ 那九條 `allow` 每一條都標了導入當下的數量與理由，**要拿掉之前先讀理由**。最大宗是
 `doc_markdown`（468 個），它要求中文註解裡的 Express / SQLite 這些字加反引號。

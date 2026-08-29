@@ -1,3 +1,6 @@
+// 理由見 lib.rs 頂端的同一條——crate root 才涵蓋得剛好是正式碼。
+#![deny(clippy::unwrap_used)]
+
 use std::{env, str::FromStr, sync::Arc, time::Duration};
 
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};

@@ -2,6 +2,10 @@
 //! 用法：`cargo run --bin export_types`（backend/ 下）。
 //! P4 起手：先收已 typed 的端點 struct；動態 JSON 端點待 typed 化後逐步 register。
 
+// 這支是 codegen CLI 不是 server：它的輸出對象是跑指令的人，不是結構化 log，
+// 所以 println! 就是對的做法。全 workspace 的 print_stdout = deny 在這裡放行。
+#![allow(clippy::print_stdout, reason = "codegen CLI，輸出對象是終端機不是 log")]
+
 use koimsurai_web_backend::handlers::admin::{
     AdminCategoryRow, AdminCommentRow, AdminCommentsResponse, AdminPostDetailResponse, AdminPostFull,
     AdminPostsResponse, AdminTagRow, AdminUserRow, AdminUsersResponse, BlacklistResponse, BlacklistRow,

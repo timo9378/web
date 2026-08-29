@@ -1,0 +1,14 @@
+# clippy 的「參數」——lint 的**開關**在 Cargo.toml 的 [workspace.lints]，這裡放的是
+# 那些 lint 的設定值。兩個檔案要一起看。
+#
+# ⚠️ 這幾行是 `unwrap_used = "deny"` 能成立的前提。
+#
+# 常見的誤解是「unwrap 在測試裡合理，所以只設 warn 就好」——那在這個 repo 不成立：
+# CI 與 pre-commit 都是 `cargo clippy -- -D warnings`，warn 在合流那一刻等同 deny，
+# 測試裡的 577 個 .unwrap() 一樣會擋人。真正該用的機制是下面這幾個開關：它們只放行
+# `#[cfg(test)]` 與 tests/ 裡的用法，正式碼照擋。
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true

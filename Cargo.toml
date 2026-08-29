@@ -38,3 +38,27 @@ items_after_statements = "allow" # 21；區域 fn 就近定義比搬到頂端好
 similar_names = "allow"          # 3
 many_single_char_names = "allow" # 3
 unreadable_literal = "allow"     # 4；port 與短常數加底線反而難讀
+
+# ─── restriction：整組絕對不要開，只個別挑 ────────────────────────────
+# 這組是「有些專案想禁但多數專案不該禁」的集合（連 `else` 都有規則在禁），
+# 開整組會直接淹沒。以下每一條都是量過現存數量才加的。
+todo = "deny"           # 現存 0。半成品不准 merge
+unimplemented = "deny"  # 現存 0
+dbg_macro = "deny"      # 現存 0。上 commit 前清掉
+print_stdout = "deny"   # 正式碼現存 1（export_types 那支 codegen CLI，檔內 allow）
+print_stderr = "deny"   # 正式碼現存 0。要輸出走 tracing，才進得了結構化 log
+
+# ⚠️ `unwrap_used` **不在這裡**，它寫在三個 crate root 的 `#![deny(...)]`
+# （src/lib.rs、src/main.rs、src/bin/export_types.rs），理由見 lib.rs 上面那段。
+# 一句話版本：`[lints]` 是 package 層級、會連 tests/ 一起管，而這條的意圖只針對正式碼。
+
+# ─── rustc 自己的 lint ────────────────────────────────────────────────
+# 預設 warn 的那些在 `-D warnings` 下本來就會擋，這裡只列「預設是 allow、
+# 要主動打開才有」的。同樣每條都量過現存數量。
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny" # unsafe fn 內仍要 explicit unsafe block
+unused_must_use = "deny"        # Result 不能默默扔掉（預設 warn，這裡升 deny）
+trivial_numeric_casts = "warn"  # 現存 0。`5_i32 as i32` 之類的廢操作
+unused_lifetimes = "warn"       # 現存 0
+# missing_docs 不開：現存 689 個，而且這個 crate 沒有對外 API 消費者
+# unreachable_pub 不開：現存 10 個全在 tests/common，那是 include 模式的固有現象
