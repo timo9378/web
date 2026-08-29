@@ -5,6 +5,10 @@
 #
 # 只放「純格式／純搬移」的 SHA。有任何行為變動的 commit 不要加進來——
 # 加了就等於把那次改動從 blame 裡藏起來，之後追問題會追不到人。
+#
+# ⚠️ 這個 repo 的 PR 是 squash merge，所以要寫的是**合併後 main 上那顆**的 SHA，
+# 不是分支上原本那筆。分支被刪掉後原 SHA 就不在 main 的歷史裡，blame 會完全無視它
+# （不報錯，只是靜靜地沒生效）——所以 SHA 要等 merge 完才填得對。
 
-# style: 用 oxfmt 統一 JS/TS 格式（218 檔）
-f4ca192c76ed70c7cb9f7ef86c168ebc6bec9854
+# chore: 補上 oxfmt(JS/TS formatter) (#130) —— 218 檔格式化 + 接線
+2b0b89b1a39615343558f20512e18037cea4102a
