@@ -18,10 +18,10 @@
 # Stage 1: Build
 FROM node:26.5.0-bookworm AS builder
 WORKDIR /app
-# pnpm 釘版:對齊 host/CI(packageManager 欄位 = pnpm@11.17.0)。
+# pnpm 釘版:對齊 host/CI(packageManager 欄位 = pnpm@12.1.0)。
 # 不釘的話 build 會抓到當下最新 pnpm,版本漂移。overrides 已移到 pnpm-workspace.yaml
 # (pnpm 11 不讀 package.json 的 pnpm 欄位);minimumReleaseAge 預設保留(供應鏈防護)。
-RUN npm config set script-shell sh && npm install -g pnpm@11.17.0
+RUN npm config set script-shell sh && npm install -g pnpm@12.1.0
 
 # overrides 現在在 pnpm-workspace.yaml(pnpm 11 不讀 package.json 的 pnpm 欄位),
 # 且 root 依賴 @koimsurai/api-types(workspace:*):install 前需備妥 workspace 定義

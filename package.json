@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=26"
   },
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@12.1.0",
   "scripts": {
     "build": "vite build --config vite.config.start.ts",
     "build:all": "pnpm run build:photos && pnpm run build",
