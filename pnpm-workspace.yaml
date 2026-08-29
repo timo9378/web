@@ -4,6 +4,10 @@ packages:
 # pnpm 11 預設封鎖 postinstall build script,需顯式核可。
 # esbuild:平台 binary 安裝;exifreader:套件的 prepare。兩者為既有相依,允許執行。
 allowBuilds:
+  # ⚠️ pnpm 自己也要核可：12 起 CLI 是 Rust 原生 binary，靠 postinstall 的 install.js
+  #    把它放到位。不核可的話 packageManager 自動接手會裝出一個**佔位符**，
+  #    執行時報 "Syntax error" 而不是「缺少 binary」——症狀跟原因差很遠。
+  pnpm: true
   # sentry-cli 的 postinstall 下載平台對應的 binary（source map 上傳用，見
   # scripts/upload-sourcemaps.sh）。不核可的話 pnpm install 會直接失敗。
   '@sentry/cli': true
