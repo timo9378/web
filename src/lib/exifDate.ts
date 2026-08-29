@@ -26,8 +26,7 @@ export interface ExifWallClock {
   offset: string | null;
 }
 
-const STAMP_RE =
-  /^(\d{4})[:-](\d{2})[:-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
+const STAMP_RE = /^(\d{4})[:-](\d{2})[:-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
 
 export function parseExifWallClock(raw?: string | null): ExifWallClock | null {
   if (!raw) return null;
@@ -43,13 +42,22 @@ export function parseExifWallClock(raw?: string | null): ExifWallClock | null {
     const t = new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
     if (Number.isNaN(t.getTime())) return null;
     return {
-      year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate(),
-      hour: t.getHours(), minute: t.getMinutes(), second: t.getSeconds(),
+      year: t.getFullYear(),
+      month: t.getMonth() + 1,
+      day: t.getDate(),
+      hour: t.getHours(),
+      minute: t.getMinutes(),
+      second: t.getSeconds(),
       offset: null,
     };
   }
   const w: ExifWallClock = {
-    year: +y, month: +mo, day: +d, hour: +h, minute: +mi, second: +s,
+    year: +y,
+    month: +mo,
+    day: +d,
+    hour: +h,
+    minute: +mi,
+    second: +s,
     offset: zone ?? null,
   };
   // regex 只保證「兩位數字」，不保證是合法的月/日。沒擋的話 "2023-13-99" 會一路
@@ -95,7 +103,11 @@ export function exifDateTimeText(raw?: string | null, locale = 'zh-TW'): string 
   const w = parseExifWallClock(raw);
   if (!w) return null;
   return asUtcShell(w).toLocaleString(locale, {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
   });
 }

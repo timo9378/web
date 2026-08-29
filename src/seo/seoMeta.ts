@@ -64,12 +64,7 @@ const jsonLdScript = (data: unknown): { type: string; children: string } => ({
 });
 
 /** 一般頁面（非文章）head() 用的 meta。canonicalPath 例:/music、/en/music */
-export function pageMeta(
-  title: string | null,
-  description: string,
-  canonicalPath: string,
-  locale: string,
-): MetaTag[] {
+export function pageMeta(title: string | null, description: string, canonicalPath: string, locale: string): MetaTag[] {
   const url = `${BASE_URL}${canonicalPath}`;
   const image = `${BASE_URL}/og-default-v2.png`;
   // 對齊 SEOHead 既有的標題格式

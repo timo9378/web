@@ -19,15 +19,7 @@ interface Props {
   step?: number;
 }
 
-export default function InteractiveChartBlock({
-  type = 'bar',
-  data = [],
-  title,
-  unit,
-  min = 0,
-  max,
-  step = 1,
-}: Props) {
+export default function InteractiveChartBlock({ type = 'bar', data = [], title, unit, min = 0, max, step = 1 }: Props) {
   const [rows, setRows] = useState<Row[]>(() =>
     data.map((d) => ({ label: String(d.label ?? ''), value: Number(d.value) || 0 })),
   );
@@ -37,8 +29,7 @@ export default function InteractiveChartBlock({
   }
 
   const hi = max ?? Math.max(...rows.map((r) => r.value), 1) * 2;
-  const setAt = (i: number, v: number) =>
-    setRows((rs) => rs.map((r, j) => (j === i ? { ...r, value: v } : r)));
+  const setAt = (i: number, v: number) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, value: v } : r)));
 
   return (
     <div className="mdx-chart-interactive">

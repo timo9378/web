@@ -34,7 +34,9 @@ function StarPicker({ value, onChange }: StarPickerProps) {
           className={'fe-star ' + (n <= value ? 'on' : '')}
           onClick={() => onChange(n)}
           aria-label={`${n}`}
-        >★</button>
+        >
+          ★
+        </button>
       ))}
     </span>
   );
@@ -56,15 +58,22 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  const authHeaders = useCallback(() => ({
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${getToken() ?? ''}`,
-  }), [getToken]);
+  const authHeaders = useCallback(
+    () => ({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken() ?? ''}`,
+    }),
+    [getToken],
+  );
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); };
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
   }, [onClose]);
 
   // 搜尋輸入 debounce 400ms → debouncedQuery
@@ -77,10 +86,10 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
   const { data: results = [], isFetching: searching } = useQuery({
     queryKey: ['watch', 'tmdb-search', debouncedQuery, kind],
     queryFn: async (): Promise<SearchResult[]> => {
-      const r = await fetch(
+      const r = (await fetch(
         `${API}/watch/tmdb-search?q=${encodeURIComponent(debouncedQuery)}&kind=${kind === 'film' ? 'movie' : 'tv'}`,
         { headers: authHeaders() },
-      ).then((x) => x.json()) as TmdbSearchResponse;
+      ).then((x) => x.json())) as TmdbSearchResponse;
       return r.results;
     },
     enabled: !!debouncedQuery,
@@ -95,14 +104,19 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
         headers: authHeaders(),
         body: JSON.stringify({ tmdbId: item.tmdbId, kind, rating: 5, quote: '' }),
       });
-      setQuery(''); setDebouncedQuery('');
+      setQuery('');
+      setDebouncedQuery('');
       onChanged();
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const patchFavorite = async (id: number, patch: Record<string, unknown>) => {
     await fetch(`${API}/watch/favorites/${id}`, {
-      method: 'PUT', headers: authHeaders(), body: JSON.stringify(patch),
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(patch),
     });
     onChanged();
   };
@@ -112,7 +126,9 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
     try {
       await fetch(`${API}/watch/favorites/${id}`, { method: 'DELETE', headers: authHeaders() });
       onChanged();
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   // 移動排序：跟相鄰項互換 sort_order
@@ -121,14 +137,14 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
     // idx=0 往上移時就會跟清單尾端互換 —— 那是 bug 不是防護。
     const j = idx + dir;
     if (idx < 0 || idx >= favorites.length || j < 0 || j >= favorites.length) return;
-    const a = favorites[idx], b = favorites[j];
+    const a = favorites[idx],
+      b = favorites[j];
     setBusy(true);
     try {
-      await Promise.all([
-        patchFavorite(a.id, { sort_order: idx + dir }),
-        patchFavorite(b.id, { sort_order: idx }),
-      ]);
-    } finally { setBusy(false); }
+      await Promise.all([patchFavorite(a.id, { sort_order: idx + dir }), patchFavorite(b.id, { sort_order: idx })]);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return createPortal(
@@ -137,11 +153,18 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
     // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
     // 同上：本元件有 Escape 監聽與右上關閉鈕，遮罩點擊只是滑鼠便利
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div className="fe-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="fe-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="fe-modal">
         <div className="fe-head">
           <h3>{t('watch.favManage')}</h3>
-          <button className="fe-close" onClick={onClose} aria-label="close">✕</button>
+          <button className="fe-close" onClick={onClose} aria-label="close">
+            ✕
+          </button>
         </div>
 
         {/* 現有清單 */}
@@ -149,26 +172,63 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
           {favorites.length === 0 && <p className="fe-empty">{t('watch.favEmpty')}</p>}
           {favorites.map((f, i) => (
             <div className="fe-item" key={f.id}>
-              {f.poster
-                ? <img className="fe-item-poster" src={f.poster} alt={f.title} loading="lazy" />
-                : <span className="fe-item-poster fe-item-poster--blank">{f.title.slice(0, 2)}</span>}
+              {f.poster ? (
+                <img className="fe-item-poster" src={f.poster} alt={f.title} loading="lazy" />
+              ) : (
+                <span className="fe-item-poster fe-item-poster--blank">{f.title.slice(0, 2)}</span>
+              )}
               <div className="fe-item-body">
                 <div className="fe-item-top">
-                  <span className="fe-item-title">{f.title}{f.year ? ` · ${f.year}` : ''}</span>
+                  <span className="fe-item-title">
+                    {f.title}
+                    {f.year ? ` · ${f.year}` : ''}
+                  </span>
                   <span className="fe-item-actions">
-                    <button disabled={i === 0 || busy} onClick={() => { void move(i, -1); }} aria-label="up">↑</button>
-                    <button disabled={i === favorites.length - 1 || busy} onClick={() => { void move(i, 1); }} aria-label="down">↓</button>
-                    <button className="fe-del" disabled={busy} onClick={() => { void removeFavorite(f.id); }} aria-label="delete">🗑</button>
+                    <button
+                      disabled={i === 0 || busy}
+                      onClick={() => {
+                        void move(i, -1);
+                      }}
+                      aria-label="up"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      disabled={i === favorites.length - 1 || busy}
+                      onClick={() => {
+                        void move(i, 1);
+                      }}
+                      aria-label="down"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      className="fe-del"
+                      disabled={busy}
+                      onClick={() => {
+                        void removeFavorite(f.id);
+                      }}
+                      aria-label="delete"
+                    >
+                      🗑
+                    </button>
                   </span>
                 </div>
                 {/* rating / quote 在 DB 都允許 NULL（rating INTEGER DEFAULT 5、quote TEXT DEFAULT ''，
                     兩者都沒有 NOT NULL）——舊資料可能是 NULL，這裡補上顯示用的預設。 */}
-                <StarPicker value={f.rating ?? 0} onChange={(n) => { void patchFavorite(f.id, { rating: n }); }} />
+                <StarPicker
+                  value={f.rating ?? 0}
+                  onChange={(n) => {
+                    void patchFavorite(f.id, { rating: n });
+                  }}
+                />
                 <textarea
                   className="fe-quote"
                   defaultValue={f.quote ?? ''}
                   placeholder={t('watch.favQuotePlaceholder')}
-                  onBlur={(e) => { if (e.target.value !== f.quote) void patchFavorite(f.id, { quote: e.target.value }); }}
+                  onBlur={(e) => {
+                    if (e.target.value !== f.quote) void patchFavorite(f.id, { quote: e.target.value });
+                  }}
                 />
               </div>
             </div>
@@ -179,8 +239,12 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
         <div className="fe-add">
           <div className="fe-add-row">
             <div className="fe-kind">
-              <button className={kind === 'film' ? 'on' : ''} onClick={() => setKind('film')}>{t('watch.kindFilm')}</button>
-              <button className={kind === 'tv' ? 'on' : ''} onClick={() => setKind('tv')}>{t('watch.kindTv')}</button>
+              <button className={kind === 'film' ? 'on' : ''} onClick={() => setKind('film')}>
+                {t('watch.kindFilm')}
+              </button>
+              <button className={kind === 'tv' ? 'on' : ''} onClick={() => setKind('tv')}>
+                {t('watch.kindTv')}
+              </button>
             </div>
             <input
               className="fe-search"
@@ -194,11 +258,19 @@ export default function FavoritesEditor({ favorites, onClose, onChanged }: Favor
             <ul className="fe-results">
               {results.map((r) => (
                 <li key={r.tmdbId}>
-                  <button className="fe-result" disabled={busy} onClick={() => { void addFavorite(r); }}>
+                  <button
+                    className="fe-result"
+                    disabled={busy}
+                    onClick={() => {
+                      void addFavorite(r);
+                    }}
+                  >
                     {/* alt 用 `?? ''`：沒標題時海報右邊那行標題也是空的，硬掛假替代文字更糟 */}
-                    {r.poster
-                      ? <img src={r.poster} alt={r.title ?? ''} loading="lazy" />
-                      : <span className="fe-result-blank">—</span>}
+                    {r.poster ? (
+                      <img src={r.poster} alt={r.title ?? ''} loading="lazy" />
+                    ) : (
+                      <span className="fe-result-blank">—</span>
+                    )}
                     <span className="fe-result-meta">
                       <span className="fe-result-title">{r.title}</span>
                       <span className="fe-result-year">{r.year ?? ''}</span>

@@ -43,19 +43,13 @@ interface SlotProps {
 
 function Slot({ children, ref, ...props }: SlotProps) {
   const childType = children.type;
-  const isAlreadyMotion =
-    typeof childType === 'object' &&
-    childType !== null &&
-    isMotionComponent(childType);
+  const isAlreadyMotion = typeof childType === 'object' && childType !== null && isMotionComponent(childType);
 
   // Slot 的本質：用 motion 包裝任意子元素的型別，只有 render 期才知道子元素是什麼，
   // 故無法把 motion.create 提到模組層級——這正是 animate-ui 既有設計。
   // eslint-disable-next-line @eslint-react/static-components -- 多型 Slot 必須在 render 期生成 motion 元件
   const Base = React.useMemo<React.ElementType>(
-    () =>
-      isAlreadyMotion
-        ? (childType as React.ElementType)
-        : motion.create(childType as React.ComponentType),
+    () => (isAlreadyMotion ? (childType as React.ElementType) : motion.create(childType as React.ComponentType)),
     [isAlreadyMotion, childType],
   );
 

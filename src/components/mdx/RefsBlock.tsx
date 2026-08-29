@@ -8,13 +8,23 @@ import { SiNpm, SiRust, SiPypi } from 'react-icons/si';
 import { FaGithub, FaXTwitter, FaBookOpen, FaLink, FaYoutube } from 'react-icons/fa6';
 import { LinkHoverPreview } from '@/components/common/LinkHoverPreview';
 
-interface RefLink { text: string; href: string }
-interface RefItem { label?: string; links?: RefLink[] }
+interface RefLink {
+  text: string;
+  href: string;
+}
+interface RefItem {
+  label?: string;
+  links?: RefLink[];
+}
 
 // 依網域回傳品牌 icon + 深底可讀的品牌色。
 function brandFor(href: string): { Icon: IconType; color: string } {
   let host = '';
-  try { host = new URL(href, 'https://koimsurai.com').hostname.replace(/^www\./, ''); } catch { /* 無法解析 → 預設 */ }
+  try {
+    host = new URL(href, 'https://koimsurai.com').hostname.replace(/^www\./, '');
+  } catch {
+    /* 無法解析 → 預設 */
+  }
   if (/(^|\.)github\.(com|io)$/.test(host)) return { Icon: FaGithub, color: '#e8e8ea' };
   if (host === 'npmjs.com') return { Icon: SiNpm, color: '#e15754' };
   if (host === 'crates.io') return { Icon: SiRust, color: '#e0aa82' };

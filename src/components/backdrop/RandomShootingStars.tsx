@@ -26,8 +26,8 @@ const createShootingStar = (): ShootingStar => {
   const startY = getRandomValue(-10, 110); // 起始 Y 位置 (% of height)
 
   // 根據角度和距離計算結束位置的相對偏移
-  const endXOffset = distance * Math.cos(angle * Math.PI / 180);
-  const endYOffset = distance * Math.sin(angle * Math.PI / 180);
+  const endXOffset = distance * Math.cos((angle * Math.PI) / 180);
+  const endYOffset = distance * Math.sin((angle * Math.PI) / 180);
 
   return {
     id: Math.random(),
@@ -39,7 +39,7 @@ const createShootingStar = (): ShootingStar => {
     duration: duration,
     delay: getRandomValue(0, 6), // 延遲出現
     rotate: angle, // 直接使用飛行角度旋轉元素
-    sizeScale: getRandomValue(0.6, 1.4) // 新增整體縮放比例
+    sizeScale: getRandomValue(0.6, 1.4), // 新增整體縮放比例
   };
 };
 
@@ -47,35 +47,34 @@ interface RandomShootingStarsProps {
   count?: number;
 }
 
-const RandomShootingStars = ({ count = 5 }: RandomShootingStarsProps) => { // Reduce default shooting star count to 5
+const RandomShootingStars = ({ count = 5 }: RandomShootingStarsProps) => {
+  // Reduce default shooting star count to 5
   const { isVisible } = usePageVisibility();
-  const [stars, setStars] = useState<ShootingStar[]>(() =>
-    Array.from({ length: count }, createShootingStar)
-  );
+  const [stars, setStars] = useState<ShootingStar[]>(() => Array.from({ length: count }, createShootingStar));
 
   // Remove useEffect with setInterval
 
   const handleAnimationComplete = (id: number) => {
-    setStars(prevStars =>
-      prevStars.map(star =>
-        star.id === id ? createShootingStar() : star
-      )
-    );
+    setStars((prevStars) => prevStars.map((star) => (star.id === id ? createShootingStar() : star)));
   };
 
-   return (
-     <div style={{
-       position: 'fixed',
-       top: 0,
-       left: 0,
-       width: '100%',
-       height: '100%',
-       pointerEvents: 'none',
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
         zIndex: 4,
         overflow: 'hidden',
-      }}> {/* z-index: 4 */}
-        <AnimatePresence>
-          {stars.map(star => (
+      }}
+    >
+      {' '}
+      {/* z-index: 4 */}
+      <AnimatePresence>
+        {stars.map((star) => (
           <motion.div
             key={star.id}
             className="shooting-star" // Add a class for potential CSS targeting
@@ -99,19 +98,25 @@ const RandomShootingStars = ({ count = 5 }: RandomShootingStarsProps) => { // Re
               x: 0, // Initial relative transform offset
               y: 0,
             }}
-            animate={isVisible ? {
-              x: star.endX, // Animate relative transform offset
-              y: star.endY,
-              opacity: [0, 1, 1, 0], // Restore full opacity cycle
-            } : {}}
+            animate={
+              isVisible
+                ? {
+                    x: star.endX, // Animate relative transform offset
+                    y: star.endY,
+                    opacity: [0, 1, 1, 0], // Restore full opacity cycle
+                  }
+                : {}
+            }
             transition={{
               delay: star.delay,
               duration: isVisible ? star.duration : 0, // 頁面不可見時停止動畫
               x: { duration: isVisible ? star.duration : 0, ease: 'linear' }, // Keep one x transition
               y: { duration: isVisible ? star.duration : 0, ease: 'linear' },
-              opacity: { duration: isVisible ? star.duration : 0, times: [0, 0.3, 0.95, 1] } // Restore times array
+              opacity: { duration: isVisible ? star.duration : 0, times: [0, 0.3, 0.95, 1] }, // Restore times array
             }}
-            onAnimationComplete={() => { handleAnimationComplete(star.id); }} // Trigger replacement on completion
+            onAnimationComplete={() => {
+              handleAnimationComplete(star.id);
+            }} // Trigger replacement on completion
             exit={{ opacity: 0 }} // Keep exit for AnimatePresence handling if needed
           />
         ))}

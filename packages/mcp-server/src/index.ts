@@ -21,10 +21,7 @@ const api = new ApiClient({
 const tools = makeTools(api);
 const byName = new Map(tools.map((t) => [t.name, t]));
 
-const server = new Server(
-  { name: 'koimsurai-admin', version: '0.1.0' },
-  { capabilities: { tools: {} } },
-);
+const server = new Server({ name: 'koimsurai-admin', version: '0.1.0' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, () => ({
   tools: tools.map((t) => ({

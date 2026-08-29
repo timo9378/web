@@ -72,8 +72,17 @@ function stubMediaElement() {
 
 /** 進度條在 jsdom 裡沒有版面，getBoundingClientRect 全是 0——手動給一個。 */
 function giveLayout(el: HTMLElement, left: number, width: number) {
-  el.getBoundingClientRect = () =>
-    ({ left, width, right: left + width, top: 0, bottom: 0, height: 10, x: left, y: 0, toJSON: () => ({}) });
+  el.getBoundingClientRect = () => ({
+    left,
+    width,
+    right: left + width,
+    top: 0,
+    bottom: 0,
+    height: 10,
+    x: left,
+    y: 0,
+    toJSON: () => ({}),
+  });
   // setPointerCapture 在 jsdom 不存在；元件自己 try/catch 了，但補上比較貼近真實
   el.setPointerCapture = vi.fn();
 }
@@ -178,7 +187,9 @@ describe('總時長', () => {
   it('秒數補零：連續時間的顯示不會跳成 1:5', () => {
     media.state.duration = 65;
     render(<VideoPlayer src={SRC} />);
-    driveVideo((v) => { v.currentTime = 5; });
+    driveVideo((v) => {
+      v.currentTime = 5;
+    });
     expect(screen.getByText('0:05 / 1:05')).toBeTruthy();
   });
 });
@@ -213,24 +224,32 @@ describe('進度條', () => {
 
   it('ARIA 的 valuenow / valuemax 跟著實際時間走', () => {
     const p = setup(100);
-    driveVideo((v) => { v.currentTime = 42; });
+    driveVideo((v) => {
+      v.currentTime = 42;
+    });
     expect(p.getAttribute('aria-valuenow')).toBe('42');
     expect(p.getAttribute('aria-valuemax')).toBe('100');
   });
 
   it('鍵盤左右鍵各快轉 5 秒，而且夾在範圍內', () => {
     const p = setup(100);
-    driveVideo((v) => { v.currentTime = 10; });
+    driveVideo((v) => {
+      v.currentTime = 10;
+    });
     fireEvent.keyDown(p, { key: 'ArrowRight' });
     expect(media.state.currentTime).toBe(15);
     fireEvent.keyDown(p, { key: 'ArrowLeft' });
     expect(media.state.currentTime).toBe(10);
 
-    driveVideo((v) => { v.currentTime = 2; });
+    driveVideo((v) => {
+      v.currentTime = 2;
+    });
     fireEvent.keyDown(p, { key: 'ArrowLeft' });
     expect(media.state.currentTime).toBe(0); // 不會變成 -3
 
-    driveVideo((v) => { v.currentTime = 98; });
+    driveVideo((v) => {
+      v.currentTime = 98;
+    });
     fireEvent.keyDown(p, { key: 'ArrowRight' });
     expect(media.state.currentTime).toBe(100); // 不會超過總長
   });
@@ -298,7 +317,9 @@ describe('靜音', () => {
 
   it('影片自己被靜音（外部改動）時介面也要跟上', () => {
     render(<VideoPlayer src={SRC} />);
-    driveVideo((v) => { v.muted = true; });
+    driveVideo((v) => {
+      v.muted = true;
+    });
     expect(screen.getByLabelText('取消靜音')).toBeTruthy();
   });
 });

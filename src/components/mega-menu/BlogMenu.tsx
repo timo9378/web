@@ -51,10 +51,7 @@ function BlogMenuContent() {
 
   // 只顯示有文章的分類，避免空欄位佔版面
   const categories = useMemo(() => allCategories.filter((c) => c.post_count > 0), [allCategories]);
-  const posts = useMemo(
-    () => allPosts.filter((p) => p.status === 'published' || !p.status),
-    [allPosts],
-  );
+  const posts = useMemo(() => allPosts.filter((p) => p.status === 'published' || !p.status), [allPosts]);
 
   const filteredPosts = useMemo(() => {
     if (!activeCat) return posts.slice(0, 5);
@@ -85,7 +82,10 @@ function BlogMenuContent() {
         ))}
       </MegaMenuColumn>
 
-      <MegaMenuColumn title={activeCat ? t('megaMenu.groups.categoryLatest', { cat: activeCat }) : t('megaMenu.groups.latestPosts')} span={1}>
+      <MegaMenuColumn
+        title={activeCat ? t('megaMenu.groups.categoryLatest', { cat: activeCat }) : t('megaMenu.groups.latestPosts')}
+        span={1}
+      >
         <div className="mega-menu-posts">
           {filteredPosts.length === 0 && (
             <div style={{ padding: '8px 12px', fontSize: '0.8rem', color: 'rgba(161,161,170,0.55)' }}>

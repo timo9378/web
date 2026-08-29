@@ -22,7 +22,6 @@ import { lookupOr } from '@/lib/tableLookup';
    在看什麼 — 編輯風「品味展示」
 ─────────────────────────────────────────────────────────────── */
 
-
 type WatchType = 'anime' | 'film' | 'tv';
 
 interface WatchEntry {
@@ -63,20 +62,33 @@ const dedupeByTmdb = (items: WatchEntry[]): WatchEntry[] => {
   const byKey = new Map<string, number>();
   const out: WatchEntry[] = [];
   for (const it of items) {
-    if (it.tmdbId == null) { out.push(it); continue; }
+    if (it.tmdbId == null) {
+      out.push(it);
+      continue;
+    }
     const key = `${it.type === 'film' ? 'm' : 't'}:${it.tmdbId}`;
     const idx = byKey.get(key);
-    if (idx == null) { byKey.set(key, out.length); out.push(it); }
-    else if ((it.epCount ?? 0) > (out[idx].epCount ?? 0)) out[idx] = it; // 留集數多的
+    if (idx == null) {
+      byKey.set(key, out.length);
+      out.push(it);
+    } else if ((it.epCount ?? 0) > (out[idx].epCount ?? 0)) out[idx] = it; // 留集數多的
   }
   return out;
 };
 
 const EP_LABEL: Record<string, string> = {
-  'zh-TW': '第 {{n}} 集', 'zh-CN': '第 {{n}} 集', en: 'Ep. {{n}}', ja: '第 {{n}} 話', ko: '{{n}}화',
+  'zh-TW': '第 {{n}} 集',
+  'zh-CN': '第 {{n}} 集',
+  en: 'Ep. {{n}}',
+  ja: '第 {{n}} 話',
+  ko: '{{n}}화',
 };
 const SERVICE_LABEL: Record<string, string> = {
-  'zh-TW': '動畫瘋', 'zh-CN': '动画疯', en: 'Bahamut Anime', ja: '動畫瘋', ko: '動畫瘋',
+  'zh-TW': '動畫瘋',
+  'zh-CN': '动画疯',
+  en: 'Bahamut Anime',
+  ja: '動畫瘋',
+  ko: '動畫瘋',
 };
 const interpolate = (tpl: string, vars: Record<string, string | number | undefined>) =>
   tpl.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? ''));
@@ -96,7 +108,10 @@ const reveal = {
 };
 
 const Stars = ({ n }: { n: number }) => (
-  <span className="w-stars">{'★'.repeat(n)}<span className="w-stars-dim">{'★'.repeat(5 - n)}</span></span>
+  <span className="w-stars">
+    {'★'.repeat(n)}
+    <span className="w-stars-dim">{'★'.repeat(5 - n)}</span>
+  </span>
 );
 
 const parseAnimeDate = (raw?: string | null): { isoDate: string; shortDate: string } => {
@@ -109,10 +124,12 @@ const parseAnimeDate = (raw?: string | null): { isoDate: string; shortDate: stri
 const groupByWeek = (items: WatchEntry[]): { thisWeek: WatchEntry[]; earlier: WatchEntry[] } => {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 7);
-  const thisWeek: WatchEntry[] = [], earlier: WatchEntry[] = [];
+  const thisWeek: WatchEntry[] = [],
+    earlier: WatchEntry[] = [];
   for (const item of items) {
     const d = item.isoDate ? new Date(item.isoDate) : null;
-    if (d && d >= cutoff) thisWeek.push(item); else earlier.push(item);
+    if (d && d >= cutoff) thisWeek.push(item);
+    else earlier.push(item);
   }
   return { thisWeek, earlier };
 };
@@ -140,12 +157,18 @@ function Watch() {
   // 要避開就得自己做快照快取，machinery 比 setInterval + setState 還重。
   /* eslint-disable @eslint-react/set-state-in-effect */
   useEffect(() => {
-    if (!liveNow) { setLiveProgress(null); return; }
+    if (!liveNow) {
+      setLiveProgress(null);
+      return;
+    }
     const base = liveNow.progressPct;
     const s = liveNow.startedAt;
     const e = liveNow.endsAt;
     // startedAt 在生成型別裡是必填（兩個寫入點都一定給），只有 progressPct / endsAt 可能沒有
-    if (base == null || e == null || e <= s) { setLiveProgress(base); return; }
+    if (base == null || e == null || e <= s) {
+      setLiveProgress(base);
+      return;
+    }
     const durationMs = e - s;
     const compute = () => {
       const elapsed = Date.now() - liveNowUpdatedAt;
@@ -163,7 +186,9 @@ function Watch() {
   const queryClient = useQueryClient();
 
   // FavoritesEditor 改動後重抓 favorites（所有語系版本）。
-  const reloadFavorites = () => { void queryClient.invalidateQueries({ queryKey: ['watch', 'favorites'] }); };
+  const reloadFavorites = () => {
+    void queryClient.invalidateQueries({ queryKey: ['watch', 'favorites'] });
+  };
 
   const shareToThinking = (item: WatchEntry | null) => {
     if (!item) return;
@@ -174,7 +199,11 @@ function Watch() {
       title: item.title,
       poster: item.poster,
     };
-    try { sessionStorage.setItem('thinking_prefill', JSON.stringify(media)); } catch { /* ignore */ }
+    try {
+      sessionStorage.setItem('thinking_prefill', JSON.stringify(media));
+    } catch {
+      /* ignore */
+    }
     void navigate('/thinking');
   };
 
@@ -186,7 +215,8 @@ function Watch() {
     const byAnime = new Map<number | string, AnimeRow[]>();
     for (const row of animeHistory) {
       const arr = byAnime.get(row.anime_sn);
-      if (arr) arr.push(row); else byAnime.set(row.anime_sn, [row]);
+      if (arr) arr.push(row);
+      else byAnime.set(row.anime_sn, [row]);
     }
     const grouped = [...byAnime.values()].map((eps) => {
       const sorted = eps.slice().sort((a, b) => (b.last_watched_at ?? '').localeCompare(a.last_watched_at ?? ''));
@@ -218,8 +248,9 @@ function Watch() {
         tmdbId: head.tmdbId,
         isoDate: headParsed.isoDate,
         date: headParsed.shortDate,
-        externalUrl: tmdbUrl('tv', head.tmdbId)
-          ?? `https://www.themoviedb.org/search?query=${encodeURIComponent(head.title ?? '')}`,
+        externalUrl:
+          tmdbUrl('tv', head.tmdbId) ??
+          `https://www.themoviedb.org/search?query=${encodeURIComponent(head.title ?? '')}`,
       },
       recentAnime: grouped.slice(1, 12).map((g) => {
         const { isoDate, shortDate } = parseAnimeDate(g.lastWatchedAt);
@@ -265,11 +296,13 @@ function Watch() {
   }));
   // 「最近看完」hero fallback：跨類型取最近一筆（動畫#1 / 電影#1 / 影集#1 比日期），
   // 不再只看動畫——否則看完 Trakt 電影，hero 仍顯示上一部動畫（史萊姆）。
-  const recentMost: WatchEntry | null = [now, filmItems[0], tvItems[0]]
-    .filter((e): e is WatchEntry => e != null)
-    // .at(0) 而非 [0]：陣列索引在型別上永遠非空，?? null 會被判成多餘，
-    // 而 recentMost 也就跟著被當成必然存在（下面的 hero fallback 判斷失去意義）。
-    .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? '')).at(0) ?? null;
+  const recentMost: WatchEntry | null =
+    [now, filmItems[0], tvItems[0]]
+      .filter((e): e is WatchEntry => e != null)
+      // .at(0) 而非 [0]：陣列索引在型別上永遠非空，?? null 會被判成多餘，
+      // 而 recentMost 也就跟著被當成必然存在（下面的 hero fallback 判斷失去意義）。
+      .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? ''))
+      .at(0) ?? null;
   const recentAll = dedupeByTmdb([...recentAnime, ...filmItems, ...tvItems])
     .sort((a, b) => (b.isoDate ?? '').localeCompare(a.isoDate ?? ''))
     .slice(0, 14);
@@ -279,9 +312,7 @@ function Watch() {
   const renderRecentRow = (r: WatchEntry, prev?: WatchEntry): ReactElement => {
     const showDate = !prev || prev.date !== r.date;
     const Inner: ElementType = r.externalUrl ? 'a' : 'div';
-    const linkProps = r.externalUrl
-      ? { href: r.externalUrl, target: '_blank', rel: 'noopener noreferrer' }
-      : {};
+    const linkProps = r.externalUrl ? { href: r.externalUrl, target: '_blank', rel: 'noopener noreferrer' } : {};
     return (
       <li className="w-recent-row" key={r.id}>
         <Inner
@@ -330,7 +361,9 @@ function Watch() {
           liveNow.episode ? interpolate(epTemplate, { n: liveNow.episode }) : null,
           liveNow.source === 'bahamut'
             ? serviceLabel
-            : (liveNow.type === 'movie' ? t('watch.typeFilm') : t('watch.typeTv')),
+            : liveNow.type === 'movie'
+              ? t('watch.typeFilm')
+              : t('watch.typeTv'),
         ].filter(Boolean),
       }
     : recentMost
@@ -341,13 +374,14 @@ function Watch() {
           title: recentMost.title,
           externalUrl: recentMost.externalUrl,
           progressPct: null,
-          metaParts: (
-            recentMost.type === 'anime'
-              ? [recentMost.episode ? interpolate(epTemplate, { n: recentMost.episode }) : null, serviceLabel]
-              : recentMost.type === 'film'
-                ? [t('watch.typeFilm'), recentMost.year != null ? String(recentMost.year) : null]
-                : [t('watch.typeTv'), recentMost.epCount ? interpolate(epTemplate, { n: recentMost.epCount }) : null]
-          ).concat(recentMost.date ?? null).filter(Boolean),
+          metaParts: (recentMost.type === 'anime'
+            ? [recentMost.episode ? interpolate(epTemplate, { n: recentMost.episode }) : null, serviceLabel]
+            : recentMost.type === 'film'
+              ? [t('watch.typeFilm'), recentMost.year != null ? String(recentMost.year) : null]
+              : [t('watch.typeTv'), recentMost.epCount ? interpolate(epTemplate, { n: recentMost.epCount }) : null]
+          )
+            .concat(recentMost.date ?? null)
+            .filter(Boolean),
         }
       : null;
 
@@ -420,25 +454,25 @@ function Watch() {
             {favorites.map((f) => (
               <figure className="w-fav" key={f.id}>
                 <a className="w-fav-poster" href={f.externalUrl} target="_blank" rel="noopener noreferrer">
-                  {f.poster
-                    ? <img src={f.poster} alt={f.title} loading="lazy" />
-                    : <span className="w-fav-noposter">{f.title}</span>}
+                  {f.poster ? (
+                    <img src={f.poster} alt={f.title} loading="lazy" />
+                  ) : (
+                    <span className="w-fav-noposter">{f.title}</span>
+                  )}
                   {f.quote && <figcaption className="w-fav-quote">「{f.quote}」</figcaption>}
                 </a>
                 <p className="w-fav-title">{f.title}</p>
                 {/* rating 在 DB 允許 NULL（欄位是 `rating INTEGER DEFAULT 5`，沒有 NOT NULL） */}
-                <p className="w-fav-line"><Stars n={f.rating ?? 0} /> <span className="w-fav-year">{f.year}</span></p>
+                <p className="w-fav-line">
+                  <Stars n={f.rating ?? 0} /> <span className="w-fav-year">{f.year}</span>
+                </p>
               </figure>
             ))}
           </div>
         </motion.section>
 
         {favEditing && (
-          <FavoritesEditor
-            favorites={favorites}
-            onClose={() => setFavEditing(false)}
-            onChanged={reloadFavorites}
-          />
+          <FavoritesEditor favorites={favorites} onClose={() => setFavEditing(false)} onChanged={reloadFavorites} />
         )}
 
         {/* 最近在看（依週分組） */}
@@ -447,7 +481,9 @@ function Watch() {
             <h2 className="w-h2">{t('watch.recentTitle')}</h2>
             <div className="w-h2-actions">
               {isAdmin && now && (
-                <button className="w-share-btn" onClick={() => shareToThinking(now)}>＋ 發碎念</button>
+                <button className="w-share-btn" onClick={() => shareToThinking(now)}>
+                  ＋ 發碎念
+                </button>
               )}
               <LocaleLink to="/watch/library" className="w-section-link">
                 {t('watch.library.title')} →

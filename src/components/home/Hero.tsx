@@ -61,7 +61,6 @@ const useTypingEffect = (text: string, speed = 100, startDelay = 0) => {
   return { displayedText, isTypingComplete };
 };
 
-
 // chip 打字的完整字串。抽成常量是因為下面要用同一份文字當「隱藏佔位」把最終寬度先撐住——
 // 兩邊必須一致，否則預留的寬度就是錯的。
 const CHIP_TEXT = 'products that feel right';
@@ -86,16 +85,13 @@ function Hero() {
       className="hero-section"
     >
       {/* 移除 Saturn3D 和 Particles 的渲染 */}
-
       {/* Keep motion.div for overall content animation, but remove whileInView for text */}
       <div className="home-hero-content">
         <Parallax speed={10}>
           <h1 className="hero-line1">
             {"Hi, I'm "}
             <span className="hero-name-wrap">
-              <span className="hero-name">Koimsurai</span>
-              {' '}
-              <span className="emoji-native hero-wave">👋</span>
+              <span className="hero-name">Koimsurai</span> <span className="emoji-native hero-wave">👋</span>
             </span>
           </h1>
         </Parallax>
@@ -105,13 +101,17 @@ function Hero() {
             <em className="hero-accent">ideas</em>
             {' into '}
             <span className="hero-chip hero-chip--rift">
-              <span className="hero-chip-spark" aria-hidden="true">✦</span>
+              <span className="hero-chip-spark" aria-hidden="true">
+                ✦
+              </span>
               {/* 打字時 chip 會橫向長大 → hero-line2 的換行點改變 → 整塊 hero 高度 +43px
                   （實測 CLS 0.0268；「上一頁」回首頁時最明顯，那時 intro 遮罩不會蓋住這段）。
                   先用一份隱藏的完整文字把最終寬度佔住，打出來的字疊在上面。
                   data-text 仍給打出來的字：它是 ::before/::after 那組 hover 故障重影的內容。 */}
               <span className="hero-chip-text" data-text={typedChip}>
-                <span className="hero-chip-sizer" aria-hidden="true">{CHIP_TEXT}</span>
+                <span className="hero-chip-sizer" aria-hidden="true">
+                  {CHIP_TEXT}
+                </span>
                 <span className="hero-chip-typed">{typedChip}</span>
               </span>
               <span className="hero-caret" aria-hidden="true" />
@@ -128,16 +128,36 @@ function Hero() {
             <a href="https://github.com/timo9378" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
               <FaGithub />
             </a>
-            <a href="https://www.linkedin.com/in/%E6%B3%B0%E5%92%8C-%E6%A5%8A-292338352/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <a
+              href="https://www.linkedin.com/in/%E6%B3%B0%E5%92%8C-%E6%A5%8A-292338352/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+            >
               <FaLinkedin />
             </a>
-            <a href="https://www.instagram.com/koimsurai.23/?hl=zh-tw" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <a
+              href="https://www.instagram.com/koimsurai.23/?hl=zh-tw"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
               <FaInstagram />
             </a>
-            <a href="https://www.facebook.com/profile.php?id=100003126780663" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <a
+              href="https://www.facebook.com/profile.php?id=100003126780663"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+            >
               <FaFacebook />
             </a>
-            <a href="https://open.spotify.com/user/x6l1h2n0fxtivlao8prrfq1pj?si=b31c38eb1a734038" target="_blank" rel="noopener noreferrer" aria-label="Spotify">
+            <a
+              href="https://open.spotify.com/user/x6l1h2n0fxtivlao8prrfq1pj?si=b31c38eb1a734038"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Spotify"
+            >
               <FaSpotify />
             </a>
             <a href="mailto:timo9378@gmail.com" aria-label="Email">
@@ -149,8 +169,8 @@ function Hero() {
           </div>
           {/* 聯絡 CTA 已移除 — 社群連結與頁尾訊號區已涵蓋聯絡方式 */}
         </div>
-      </div> {/* Close home-hero-content div */}
-
+      </div>{' '}
+      {/* Close home-hero-content div */}
       {/* 新增頭像區塊 */}
       <div className="hero-avatar-wrapper">
         <img
@@ -164,12 +184,12 @@ function Hero() {
           height="280"
         />
       </div>
-
       {/* Figma 中還有一個巨大的背景文字 "Sergio"，可以考慮加入 */}
       <div className="background-text">Koimsurai</div> {/* 加入背景文字 */}
-
       {/* scroll 提示線 — 跟 hero-actions 同步淡入 */}
-      <div className={`hero-scroll-cue ${chipComplete && !scrolled ? 'fade-in' : ''}`} aria-hidden="true"><span /></div>
+      <div className={`hero-scroll-cue ${chipComplete && !scrolled ? 'fade-in' : ''}`} aria-hidden="true">
+        <span />
+      </div>
     </section> // 結束 section
   );
 }

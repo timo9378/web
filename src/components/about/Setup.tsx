@@ -44,9 +44,27 @@ import imgT100 from '@/assets/setup/t100.png';
 import { lookupOr } from '@/lib/tableLookup';
 
 // --- 文案 i18n ---
-interface SetupUi { subtitle: string; all: string; catSubs: Record<string, string>; retired: string; retiredText: string }
-interface SetupItem { title: string; subtitle: string; image?: string | null; iconOnly?: boolean }
-interface SetupCategory { id: string; number: string; title: string; subtitle: string; icon: ReactElement; items: SetupItem[] }
+interface SetupUi {
+  subtitle: string;
+  all: string;
+  catSubs: Record<string, string>;
+  retired: string;
+  retiredText: string;
+}
+interface SetupItem {
+  title: string;
+  subtitle: string;
+  image?: string | null;
+  iconOnly?: boolean;
+}
+interface SetupCategory {
+  id: string;
+  number: string;
+  title: string;
+  subtitle: string;
+  icon: ReactElement;
+  items: SetupItem[];
+}
 
 const SETUP_UI: Record<string, SetupUi> = {
   'zh-TW': {
@@ -54,9 +72,9 @@ const SETUP_UI: Record<string, SetupUi> = {
     all: '全部',
     catSubs: {
       'main-rig': '全白美學主力機',
-      'server': 'The Lab — 效能與穩定',
-      'network': 'Connectivity — 數位生活核心',
-      'peripherals': 'Input / Output 周邊設備',
+      server: 'The Lab — 效能與穩定',
+      network: 'Connectivity — 數位生活核心',
+      peripherals: 'Input / Output 周邊設備',
       'base-ii': 'Holiday Rig — 老家備用基地',
     },
     retired: '⚙️ Retired Legacy',
@@ -67,9 +85,9 @@ const SETUP_UI: Record<string, SetupUi> = {
     all: '全部',
     catSubs: {
       'main-rig': '全白美学主力机',
-      'server': 'The Lab — 性能与稳定',
-      'network': 'Connectivity — 数位生活核心',
-      'peripherals': 'Input / Output 周边设备',
+      server: 'The Lab — 性能与稳定',
+      network: 'Connectivity — 数位生活核心',
+      peripherals: 'Input / Output 周边设备',
       'base-ii': 'Holiday Rig — 老家备用基地',
     },
     retired: '⚙️ Retired Legacy',
@@ -80,9 +98,9 @@ const SETUP_UI: Record<string, SetupUi> = {
     all: 'All',
     catSubs: {
       'main-rig': 'All-white main rig',
-      'server': 'The Lab — power & uptime',
-      'network': 'Connectivity — my digital backbone',
-      'peripherals': 'Input / Output gear',
+      server: 'The Lab — power & uptime',
+      network: 'Connectivity — my digital backbone',
+      peripherals: 'Input / Output gear',
       'base-ii': 'Holiday Rig — hometown standby',
     },
     retired: '⚙️ Retired Legacy',
@@ -93,9 +111,9 @@ const SETUP_UI: Record<string, SetupUi> = {
     all: '全部',
     catSubs: {
       'main-rig': '真っ白なメインリグ',
-      'server': 'The Lab — 性能と安定性',
-      'network': 'Connectivity — デジタル生活の基盤',
-      'peripherals': 'Input / Output の周辺機器',
+      server: 'The Lab — 性能と安定性',
+      network: 'Connectivity — デジタル生活の基盤',
+      peripherals: 'Input / Output の周辺機器',
       'base-ii': 'Holiday Rig — 実家の予備基地',
     },
     retired: '⚙️ Retired Legacy',
@@ -106,9 +124,9 @@ const SETUP_UI: Record<string, SetupUi> = {
     all: '전체',
     catSubs: {
       'main-rig': '올화이트 메인 PC',
-      'server': 'The Lab — 성능과 안정성',
-      'network': 'Connectivity — 디지털 라이프의 중심',
-      'peripherals': 'Input / Output 주변기기',
+      server: 'The Lab — 성능과 안정성',
+      network: 'Connectivity — 디지털 라이프의 중심',
+      peripherals: 'Input / Output 주변기기',
       'base-ii': 'Holiday Rig — 본가 예비 베이스',
     },
     retired: '⚙️ Retired Legacy',
@@ -135,7 +153,7 @@ const categories: SetupCategory[] = [
       { title: 'Crucial T500 SSD', subtitle: '1TB Gen4 NVMe (System)', image: imgCrucialT500 },
       { title: 'KIOXIA Exceria Pro', subtitle: '2TB Gen4 NVMe (Games)', image: imgKioxia },
       { title: 'ROG Strix XG27ACS', subtitle: '27" 1440p Gaming Monitor', image: imgXg27acs },
-    ]
+    ],
   },
   {
     id: 'server',
@@ -154,7 +172,7 @@ const categories: SetupCategory[] = [
       { title: 'Predator GM7000', subtitle: '2TB Gen4 NVMe SSD', image: imgAcerSsd },
       { title: 'WD Ultrastar HC550', subtitle: '32TB (16TBx2) HDD Pool', image: imgWd16tb },
       { title: 'Headless Adaptor', subtitle: 'DisplayPort Dummy Plug', image: null, iconOnly: true },
-    ]
+    ],
   },
   {
     id: 'network',
@@ -167,7 +185,7 @@ const categories: SetupCategory[] = [
       { title: 'ASUS QG-U1050', subtitle: '5-Port Switch', image: imgQgU1050 },
       { title: 'Google Pixel 8 Pro', subtitle: '256GB / Bay Blue', image: imgPixel8 },
       { title: 'Razer Blade 14 (2021)', subtitle: 'Ryzen 5900HX / RTX 3070', image: imgRazerBlade },
-    ]
+    ],
   },
   {
     id: 'peripherals',
@@ -191,8 +209,8 @@ const categories: SetupCategory[] = [
       { title: 'Shure MV7+', subtitle: 'USB/XLR Podcast Microphone', image: imgShureMv7Plus },
       { title: 'RODE PSA1+', subtitle: 'Professional Studio Boom Arm', image: imgPsa1Plus },
       { title: 'Creative T100', subtitle: 'Hi-Fi 2.0 Speakers', image: imgT100 },
-    ]
-  }
+    ],
+  },
 ];
 
 const baseIISpecs: { label: string; value: string }[] = [
@@ -210,24 +228,27 @@ const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.06 }
-  }
+    transition: { staggerChildren: 0.06 },
+  },
 };
 
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
   visible: {
-    opacity: 1, y: 0, scale: 1,
-    transition: { duration: 0.4, ease: 'easeOut' }
-  }
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
 };
 
 const sectionVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: {
-    opacity: 1, y: 0,
-    transition: { duration: 0.5, ease: 'easeOut' }
-  }
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
 };
 
 function Setup() {
@@ -236,9 +257,7 @@ function Setup() {
   const ui = lookupOr(SETUP_UI, lang, SETUP_UI['zh-TW']);
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const filteredCategories = activeFilter === 'all'
-    ? categories
-    : categories.filter(c => c.id === activeFilter);
+  const filteredCategories = activeFilter === 'all' ? categories : categories.filter((c) => c.id === activeFilter);
 
   const totalItems = categories.reduce((sum, c) => sum + c.items.length, 0);
 
@@ -257,151 +276,154 @@ function Setup() {
 
       {/* 主內容 */}
       <div className="setup-content">
-      {/* Header */}
-      <motion.div
-        className="setup-header"
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <h1 className="setup-title">
-          <span className="title-emoji">🖥️</span>
-          <span className="title-gradient">My Setup</span>
-        </h1>
-        <p className="setup-subtitle">{ui.subtitle}</p>
-      </motion.div>
-
-      {/* Category Filter Tabs */}
-      <motion.div
-        className="setup-category-tabs"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <button
-          className={`setup-category-tab ${activeFilter === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveFilter('all')}
+        {/* Header */}
+        <motion.div
+          className="setup-header"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          {ui.all}
-          <span className="tab-count">{totalItems}</span>
-        </button>
-        {categories.map(cat => (
+          <h1 className="setup-title">
+            <span className="title-emoji">🖥️</span>
+            <span className="title-gradient">My Setup</span>
+          </h1>
+          <p className="setup-subtitle">{ui.subtitle}</p>
+        </motion.div>
+
+        {/* Category Filter Tabs */}
+        <motion.div
+          className="setup-category-tabs"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <button
-            key={cat.id}
-            className={`setup-category-tab ${activeFilter === cat.id ? 'active' : ''}`}
-            onClick={() => setActiveFilter(cat.id)}
+            className={`setup-category-tab ${activeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('all')}
           >
-            <span className="tab-icon">{cat.icon}</span>
-            {cat.title}
-            <span className="tab-count">{cat.items.length}</span>
+            {ui.all}
+            <span className="tab-count">{totalItems}</span>
           </button>
-        ))}
-        <button
-          className={`setup-category-tab ${activeFilter === 'base-ii' ? 'active' : ''}`}
-          onClick={() => setActiveFilter('base-ii')}
-        >
-          <span className="tab-icon"><FaHome /></span>
-          Base II
-          <span className="tab-count">{baseIISpecs.length}</span>
-        </button>
-      </motion.div>
-
-      {/* Equipment Grid Sections */}
-      <AnimatePresence mode="wait">
-        {(activeFilter === 'all' || activeFilter !== 'base-ii') && filteredCategories.map(category => (
-          <motion.div
-            key={category.id}
-            className="setup-category-section"
-            variants={sectionVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={`setup-category-tab ${activeFilter === cat.id ? 'active' : ''}`}
+              onClick={() => setActiveFilter(cat.id)}
+            >
+              <span className="tab-icon">{cat.icon}</span>
+              {cat.title}
+              <span className="tab-count">{cat.items.length}</span>
+            </button>
+          ))}
+          <button
+            className={`setup-category-tab ${activeFilter === 'base-ii' ? 'active' : ''}`}
+            onClick={() => setActiveFilter('base-ii')}
           >
-            <div className="setup-category-header">
-              <span className="setup-category-number">{category.number}</span>
-              <h2 className="setup-category-title">{category.title}</h2>
-              <span className="setup-category-subtitle">{ui.catSubs[category.id] || category.subtitle}</span>
-            </div>
+            <span className="tab-icon">
+              <FaHome />
+            </span>
+            Base II
+            <span className="tab-count">{baseIISpecs.length}</span>
+          </button>
+        </motion.div>
 
+        {/* Equipment Grid Sections */}
+        <AnimatePresence mode="wait">
+          {(activeFilter === 'all' || activeFilter !== 'base-ii') &&
+            filteredCategories.map((category) => (
+              <motion.div
+                key={category.id}
+                className="setup-category-section"
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-50px' }}
+              >
+                <div className="setup-category-header">
+                  <span className="setup-category-number">{category.number}</span>
+                  <h2 className="setup-category-title">{category.title}</h2>
+                  <span className="setup-category-subtitle">{ui.catSubs[category.id] || category.subtitle}</span>
+                </div>
+
+                <motion.div
+                  className="setup-grid"
+                  variants={containerVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: '-30px' }}
+                >
+                  {category.items.map((item) => (
+                    <motion.div
+                      key={`${category.id}-${item.title}`}
+                      className="setup-card"
+                      variants={cardVariants}
+                      whileHover={{ y: -5 }}
+                    >
+                      {item.iconOnly ? (
+                        <div className="setup-card-icon-wrapper">🔌</div>
+                      ) : (
+                        <div className="setup-card-image-wrapper">
+                          <img
+                            src={item.image ?? undefined}
+                            alt={item.title}
+                            className="setup-card-image"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      )}
+                      <h3 className="setup-card-title">{item.title}</h3>
+                      <p className="setup-card-subtitle">{item.subtitle}</p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            ))}
+
+          {/* Base II Section */}
+          {(activeFilter === 'all' || activeFilter === 'base-ii') && (
             <motion.div
-              className="setup-grid"
-              variants={containerVariants}
+              className="setup-base-section"
+              variants={sectionVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: '-30px' }}
+              viewport={{ once: true, margin: '-50px' }}
             >
-              {category.items.map((item) => (
-                <motion.div
-                  key={`${category.id}-${item.title}`}
-                  className="setup-card"
-                  variants={cardVariants}
-                  whileHover={{ y: -5 }}
-                >
-                  {item.iconOnly ? (
-                    <div className="setup-card-icon-wrapper">🔌</div>
-                  ) : (
-                    <div className="setup-card-image-wrapper">
-                      <img
-                        src={item.image ?? undefined}
-                        alt={item.title}
-                        className="setup-card-image"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  )}
-                  <h3 className="setup-card-title">{item.title}</h3>
-                  <p className="setup-card-subtitle">{item.subtitle}</p>
-                </motion.div>
-              ))}
+              <div className="setup-category-header">
+                <span className="setup-category-number">05</span>
+                <h2 className="setup-category-title">Base II: Hometown</h2>
+                <span className="setup-category-subtitle">{ui.catSubs['base-ii']}</span>
+              </div>
+
+              <div className="setup-base-card">
+                <p className="setup-base-quote">
+                  "Built from spare parts and memories. Ready for action whenever I return home."
+                </p>
+
+                <div className="setup-base-specs">
+                  {baseIISpecs.map((spec, idx) => (
+                    <motion.div
+                      key={spec.label}
+                      className="setup-base-spec-item"
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: idx * 0.05 }}
+                      viewport={{ once: true }}
+                    >
+                      <span className="setup-base-spec-label">{spec.label}</span>
+                      <span className="setup-base-spec-value">{spec.value}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="setup-retired-section">
+                  <p className="setup-retired-title">{ui.retired}</p>
+                  <p className="setup-retired-text">{ui.retiredText}</p>
+                </div>
+              </div>
             </motion.div>
-          </motion.div>
-        ))}
-
-        {/* Base II Section */}
-        {(activeFilter === 'all' || activeFilter === 'base-ii') && (
-          <motion.div
-            className="setup-base-section"
-            variants={sectionVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-          >
-            <div className="setup-category-header">
-              <span className="setup-category-number">05</span>
-              <h2 className="setup-category-title">Base II: Hometown</h2>
-              <span className="setup-category-subtitle">{ui.catSubs['base-ii']}</span>
-            </div>
-
-            <div className="setup-base-card">
-              <p className="setup-base-quote">
-                "Built from spare parts and memories. Ready for action whenever I return home."
-              </p>
-
-              <div className="setup-base-specs">
-                {baseIISpecs.map((spec, idx) => (
-                  <motion.div
-                    key={spec.label}
-                    className="setup-base-spec-item"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: idx * 0.05 }}
-                    viewport={{ once: true }}
-                  >
-                    <span className="setup-base-spec-label">{spec.label}</span>
-                    <span className="setup-base-spec-value">{spec.value}</span>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="setup-retired-section">
-                <p className="setup-retired-title">{ui.retired}</p>
-                <p className="setup-retired-text">{ui.retiredText}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

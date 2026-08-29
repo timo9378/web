@@ -148,9 +148,7 @@ test.describe('行動版選單', () => {
 
     expect(await wrapHeight(), '展開之前收合層的高度該是 0').toBe(0);
     await group.getByRole('button', { name: '更多' }).first().click();
-    await expect
-      .poll(wrapHeight, { message: '按了展開但收合層沒有長出高度', timeout: 10_000 })
-      .toBeGreaterThan(0);
+    await expect.poll(wrapHeight, { message: '按了展開但收合層沒有長出高度', timeout: 10_000 }).toBeGreaterThan(0);
 
     const photos = group.getByRole('link', { name: '照片' });
     await photos.click();

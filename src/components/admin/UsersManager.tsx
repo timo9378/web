@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminUsersQueryOptions } from '@/data/adminData';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, RefreshCw, Shield, ShieldCheck, Crown, Search, type LucideIcon } from 'lucide-react';
@@ -21,11 +25,23 @@ import { lookup, lookupOr } from '../../lib/tableLookup';
 // 型別來源＝Rust struct（specta 生成）；原手寫 interface 已與 API 漂移（avatar vs avatar_url、id 型別）
 type AdminUser = AdminUserRow;
 
-interface RoleConfig { label: string; color: string; bg: string; border: string; icon: LucideIcon }
+interface RoleConfig {
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+  icon: LucideIcon;
+}
 
 const ROLE_CONFIG: Record<string, RoleConfig> = {
   OWNER: { label: 'Owner', color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20', icon: Crown },
-  ADMIN: { label: 'Admin', color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20', icon: ShieldCheck },
+  ADMIN: {
+    label: 'Admin',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10',
+    border: 'border-blue-400/20',
+    icon: ShieldCheck,
+  },
   USER: { label: 'User', color: 'text-zinc-400', bg: 'bg-zinc-400/10', border: 'border-zinc-400/20', icon: Shield },
 };
 
@@ -35,7 +51,11 @@ export default function UsersManager() {
   // 用戶列表改由 TanStack Query 讀（生成 AdminUserRow）；改角色後 invalidate 重抓。
   const { data: users = [], isPending: isLoading } = useQuery(adminUsersQueryOptions);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleChangeDialog, setRoleChangeDialog] = useState<{ open: boolean; user: AdminUser | null; newRole: string }>({ open: false, user: null, newRole: '' });
+  const [roleChangeDialog, setRoleChangeDialog] = useState<{ open: boolean; user: AdminUser | null; newRole: string }>({
+    open: false,
+    user: null,
+    newRole: '',
+  });
 
   // 呼叫時才讀 token，不在 render 期讀：localStorage 是外部可變狀態，render 必須是純的
   //（react-hooks/purity）。順帶修掉一個實質問題——原本 token 在 render 當下就固定了，
@@ -56,10 +76,12 @@ export default function UsersManager() {
         body: JSON.stringify({ role: newRole }),
       });
       if (res.ok) {
-        toast.success(`已將 ${targetUser.display_name ?? ''} 的角色更改為 ${lookup(ROLE_CONFIG, newRole)?.label ?? newRole}`);
+        toast.success(
+          `已將 ${targetUser.display_name ?? ''} 的角色更改為 ${lookup(ROLE_CONFIG, newRole)?.label ?? newRole}`,
+        );
         void queryClient.invalidateQueries({ queryKey: adminUsersQueryOptions.queryKey });
       } else {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string };
         toast.error(data.error ?? '更改角色失敗');
       }
     } catch {
@@ -82,7 +104,13 @@ export default function UsersManager() {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
-    return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   return (
@@ -96,7 +124,9 @@ export default function UsersManager() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => { void queryClient.invalidateQueries({ queryKey: adminUsersQueryOptions.queryKey }); }}
+          onClick={() => {
+            void queryClient.invalidateQueries({ queryKey: adminUsersQueryOptions.queryKey });
+          }}
           disabled={isLoading}
           className="gap-2"
         >
@@ -111,10 +141,7 @@ export default function UsersManager() {
           const count = users.filter((u) => u.role === role).length;
           const Icon = config.icon;
           return (
-            <div
-              key={role}
-              className={`rounded-xl border ${config.border} ${config.bg} p-4 flex items-center gap-3`}
-            >
+            <div key={role} className={`rounded-xl border ${config.border} ${config.bg} p-4 flex items-center gap-3`}>
               <div className={`p-2 rounded-lg ${config.bg}`}>
                 <Icon className={`h-5 w-5 ${config.color}`} />
               </div>
@@ -171,7 +198,8 @@ export default function UsersManager() {
                 filteredUsers.map((u) => {
                   const roleConfig = lookupOr(ROLE_CONFIG, u.role ?? 'USER', ROLE_CONFIG.USER);
                   const RoleIcon = roleConfig.icon;
-                  const isSelf = currentUser && (String(currentUser.id) === String(u.id) || currentUser.email === u.email);
+                  const isSelf =
+                    currentUser && (String(currentUser.id) === String(u.id) || currentUser.email === u.email);
 
                   return (
                     <tr key={u.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
@@ -197,12 +225,18 @@ export default function UsersManager() {
                       {/* Provider */}
                       <td className="p-3">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60">
-                          {u.provider === 'google' ? '🔵 Google' : u.provider === 'github' ? '⚫ GitHub' : (u.provider ?? '-')}
+                          {u.provider === 'google'
+                            ? '🔵 Google'
+                            : u.provider === 'github'
+                              ? '⚫ GitHub'
+                              : (u.provider ?? '-')}
                         </span>
                       </td>
                       {/* Role */}
                       <td className="p-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleConfig.bg} ${roleConfig.color} border ${roleConfig.border}`}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleConfig.bg} ${roleConfig.color} border ${roleConfig.border}`}
+                        >
                           <RoleIcon className="h-3 w-3" />
                           {roleConfig.label}
                         </span>
@@ -253,20 +287,30 @@ export default function UsersManager() {
       {/* Role Change Confirmation Dialog */}
       <AlertDialog
         open={roleChangeDialog.open}
-        onOpenChange={(open) => { if (!open) setRoleChangeDialog({ open: false, user: null, newRole: '' }); }}
+        onOpenChange={(open) => {
+          if (!open) setRoleChangeDialog({ open: false, user: null, newRole: '' });
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確認更改角色</AlertDialogTitle>
             <AlertDialogDescription>
               確定要將 <strong>{roleChangeDialog.user?.display_name}</strong> 的角色從{' '}
-              <strong>{roleChangeDialog.user ? lookup(ROLE_CONFIG, roleChangeDialog.user.role ?? 'USER')?.label : ''}</strong> 更改為{' '}
-              <strong>{lookup(ROLE_CONFIG, roleChangeDialog.newRole)?.label}</strong> 嗎？
+              <strong>
+                {roleChangeDialog.user ? lookup(ROLE_CONFIG, roleChangeDialog.user.role ?? 'USER')?.label : ''}
+              </strong>{' '}
+              更改為 <strong>{lookup(ROLE_CONFIG, roleChangeDialog.newRole)?.label}</strong> 嗎？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void handleRoleChange(); }}>確認更改</AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                void handleRoleChange();
+              }}
+            >
+              確認更改
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -21,12 +21,7 @@ interface GalleryThumbnailProps {
   onSwiper: (swiper: SwiperType) => void;
 }
 
-const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
-  photos,
-  activeIndex,
-  onThumbnailClick,
-  onSwiper,
-}) => {
+const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({ photos, activeIndex, onThumbnailClick, onSwiper }) => {
   return (
     <div className="gallery-thumbnail-container">
       <Swiper
@@ -43,15 +38,10 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
             {/* 選擇這張縮圖（原本是可點的 div：不可聚焦、無鍵盤操作，報讀器也不知道它能按） */}
             <button
               type="button"
-              className={`gallery-thumbnail-item ${index === activeIndex ? 'active' : ''
-                }`}
+              className={`gallery-thumbnail-item ${index === activeIndex ? 'active' : ''}`}
               onClick={() => onThumbnailClick(index)}
             >
-              <img
-                src={photo.urls.thumb || photo.urls.small}
-                alt={photo.title || ''}
-                loading="lazy"
-              />
+              <img src={photo.urls.thumb || photo.urls.small} alt={photo.title || ''} loading="lazy" />
               {index === activeIndex && <div className="active-indicator" />}
             </button>
           </SwiperSlide>

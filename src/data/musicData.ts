@@ -20,11 +20,7 @@ const STALE = 5 * 60 * 1000;
 const DATA_REFRESH = 10 * 60 * 1000;
 const NOW_PLAYING_REFRESH = 30 * 1000;
 
-async function getState<T>(
-  path: string,
-  ok: (d: Record<string, unknown>) => T,
-  bad: (msg: string) => T,
-): Promise<T> {
+async function getState<T>(path: string, ok: (d: Record<string, unknown>) => T, bad: (msg: string) => T): Promise<T> {
   try {
     const res = await fetch(apiUrl(path));
     const data = (await res.json()) as Record<string, unknown>;

@@ -127,8 +127,7 @@ test('不存在的路由回 404 而不是白畫面', async ({ page }) => {
   await expect(page.locator('.nf-sr'), '要有給輔助技術的 404').toHaveText('404');
   // 把「你要找的位置」印出來是這一頁唯一有功能性的東西，印錯或沒印
   //（例如哪天改成讀 state 而不是 location）從畫面上看不出來
-  await expect(page.locator('.nf-addr-path'), '要印出使用者要找的路徑')
-    .toHaveText('/this-route-does-not-exist');
+  await expect(page.locator('.nf-addr-path'), '要印出使用者要找的路徑').toHaveText('/this-route-does-not-exist');
   // 前景濾鏡：少了它文字會壓在最亮的星空上。這條擋的是「新頁面忘記加 scrim」，
   // 而那正是這一頁前兩版都犯過的錯
   await expect(page.locator('.nf-scrim'), '要有壓暗星空的前景濾鏡').toBeAttached();
@@ -197,9 +196,7 @@ for (const path of ['/admin', '/admin/posts', '/admin/users', '/admin/login', '/
     // （見 tests/e2e/routes.ts 的 SKIP 註解），瀏覽器語系不同就會停在 /en、/ja…。
     // 第一版寫死 '/' 時這五條全紅，而我手動用另一個語系的 context 測卻是綠的——
     // 差的就是這個導向，不是守衛。
-    await expect
-      .poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
-      .toMatch(/^\/(en|ja|ko|zh-cn)?$/);
+    await expect.poll(() => new URL(page.url()).pathname, { timeout: 10_000 }).toMatch(/^\/(en|ja|ko|zh-cn)?$/);
     await expect(page.locator('body')).not.toContainText('未發布草稿');
   });
 }

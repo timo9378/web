@@ -41,11 +41,25 @@ function OAuthCallback() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#fff' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#fff' }}
+      >
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>❌ {error}</p>
-          <button onClick={() => { window.location.assign('/blog'); }} style={{ padding: '8px 20px', borderRadius: '8px', background: 'rgba(127,90,240,0.2)', border: '1px solid rgba(127,90,240,0.4)', color: '#c4b5fd', cursor: 'pointer' }}>
-{t('nav.notes')}
+          <button
+            onClick={() => {
+              window.location.assign('/blog');
+            }}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '8px',
+              background: 'rgba(127,90,240,0.2)',
+              border: '1px solid rgba(127,90,240,0.4)',
+              color: '#c4b5fd',
+              cursor: 'pointer',
+            }}
+          >
+            {t('nav.notes')}
           </button>
         </div>
       </div>

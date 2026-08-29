@@ -56,7 +56,6 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
   }, [src, isCurrentImage]);
   /* eslint-enable @eslint-react/set-state-in-effect */
 
-
   // Preload high-res image only when it's the current image
   useEffect(() => {
     // Only start loading if it's the current image and it hasn't loaded yet.
@@ -72,65 +71,69 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     // to keep already loaded images in high-res when swiping back.
   }, [src, onLoad, isCurrentImage, loaded]);
 
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (!enableZoom || !isCurrentImage) return;
-    e.preventDefault();
-    e.stopPropagation();
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (!enableZoom || !isCurrentImage) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-    const delta = e.deltaY > 0 ? -0.2 : 0.2;
-    setScale(prevScale => {
-      const newScale = Math.max(1, Math.min(prevScale + delta, 5));
-      if (newScale === 1) {
-        setPosition({ x: 0, y: 0 });
+      const delta = e.deltaY > 0 ? -0.2 : 0.2;
+      setScale((prevScale) => {
+        const newScale = Math.max(1, Math.min(prevScale + delta, 5));
+        if (newScale === 1) {
+          setPosition({ x: 0, y: 0 });
+        }
+        return newScale;
+      });
+    },
+    [enableZoom, isCurrentImage],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!enablePan || scale <= 1 || !isCurrentImage) return;
+      e.preventDefault();
+      setIsPanning(true);
+      setStartPos({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      });
+    },
+    [enablePan, scale, isCurrentImage, position],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isPanning || !containerRef.current) return;
+
+      const newX = e.clientX - startPos.x;
+      const newY = e.clientY - startPos.y;
+
+      // Boundary checks to prevent panning too far
+      // container 在函式開頭的 `if (!isPanning || !containerRef.current) return` 已經確定非 null
+      const container = containerRef.current;
+      const image = imageRef.current;
+      if (image) {
+        const containerRect = container.getBoundingClientRect();
+        const imageWidth = image.naturalWidth * scale;
+        const imageHeight = image.naturalHeight * scale;
+
+        // Calculate how much the image exceeds the container
+        const excessWidth = Math.max(0, (imageWidth - containerRect.width) / 2);
+        const excessHeight = Math.max(0, (imageHeight - containerRect.height) / 2);
+
+        // Only clamp if the image is larger than the container in that dimension
+        const clampedX = excessWidth > 0 ? Math.max(-excessWidth, Math.min(newX, excessWidth)) : 0; // Keep centered if image is smaller
+
+        const clampedY = excessHeight > 0 ? Math.max(-excessHeight, Math.min(newY, excessHeight)) : 0; // Keep centered if image is smaller
+
+        setPosition({ x: clampedX, y: clampedY });
+      } else {
+        setPosition({ x: newX, y: newY });
       }
-      return newScale;
-    });
-  }, [enableZoom, isCurrentImage]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!enablePan || scale <= 1 || !isCurrentImage) return;
-    e.preventDefault();
-    setIsPanning(true);
-    setStartPos({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    });
-  }, [enablePan, scale, isCurrentImage, position]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isPanning || !containerRef.current) return;
-
-    const newX = e.clientX - startPos.x;
-    const newY = e.clientY - startPos.y;
-
-    // Boundary checks to prevent panning too far
-    // container 在函式開頭的 `if (!isPanning || !containerRef.current) return` 已經確定非 null
-    const container = containerRef.current;
-    const image = imageRef.current;
-    if (image) {
-      const containerRect = container.getBoundingClientRect();
-      const imageWidth = image.naturalWidth * scale;
-      const imageHeight = image.naturalHeight * scale;
-
-      // Calculate how much the image exceeds the container
-      const excessWidth = Math.max(0, (imageWidth - containerRect.width) / 2);
-      const excessHeight = Math.max(0, (imageHeight - containerRect.height) / 2);
-
-      // Only clamp if the image is larger than the container in that dimension
-      const clampedX = excessWidth > 0
-        ? Math.max(-excessWidth, Math.min(newX, excessWidth))
-        : 0; // Keep centered if image is smaller
-
-      const clampedY = excessHeight > 0
-        ? Math.max(-excessHeight, Math.min(newY, excessHeight))
-        : 0; // Keep centered if image is smaller
-
-      setPosition({ x: clampedX, y: clampedY });
-    } else {
-      setPosition({ x: newX, y: newY });
-    }
-
-  }, [isPanning, startPos, scale]);
+    },
+    [isPanning, startPos, scale],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -151,7 +154,6 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
     }
   }, [handleWheel, handleMouseMove, handleMouseUp, isCurrentImage]);
 
-
   return (
     // onMouseDown 是「拖曳平移放大後的圖片」，本質是指標手勢；
     // 鍵盤沒有對應的平移概念（要做也是另開方向鍵功能，不是補 onKeyDown）
@@ -164,7 +166,7 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        cursor: isPanning ? 'grabbing' : (isCurrentImage && scale > 1 ? 'grab' : 'default'),
+        cursor: isPanning ? 'grabbing' : isCurrentImage && scale > 1 ? 'grab' : 'default',
       }}
     >
       <motion.div

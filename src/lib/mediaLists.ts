@@ -46,9 +46,7 @@ export function filterAndSortBooks<T extends BookLike>(books: readonly T[], f: B
 
   if (f.searchTerm) {
     const term = f.searchTerm.toLowerCase();
-    out = out.filter(
-      (b) => b.title.toLowerCase().includes(term) || (b.authors?.toLowerCase().includes(term) ?? false),
-    );
+    out = out.filter((b) => b.title.toLowerCase().includes(term) || (b.authors?.toLowerCase().includes(term) ?? false));
   }
   if (f.statusFilter !== 'all') out = out.filter((b) => b.reading_status === f.statusFilter);
   if (f.ratingFilter !== 'all') {

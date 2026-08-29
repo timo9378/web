@@ -71,13 +71,7 @@ export default function BarChartBlock({ data = [], title, unit, color = ACCENT }
           <YAxis hide />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<ChartTooltip unit={unit} />} />
           <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={64} fill={color} isAnimationActive={false}>
-            <LabelList
-              dataKey="value"
-              position="top"
-              fill="rgba(255,255,255,0.75)"
-              fontSize={12}
-              formatter={fmt}
-            />
+            <LabelList dataKey="value" position="top" fill="rgba(255,255,255,0.75)" fontSize={12} formatter={fmt} />
           </Bar>
         </ReBarChart>
       </ResponsiveContainer>

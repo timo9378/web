@@ -6,6 +6,8 @@ let chunkPromise: Promise<unknown> | null = null;
 
 export function prefetchPostChunk(): Promise<unknown> | null {
   if (chunkPromise) return chunkPromise;
-  chunkPromise = import('@/components/blog/BlogPost').catch(() => { chunkPromise = null; });
+  chunkPromise = import('@/components/blog/BlogPost').catch(() => {
+    chunkPromise = null;
+  });
   return chunkPromise;
 }

@@ -108,10 +108,7 @@ export function literalValue(node: EstreeNode, where: string, line?: number): un
     case 'TemplateLiteral': {
       const t = node as unknown as { expressions: unknown[]; quasis: { value: { cooked: string } }[] };
       if (t.expressions.length === 0) return t.quasis[0].value.cooked;
-      throw new MdxUnsupportedError(
-        `${where}：樣板字串裡有運算式。屬性值必須是寫得死的內容，把結果直接寫出來。`,
-        line,
-      );
+      throw new MdxUnsupportedError(`${where}：樣板字串裡有運算式。屬性值必須是寫得死的內容，把結果直接寫出來。`, line);
     }
     default:
       throw new MdxUnsupportedError(
@@ -155,10 +152,7 @@ export function assertRenderable(tree: HastNode, knownComponents?: ReadonlySet<s
         };
         const tag = el.name ?? '<>';
         if (el.name && /^[A-Z]/.test(el.name) && knownComponents && !knownComponents.has(el.name)) {
-          throw new MdxUnsupportedError(
-            `<${el.name}> 沒有註冊。可用的元件見 mdx-blocks-registry。`,
-            line(node),
-          );
+          throw new MdxUnsupportedError(`<${el.name}> 沒有註冊。可用的元件見 mdx-blocks-registry。`, line(node));
         }
         for (const a of el.attributes ?? []) {
           if (a.type === 'mdxJsxExpressionAttribute') {
@@ -166,8 +160,7 @@ export function assertRenderable(tree: HastNode, knownComponents?: ReadonlySet<s
           }
           const v = a.value;
           if (v && typeof v === 'object') {
-            const estree = (v as { data?: { estree?: { body?: { expression?: EstreeNode }[] } } }).data
-              ?.estree;
+            const estree = (v as { data?: { estree?: { body?: { expression?: EstreeNode }[] } } }).data?.estree;
             const expr = estree?.body?.[0]?.expression;
             if (!expr) {
               throw new MdxUnsupportedError(`<${tag}> 的 ${a.name}：解不出屬性值`, line(node));
@@ -181,7 +174,7 @@ export function assertRenderable(tree: HastNode, knownComponents?: ReadonlySet<s
       default:
         break;
     }
-    for (const c of ((node as { children?: HastNode[] }).children ?? [])) walk(c);
+    for (const c of (node as { children?: HastNode[] }).children ?? []) walk(c);
   };
   walk(tree);
 }
@@ -221,10 +214,7 @@ export async function mdxToHast(source: string): Promise<HastNode> {
  * 不可渲染的構造會在這裡丟 `MdxUnsupportedError`——呼叫端（blogList）接到之後
  * 退回 markdown 渲染，跟以前編譯失敗的行為一致。
  */
-export async function compileMdxToHastJson(
-  source: string,
-  knownComponents?: ReadonlySet<string>,
-): Promise<string> {
+export async function compileMdxToHastJson(source: string, knownComponents?: ReadonlySet<string>): Promise<string> {
   const tree = await mdxToHast(source);
   assertRenderable(tree, knownComponents);
   return JSON.stringify(slim(tree));

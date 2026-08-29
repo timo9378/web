@@ -12,9 +12,15 @@ import './LinkCard.css';
 const LinkCardSkeleton = () => (
   <span className="link-card link-card-internal link-card-skeleton" aria-hidden="true">
     <span className="link-card-body">
-      <span className="link-card-site"><span className="bp-skel" style={{ width: 64, height: 12, display: 'inline-block' }} /></span>
-      <span className="link-card-title"><span className="bp-skel" style={{ width: '70%', height: 16, display: 'block' }} /></span>
-      <span className="link-card-meta"><span className="bp-skel" style={{ width: 90, height: 12, display: 'inline-block' }} /></span>
+      <span className="link-card-site">
+        <span className="bp-skel" style={{ width: 64, height: 12, display: 'inline-block' }} />
+      </span>
+      <span className="link-card-title">
+        <span className="bp-skel" style={{ width: '70%', height: 16, display: 'block' }} />
+      </span>
+      <span className="link-card-meta">
+        <span className="bp-skel" style={{ width: 90, height: 12, display: 'inline-block' }} />
+      </span>
     </span>
   </span>
 );
@@ -36,7 +42,6 @@ interface LinkMeta {
   path?: string;
 }
 
-
 /* ── Link type detection ── */
 const getLinkMeta = (url: string): LinkMeta | null => {
   try {
@@ -46,7 +51,14 @@ const getLinkMeta = (url: string): LinkMeta | null => {
       let vid = '';
       if (host.includes('youtu.be')) vid = u.pathname.slice(1);
       else vid = u.searchParams.get('v') ?? '';
-      return { type: 'youtube', icon: FaYoutube, color: '#ff0000', label: 'YouTube', thumb: vid ? 'https://img.youtube.com/vi/' + vid + '/mqdefault.jpg' : null, vid };
+      return {
+        type: 'youtube',
+        icon: FaYoutube,
+        color: '#ff0000',
+        label: 'YouTube',
+        thumb: vid ? 'https://img.youtube.com/vi/' + vid + '/mqdefault.jpg' : null,
+        vid,
+      };
     }
     if (host.includes('github.com')) {
       const parts = u.pathname.split('/').filter(Boolean);
@@ -79,15 +91,22 @@ const getLinkMeta = (url: string): LinkMeta | null => {
       }
       return { type: 'github', icon: FaGithub, color: '#fff', label: 'GitHub', desc: repo };
     }
-    if (host.includes('instagram.com')) return { type: 'instagram', icon: FaInstagram, color: '#E4405F', label: 'Instagram' };
-    if (host.includes('threads.net')) return { type: 'threads', icon: FaExternalLinkAlt, color: '#fff', label: 'Threads' };
+    if (host.includes('instagram.com'))
+      return { type: 'instagram', icon: FaInstagram, color: '#E4405F', label: 'Instagram' };
+    if (host.includes('threads.net'))
+      return { type: 'threads', icon: FaExternalLinkAlt, color: '#fff', label: 'Threads' };
 
     // Spotify
     if (host.includes('spotify.com') || host.includes('open.spotify.com')) {
       // Extract Spotify embed URL
       const pathParts = u.pathname.split('/');
       let embedUrl = null;
-      if (pathParts.includes('track') || pathParts.includes('album') || pathParts.includes('playlist') || pathParts.includes('episode')) {
+      if (
+        pathParts.includes('track') ||
+        pathParts.includes('album') ||
+        pathParts.includes('playlist') ||
+        pathParts.includes('episode')
+      ) {
         embedUrl = `https://open.spotify.com/embed${u.pathname}`;
       }
       return { type: 'spotify', icon: FaExternalLinkAlt, color: '#1DB954', label: 'Spotify', embedUrl };
@@ -116,11 +135,19 @@ const getLinkMeta = (url: string): LinkMeta | null => {
 
     // Internal Web Link Detection (non-blog pages)
     if (host.includes('koimsurai.com')) {
-      return { type: 'internal-page', icon: FaExternalLinkAlt, color: 'var(--post-accent)', label: '站內連結', path: u.pathname };
+      return {
+        type: 'internal-page',
+        icon: FaExternalLinkAlt,
+        color: 'var(--post-accent)',
+        label: '站內連結',
+        path: u.pathname,
+      };
     }
 
     return { type: 'generic', icon: FaExternalLinkAlt, color: 'var(--post-muted)', label: host };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
 
 /* ══════════════════════════
@@ -147,8 +174,13 @@ const InternalLinkCard = ({ id }: { id: string }) => {
         <div className="link-card-title">{post.title}</div>
         <div className="link-card-meta">
           {/* 年份直接取 ISO 字串前 4 碼（不經 Date/時區）→ SSR 與 client 一致，不 mismatch。 */}
-          <span>{(post.created_at).slice(0, 4)}</span>
-          {post.category && <> · <span>{post.category}</span></>}
+          <span>{post.created_at.slice(0, 4)}</span>
+          {post.category && (
+            <>
+              {' '}
+              · <span>{post.category}</span>
+            </>
+          )}
         </div>
       </div>
     </LocaleLink>
@@ -184,7 +216,12 @@ const ThoughtPreviewCard = ({ id }: { id: string }) => {
    ══════════════════════════ */
 export const LinkCard = ({ href }: { href: string }) => {
   const meta = getLinkMeta(href);
-  if (!meta) return <a href={href} target="_blank" rel="noopener noreferrer">{href}</a>;
+  if (!meta)
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {href}
+      </a>
+    );
 
   if (meta.type === 'internal') {
     return <InternalLinkCard id={meta.id ?? ''} />;

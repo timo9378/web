@@ -26,7 +26,8 @@ const ABOUT_SITE_BY_LANG = {
     q4: '4. 這裡有藏彩蛋嗎？',
     a4: '沒有。沒有實作彩蛋，這裡所見即所得。',
     q5: '5. 這個網站的主要受眾是誰？',
-    a5_p1: '最初架這個站，單純是把這裡當作我個人求職使用，沒有特別去社群上宣傳。但說實話，既然我都花這麼多時間弄了，當然還是會希望自己花心血熬夜刻出來的畫面與架構能被人看見。',
+    a5_p1:
+      '最初架這個站，單純是把這裡當作我個人求職使用，沒有特別去社群上宣傳。但說實話，既然我都花這麼多時間弄了，當然還是會希望自己花心血熬夜刻出來的畫面與架構能被人看見。',
     a5_p2_pre: '所以，如果你剛好逛到這裡，覺得這個站點的設計或技術棧還合你的胃口，非常歡迎交換友鏈。也歡迎直接在',
     a5_p2_link: '留言',
     a5_p2_post: '留個足跡。',
@@ -59,7 +60,8 @@ const ABOUT_SITE_BY_LANG = {
     q4: '4. 这里有藏彩蛋吗？',
     a4: '没有。没有实作彩蛋，这里所见即所得。',
     q5: '5. 这个网站的主要受众是谁？',
-    a5_p1: '最初架这个站，单纯是把这里当作我个人求职使用，没有特别去社群上宣传。但说实话，既然我都花这么多时间弄了，当然还是会希望自己花心血熬夜刻出来的画面与架构能被人看见。',
+    a5_p1:
+      '最初架这个站，单纯是把这里当作我个人求职使用，没有特别去社群上宣传。但说实话，既然我都花这么多时间弄了，当然还是会希望自己花心血熬夜刻出来的画面与架构能被人看见。',
     a5_p2_pre: '所以，如果你刚好逛到这里，觉得这个站点的设计或技术栈还合你的胃口，非常欢迎交换友链。也欢迎直接在',
     a5_p2_link: '留言',
     a5_p2_post: '留个足迹。',
@@ -75,8 +77,8 @@ const ABOUT_SITE_BY_LANG = {
     intro: 'This site is my personal corner for jotting down tech and life. It has been growing since April 2025.',
     qaHeading: 'FAQ',
     q1: '1. Why did you build this site?',
-    a1: 'Originally I built it to have a place to show my stack and skills while looking for an internship. It didn\'t really help with the internship hunt — but my current coworkers do drop by occasionally now.',
-    q2: '2. What\'s the tech stack?',
+    a1: "Originally I built it to have a place to show my stack and skills while looking for an internship. It didn't really help with the internship hunt — but my current coworkers do drop by occasionally now.",
+    q2: "2. What's the tech stack?",
     a2_pre: 'The frontend uses ',
     a2_mid1: ' with ',
     a2_mid2: ' (SSG/ISR), built with ',
@@ -88,19 +90,22 @@ const ABOUT_SITE_BY_LANG = {
     a2_tail: '.',
     q3: '3. About the photo wall and AI usage?',
     a3: 'The photo gallery uses a Masonry layout, with EXIF extracted via automation scripts. I later added an AI CLIP Tagger for tag suggestions, and on upload each image gets a',
-    a3_mid: 'as a blur-sm placeholder. I lean on AI tools for these tedious automation flows. More details in this post:',
+    a3_mid:
+      'as a blur-sm placeholder. I lean on AI tools for these tedious automation flows. More details in this post:',
     q4: '4. Any easter eggs hidden here?',
     a4: 'Nope. No easter eggs implemented — what you see is what you get.',
     q5: '5. Who is this site for?',
-    a5_p1: 'It started as my personal job-hunt site, with no real promotion on social. Honestly though, after pouring this many late nights into it, I do hope the visuals and architecture get to be seen by someone.',
-    a5_p2_pre: 'So if you happened to wander in and the design or stack feels right, link exchanges are very welcome. Feel free to leave a footprint on the',
+    a5_p1:
+      'It started as my personal job-hunt site, with no real promotion on social. Honestly though, after pouring this many late nights into it, I do hope the visuals and architecture get to be seen by someone.',
+    a5_p2_pre:
+      'So if you happened to wander in and the design or stack feels right, link exchanges are very welcome. Feel free to leave a footprint on the',
     a5_p2_link: 'messages',
     a5_p2_post: 'page too.',
     nameHeading: 'About the name',
     q6: 'Q: Where does the site title 「宙と木」 come from?',
     a6: 'Nothing dramatic. One day I asked Gemini for Japanese site-name candidates, saw 「宙と木」 and thought it looked cool. 「宙」(cosmos) matched the space visuals nicely, and 「木」 echoes my online handle 「木村盆栽」, so I went with it.',
     q7: 'Q: Why "Koimsurai" — how is it pronounced?',
-    a7: 'It\'s a compound word. My online handle is 「木村盆栽」 (Kimura Bonsai), and Koimsurai is a custom ID stitched together from the romaji of those two words.',
+    a7: "It's a compound word. My online handle is 「木村盆栽」 (Kimura Bonsai), and Koimsurai is a custom ID stitched together from the romaji of those two words.",
     q8: 'Q: Why "Kimura Bonsai" originally?',
     a8: 'Just because I was a big Kimura Takuya fan and casually borrowed the surname, then tacked on "bonsai" because it sounded nice.',
   },
@@ -116,16 +121,19 @@ const ABOUT_SITE_BY_LANG = {
     a2_mid3: ' でビルド、',
     a2_mid4: ' でスタイリング。宇宙背景は ',
     a2_mid5: '（WebGPU/TSL）で描画しています。バックエンドは ',
-    a2_mid6: '（axum）に全面書き換え——Steam・Spotify・WakaTime・GitHub などの外部データもここで取得しています。データベースは ',
+    a2_mid6:
+      '（axum）に全面書き換え——Steam・Spotify・WakaTime・GitHub などの外部データもここで取得しています。データベースは ',
     a2_mid7: '、インフラはすべて ',
     a2_tail: ' でコンテナ化されています。',
     q3: '3. 写真ウォールと AI の使い方は？',
     a3: 'サイト内のアルバムは Masonry レイアウトで、EXIF は自動化スクリプトで抽出しています。後から AI CLIP Tagger を追加してタグ付けを補助しており、画像アップロード時には',
-    a3_mid: 'がぼかしのプレースホルダーとして生成されます。こういう細かい自動化には AI を使っています。詳細はこちらの記事で：',
+    a3_mid:
+      'がぼかしのプレースホルダーとして生成されます。こういう細かい自動化には AI を使っています。詳細はこちらの記事で：',
     q4: '4. ここにイースターエッグはありますか？',
     a4: 'ありません。仕込んでいないので、見えているそのままです。',
     q5: '5. このサイトの主な対象は？',
-    a5_p1: '最初は個人の就活用サイトとして作り、SNS で宣伝もしていません。とはいえこれだけ時間をかけて作ったので、夜なべして作ったデザインや構造を誰かに見てもらえると嬉しいです。',
+    a5_p1:
+      '最初は個人の就活用サイトとして作り、SNS で宣伝もしていません。とはいえこれだけ時間をかけて作ったので、夜なべして作ったデザインや構造を誰かに見てもらえると嬉しいです。',
     a5_p2_pre: 'ですので、たまたま辿りついてデザインや技術スタックが気に入ったら、相互リンク大歓迎です。',
     a5_p2_link: 'メッセージ',
     a5_p2_post: 'ページから足あとを残してくれても嬉しいです。',
@@ -149,16 +157,19 @@ const ABOUT_SITE_BY_LANG = {
     a2_mid3: ' 로 빌드, ',
     a2_mid4: ' 로 스타일링합니다. 우주 배경은 ',
     a2_mid5: ' (WebGPU/TSL)로 렌더링합니다. 백엔드는 ',
-    a2_mid6: ' (axum)로 전면 재작성했으며 — Steam·Spotify·WakaTime·GitHub 같은 외부 데이터도 여기서 가져옵니다. 데이터베이스는 ',
+    a2_mid6:
+      ' (axum)로 전면 재작성했으며 — Steam·Spotify·WakaTime·GitHub 같은 외부 데이터도 여기서 가져옵니다. 데이터베이스는 ',
     a2_mid7: ' 를 사용하고, 인프라는 전부 ',
     a2_tail: ' 로 컨테이너화되어 있습니다.',
     q3: '3. 사진 월과 AI 활용은?',
     a3: '사진첩은 Masonry 레이아웃이고, EXIF는 자동화 스크립트로 추출합니다. 이후 AI CLIP Tagger를 추가해 태그 작업을 보조하며, 이미지 업로드 시 자동으로',
-    a3_mid: '를 흐림 플레이스홀더로 생성합니다. 이런 자질구레한 자동화에는 AI 도구를 적극적으로 사용해요. 자세한 내용은 이 글에서:',
+    a3_mid:
+      '를 흐림 플레이스홀더로 생성합니다. 이런 자질구레한 자동화에는 AI 도구를 적극적으로 사용해요. 자세한 내용은 이 글에서:',
     q4: '4. 이스터에그가 있나요?',
     a4: '없습니다. 이스터에그는 만들지 않았고, 보이는 그대로입니다.',
     q5: '5. 이 사이트의 주된 대상은?',
-    a5_p1: '원래는 개인 구직용으로 만들었고 따로 SNS에 홍보하지도 않았어요. 하지만 솔직히 이렇게 시간을 들였으니, 밤새워 만든 화면과 구조를 누군가가 봐주면 좋겠다는 마음은 있습니다.',
+    a5_p1:
+      '원래는 개인 구직용으로 만들었고 따로 SNS에 홍보하지도 않았어요. 하지만 솔직히 이렇게 시간을 들였으니, 밤새워 만든 화면과 구조를 누군가가 봐주면 좋겠다는 마음은 있습니다.',
     a5_p2_pre: '그러니 우연히 들렀다가 디자인이나 스택이 마음에 들면, 상호 링크 환영합니다.',
     a5_p2_link: '메시지',
     a5_p2_post: '페이지에 발자국을 남겨도 좋아요.',
@@ -194,7 +205,23 @@ function AboutSite() {
 
       <h3 id="q2">{c.q2}</h3>
       <p>
-        {c.a2_pre}<code>React 19</code>{c.a2_mid1}<code>TanStack Start</code>{c.a2_mid2}<code>Vite</code>{c.a2_mid3}<code>Tailwind CSS</code>{c.a2_mid4}<code>Three.js</code>{c.a2_mid5}<code>Rust</code>{c.a2_mid6}<code>SQLite</code>{c.a2_mid7}<code>Docker</code>{c.a2_tail}
+        {c.a2_pre}
+        <code>React 19</code>
+        {c.a2_mid1}
+        <code>TanStack Start</code>
+        {c.a2_mid2}
+        <code>Vite</code>
+        {c.a2_mid3}
+        <code>Tailwind CSS</code>
+        {c.a2_mid4}
+        <code>Three.js</code>
+        {c.a2_mid5}
+        <code>Rust</code>
+        {c.a2_mid6}
+        <code>SQLite</code>
+        {c.a2_mid7}
+        <code>Docker</code>
+        {c.a2_tail}
       </p>
 
       <h3 id="q3">{c.q3}</h3>
@@ -210,7 +237,16 @@ function AboutSite() {
       <p>{c.a5_p1}</p>
       <p>
         {c.a5_p2_pre}
-        <LocaleLink to="/messages" style={{ color: 'rgba(216, 180, 254, 0.95)', borderBottom: '1px dashed rgba(216, 180, 254, 0.35)', textDecoration: 'none' }}>{c.a5_p2_link}</LocaleLink>
+        <LocaleLink
+          to="/messages"
+          style={{
+            color: 'rgba(216, 180, 254, 0.95)',
+            borderBottom: '1px dashed rgba(216, 180, 254, 0.35)',
+            textDecoration: 'none',
+          }}
+        >
+          {c.a5_p2_link}
+        </LocaleLink>
         {c.a5_p2_post}
       </p>
 

@@ -48,9 +48,7 @@ test.describe('留言', () => {
     const content = `e2e 測試留言 ${Date.now()}`;
     await page.goto('/blog/1');
 
-    const posted = page.waitForResponse(
-      (r) => r.url().includes('/comments') && r.request().method() === 'POST',
-    );
+    const posted = page.waitForResponse((r) => r.url().includes('/comments') && r.request().method() === 'POST');
     await fillAnonymousComment(page, 'e2e 訪客', content);
     await page.locator('button.submit-btn').click();
 
@@ -171,9 +169,7 @@ test.describe('emoji 反應', () => {
     const emoji = (await btn.locator('.reaction-emoji').innerText()).trim();
     const before = await settledCount(page, emoji);
 
-    const posted = page.waitForResponse(
-      (r) => r.url().includes('/reactions') && r.request().method() === 'POST',
-    );
+    const posted = page.waitForResponse((r) => r.url().includes('/reactions') && r.request().method() === 'POST');
     await btn.click();
     await posted;
 
@@ -184,9 +180,7 @@ test.describe('emoji 反應', () => {
     await expect.poll(countOf, { message: '計數應該 +1' }).toBe(before + 1);
 
     // 再點一下收回
-    const posted2 = page.waitForResponse(
-      (r) => r.url().includes('/reactions') && r.request().method() === 'POST',
-    );
+    const posted2 = page.waitForResponse((r) => r.url().includes('/reactions') && r.request().method() === 'POST');
     await btn.click();
     await posted2;
     await expect(btn).toHaveAttribute('aria-pressed', 'false');
@@ -205,23 +199,16 @@ test.describe('emoji 反應', () => {
     // 等於間接確認 hydration 完成。上面那條測試一開始就有這道守衛，這條漏了。
     await settledCount(page, (await btn.locator('.reaction-emoji').innerText()).trim());
 
-    const posted = page.waitForResponse(
-      (r) => r.url().includes('/reactions') && r.request().method() === 'POST',
-    );
+    const posted = page.waitForResponse((r) => r.url().includes('/reactions') && r.request().method() === 'POST');
     await btn.click();
     await posted;
 
     await page.reload();
     const after = page.locator('.reaction-btn').first();
-    await expect(after, '重載後仍該記得是自己按的（存在 localStorage）').toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(after, '重載後仍該記得是自己按的（存在 localStorage）').toHaveAttribute('aria-pressed', 'true');
 
     // 收回，把共用計數器還原，不要留給下一條測試
-    const undo = page.waitForResponse(
-      (r) => r.url().includes('/reactions') && r.request().method() === 'POST',
-    );
+    const undo = page.waitForResponse((r) => r.url().includes('/reactions') && r.request().method() === 'POST');
     await after.click();
     await undo;
   });
@@ -246,9 +233,7 @@ test.describe('站內導覽', () => {
     await expect(page).toHaveURL(/\/blog\/[^/]+$/);
     await expect(page.locator('main').first()).not.toBeEmpty();
 
-    const marker = await page.evaluate(
-      () => (window as unknown as { __e2eMarker?: number }).__e2eMarker,
-    );
+    const marker = await page.evaluate(() => (window as unknown as { __e2eMarker?: number }).__e2eMarker);
     expect(marker, '記號不見了 → 發生了整頁重載，SPA 導覽壞掉').toBe(42);
   });
 

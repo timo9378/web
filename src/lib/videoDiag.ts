@@ -45,7 +45,7 @@ export function diagnoseVideo(video: HTMLVideoElement): string {
   out.push('── 影片狀態 ──');
   out.push(
     `readyState=${video.readyState} 尺寸=${video.videoWidth}x${video.videoHeight} ` +
-    `time=${video.currentTime.toFixed(2)}/${video.duration.toFixed(2)} error=${video.error?.code ?? 'null'}`,
+      `time=${video.currentTime.toFixed(2)}/${video.duration.toFixed(2)} error=${video.error?.code ?? 'null'}`,
   );
   // 從畫面取樣：亮 → 解碼正常，黑掉的是合成階段而不是影片本身
   try {
@@ -63,7 +63,9 @@ export function diagnoseVideo(video: HTMLVideoElement): string {
         max = Math.max(max, lum);
         sum += lum;
       }
-      out.push(`畫面取樣：最亮=${Math.round(max)} 平均=${Math.round(sum / (d.length / 4))}（亮 → 解碼沒問題，是合成掉了）`);
+      out.push(
+        `畫面取樣：最亮=${Math.round(max)} 平均=${Math.round(sum / (d.length / 4))}（亮 → 解碼沒問題，是合成掉了）`,
+      );
     }
   } catch (e) {
     out.push(`畫面取樣失敗：${String(e)}`);
@@ -74,12 +76,10 @@ export function diagnoseVideo(video: HTMLVideoElement): string {
   let hits = 0;
   for (let el: Element | null = video.parentElement; el; el = el.parentElement) {
     const cs = getComputedStyle(el);
-    const found = SUSPECTS
-      .map(({ prop, hit }) => {
-        const v = cs.getPropertyValue(prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`));
-        return hit(v) ? `${prop}=${v.slice(0, 40)}` : null;
-      })
-      .filter(Boolean);
+    const found = SUSPECTS.map(({ prop, hit }) => {
+      const v = cs.getPropertyValue(prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`));
+      return hit(v) ? `${prop}=${v.slice(0, 40)}` : null;
+    }).filter(Boolean);
     if (found.length > 0) {
       hits += found.length;
       out.push(`${tag(el)}\n    ${found.join('  ')}`);
@@ -103,7 +103,7 @@ export function diagnoseVideo(video: HTMLVideoElement): string {
     const transparent = bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent';
     covering.push(
       `${tag(el)}  z=${cs.zIndex} pos=${cs.position} pe=${cs.pointerEvents} ` +
-      `bg=${transparent ? '透明' : bg} backdrop=${cs.backdropFilter}`,
+        `bg=${transparent ? '透明' : bg} backdrop=${cs.backdropFilter}`,
     );
   }
   out.push(covering.length > 0 ? covering.join('\n') : '（沒有元素蓋住影片中心）');
@@ -168,7 +168,9 @@ export function bisectVideo(src: string): () => void {
     tagEl.textContent = v.label;
     cell.append(wrap, tagEl);
     host.appendChild(cell);
-    void video.play().catch(() => { /* autoplay 被擋就算了，靜音的通常不會 */ });
+    void video.play().catch(() => {
+      /* autoplay 被擋就算了，靜音的通常不會 */
+    });
   }
 
   document.body.appendChild(host);

@@ -8,14 +8,7 @@
 // 下面每一組對應一種「改壞了不會有人發現」的情況，而不是為了把行數蓋滿。
 import { describe, expect, it } from 'vitest';
 
-import {
-  articleJsonLd,
-  articleMeta,
-  blogListJsonLd,
-  LOCALE_TO_OG,
-  pageMeta,
-  siteJsonLd,
-} from './seoMeta';
+import { articleJsonLd, articleMeta, blogListJsonLd, LOCALE_TO_OG, pageMeta, siteJsonLd } from './seoMeta';
 
 type Post = Parameters<typeof articleMeta>[0];
 
@@ -37,10 +30,8 @@ const post = (over: Record<string, unknown> = {}): Post =>
 const pick = (tags: ReturnType<typeof pageMeta>, key: string): string | undefined =>
   tags.find((t) => t.name === key || t.property === key)?.content;
 
-const parse = (s: { children: string }): Record<string, unknown> =>
-  JSON.parse(s.children) as Record<string, unknown>;
-const graph = (s: { children: string }): Record<string, unknown>[] =>
-  parse(s)['@graph'] as Record<string, unknown>[];
+const parse = (s: { children: string }): Record<string, unknown> => JSON.parse(s.children) as Record<string, unknown>;
+const graph = (s: { children: string }): Record<string, unknown>[] => parse(s)['@graph'] as Record<string, unknown>[];
 
 describe('日期轉 ISO 8601', () => {
   // 後端存的是 SQLite datetime('now')：UTC，但**沒有時區標記**。
@@ -57,8 +48,7 @@ describe('日期轉 ISO 8601', () => {
     // `?? ''` 不是防禦性程式碼：拿掉就得用 `!` 或 `as string`，而 oxlint 對那兩種
     // 各有一條規則互相打架（no-non-null-assertion / non-nullable-type-assertion-style）。
     // 值真的不存在時 new Date('') 會是 Invalid Date，斷言照樣紅。
-    expect(new Date(pick(m, 'article:published_time') ?? '').toISOString())
-      .toBe('2026-08-01T03:04:05.000Z');
+    expect(new Date(pick(m, 'article:published_time') ?? '').toISOString()).toBe('2026-08-01T03:04:05.000Z');
   });
 
   it('已經是 ISO 的字串原樣不動，不會被加上第二個 Z', () => {
@@ -121,8 +111,7 @@ describe('articleMeta', () => {
   });
 
   it('og:image 指向後端產的那張，網址帶文章 id', () => {
-    expect(pick(articleMeta(post(), '/blog/42', 'zh-TW'), 'og:image'))
-      .toBe('https://koimsurai.com/api/og/42.png');
+    expect(pick(articleMeta(post(), '/blog/42', 'zh-TW'), 'og:image')).toBe('https://koimsurai.com/api/og/42.png');
   });
 
   it('og:type 是 article，不是首頁那種 website', () => {
@@ -138,8 +127,7 @@ describe('articleMeta', () => {
 
 describe('articleJsonLd', () => {
   it('@graph 就是 BlogPosting + BreadcrumbList 兩個實體', () => {
-    expect(graph(articleJsonLd(post(), '/blog/42')).map((g) => g['@type']))
-      .toEqual(['BlogPosting', 'BreadcrumbList']);
+    expect(graph(articleJsonLd(post(), '/blog/42')).map((g) => g['@type'])).toEqual(['BlogPosting', 'BreadcrumbList']);
   });
 
   // ⚠ 這條守的是原始碼裡那段註解記下來的事故：Google 規定 `item` 對「除了最後一項以外」
@@ -157,8 +145,7 @@ describe('articleJsonLd', () => {
   });
 
   it('麵包屑最後一項指向文章本身，中間那層指向該語系的 blog 列表', () => {
-    const items = graph(articleJsonLd(post(), '/en/blog/42', 'en'))[1]
-      .itemListElement as Record<string, unknown>[];
+    const items = graph(articleJsonLd(post(), '/en/blog/42', 'en'))[1].itemListElement as Record<string, unknown>[];
     expect(items[0].item).toBe('https://koimsurai.com/en');
     expect(items[1].item).toBe('https://koimsurai.com/en/blog');
     expect(items[2].item).toBe('https://koimsurai.com/en/blog/42');

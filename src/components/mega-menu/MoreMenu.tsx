@@ -8,13 +8,26 @@ import { RadioTowerIcon } from '@/components/animate-ui/icons/radio-tower';
 import { AudioLinesIcon } from '@/components/animate-ui/icons/audio-lines';
 import { BookOpenTextIcon, EyeIcon } from '@animateicons/react/lucide';
 
-interface AnimateIconHandle { startAnimation?: () => void; stopAnimation?: () => void }
+interface AnimateIconHandle {
+  startAnimation?: () => void;
+  stopAnimation?: () => void;
+}
 
 /**
  * @animateicons/react 的 icon 不會 watch isAnimated prop 變化來播動畫，
  * 它走 imperative handle（startAnimation / stopAnimation），所以需要拿 ref。
  */
-function AnimateIconsLibIcon({ Comp, size = 16, duration = 0.6, hover }: { Comp: ElementType; size?: number; duration?: number; hover?: boolean }) {
+function AnimateIconsLibIcon({
+  Comp,
+  size = 16,
+  duration = 0.6,
+  hover,
+}: {
+  Comp: ElementType;
+  size?: number;
+  duration?: number;
+  hover?: boolean;
+}) {
   const ref = useRef<AnimateIconHandle>(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -45,13 +58,14 @@ function AnimatedMenuLink({ to, AnimIcon, FallbackIcon, AnimateIconsLib, title }
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <span className={`mega-menu-link-icon${(AnimIcon || AnimateIconsLib) ? ' mega-menu-link-icon--motion' : ''}`}>
-        {AnimIcon
-          ? createElement(AnimIcon, { size: 16, animate: hover ? 'default' : false })
-          : AnimateIconsLib
-            ? <AnimateIconsLibIcon Comp={AnimateIconsLib} hover={hover} />
-            : FallbackIcon ? createElement(FallbackIcon) : null
-        }
+      <span className={`mega-menu-link-icon${AnimIcon || AnimateIconsLib ? ' mega-menu-link-icon--motion' : ''}`}>
+        {AnimIcon ? (
+          createElement(AnimIcon, { size: 16, animate: hover ? 'default' : false })
+        ) : AnimateIconsLib ? (
+          <AnimateIconsLibIcon Comp={AnimateIconsLib} hover={hover} />
+        ) : FallbackIcon ? (
+          createElement(FallbackIcon)
+        ) : null}
       </span>
       <span className="mega-menu-link-title">{title}</span>
     </LocaleLink>
@@ -67,19 +81,17 @@ function MoreMenuContent() {
   // 成長軌跡已併入 /about（首頁選單的頁面欄），不再出現在這裡
   // 說明文字拔掉，跟首頁選單同款 compact 對齊
   const life: MenuLink[] = [
-    { to: '/watch',     AnimateIconsLib: EyeIcon,            title: t('megaMenu.items.watch') },
-    { to: '/photos',    AnimIcon: FrameIcon,                 title: t('megaMenu.items.photos') },
-    { to: '/activity',  AnimIcon: RadioTowerIcon,            title: t('megaMenu.items.activity') },
+    { to: '/watch', AnimateIconsLib: EyeIcon, title: t('megaMenu.items.watch') },
+    { to: '/photos', AnimIcon: FrameIcon, title: t('megaMenu.items.photos') },
+    { to: '/activity', AnimIcon: RadioTowerIcon, title: t('megaMenu.items.activity') },
   ];
   const collection: MenuLink[] = [
-    { to: '/bookshelf', AnimateIconsLib: BookOpenTextIcon,   title: t('megaMenu.items.bookshelf') },
-    { to: '/music',     AnimIcon: AudioLinesIcon,            title: t('megaMenu.items.music') },
-    { to: '/setup',     FallbackIcon: Monitor,               title: t('megaMenu.items.setup') },
+    { to: '/bookshelf', AnimateIconsLib: BookOpenTextIcon, title: t('megaMenu.items.bookshelf') },
+    { to: '/music', AnimIcon: AudioLinesIcon, title: t('megaMenu.items.music') },
+    { to: '/setup', FallbackIcon: Monitor, title: t('megaMenu.items.setup') },
   ];
 
-  const renderLinks = (items: MenuLink[]) => items.map((e) => (
-    <AnimatedMenuLink key={e.to} {...e} />
-  ));
+  const renderLinks = (items: MenuLink[]) => items.map((e) => <AnimatedMenuLink key={e.to} {...e} />);
 
   return (
     <MegaMenuPanel className="mega-menu-panel--balanced">

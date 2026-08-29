@@ -78,9 +78,7 @@ test.describe('後台', () => {
     const [a, b] = q.match(/\d+/g)!.map(Number);
     await page.locator('.captcha-input').fill(String(a + b));
 
-    const posted = page.waitForResponse(
-      (r) => r.url().includes('/comments') && r.request().method() === 'POST',
-    );
+    const posted = page.waitForResponse((r) => r.url().includes('/comments') && r.request().method() === 'POST');
     await page.locator('button.submit-btn').click();
     expect((await posted).status()).toBeLessThan(400);
     await expect(page.locator('.form-success')).toBeVisible();

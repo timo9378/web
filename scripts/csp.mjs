@@ -58,11 +58,7 @@ const IMG = [
 const MEDIA = ['https://shared.akamai.steamstatic.com'];
 
 /** iframe：文章內嵌（MediaEmbed / LinkCard）與作品集。 */
-const FRAME = [
-  'https://www.youtube-nocookie.com',
-  'https://www.youtube.com',
-  'https://player.bilibili.com',
-];
+const FRAME = ['https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://player.bilibili.com'];
 
 const DIRECTIVES = {
   // 沒有列出的資源類型一律只能同源

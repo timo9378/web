@@ -183,7 +183,9 @@ test('碎念的 ref 解得出物件，原字串也還在', async ({ request }) =
 test('相簿 manifest 的整數不會變成浮點', async ({ request }) => {
   const b = await json(request, '/api/gallery/photos');
   expect(b.totalPhotos).toBe(b.photos.length);
-  const iso = b.photos.map((x: { exif?: { ISO?: unknown } }) => x.exif?.ISO).find((v: unknown) => typeof v === 'number');
+  const iso = b.photos
+    .map((x: { exif?: { ISO?: unknown } }) => x.exif?.ISO)
+    .find((v: unknown) => typeof v === 'number');
   if (iso !== undefined) expect(Number.isInteger(iso), 'manifest 會被反覆讀寫，序列化不該改數字寫法').toBe(true);
 });
 

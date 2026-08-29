@@ -48,9 +48,17 @@ interface CategoryForm {
 }
 
 /** 表單裡「描述類」譯文欄位的型別（給 keyof 索引用）。 */
-type TagLikeDesc = Pick<CategoryForm,
-  'description_en' | 'description_ja' | 'description_ko' | 'description_zh_cn' |
-  'short_description_en' | 'short_description_ja' | 'short_description_ko' | 'short_description_zh_cn'>;
+type TagLikeDesc = Pick<
+  CategoryForm,
+  | 'description_en'
+  | 'description_ja'
+  | 'description_ko'
+  | 'description_zh_cn'
+  | 'short_description_en'
+  | 'short_description_ja'
+  | 'short_description_ko'
+  | 'short_description_zh_cn'
+>;
 
 /** 譯名欄位表：新增語系時只要改這裡（表單自動長出欄位）。 */
 const LOCALE_NAME_FIELDS = [
@@ -89,9 +97,8 @@ export default function CategoriesManager() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const q = searchQuery.toLowerCase();
-  const filteredCategories = categories.filter((c) =>
-    c.name.toLowerCase().includes(q) ||
-    c.slug.toLowerCase().includes(q)
+  const filteredCategories = categories.filter(
+    (c) => c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q),
   );
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -99,16 +106,14 @@ export default function CategoriesManager() {
 
     try {
       const token = localStorage.getItem('koimsurai_user_token');
-      const url = editingCategory
-        ? `/api/admin/categories/${editingCategory.id}`
-        : '/api/admin/categories';
+      const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : '/api/admin/categories';
       const method = editingCategory ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token ?? ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
         },
         body: JSON.stringify(formData),
       });
@@ -157,7 +162,7 @@ export default function CategoriesManager() {
       const token = localStorage.getItem('koimsurai_user_token');
       const response = await fetch(`/api/admin/categories/${deleteId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token ?? ''}` },
+        headers: { Authorization: `Bearer ${token ?? ''}` },
       });
 
       if (response.ok) {
@@ -175,7 +180,24 @@ export default function CategoriesManager() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '', description: '', short_description: '', name_en: '', name_ja: '', name_ko: '', name_zh_cn: '', description_en: '', description_ja: '', description_ko: '', description_zh_cn: '', short_description_en: '', short_description_ja: '', short_description_ko: '', short_description_zh_cn: '' });
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
+      short_description: '',
+      name_en: '',
+      name_ja: '',
+      name_ko: '',
+      name_zh_cn: '',
+      description_en: '',
+      description_ja: '',
+      description_ko: '',
+      description_zh_cn: '',
+      short_description_en: '',
+      short_description_ja: '',
+      short_description_ko: '',
+      short_description_zh_cn: '',
+    });
     setEditingCategory(null);
   };
 
@@ -196,13 +218,16 @@ export default function CategoriesManager() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-medium text-foreground/90">分類管理</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            共 {categories.length} 個分類
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">共 {categories.length} 個分類</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40" onClick={resetForm}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40"
+              onClick={resetForm}
+            >
               <Plus className="size-3.5" />
               新增分類
             </Button>
@@ -210,11 +235,13 @@ export default function CategoriesManager() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingCategory ? '編輯分類' : '新增分類'}</DialogTitle>
-              <DialogDescription>
-                {editingCategory ? '修改分類資訊' : '創建新的文章分類'}
-              </DialogDescription>
+              <DialogDescription>{editingCategory ? '修改分類資訊' : '創建新的文章分類'}</DialogDescription>
             </DialogHeader>
-            <form onSubmit={(e) => { void handleSubmit(e); }}>
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+            >
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">分類名稱</Label>
@@ -262,7 +289,9 @@ export default function CategoriesManager() {
                   <div className="grid grid-cols-2 gap-3">
                     {LOCALE_NAME_FIELDS.map(({ key, label, placeholder }) => (
                       <div className="space-y-2" key={key}>
-                        <Label htmlFor={key} className="text-xs">{label}</Label>
+                        <Label htmlFor={key} className="text-xs">
+                          {label}
+                        </Label>
                         <Input
                           id={key}
                           value={formData[key]}
@@ -286,7 +315,9 @@ export default function CategoriesManager() {
                       return (
                         <div key={key} className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label htmlFor={shortKey} className="text-xs">{label}・簡述</Label>
+                            <Label htmlFor={shortKey} className="text-xs">
+                              {label}・簡述
+                            </Label>
                             <Input
                               id={shortKey}
                               value={formData[shortKey]}
@@ -294,7 +325,9 @@ export default function CategoriesManager() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor={descKey} className="text-xs">{label}・描述</Label>
+                            <Label htmlFor={descKey} className="text-xs">
+                              {label}・描述
+                            </Label>
                             <Input
                               id={descKey}
                               value={formData[descKey]}
@@ -311,9 +344,7 @@ export default function CategoriesManager() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   取消
                 </Button>
-                <Button type="submit">
-                  {editingCategory ? '更新' : '創建'}
-                </Button>
+                <Button type="submit">{editingCategory ? '更新' : '創建'}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -379,13 +410,16 @@ export default function CategoriesManager() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確定要刪除這個分類嗎？</AlertDialogTitle>
-            <AlertDialogDescription>
-              此操作無法復原。分類將被永久刪除，但不會影響已分類的文章。
-            </AlertDialogDescription>
+            <AlertDialogDescription>此操作無法復原。分類將被永久刪除，但不會影響已分類的文章。</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void handleDelete(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => {
+                void handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               刪除
             </AlertDialogAction>
           </AlertDialogFooter>

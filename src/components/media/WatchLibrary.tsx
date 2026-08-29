@@ -42,7 +42,8 @@ function normalizeAnime(rows?: AnimeRow[]): WatchItem[] {
   const byAnime = new Map<number | string, AnimeRow[]>();
   for (const r of rows ?? []) {
     const arr = byAnime.get(r.anime_sn);
-    if (arr) arr.push(r); else byAnime.set(r.anime_sn, [r]);
+    if (arr) arr.push(r);
+    else byAnime.set(r.anime_sn, [r]);
   }
   return [...byAnime.values()].map((eps) => {
     const sorted = eps.slice().sort((a, b) => (b.last_watched_at ?? '').localeCompare(a.last_watched_at ?? ''));
@@ -97,7 +98,11 @@ function normalizeTv(rows?: TvRow[]): WatchItem[] {
 
 const SORT_OPTIONS = ['newest', 'oldest', 'titleAsc', 'titleDesc'];
 
-interface WatchItems { anime: WatchItem[] | null; film: WatchItem[] | null; tv: WatchItem[] | null }
+interface WatchItems {
+  anime: WatchItem[] | null;
+  film: WatchItem[] | null;
+  tv: WatchItem[] | null;
+}
 
 function WatchLibrary() {
   const { t } = useTranslation();
@@ -110,20 +115,27 @@ function WatchLibrary() {
   const animeQ = useQuery(animeLibraryQueryOptions);
   const filmsQ = useQuery(filmsLibraryQueryOptions);
   const tvQ = useQuery(tvLibraryQueryOptions);
-  const items = useMemo<WatchItems>(() => ({
-    anime: animeQ.data ? normalizeAnime(animeQ.data) : null,
-    film: filmsQ.data ? normalizeFilms(filmsQ.data) : null,
-    tv: tvQ.data ? normalizeTv(tvQ.data) : null,
-  }), [animeQ.data, filmsQ.data, tvQ.data]);
+  const items = useMemo<WatchItems>(
+    () => ({
+      anime: animeQ.data ? normalizeAnime(animeQ.data) : null,
+      film: filmsQ.data ? normalizeFilms(filmsQ.data) : null,
+      tv: tvQ.data ? normalizeTv(tvQ.data) : null,
+    }),
+    [animeQ.data, filmsQ.data, tvQ.data],
+  );
   const loading = animeQ.isPending || filmsQ.isPending || tvQ.isPending;
-  const err = (animeQ.isError || filmsQ.isError || tvQ.isError) ? '載入失敗' : null;
+  const err = animeQ.isError || filmsQ.isError || tvQ.isError ? '載入失敗' : null;
 
   // close sort popup on outside click
   useEffect(() => {
     if (!sortOpen) return;
-    const onDoc = (e: MouseEvent) => { if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false); };
+    const onDoc = (e: MouseEvent) => {
+      if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false);
+    };
     document.addEventListener('mousedown', onDoc);
-    return () => { document.removeEventListener('mousedown', onDoc); };
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+    };
   }, [sortOpen]);
 
   // 跨「動畫(Bahamut)/影集(Netflix/Trakt)」去重：同 tmdb_id 視為同一部，保留集數最多的那筆。
@@ -151,7 +163,9 @@ function WatchLibrary() {
 
       <div className="wl-wrap">
         <motion.header className="wl-header" {...reveal}>
-          <LocaleLink to="/watch" className="wl-back">{t('watch.library.viewWatch')}</LocaleLink>
+          <LocaleLink to="/watch" className="wl-back">
+            {t('watch.library.viewWatch')}
+          </LocaleLink>
           <h1 className="wl-title">{t('watch.library.title')}</h1>
           <p className="wl-subtitle">{t('watch.library.subtitle')}</p>
         </motion.header>
@@ -159,11 +173,7 @@ function WatchLibrary() {
         {/* tabs */}
         <div className="wl-tabs">
           {(['anime', 'film', 'tv'] as const).map((k) => (
-            <button
-              key={k}
-              className={`wl-tab ${activeTab === k ? 'active' : ''}`}
-              onClick={() => setActiveTab(k)}
-            >
+            <button key={k} className={`wl-tab ${activeTab === k ? 'active' : ''}`} onClick={() => setActiveTab(k)}>
               {t(`watch.library.tabs.${k}`)}
               <span className="wl-tab-count">{counts[k]}</span>
             </button>
@@ -205,7 +215,10 @@ function WatchLibrary() {
                       <button
                         type="button"
                         className={`wl-sort-item${sortBy === opt ? ' active' : ''}`}
-                        onClick={() => { setSortBy(opt); setSortOpen(false); }}
+                        onClick={() => {
+                          setSortBy(opt);
+                          setSortOpen(false);
+                        }}
                       >
                         {t(`watch.library.sort.${opt}`)}
                       </button>
@@ -220,9 +233,7 @@ function WatchLibrary() {
         {/* grid */}
         {loading && <p className="wl-info">{t('watch.library.loading')}</p>}
         {err && <p className="wl-info wl-info--err">⚠️ {err}</p>}
-        {!loading && !err && visible.length === 0 && (
-          <p className="wl-info">{t('watch.library.empty')}</p>
-        )}
+        {!loading && !err && visible.length === 0 && <p className="wl-info">{t('watch.library.empty')}</p>}
 
         {!loading && visible.length > 0 && (
           <div className="wl-grid">
@@ -247,12 +258,16 @@ function WatchLibrary() {
                   <p className="wl-card-title">{it.title}</p>
                   <p className="wl-card-sub">
                     {it.type === 'film' && it.year ? <span>{it.year}</span> : null}
-                    {it.type === 'tv' && it.epCount
-                      ? <span>{it.epCount} {t('watch.library.epsSuffix')}</span>
-                      : null}
-                    {it.type === 'anime' && it.epCount
-                      ? <span>{it.epCount} {t('watch.library.epsSuffix')}</span>
-                      : null}
+                    {it.type === 'tv' && it.epCount ? (
+                      <span>
+                        {it.epCount} {t('watch.library.epsSuffix')}
+                      </span>
+                    ) : null}
+                    {it.type === 'anime' && it.epCount ? (
+                      <span>
+                        {it.epCount} {t('watch.library.epsSuffix')}
+                      </span>
+                    ) : null}
                     <span className="wl-card-date">{it.isoDate ?? t('watch.library.undated')}</span>
                   </p>
                 </div>

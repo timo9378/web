@@ -41,17 +41,17 @@ function loadUserSnippets(): Snippet[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return (parsed as unknown[]).filter(
-      (s): s is { label: string; detail?: unknown; body: string } => {
+    return (parsed as unknown[])
+      .filter((s): s is { label: string; detail?: unknown; body: string } => {
         if (typeof s !== 'object' || s === null) return false;
         const o = s as Record<string, unknown>;
         return typeof o.label === 'string' && o.label.startsWith('/') && typeof o.body === 'string';
-      }
-    ).map((s) => ({
-      label: s.label,
-      detail: typeof s.detail === 'string' ? s.detail : '使用者自訂',
-      body: s.body,
-    }));
+      })
+      .map((s) => ({
+        label: s.label,
+        detail: typeof s.detail === 'string' ? s.detail : '使用者自訂',
+        body: s.body,
+      }));
   } catch {
     return [];
   }

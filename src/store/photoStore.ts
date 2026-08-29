@@ -48,29 +48,23 @@ const panPositionAtom = atomWithReset<{ x: number; y: number }>({ x: 0, y: 0 });
 /**
  * Action: 開啟照片查看器
  */
-export const openViewerAtom = atom(
-  null,
-  (get, set, photo: PhotoManifest) => {
-    const photos = get(photosAtom);
-    const index = photos.findIndex(p => p.id === photo.id);
-    
-    set(selectedPhotoAtom, photo);
-    set(selectedPhotoIndexAtom, index);
-    set(viewerOpenAtom, true);
-    set(zoomLevelAtom, 1);
-    set(panPositionAtom, { x: 0, y: 0 });
-  }
-);
+export const openViewerAtom = atom(null, (get, set, photo: PhotoManifest) => {
+  const photos = get(photosAtom);
+  const index = photos.findIndex((p) => p.id === photo.id);
+
+  set(selectedPhotoAtom, photo);
+  set(selectedPhotoIndexAtom, index);
+  set(viewerOpenAtom, true);
+  set(zoomLevelAtom, 1);
+  set(panPositionAtom, { x: 0, y: 0 });
+});
 
 /**
  * Action: 關閉照片查看器
  */
-export const closeViewerAtom = atom(
-  null,
-  (_get, set) => {
-    set(viewerOpenAtom, false);
-    set(selectedPhotoAtom, null);
-    set(selectedPhotoIndexAtom, -1);
-    set(exifPanelOpenAtom, false);
-  }
-);
+export const closeViewerAtom = atom(null, (_get, set) => {
+  set(viewerOpenAtom, false);
+  set(selectedPhotoAtom, null);
+  set(selectedPhotoIndexAtom, -1);
+  set(exifPanelOpenAtom, false);
+});

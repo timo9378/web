@@ -33,9 +33,7 @@ const REVALIDATE_SECRET = 'e2e-revalidate-secret';
 // 所以產物在 web/target/ 而不是 web/backend/target/。debug 優先——CI 就是建那個。
 function findBackendBin() {
   if (process.env.E2E_BACKEND_BIN) return process.env.E2E_BACKEND_BIN;
-  const candidates = ['target/debug', 'target/release'].map((d) =>
-    path.join(ROOT, d, 'koimsurai-web-backend'),
-  );
+  const candidates = ['target/debug', 'target/release'].map((d) => path.join(ROOT, d, 'koimsurai-web-backend'));
   return candidates.find((p) => existsSync(p)) ?? candidates[0];
 }
 const BACKEND_BIN = findBackendBin();
@@ -99,7 +97,9 @@ async function sizedPng(w, h) {
     const { default: sharp } = await import('sharp');
     sizedPngCache.set(
       key,
-      await sharp({ create: { width: w, height: h, channels: 3, background: '#334' } }).png().toBuffer(),
+      await sharp({ create: { width: w, height: h, channels: 3, background: '#334' } })
+        .png()
+        .toBuffer(),
     );
   }
   return sizedPngCache.get(key);

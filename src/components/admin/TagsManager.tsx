@@ -66,9 +66,7 @@ export default function TagsManager() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredTags = tags.filter((t) =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTags = tags.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const sortedTags = [...filteredTags].sort((a, b) => b.post_count - a.post_count);
 
@@ -77,16 +75,14 @@ export default function TagsManager() {
 
     try {
       const token = localStorage.getItem('koimsurai_user_token');
-      const url = editingTag
-        ? `/api/admin/tags/${editingTag.id}`
-        : '/api/admin/tags';
+      const url = editingTag ? `/api/admin/tags/${editingTag.id}` : '/api/admin/tags';
       const method = editingTag ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token ?? ''}`,
+          Authorization: `Bearer ${token ?? ''}`,
         },
         body: JSON.stringify(formData),
       });
@@ -127,7 +123,7 @@ export default function TagsManager() {
       const token = localStorage.getItem('koimsurai_user_token');
       const response = await fetch(`/api/admin/tags/${deleteId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token ?? ''}` },
+        headers: { Authorization: `Bearer ${token ?? ''}` },
       });
 
       if (response.ok) {
@@ -166,13 +162,16 @@ export default function TagsManager() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-medium text-foreground/90">標籤管理</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            共 {tags.length} 個標籤
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">共 {tags.length} 個標籤</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40" onClick={resetForm}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40"
+              onClick={resetForm}
+            >
               <Plus className="size-3.5" />
               新增標籤
             </Button>
@@ -180,11 +179,13 @@ export default function TagsManager() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingTag ? '編輯標籤' : '新增標籤'}</DialogTitle>
-              <DialogDescription>
-                {editingTag ? '修改標籤資訊' : '創建新的文章標籤'}
-              </DialogDescription>
+              <DialogDescription>{editingTag ? '修改標籤資訊' : '創建新的文章標籤'}</DialogDescription>
             </DialogHeader>
-            <form onSubmit={(e) => { void handleSubmit(e); }}>
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+            >
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">標籤名稱</Label>
@@ -205,7 +206,9 @@ export default function TagsManager() {
                   <div className="grid grid-cols-2 gap-3">
                     {LOCALE_NAME_FIELDS.map(({ key, label, placeholder }) => (
                       <div className="space-y-2" key={key}>
-                        <Label htmlFor={key} className="text-xs">{label}</Label>
+                        <Label htmlFor={key} className="text-xs">
+                          {label}
+                        </Label>
                         <Input
                           id={key}
                           value={formData[key]}
@@ -248,9 +251,7 @@ export default function TagsManager() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   取消
                 </Button>
-                <Button type="submit">
-                  {editingTag ? '更新' : '創建'}
-                </Button>
+                <Button type="submit">{editingTag ? '更新' : '創建'}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -271,11 +272,12 @@ export default function TagsManager() {
           <div className="flex flex-wrap gap-2">
             {sortedTags.map((tag) => {
               const count = tag.post_count;
-              const sizeClass = count >= 10
-                ? 'text-sm px-3 py-1.5'
-                : count >= 5
-                  ? 'text-[13px] px-2.5 py-1'
-                  : 'text-[12px] px-2 py-0.5';
+              const sizeClass =
+                count >= 10
+                  ? 'text-sm px-3 py-1.5'
+                  : count >= 5
+                    ? 'text-[13px] px-2.5 py-1'
+                    : 'text-[12px] px-2 py-0.5';
 
               return (
                 <span
@@ -359,13 +361,16 @@ export default function TagsManager() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確定要刪除這個標籤嗎？</AlertDialogTitle>
-            <AlertDialogDescription>
-              此操作無法復原。標籤將被永久刪除，但不會影響已標記的文章。
-            </AlertDialogDescription>
+            <AlertDialogDescription>此操作無法復原。標籤將被永久刪除，但不會影響已標記的文章。</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void handleDelete(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => {
+                void handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               刪除
             </AlertDialogAction>
           </AlertDialogFooter>

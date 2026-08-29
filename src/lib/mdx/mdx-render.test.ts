@@ -19,9 +19,7 @@ const compile = (src: string) => compileMdxToHastJson(src);
 
 describe('MDX 可渲染性的界線', () => {
   it('元件 + 純資料屬性：通過，而且屬性值原樣保留', async () => {
-    const json = await compile(
-      '<Poll id="demo" open options={[{key:"a",label:"甲"},{key:"b",label:"乙"}]} n={3} />\n',
-    );
+    const json = await compile('<Poll id="demo" open options={[{key:"a",label:"甲"},{key:"b",label:"乙"}]} n={3} />\n');
     // 屬性要真的留在樹裡——只驗「編得過」的話，屬性掉光了也會綠
     expect(json).toContain('"demo"');
     expect(json).toContain('label');
@@ -51,9 +49,7 @@ describe('MDX 可渲染性的界線', () => {
 
   it('未註冊的元件在有清單時就被擋下', async () => {
     await expect(compileMdxToHastJson('<Nope />\n', new Set(['Note']))).rejects.toThrow(/沒有註冊/);
-    await expect(compileMdxToHastJson('<Note>x</Note>\n', new Set(['Note']))).resolves.toBeTypeOf(
-      'string',
-    );
+    await expect(compileMdxToHastJson('<Note>x</Note>\n', new Set(['Note']))).resolves.toBeTypeOf('string');
   });
 });
 

@@ -21,7 +21,11 @@ export default function SiteAppreciation() {
   useEffect(() => {
     const ac = new AbortController();
     let already = false;
-    try { already = localStorage.getItem(LIKED_KEY) === '1'; } catch { /* 不可用就當沒按過 */ }
+    try {
+      already = localStorage.getItem(LIKED_KEY) === '1';
+    } catch {
+      /* 不可用就當沒按過 */
+    }
     const apply = (n: number | null) => {
       if (ac.signal.aborted) return;
       if (n !== null) setLikes(n);
@@ -33,8 +37,12 @@ export default function SiteAppreciation() {
       .catch(() => apply(null));
     fetch(apiUrl('/api/site/github-stars'), { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<{ count: number }>) : null))
-      .then((d) => { if (!ac.signal.aborted && d) setStars(d.count); })
-      .catch(() => { /* 靜默：星數抓不到就不顯示數字 */ });
+      .then((d) => {
+        if (!ac.signal.aborted && d) setStars(d.count);
+      })
+      .catch(() => {
+        /* 靜默：星數抓不到就不顯示數字 */
+      });
     return () => ac.abort();
   }, []);
 
@@ -46,9 +54,15 @@ export default function SiteAppreciation() {
       .then((d) => {
         if (d) setLikes(d.count);
         setLiked(true);
-        try { localStorage.setItem(LIKED_KEY, '1'); } catch { /* 忽略 */ }
+        try {
+          localStorage.setItem(LIKED_KEY, '1');
+        } catch {
+          /* 忽略 */
+        }
       })
-      .catch(() => { /* 失敗就維持未按狀態，可再試 */ })
+      .catch(() => {
+        /* 失敗就維持未按狀態，可再試 */
+      })
       .finally(() => setBusy(false));
   }, [liked, busy]);
 

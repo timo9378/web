@@ -66,7 +66,11 @@ export default function MonacoEditor({
 
   // Vim 模式（C-1）— 狀態 + lifecycle 由 useEffect 接管
   const [vimMode, setVimMode] = useState<boolean>(() => {
-    try { return localStorage.getItem(VIM_MODE_KEY) === '1'; } catch { return false; }
+    try {
+      return localStorage.getItem(VIM_MODE_KEY) === '1';
+    } catch {
+      return false;
+    }
   });
   const vimStatusRef = useRef<HTMLDivElement | null>(null);
   const vimAdapterRef = useRef<{ dispose: () => void } | null>(null);
@@ -101,17 +105,15 @@ export default function MonacoEditor({
       if (monacoNs) {
         // 使用 highResUrl 或 thumbnailUrl，這裡預設 highResUrl
         // 需注意 url 已經包含 /nas-images/ 前綴
-        const imageUrl =
-          photo.highResUrl ??
-          photo.originalUrl ??
-          photo.urls?.full ??
-          photo.thumbnailUrl;
+        const imageUrl = photo.highResUrl ?? photo.originalUrl ?? photo.urls?.full ?? photo.thumbnailUrl;
         const textToInsert = `![${photo.title ?? 'image'}](${imageUrl})\n`;
 
-        editor.executeEdits('insert-nas-image', [{
-          range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-          text: textToInsert,
-        }]);
+        editor.executeEdits('insert-nas-image', [
+          {
+            range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            text: textToInsert,
+          },
+        ]);
       }
     }
     setShowNASSelector(false);
@@ -146,7 +148,8 @@ export default function MonacoEditor({
         // 壓縮圖片到 max 1920px 並轉 webp
         const bitmap = await createImageBitmap(file);
         const MAX = 1920;
-        let w = bitmap.width, h = bitmap.height;
+        let w = bitmap.width,
+          h = bitmap.height;
         if (w > MAX || h > MAX) {
           const ratio = Math.min(MAX / w, MAX / h);
           w = Math.round(w * ratio);
@@ -169,16 +172,16 @@ export default function MonacoEditor({
       const token = localStorage.getItem('koimsurai_user_token');
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({})) as { error?: string };
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(errData.error ?? 'Upload failed');
       }
 
-      const data = await res.json() as { url: string };
+      const data = (await res.json()) as { url: string };
       const imageUrl = data.url;
 
       // 插入 markdown
@@ -187,10 +190,12 @@ export default function MonacoEditor({
         const monacoNs = getMonaco();
         if (monacoNs) {
           const altText = file.name.replace(/\.[^/.]+$/, '');
-          editorInstance.executeEdits('upload-image', [{
-            range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-            text: `![${altText}](${imageUrl})\n`,
-          }]);
+          editorInstance.executeEdits('upload-image', [
+            {
+              range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+              text: `![${altText}](${imageUrl})\n`,
+            },
+          ]);
         }
       }
     } catch (err) {
@@ -204,152 +209,227 @@ export default function MonacoEditor({
   /**
    * 編輯器掛載完成時的回調
    */
-  const handleEditorDidMount = useCallback(
-    (editor: editor.IStandaloneCodeEditor) => {
-      editorRef.current = editor;
-      textHelperRef.current = new MonacoTextHelper(editor);
-      setIsEditorReady(true);
+  const handleEditorDidMount = useCallback((editor: editor.IStandaloneCodeEditor) => {
+    editorRef.current = editor;
+    textHelperRef.current = new MonacoTextHelper(editor);
+    setIsEditorReady(true);
 
-      /**
-       * 計算字形數量（使用者感知的字元）
-       */
-      const countGraphemes = (text: string): number => {
-        if (!text) return 0;
-        const normalized = text.replace(/\r\n/g, '\n');
+    /**
+     * 計算字形數量（使用者感知的字元）
+     */
+    const countGraphemes = (text: string): number => {
+      if (!text) return 0;
+      const normalized = text.replace(/\r\n/g, '\n');
+      if ('Segmenter' in Intl) {
+        try {
+          const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+          let count = 0;
+          for (const _ of seg.segment(normalized)) count++;
+          return count;
+        } catch {
+          // fallback
+        }
+      }
+      return Array.from(normalized).length;
+    };
+
+    /**
+     * 智慧計算單字數量
+     */
+    const countWords = (text: string): number => {
+      if (!text) return 0;
+
+      const hasCJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text);
+      if (hasCJK) {
         if ('Segmenter' in Intl) {
           try {
-            const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+            const seg = new Intl.Segmenter(undefined, { granularity: 'word' });
             let count = 0;
-            for (const _ of seg.segment(normalized)) count++;
-            return count;
+            for (const segment of seg.segment(text)) {
+              if (segment.isWordLike) count++;
+            }
+            if (count > 0) return count;
           } catch {
             // fallback
           }
         }
-        return Array.from(normalized).length;
-      };
+      }
 
-      /**
-       * 智慧計算單字數量
-       */
-      const countWords = (text: string): number => {
-        if (!text) return 0;
+      const other = text.match(/\p{L}+/gu) ?? [];
+      return other.length;
+    };
 
-        const hasCJK =
-          /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text);
-        if (hasCJK) {
-          if ('Segmenter' in Intl) {
-            try {
-              const seg = new Intl.Segmenter(undefined, { granularity: 'word' });
-              let count = 0;
-              for (const segment of seg.segment(text)) {
-                if (segment.isWordLike) count++;
-              }
-              if (count > 0) return count;
-            } catch {
-              // fallback
-            }
-          }
+    /**
+     * 更新所有統計數據
+     */
+    const updateAllStats = () => {
+      try {
+        const model = editor.getModel();
+        if (!model) return;
+        const value = model.getValue();
+        setTotalChars(countGraphemes(value));
+        setTotalLines(model.getLineCount());
+        setTotalWords(countWords(value));
+      } catch {
+        // ignore
+      }
+    };
+
+    /**
+     * 更新選取範圍的統計數據
+     */
+    const updateSelectionStats = () => {
+      try {
+        const selection = editor.getSelection();
+        const model = editor.getModel();
+        if (!model || !selection) {
+          setSelChars(0);
+          setSelLines(0);
+          setSelWords(0);
+          return;
         }
 
-        const other = text.match(/\p{L}+/gu) ?? [];
-        return other.length;
-      };
+        const selectedText = model.getValueInRange(selection) || '';
+        setSelChars(countGraphemes(selectedText));
+        setSelLines(selectedText ? selectedText.split(/\r\n|\r|\n/).length : 0);
+        setSelWords(countWords(selectedText));
+      } catch {
+        // ignore
+      }
+    };
 
-      /**
-       * 更新所有統計數據
-       */
-      const updateAllStats = () => {
-        try {
-          const model = editor.getModel();
-          if (!model) return;
-          const value = model.getValue();
-          setTotalChars(countGraphemes(value));
-          setTotalLines(model.getLineCount());
-          setTotalWords(countWords(value));
-        } catch {
-          // ignore
-        }
-      };
+    // 初始更新
+    updateAllStats();
+    updateSelectionStats();
 
-      /**
-       * 更新選取範圍的統計數據
-       */
-      const updateSelectionStats = () => {
-        try {
-          const selection = editor.getSelection();
-          const model = editor.getModel();
-          if (!model || !selection) {
-            setSelChars(0);
-            setSelLines(0);
-            setSelWords(0);
-            return;
-          }
-
-          const selectedText = model.getValueInRange(selection) || '';
-          setSelChars(countGraphemes(selectedText));
-          setSelLines(
-            selectedText ? selectedText.split(/\r\n|\r|\n/).length : 0
-          );
-          setSelWords(countWords(selectedText));
-        } catch {
-          // ignore
-        }
-      };
-
-      // 初始更新
+    // 訂閱事件
+    const contentDisposable = editor.onDidChangeModelContent(() => {
       updateAllStats();
       updateSelectionStats();
+    });
 
-      // 訂閱事件
-      const contentDisposable = editor.onDidChangeModelContent(() => {
-        updateAllStats();
-        updateSelectionStats();
-      });
+    const selectionDisposable = editor.onDidChangeCursorSelection(() => {
+      updateSelectionStats();
+    });
 
-      const selectionDisposable = editor.onDidChangeCursorSelection(() => {
-        updateSelectionStats();
-      });
+    disposablesRef.current.push(contentDisposable, selectionDisposable);
 
-      disposablesRef.current.push(contentDisposable, selectionDisposable);
+    // 監聽 Paste 事件 — 使用 capture 以優先攔截圖片貼上
+    const domNode = editor.getContainerDomNode();
+    const pasteHandler = async (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
 
-      // 監聽 Paste 事件 — 使用 capture 以優先攔截圖片貼上
-      const domNode = editor.getContainerDomNode();
-      const pasteHandler = async (e: ClipboardEvent) => {
-        if (!e.clipboardData) return;
+      // 先檢查焦點是否在 editor 範圍內
+      const activeEl = document.activeElement;
+      if (!domNode.contains(activeEl)) return;
 
-        // 先檢查焦點是否在 editor 範圍內
-        const activeEl = document.activeElement;
-        if (!domNode.contains(activeEl)) return;
-
-        // 檢查是否有圖片檔案
-        let imageFile: File | null = null;
-        for (const f of e.clipboardData.files) {
-          if (f.type.startsWith('image/')) {
-            imageFile = f;
+      // 檢查是否有圖片檔案
+      let imageFile: File | null = null;
+      for (const f of e.clipboardData.files) {
+        if (f.type.startsWith('image/')) {
+          imageFile = f;
+          break;
+        }
+      }
+      // 也檢查 items (某些瀏覽器用 items 而非 files)。
+      // 不檢查 items 是否存在：DataTransferItemList 一定在，空的時候下面的 for 自然不跑。
+      if (!imageFile) {
+        for (const item of e.clipboardData.items) {
+          if (item.type.startsWith('image/')) {
+            imageFile = item.getAsFile();
             break;
           }
         }
-        // 也檢查 items (某些瀏覽器用 items 而非 files)。
-        // 不檢查 items 是否存在：DataTransferItemList 一定在，空的時候下面的 for 自然不跑。
-        if (!imageFile) {
-          for (const item of e.clipboardData.items) {
-            if (item.type.startsWith('image/')) {
-              imageFile = item.getAsFile();
-              break;
-            }
+      }
+      if (!imageFile) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        // 壓縮圖片到 max 1024px
+        const bitmap = await createImageBitmap(imageFile);
+        const MAX = 1024;
+        let w = bitmap.width,
+          h = bitmap.height;
+        if (w > MAX || h > MAX) {
+          const ratio = Math.min(MAX / w, MAX / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = new OffscreenCanvas(w, h);
+        // getContext 可能回 null（同時開太多 context 時瀏覽器會拒絕），
+        // 斷言掉只是把錯誤延到執行期。取不到就跳過縮圖、沿用原圖。
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
+        ctx.drawImage(bitmap, 0, 0, w, h);
+        const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+        bitmap.close();
+
+        // Upload to Server
+        const formData = new FormData();
+        formData.append('file', blob, imageFile.name.replace(/\.[^/.]+$/, '') + '.webp');
+
+        const token = localStorage.getItem('koimsurai_user_token');
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errData = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(errData.error ?? 'Upload failed');
+        }
+
+        const data = (await res.json()) as { url: string };
+        const imageUrl = data.url; // e.g., /uploads/2023/10/xyz.webp
+
+        // 插入 markdown 圖片
+        const position = editor.getPosition();
+        if (position) {
+          const monacoNs = getMonaco();
+          if (monacoNs) {
+            editor.executeEdits('paste-image', [
+              {
+                range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                text: `![image](${imageUrl})\n`,
+              },
+            ]);
           }
         }
-        if (!imageFile) return;
+      } catch (err) {
+        console.error('Paste/Upload image error:', err);
+        alert('圖片上傳失敗: ' + (err instanceof Error ? err.message : String(err)));
+      }
+    };
 
-        e.preventDefault();
-        e.stopPropagation();
+    // 使用 capture: true 讓事件在 capture 階段就被攔截，優先於 Monaco 的 handler
+    const onPasteCapture = (e: ClipboardEvent): void => {
+      void pasteHandler(e);
+    };
+    window.addEventListener('paste', onPasteCapture, true);
 
-        try {
-          // 壓縮圖片到 max 1024px
+    // 添加到 cleanup
+    disposablesRef.current.push({
+      dispose: () => window.removeEventListener('paste', onPasteCapture, true),
+    });
+
+    /* ── 拖放圖片上傳（與 paste 共用 upload 邏輯）── */
+    const uploadAndInsertImage = async (imageFile: File) => {
+      try {
+        let blob: Blob;
+        let filename: string;
+        if (imageFile.type === 'image/gif') {
+          blob = imageFile;
+          filename = imageFile.name;
+        } else {
           const bitmap = await createImageBitmap(imageFile);
-          const MAX = 1024;
-          let w = bitmap.width, h = bitmap.height;
+          const MAX = 1920;
+          let w = bitmap.width,
+            h = bitmap.height;
           if (w > MAX || h > MAX) {
             const ratio = Math.min(MAX / w, MAX / h);
             w = Math.round(w * ratio);
@@ -361,178 +441,108 @@ export default function MonacoEditor({
           const ctx = canvas.getContext('2d');
           if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
           ctx.drawImage(bitmap, 0, 0, w, h);
-          const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+          blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.85 });
           bitmap.close();
-
-          // Upload to Server
-          const formData = new FormData();
-          formData.append('file', blob, imageFile.name.replace(/\.[^/.]+$/, "") + ".webp");
-
-          const token = localStorage.getItem('koimsurai_user_token');
-          const res = await fetch('/api/admin/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formData
-          });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({})) as { error?: string };
-            throw new Error(errData.error ?? 'Upload failed');
-          }
-
-          const data = await res.json() as { url: string };
-          const imageUrl = data.url; // e.g., /uploads/2023/10/xyz.webp
-
-          // 插入 markdown 圖片
-          const position = editor.getPosition();
-          if (position) {
-            const monacoNs = getMonaco();
-            if (monacoNs) {
-              editor.executeEdits('paste-image', [{
-                range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                text: `![image](${imageUrl})\n`,
-              }]);
-            }
-          }
-        } catch (err) {
-          console.error('Paste/Upload image error:', err);
-          alert('圖片上傳失敗: ' + (err instanceof Error ? err.message : String(err)));
+          filename = imageFile.name.replace(/\.[^/.]+$/, '') + '.webp';
         }
-      };
-
-      // 使用 capture: true 讓事件在 capture 階段就被攔截，優先於 Monaco 的 handler
-      const onPasteCapture = (e: ClipboardEvent): void => { void pasteHandler(e); };
-      window.addEventListener('paste', onPasteCapture, true);
-
-      // 添加到 cleanup
-      disposablesRef.current.push({
-        dispose: () => window.removeEventListener('paste', onPasteCapture, true)
-      });
-
-      /* ── 拖放圖片上傳（與 paste 共用 upload 邏輯）── */
-      const uploadAndInsertImage = async (imageFile: File) => {
-        try {
-          let blob: Blob;
-          let filename: string;
-          if (imageFile.type === 'image/gif') {
-            blob = imageFile;
-            filename = imageFile.name;
-          } else {
-            const bitmap = await createImageBitmap(imageFile);
-            const MAX = 1920;
-            let w = bitmap.width, h = bitmap.height;
-            if (w > MAX || h > MAX) {
-              const ratio = Math.min(MAX / w, MAX / h);
-              w = Math.round(w * ratio);
-              h = Math.round(h * ratio);
-            }
-            const canvas = new OffscreenCanvas(w, h);
-            // getContext 可能回 null（同時開太多 context 時瀏覽器會拒絕），
-            // 斷言掉只是把錯誤延到執行期。取不到就跳過縮圖、沿用原圖。
-            const ctx = canvas.getContext('2d');
-            if (!ctx) throw new Error('OffscreenCanvas 2d context 取得失敗');
-            ctx.drawImage(bitmap, 0, 0, w, h);
-            blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.85 });
-            bitmap.close();
-            filename = imageFile.name.replace(/\.[^/.]+$/, '') + '.webp';
-          }
-          const formData = new FormData();
-          formData.append('file', blob, filename);
-          const token = localStorage.getItem('koimsurai_user_token');
-          const res = await fetch('/api/admin/upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData,
-          });
-          if (!res.ok) throw new Error('Upload failed');
-          const data = await res.json() as { url: string };
-          const position = editor.getPosition();
-          if (position) {
-            const monacoNs = getMonaco();
-            if (monacoNs) {
-              const altText = imageFile.name.replace(/\.[^/.]+$/, '');
-              editor.executeEdits('drop-image', [{
+        const formData = new FormData();
+        formData.append('file', blob, filename);
+        const token = localStorage.getItem('koimsurai_user_token');
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = (await res.json()) as { url: string };
+        const position = editor.getPosition();
+        if (position) {
+          const monacoNs = getMonaco();
+          if (monacoNs) {
+            const altText = imageFile.name.replace(/\.[^/.]+$/, '');
+            editor.executeEdits('drop-image', [
+              {
                 range: new monacoNs.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                 text: `![${altText}](${data.url})\n`,
-              }]);
-            }
+              },
+            ]);
           }
-        } catch (err) {
-          console.error('Drop/Upload image error:', err);
-          alert('圖片上傳失敗');
         }
-      };
-
-      const dragOverHandler = (e: DragEvent) => {
-        if (!e.dataTransfer) return;
-        const hasFile = Array.from(e.dataTransfer.items).some(it => it.kind === 'file');
-        if (!hasFile) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        domNode.classList.add('monaco-drop-active');
-      };
-      const dragLeaveHandler = () => domNode.classList.remove('monaco-drop-active');
-      const dropHandler = async (e: DragEvent) => {
-        domNode.classList.remove('monaco-drop-active');
-        // dataTransfer 是 DragEvent 上真的可能為 null 的；files 則一定在（FileList，可能長度 0）
-        if (!e.dataTransfer?.files.length) return;
-        const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-        if (!imageFiles.length) return;
-        e.preventDefault();
-        e.stopPropagation();
-        for (const f of imageFiles) {
-           
-          await uploadAndInsertImage(f);
-        }
-      };
-      const onDrop = (e: DragEvent): void => { void dropHandler(e); };
-      domNode.addEventListener('dragover', dragOverHandler);
-      domNode.addEventListener('dragleave', dragLeaveHandler);
-      domNode.addEventListener('drop', onDrop);
-      disposablesRef.current.push({
-        dispose: () => {
-          domNode.removeEventListener('dragover', dragOverHandler);
-          domNode.removeEventListener('dragleave', dragLeaveHandler);
-          domNode.removeEventListener('drop', onDrop);
-        }
-      });
-
-      /* ── 斜線指令選單（markdown 模板插入；C-2: 內建 + 使用者自訂） ── */
-      const monacoNs = getMonaco();
-      if (monacoNs?.languages) {
-        const provider = monacoNs.languages.registerCompletionItemProvider('markdown', {
-          triggerCharacters: ['/'],
-          provideCompletionItems: (model, position) => {
-            const lineUntil = model.getValueInRange({
-              startLineNumber: position.lineNumber, startColumn: 1,
-              endLineNumber: position.lineNumber, endColumn: position.column,
-            });
-            const m = /(^|\s)(\/[a-z]*)$/.exec(lineUntil);
-            if (!m) return { suggestions: [] };
-            const slash = m[2];
-            const startCol = position.column - slash.length;
-            const range = new monacoNs.Range(position.lineNumber, startCol, position.lineNumber, position.column);
-            // 動態取 snippets，使得使用者改 localStorage 後不必重啟編輯器
-            const snippets = getActiveSnippets();
-            return {
-              suggestions: snippets.map(s => ({
-                label: s.label,
-                kind: monacoNs.languages.CompletionItemKind.Snippet,
-                insertText: s.body,
-                insertTextRules: monacoNs.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                detail: s.detail,
-                range,
-              })),
-            };
-          },
-        });
-        disposablesRef.current.push(provider);
+      } catch (err) {
+        console.error('Drop/Upload image error:', err);
+        alert('圖片上傳失敗');
       }
-    },
-    []
-  );
+    };
+
+    const dragOverHandler = (e: DragEvent) => {
+      if (!e.dataTransfer) return;
+      const hasFile = Array.from(e.dataTransfer.items).some((it) => it.kind === 'file');
+      if (!hasFile) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      domNode.classList.add('monaco-drop-active');
+    };
+    const dragLeaveHandler = () => domNode.classList.remove('monaco-drop-active');
+    const dropHandler = async (e: DragEvent) => {
+      domNode.classList.remove('monaco-drop-active');
+      // dataTransfer 是 DragEvent 上真的可能為 null 的；files 則一定在（FileList，可能長度 0）
+      if (!e.dataTransfer?.files.length) return;
+      const imageFiles = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+      if (!imageFiles.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      for (const f of imageFiles) {
+        await uploadAndInsertImage(f);
+      }
+    };
+    const onDrop = (e: DragEvent): void => {
+      void dropHandler(e);
+    };
+    domNode.addEventListener('dragover', dragOverHandler);
+    domNode.addEventListener('dragleave', dragLeaveHandler);
+    domNode.addEventListener('drop', onDrop);
+    disposablesRef.current.push({
+      dispose: () => {
+        domNode.removeEventListener('dragover', dragOverHandler);
+        domNode.removeEventListener('dragleave', dragLeaveHandler);
+        domNode.removeEventListener('drop', onDrop);
+      },
+    });
+
+    /* ── 斜線指令選單（markdown 模板插入；C-2: 內建 + 使用者自訂） ── */
+    const monacoNs = getMonaco();
+    if (monacoNs?.languages) {
+      const provider = monacoNs.languages.registerCompletionItemProvider('markdown', {
+        triggerCharacters: ['/'],
+        provideCompletionItems: (model, position) => {
+          const lineUntil = model.getValueInRange({
+            startLineNumber: position.lineNumber,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          });
+          const m = /(^|\s)(\/[a-z]*)$/.exec(lineUntil);
+          if (!m) return { suggestions: [] };
+          const slash = m[2];
+          const startCol = position.column - slash.length;
+          const range = new monacoNs.Range(position.lineNumber, startCol, position.lineNumber, position.column);
+          // 動態取 snippets，使得使用者改 localStorage 後不必重啟編輯器
+          const snippets = getActiveSnippets();
+          return {
+            suggestions: snippets.map((s) => ({
+              label: s.label,
+              kind: monacoNs.languages.CompletionItemKind.Snippet,
+              insertText: s.body,
+              insertTextRules: monacoNs.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              detail: s.detail,
+              range,
+            })),
+          };
+        },
+      });
+      disposablesRef.current.push(provider);
+    }
+  }, []);
 
   // 清理工作
   useEffect(() => {
@@ -594,7 +604,11 @@ export default function MonacoEditor({
   const handleVimToggle = useCallback(() => {
     setVimMode((v) => {
       const next = !v;
-      try { localStorage.setItem(VIM_MODE_KEY, next ? '1' : '0'); } catch { /* ignore quota */ }
+      try {
+        localStorage.setItem(VIM_MODE_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore quota */
+      }
       return next;
     });
   }, []);
@@ -609,48 +623,62 @@ export default function MonacoEditor({
   /**
    * 從 PostLinkModal 選定後插入 markdown 連結
    */
-  const handlePostLinkSelect = useCallback(
-    (post: { title?: string; id?: number | string }) => {
-      const editor = editorRef.current;
-      setShowPostLinkModal(false);
-      if (!editor) return;
-      const url = `/blog/${post.id}`;
-      const selection = editor.getSelection();
-      const model = editor.getModel();
-      const selectedText = selection && model ? model.getValueInRange(selection) : '';
-      const text = `[${selectedText || post.title}](${url})`;
-      const monacoNs = getMonaco();
-      if (!monacoNs || !selection) return;
-      editor.executeEdits('insert-post-link', [{
-        range: new monacoNs.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn),
+  const handlePostLinkSelect = useCallback((post: { title?: string; id?: number | string }) => {
+    const editor = editorRef.current;
+    setShowPostLinkModal(false);
+    if (!editor) return;
+    const url = `/blog/${post.id}`;
+    const selection = editor.getSelection();
+    const model = editor.getModel();
+    const selectedText = selection && model ? model.getValueInRange(selection) : '';
+    const text = `[${selectedText || post.title}](${url})`;
+    const monacoNs = getMonaco();
+    if (!monacoNs || !selection) return;
+    editor.executeEdits('insert-post-link', [
+      {
+        range: new monacoNs.Range(
+          selection.startLineNumber,
+          selection.startColumn,
+          selection.endLineNumber,
+          selection.endColumn,
+        ),
         text,
-      }]);
-      editor.focus();
-    },
-    []
-  );
+      },
+    ]);
+    editor.focus();
+  }, []);
 
   // Vim 模式 lifecycle：editor ready + vimMode true → 動態載入 monaco-vim 並初始化
   // 切回 false 或 unmount 時 dispose
   useEffect(() => {
     if (!isEditorReady || !editorRef.current || !vimMode) {
       if (vimAdapterRef.current) {
-        try { vimAdapterRef.current.dispose(); } catch { /* ignore */ }
+        try {
+          vimAdapterRef.current.dispose();
+        } catch {
+          /* ignore */
+        }
         vimAdapterRef.current = null;
       }
       return;
     }
     let cancelled = false;
-    import('monaco-vim').then(({ initVimMode }) => {
-      if (cancelled || !editorRef.current) return;
-      vimAdapterRef.current = initVimMode(editorRef.current, vimStatusRef.current);
-    }).catch((err) => {
-      console.error('monaco-vim 載入失敗:', err);
-    });
+    import('monaco-vim')
+      .then(({ initVimMode }) => {
+        if (cancelled || !editorRef.current) return;
+        vimAdapterRef.current = initVimMode(editorRef.current, vimStatusRef.current);
+      })
+      .catch((err) => {
+        console.error('monaco-vim 載入失敗:', err);
+      });
     return () => {
       cancelled = true;
       if (vimAdapterRef.current) {
-        try { vimAdapterRef.current.dispose(); } catch { /* ignore */ }
+        try {
+          vimAdapterRef.current.dispose();
+        } catch {
+          /* ignore */
+        }
         vimAdapterRef.current = null;
       }
     };
@@ -747,7 +775,9 @@ export default function MonacoEditor({
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={(e) => { void handleFileSelected(e); }}
+        onChange={(e) => {
+          void handleFileSelected(e);
+        }}
         style={{ display: 'none' }}
       />
 
@@ -757,7 +787,7 @@ export default function MonacoEditor({
           onClose={() => setShowNASSelector(false)}
           onSelect={handleNASSelect}
         />,
-        document.body
+        document.body,
       )}
 
       {ReactDOM.createPortal(
@@ -766,7 +796,7 @@ export default function MonacoEditor({
           onClose={() => setShowPostLinkModal(false)}
           onSelect={handlePostLinkSelect}
         />,
-        document.body
+        document.body,
       )}
 
       <Editor
@@ -791,8 +821,7 @@ export default function MonacoEditor({
       {/* 狀態欄（C-4：加上閱讀時間） */}
       <div className="monaco-statusbar-glass flex items-center justify-between px-3 py-1.5 text-[11px] text-muted-foreground/70">
         <div>
-          {totalWords} 字 · {totalChars} 字元 · {totalLines} 行
-          {totalChars > 0 && <> · 約 {readingMinutes} 分鐘閱讀</>}
+          {totalWords} 字 · {totalChars} 字元 · {totalLines} 行{totalChars > 0 && <> · 約 {readingMinutes} 分鐘閱讀</>}
         </div>
         <div>
           選取: {selWords} 字 · {selChars} 字元 · {selLines} 行

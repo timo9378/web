@@ -4,29 +4,41 @@ import { Command } from 'cmdk';
 import { useLocale, useLocaleNavigate } from '@/hooks/useLocale';
 import { useTranslation } from 'react-i18next';
 import {
-  FileText, Hash, Folder, Music, BookOpen, Activity,
-  Home, Compass, Camera, Settings, Search,
+  FileText,
+  Hash,
+  Folder,
+  Music,
+  BookOpen,
+  Activity,
+  Home,
+  Compass,
+  Camera,
+  Settings,
+  Search,
   type LucideIcon,
 } from 'lucide-react';
 import { recentPostsQueryOptions, blogCategoriesQueryOptions, blogTagsQueryOptions } from '@/data/blogList';
-import {
-  closeCommandPalette, toggleCommandPalette, useCommandPaletteOpen,
-} from '@/store/commandPaletteStore';
+import { closeCommandPalette, toggleCommandPalette, useCommandPaletteOpen } from '@/store/commandPaletteStore';
 import './CommandPalette.css';
 import { useCategoryLabel } from '@/lib/categoryLabel';
 
-interface StaticPage { label: string; path: string; icon: LucideIcon; keywords: string }
+interface StaticPage {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+  keywords: string;
+}
 
 const STATIC_PAGES: StaticPage[] = [
-  { label: '首頁',    path: '/',          icon: Home,     keywords: 'home index 主頁' },
-  { label: '手記',    path: '/blog',      icon: FileText, keywords: 'blog posts 文章 日記' },
-  { label: '書櫃',    path: '/bookshelf', icon: BookOpen, keywords: 'books 閱讀 reading' },
-  { label: '音樂',    path: '/music',     icon: Music,    keywords: 'music spotify 音樂' },
-  { label: '活動',    path: '/activity',  icon: Activity, keywords: 'activity 活動 動態' },
-  { label: '軌跡',    path: '/about#journey',   icon: Compass,  keywords: 'journey 旅程 時間線' },
-  { label: '留言',    path: '/messages',  icon: Compass,  keywords: 'messages 留言 guestbook contact' },
-  { label: '相簿',    path: '/photos',    icon: Camera,   keywords: 'photos 照片 相簿' },
-  { label: '工作站',  path: '/setup',     icon: Settings, keywords: 'setup 設備' },
+  { label: '首頁', path: '/', icon: Home, keywords: 'home index 主頁' },
+  { label: '手記', path: '/blog', icon: FileText, keywords: 'blog posts 文章 日記' },
+  { label: '書櫃', path: '/bookshelf', icon: BookOpen, keywords: 'books 閱讀 reading' },
+  { label: '音樂', path: '/music', icon: Music, keywords: 'music spotify 音樂' },
+  { label: '活動', path: '/activity', icon: Activity, keywords: 'activity 活動 動態' },
+  { label: '軌跡', path: '/about#journey', icon: Compass, keywords: 'journey 旅程 時間線' },
+  { label: '留言', path: '/messages', icon: Compass, keywords: 'messages 留言 guestbook contact' },
+  { label: '相簿', path: '/photos', icon: Camera, keywords: 'photos 照片 相簿' },
+  { label: '工作站', path: '/setup', icon: Settings, keywords: 'setup 設備' },
 ];
 
 export default function CommandPalette() {
@@ -49,7 +61,9 @@ export default function CommandPalette() {
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); };
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   // 首次打開才載入（enabled: open，降低首屏成本）；三源改吃共用 query 快取。
@@ -58,7 +72,10 @@ export default function CommandPalette() {
   const { data: tags = [] } = useQuery({ ...blogTagsQueryOptions(navLocale), enabled: open });
   const posts = useMemo(() => postsData.filter((p) => p.status === 'published' || !p.status), [postsData]);
 
-  const go = (path: string) => { closeCommandPalette(); void navigate(path); };
+  const go = (path: string) => {
+    closeCommandPalette();
+    void navigate(path);
+  };
 
   const postItems = useMemo(() => posts.slice(0, 50), [posts]);
 
@@ -69,9 +86,14 @@ export default function CommandPalette() {
     // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
     // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
     // 點遮罩關閉是滑鼠的便利路徑，不是唯一出口：cmdk 原生處理 Escape，
-        // 輸入框也在焦點序列內。遮罩本身不該進 Tab 序列（那反而多一個空的停留點）
+    // 輸入框也在焦點序列內。遮罩本身不該進 Tab 序列（那反而多一個空的停留點）
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div className="cmdk-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeCommandPalette(); }}>
+    <div
+      className="cmdk-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) closeCommandPalette();
+      }}
+    >
       <div className="cmdk-wrap">
         <Command label={t('commandPalette.label')} shouldFilter>
           <div className="cmdk-input-row">
@@ -87,11 +109,7 @@ export default function CommandPalette() {
 
             <Command.Group heading={t('commandPalette.groups.pages')}>
               {STATIC_PAGES.map((p) => (
-                <Command.Item
-                  key={p.path}
-                  value={`${p.label} ${p.keywords} ${p.path}`}
-                  onSelect={() => go(p.path)}
-                >
+                <Command.Item key={p.path} value={`${p.label} ${p.keywords} ${p.path}`} onSelect={() => go(p.path)}>
                   <p.icon size={14} className="cmdk-icon" />
                   <span>{p.label}</span>
                   <span className="cmdk-meta">{p.path}</span>
@@ -125,7 +143,11 @@ export default function CommandPalette() {
                   >
                     <Folder size={14} className="cmdk-icon" />
                     <span>{c.name}</span>
-                    {<span className="cmdk-meta">{c.post_count} {t('blog.postCount')}</span>}
+                    {
+                      <span className="cmdk-meta">
+                        {c.post_count} {t('blog.postCount')}
+                      </span>
+                    }
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -152,9 +174,15 @@ export default function CommandPalette() {
           </Command.List>
 
           <div className="cmdk-footer">
-            <span><kbd>↑↓</kbd> 移動</span>
-            <span><kbd>↵</kbd> 開啟</span>
-            <span><kbd>⌘K</kbd> 切換</span>
+            <span>
+              <kbd>↑↓</kbd> 移動
+            </span>
+            <span>
+              <kbd>↵</kbd> 開啟
+            </span>
+            <span>
+              <kbd>⌘K</kbd> 切換
+            </span>
           </div>
         </Command>
       </div>

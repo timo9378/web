@@ -13,7 +13,13 @@ const canOffscreen =
   typeof HTMLCanvasElement !== 'undefined' && 'transferControlToOffscreen' in HTMLCanvasElement.prototype;
 
 const canvasStyle: React.CSSProperties = {
-  position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1,
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  pointerEvents: 'none',
+  zIndex: 1,
 };
 
 interface StarfieldGpuProps {
@@ -72,7 +78,12 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
     recoverTimerRef.current = setTimeout(() => setGeneration((g) => g + 1), 500);
   }, []);
 
-  useEffect(() => () => { clearTimeout(recoverTimerRef.current ?? undefined); }, []);
+  useEffect(
+    () => () => {
+      clearTimeout(recoverTimerRef.current ?? undefined);
+    },
+    [],
+  );
 
   // 捲動轉發（worker 無 window）+ 土星顯示（僅首頁）——控制介面就緒後立即同步當前狀態
   useEffect(() => {
@@ -105,10 +116,7 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       // 這是 worker 進入點並單獨打包，換成 @/ alias 它就認不出來了。
       const worker = new Worker(new URL('../../workers/spaceGpuWorker.ts', import.meta.url), { type: 'module' });
       const offscreen = canvas.transferControlToOffscreen();
-      worker.postMessage(
-        { type: 'init', canvas: offscreen, width, height, dpr: window.devicePixelRatio },
-        [offscreen],
-      );
+      worker.postMessage({ type: 'init', canvas: offscreen, width, height, dpr: window.devicePixelRatio }, [offscreen]);
       // ⚠ 明送一次當下的狀態，不能只靠下面的 visibilitychange / fullscreenchange。
       //
       // 那兩個事件只在「狀態改變」時觸發，而這個元件是 lazy 的（intro 播完才掛、
@@ -121,9 +129,19 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
         scroll: (y) => worker.postMessage({ type: 'scroll', y }),
         saturn: (v, a) => worker.postMessage({ type: 'saturn', visible: v, animate: a }),
       };
-      const onMsg = (e: MessageEvent<{ type: string; backend?: string; fps?: number; avgMs?: number; quality?: number; message?: string }>) => {
+      const onMsg = (
+        e: MessageEvent<{
+          type: string;
+          backend?: string;
+          fps?: number;
+          avgMs?: number;
+          quality?: number;
+          message?: string;
+        }>,
+      ) => {
         if (e.data.type === 'ready') setBackend(`${e.data.backend} · worker`);
-        else if (e.data.type === 'perf') setPerf({ fps: e.data.fps ?? 0, avgMs: e.data.avgMs ?? 0, quality: e.data.quality });
+        else if (e.data.type === 'perf')
+          setPerf({ fps: e.data.fps ?? 0, avgMs: e.data.avgMs ?? 0, quality: e.data.quality });
         else if (e.data.type === 'lost') recover(e.data.message ?? 'GPU device lost');
         else if (e.data.type === 'error') {
           // canvas 已 transfer、無法回收給主執行緒重用 → 本 session 放棄（外層有 DOM 特效兜底）
@@ -133,7 +151,8 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
         }
       };
       worker.addEventListener('message', onMsg);
-      const onResize = () => worker.postMessage({ type: 'resize', width: canvas.clientWidth, height: canvas.clientHeight });
+      const onResize = () =>
+        worker.postMessage({ type: 'resize', width: canvas.clientWidth, height: canvas.clientHeight });
       const onVis = () => worker.postMessage({ type: 'running', value: shouldRun() });
       window.addEventListener('resize', onResize);
       document.addEventListener('visibilitychange', onVis);
@@ -155,11 +174,19 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
     void import('@/lib/starfieldGpu').then(async ({ createStarfieldRunner }) => {
       try {
         const { runner, backend: be } = await createStarfieldRunner({
-          canvas, width, height, dpr: window.devicePixelRatio,
+          canvas,
+          width,
+          height,
+          dpr: window.devicePixelRatio,
           onPerf: (fps, avgMs, quality) => setPerf({ fps, avgMs, quality }),
-          onDeviceLost: (message) => { if (!disposed) recover(message); },
+          onDeviceLost: (message) => {
+            if (!disposed) recover(message);
+          },
         });
-        if (disposed) { runner.dispose(); return; }
+        if (disposed) {
+          runner.dispose();
+          return;
+        }
         runnerHandle = runner;
         // runner 預設是跑的，而 init 是 async——這段期間發生的 visibility/fullscreen 變化
         // 只會打到還是 null 的 runnerHandle 上、被靜默丟掉。補套一次當下的狀態，
@@ -201,14 +228,23 @@ export default function StarfieldGpu({ isOnHomePage = false, animateSaturn = tru
       <canvas key={generation} ref={canvasRef} style={{ ...canvasStyle, zIndex }} />
       {/* backend 徽章：?debug=perf 才顯示（正式訪客不看 debug 資訊） */}
       {perfDebug && (
-        <div style={{
-          position: 'fixed', bottom: 8, right: 8, zIndex: 99999, padding: '6px 10px',
-          background: 'rgba(0,0,0,.75)',
-          color: backend.startsWith('WebGPU') ? '#7fdcff' : '#ffd27f',
-          font: '12px/1.5 monospace', borderRadius: 6, pointerEvents: 'none',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 8,
+            right: 8,
+            zIndex: 99999,
+            padding: '6px 10px',
+            background: 'rgba(0,0,0,.75)',
+            color: backend.startsWith('WebGPU') ? '#7fdcff' : '#ffd27f',
+            font: '12px/1.5 monospace',
+            borderRadius: 6,
+            pointerEvents: 'none',
+          }}
+        >
           StarfieldGpu · {backend} · TSL bloom
-          {perf && ` · ${perf.fps.toFixed(0)} fps · ${perf.avgMs.toFixed(2)} ms${perf.quality ? ` · 品質降級 L${perf.quality}` : ''}`}
+          {perf &&
+            ` · ${perf.fps.toFixed(0)} fps · ${perf.avgMs.toFixed(2)} ms${perf.quality ? ` · 品質降級 L${perf.quality}` : ''}`}
         </div>
       )}
     </>

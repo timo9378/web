@@ -1,9 +1,20 @@
 import { queryOptions } from '@tanstack/react-query';
 import type {
-  AdminTagRow, AdminCategoryRow, AdminUserRow, AdminUsersResponse,
-  BookRow, BooksListResponse, BlacklistRow, BlacklistResponse,
-  KeywordFilterRow, KeywordFiltersResponse, SubscribersResponse, SubscriberRow,
-  AdminPostsResponse, AdminCommentsResponse, AdminPostDetailResponse,
+  AdminTagRow,
+  AdminCategoryRow,
+  AdminUserRow,
+  AdminUsersResponse,
+  BookRow,
+  BooksListResponse,
+  BlacklistRow,
+  BlacklistResponse,
+  KeywordFilterRow,
+  KeywordFiltersResponse,
+  SubscribersResponse,
+  SubscriberRow,
+  AdminPostsResponse,
+  AdminCommentsResponse,
+  AdminPostDetailResponse,
 } from '@koimsurai/api-types';
 import { apiUrl } from '@/lib/api';
 
@@ -57,7 +68,8 @@ export const adminBlacklistQueryOptions = queryOptions({
 
 export const adminKeywordFiltersQueryOptions = queryOptions({
   queryKey: ['admin', 'keyword-filters'],
-  queryFn: async (): Promise<KeywordFilterRow[]> => (await adminGet<KeywordFiltersResponse>('/api/admin/keyword-filters')).filters,
+  queryFn: async (): Promise<KeywordFilterRow[]> =>
+    (await adminGet<KeywordFiltersResponse>('/api/admin/keyword-filters')).filters,
   staleTime: STALE,
 });
 

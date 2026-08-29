@@ -119,7 +119,10 @@ describe('filterAndSortBooks', () => {
       book({ title: '一分', rating: 1 }),
     ];
     expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'rating_desc' }))).toEqual([
-      '五分', '三分', '一分', '沒評分',
+      '五分',
+      '三分',
+      '一分',
+      '沒評分',
     ]);
   });
 
@@ -133,10 +136,14 @@ describe('filterAndSortBooks', () => {
       book({ title: '沒日期B' }),
     ];
     expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'date_added_asc' }))).toEqual([
-      '有日期', '沒日期A', '沒日期B',
+      '有日期',
+      '沒日期A',
+      '沒日期B',
     ]);
     expect(titles(filterAndSortBooks(b, { ...ALL, sortBy: 'date_added_desc' }))).toEqual([
-      '有日期', '沒日期A', '沒日期B',
+      '有日期',
+      '沒日期A',
+      '沒日期B',
     ]);
   });
 

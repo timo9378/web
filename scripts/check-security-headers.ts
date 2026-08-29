@@ -109,9 +109,7 @@ async function checkRule(rule: Rule): Promise<Failure[]> {
     rule.expectStatus === undefined ? res.status >= 200 && res.status < 300 : res.status === rule.expectStatus;
   if (!statusOk) {
     const want = rule.expectStatus ?? '2xx';
-    return [
-      { label: rule.label, path: rule.path, detail: `預期 ${want}，實際 ${res.status}（無法據此判斷標頭）` },
-    ];
+    return [{ label: rule.label, path: rule.path, detail: `預期 ${want}，實際 ${res.status}（無法據此判斷標頭）` }];
   }
 
   const out: Failure[] = [];

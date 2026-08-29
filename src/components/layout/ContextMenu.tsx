@@ -101,13 +101,31 @@ export default function ContextMenu() {
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="ctx-nav">
-        <button type="button" className="ctx-nav-btn" title="上一頁" aria-label="上一頁" onClick={() => run(() => history.back())}>
+        <button
+          type="button"
+          className="ctx-nav-btn"
+          title="上一頁"
+          aria-label="上一頁"
+          onClick={() => run(() => history.back())}
+        >
           <ArrowLeft className="ctx-icon" aria-hidden />
         </button>
-        <button type="button" className="ctx-nav-btn" title="下一頁" aria-label="下一頁" onClick={() => run(() => history.forward())}>
+        <button
+          type="button"
+          className="ctx-nav-btn"
+          title="下一頁"
+          aria-label="下一頁"
+          onClick={() => run(() => history.forward())}
+        >
           <ArrowRight className="ctx-icon" aria-hidden />
         </button>
-        <button type="button" className="ctx-nav-btn" title="重新整理" aria-label="重新整理" onClick={() => run(() => location.reload())}>
+        <button
+          type="button"
+          className="ctx-nav-btn"
+          title="重新整理"
+          aria-label="重新整理"
+          onClick={() => run(() => location.reload())}
+        >
           <RotateCw className="ctx-icon" aria-hidden />
         </button>
       </div>

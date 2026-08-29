@@ -18,10 +18,10 @@ const TransitionAnimation = () => {
         ease: 'linear', // 線性運動
         opacity: {
           times: [0, 0.2, 0.8, 1], // 控制透明度變化的時間點
-          duration: 1.5
-        }
-      }
-    }
+          duration: 1.5,
+        },
+      },
+    },
   };
 
   return (

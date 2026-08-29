@@ -28,9 +28,20 @@ function timeAgo(iso: string, t: TFunction) {
 function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t: TFunction; locale: string }) {
   const [openMonth, setOpenMonth] = useState<number | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
-  const openNow = (m: number) => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); setOpenMonth(m); };
-  const closeSoon = () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); closeTimerRef.current = setTimeout(() => setOpenMonth(null), 160); };
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    },
+    [],
+  );
+  const openNow = (m: number) => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setOpenMonth(m);
+  };
+  const closeSoon = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => setOpenMonth(null), 160);
+  };
 
   // 「今」的位置只算一次（new Date() 不能在 render 期直接呼叫 → 放 state initializer）。
   const [now] = useState(() => new Date());
@@ -79,10 +90,17 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
         {/* 月份分界的細刻線（只畫 2~12 月的月初，頭尾不畫）。標籤在月正中，光看標籤
             分不出「8/4」該落在哪一段——有分界線才讀得出「今天」已經進入八月。 */}
         {Array.from({ length: 11 }, (_, i) => (
-          <span key={`e${i + 1}`} className="orbit-month-edge" style={{ left: `${monthStartPct(i + 1)}%` }} aria-hidden />
+          <span
+            key={`e${i + 1}`}
+            className="orbit-month-edge"
+            style={{ left: `${monthStartPct(i + 1)}%` }}
+            aria-hidden
+          />
         ))}
         {Array.from({ length: 12 }, (_, m) => (
-          <span key={`m${m}`} className="orbit-month-tick" style={{ left: `${monthPct(m)}%` }}>{m + 1}</span>
+          <span key={`m${m}`} className="orbit-month-tick" style={{ left: `${monthPct(m)}%` }}>
+            {m + 1}
+          </span>
         ))}
         {clusters.map(({ month, posts }) => {
           const open = openMonth === month;
@@ -102,7 +120,9 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
               style={{ left: `${clusterPct(month)}%` }}
               onMouseEnter={() => openNow(month)}
               onMouseLeave={closeSoon}
-              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpenMonth(null); }}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) setOpenMonth(null);
+              }}
             >
               <button
                 type="button"
@@ -144,7 +164,9 @@ function OrbitTimeline({ timeline, t, locale }: { timeline: DigestTimeline[]; t:
       <div className="orbit-stat">
         {t('home.lately.orbitStat', { count: timeline.length })}
         <span className="orbit-stat-dot">·</span>
-        <LocaleLink to="/blog" className="lately-more">{t('home.lately.viewAll')} →</LocaleLink>
+        <LocaleLink to="/blog" className="lately-more">
+          {t('home.lately.viewAll')} →
+        </LocaleLink>
       </div>
     </div>
   );
@@ -191,7 +213,8 @@ export default function HomeLately() {
                   <span className="lately-post-body">
                     <span className="lately-post-title">{p.title}</span>
                     <span className="lately-post-meta">
-                      {p.category ? `${categoryLabel(p.category)} · ` : ''}{timeAgo(p.created_at, t)}
+                      {p.category ? `${categoryLabel(p.category)} · ` : ''}
+                      {timeAgo(p.created_at, t)}
                     </span>
                   </span>
                 </LocaleLink>
@@ -205,7 +228,9 @@ export default function HomeLately() {
           <div className="lately-block">
             <h2 className="lately-h">
               {t('home.lately.murmursTitle')}
-              <LocaleLink to="/thinking" className="lately-more lately-h-more">{t('home.lately.more')} →</LocaleLink>
+              <LocaleLink to="/thinking" className="lately-more lately-h-more">
+                {t('home.lately.more')} →
+              </LocaleLink>
             </h2>
             {thoughts.length === 0 && <p className="lately-empty">{t('home.lately.empty')}</p>}
             <ul className="lately-murmurs">
@@ -260,7 +285,9 @@ export default function HomeLately() {
           <span className="signal-dot" />
           {t('home.signal.open')}
           <span className="orbit-stat-dot">·</span>
-          <a href="mailto:timo9378@gmail.com" className="signal-mail">timo9378@gmail.com</a>
+          <a href="mailto:timo9378@gmail.com" className="signal-mail">
+            timo9378@gmail.com
+          </a>
         </div>
         <SiteAppreciation />
       </div>

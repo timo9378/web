@@ -5,13 +5,7 @@ import '@fontsource-variable/tasa-explorer';
 import '../index.css';
 import '../App.css';
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
-import {
-  Outlet,
-  createRootRouteWithContext,
-  HeadContent,
-  Scripts,
-  useRouterState,
-} from '@tanstack/react-router';
+import { Outlet, createRootRouteWithContext, HeadContent, Scripts, useRouterState } from '@tanstack/react-router';
 import type { QueryClient } from '@tanstack/react-query';
 import { ParallaxProvider } from 'react-scroll-parallax';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -52,7 +46,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 // 換成 useSyncExternalStore 後 client 首次 render 就拿得到真值,不再有補丁式的第二次 render。
 const subscribeVisibility = (cb: () => void) => {
   document.addEventListener('visibilitychange', cb);
-  return () => { document.removeEventListener('visibilitychange', cb); };
+  return () => {
+    document.removeEventListener('visibilitychange', cb);
+  };
 };
 
 // PageVisibilityProvider 是受控的(需 isVisible)。SSR 預設 visible,client 端追蹤 document.hidden。
@@ -82,7 +78,10 @@ function RootComponent() {
 function useServiceWorker() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    const onLoad = () => void navigator.serviceWorker.register('/sw.js').catch(() => { /* SW 註冊失敗無妨 */ });
+    const onLoad = () =>
+      void navigator.serviceWorker.register('/sw.js').catch(() => {
+        /* SW 註冊失敗無妨 */
+      });
     // 等 load 之後再註冊,避免跟首屏資源搶頻寬
     if (document.readyState === 'complete') onLoad();
     else {
@@ -195,7 +194,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               {/* 依 URL locale 的 i18n context 提到 root：讓 AppShell 的 Header/Footer/chrome 也拿到正確語言。
                   否則 chrome 在 per-page LocaleProvider 之外 → fallback 到 react-i18next 全域 instance,
                   prerender 多頁時語言互相洩漏(navbar 變別頁的語言)→ hydration text mismatch(React #418)。 */}
-                <LocaleProvider locale={locale}>{children}</LocaleProvider>
+              <LocaleProvider locale={locale}>{children}</LocaleProvider>
             </PageVisibilityBridge>
           </ParallaxProvider>
         </AuthProvider>

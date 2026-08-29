@@ -23,7 +23,11 @@ import { lookup } from '@/lib/tableLookup';
 // 理由與驗證方式見 MermaidBlock.css 的檔頭。
 import './MermaidBlock.css';
 
-interface MermaidOption { value: string; label: string; icon?: string }
+interface MermaidOption {
+  value: string;
+  label: string;
+  icon?: string;
+}
 
 /* ── 主題 ──
    配色不進渲染器：SVG 內部用 `var(--fg)` / `var(--surface, …)` 上色，值由外層
@@ -43,46 +47,133 @@ const MERMAID_THEMES = [
 
 /* ── Toolbar SVG Icons ── */
 const IconPalette = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="13.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/>
-    <circle cx="8.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.67 1.5-1.5 0-.4-.15-.74-.42-1.03-.28-.28-.42-.63-.42-1.03 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6C22 6.5 17.52 2 12 2z"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="13.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="8.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="6.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.5-.67 1.5-1.5 0-.4-.15-.74-.42-1.03-.28-.28-.42-.63-.42-1.03 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6C22 6.5 17.52 2 12 2z" />
   </svg>
 );
 const IconExpand = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-    <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="15 3 21 3 21 9" />
+    <polyline points="9 21 3 21 3 15" />
+    <line x1="21" y1="3" x2="14" y2="10" />
+    <line x1="3" y1="21" x2="10" y2="14" />
   </svg>
 );
 const IconZoomIn = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.5" y2="16.5" />
+    <line x1="11" y1="8" x2="11" y2="14" />
+    <line x1="8" y1="11" x2="14" y2="11" />
   </svg>
 );
 const IconZoomOut = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.5" y2="16.5" />
+    <line x1="8" y1="11" x2="14" y2="11" />
   </svg>
 );
 const IconFit = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M4 9V4h5" />
+    <path d="M20 9V4h-5" />
+    <path d="M4 15v5h5" />
+    <path d="M20 15v5h-5" />
   </svg>
 );
 const IconCopyCode = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="9" y="9" width="12" height="12" rx="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
 const IconCheckMark = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 const IconDownload = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
   </svg>
 );
 
@@ -169,7 +260,17 @@ function downloadMermaidPng(ref: ReactZoomPanPinchRef | null): void {
 }
 
 /* ── MermaidDiagram (shared renderer used in inline + fullscreen) ── */
-const MermaidDiagram = ({ code, theme, onError, onRendered }: { code: string; theme: string; onError?: (err: string | null) => void; onRendered?: () => void }) => {
+const MermaidDiagram = ({
+  code,
+  theme,
+  onError,
+  onRendered,
+}: {
+  code: string;
+  theme: string;
+  onError?: (err: string | null) => void;
+  onRendered?: () => void;
+}) => {
   const parsed = useMemo(() => parseMermaidFrontmatter(code), [code]);
   /* SVG 由伺服器預先渲染好（見 lib/mdx/mermaidRender.ts），這裡只查表。
      渲染器約 1.5 MB，讓它留在伺服器端，client 一個 byte 都不必背。 */
@@ -211,13 +312,27 @@ export const MermaidStatic = ({ code }: { code: string }) => {
 };
 
 /* ── Toolbar icon menu ── */
-const ToolbarMenu = ({ icon, label, value, options, onChange }: { icon: React.ReactNode; label: string; value: string; options: MermaidOption[]; onChange: (value: string) => void }) => {
+const ToolbarMenu = ({
+  icon,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  options: MermaidOption[];
+  onChange: (value: string) => void;
+}) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: PointerEvent) => { if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e: PointerEvent) => {
+      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener('pointerdown', handler);
     return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
@@ -242,7 +357,10 @@ const ToolbarMenu = ({ icon, label, value, options, onChange }: { icon: React.Re
             <button
               key={o.value}
               className={`mm-menu-item ${o.value === value ? 'mm-menu-item--active' : ''}`}
-              onClick={() => { onChange(o.value); setOpen(false); }}
+              onClick={() => {
+                onChange(o.value);
+                setOpen(false);
+              }}
             >
               {o.icon && <span className="mm-menu-item-icon">{o.icon}</span>}
               {o.label}
@@ -255,7 +373,13 @@ const ToolbarMenu = ({ icon, label, value, options, onChange }: { icon: React.Re
 };
 
 /* ── Mermaid 動作鈕（縮放 / 重新置中 / 複製原始碼 / 下載 SVG·PNG）── */
-const MermaidActions = ({ transformRef, code }: { transformRef: React.RefObject<ReactZoomPanPinchRef | null>; code: string }) => {
+const MermaidActions = ({
+  transformRef,
+  code,
+}: {
+  transformRef: React.RefObject<ReactZoomPanPinchRef | null>;
+  code: string;
+}) => {
   const [copied, setCopied] = useState(false);
   const copy = useCallback(() => {
     void navigator.clipboard.writeText(code).then(() => {
@@ -265,18 +389,78 @@ const MermaidActions = ({ transformRef, code }: { transformRef: React.RefObject<
   }, [code]);
   return (
     <div className="mm-toolbar-actions">
-      <button type="button" className="mm-action-btn" onClick={() => transformRef.current?.zoomOut(0.3)} data-tooltip="縮小" aria-label="縮小">{IconZoomOut}</button>
-      <button type="button" className="mm-action-btn" onClick={() => transformRef.current?.zoomIn(0.3)} data-tooltip="放大" aria-label="放大">{IconZoomIn}</button>
-      <button type="button" className="mm-action-btn" onClick={() => scheduleFitMermaid(transformRef.current)} data-tooltip="重新置中" aria-label="重新置中">{IconFit}</button>
-      <button type="button" className="mm-action-btn" onClick={copy} data-tooltip={copied ? '已複製' : '複製原始碼'} aria-label="複製原始碼">{copied ? IconCheckMark : IconCopyCode}</button>
-      <button type="button" className="mm-action-btn mm-action-btn--dl" onClick={() => downloadMermaidSvg(transformRef.current)} data-tooltip="下載 SVG" aria-label="下載 SVG">{IconDownload}<span className="mm-action-ext">SVG</span></button>
-      <button type="button" className="mm-action-btn mm-action-btn--dl" onClick={() => downloadMermaidPng(transformRef.current)} data-tooltip="下載 PNG" aria-label="下載 PNG">{IconDownload}<span className="mm-action-ext">PNG</span></button>
+      <button
+        type="button"
+        className="mm-action-btn"
+        onClick={() => transformRef.current?.zoomOut(0.3)}
+        data-tooltip="縮小"
+        aria-label="縮小"
+      >
+        {IconZoomOut}
+      </button>
+      <button
+        type="button"
+        className="mm-action-btn"
+        onClick={() => transformRef.current?.zoomIn(0.3)}
+        data-tooltip="放大"
+        aria-label="放大"
+      >
+        {IconZoomIn}
+      </button>
+      <button
+        type="button"
+        className="mm-action-btn"
+        onClick={() => scheduleFitMermaid(transformRef.current)}
+        data-tooltip="重新置中"
+        aria-label="重新置中"
+      >
+        {IconFit}
+      </button>
+      <button
+        type="button"
+        className="mm-action-btn"
+        onClick={copy}
+        data-tooltip={copied ? '已複製' : '複製原始碼'}
+        aria-label="複製原始碼"
+      >
+        {copied ? IconCheckMark : IconCopyCode}
+      </button>
+      <button
+        type="button"
+        className="mm-action-btn mm-action-btn--dl"
+        onClick={() => downloadMermaidSvg(transformRef.current)}
+        data-tooltip="下載 SVG"
+        aria-label="下載 SVG"
+      >
+        {IconDownload}
+        <span className="mm-action-ext">SVG</span>
+      </button>
+      <button
+        type="button"
+        className="mm-action-btn mm-action-btn--dl"
+        onClick={() => downloadMermaidPng(transformRef.current)}
+        data-tooltip="下載 PNG"
+        aria-label="下載 PNG"
+      >
+        {IconDownload}
+        <span className="mm-action-ext">PNG</span>
+      </button>
     </div>
   );
 };
 
 /* ── Fullscreen Modal ── */
-const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; theme: string; onTheme: (v: string) => void; onClose: () => void }) => {
+const MermaidFullscreen = ({
+  code,
+  theme,
+  onTheme,
+  onClose,
+}: {
+  code: string;
+  theme: string;
+  onTheme: (v: string) => void;
+  onClose: () => void;
+}) => {
   /* Lock scroll SYNCHRONOUSLY before paint — useLayoutEffect runs before the browser paints */
   useLayoutEffect(() => {
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -286,7 +470,9 @@ const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; th
     document.body.style.paddingRight = `${scrollbarWidth}px`;
     // 強制保持原位置（防止 overflow:hidden 改變 scroll position）
     window.scrollTo(0, scrollY);
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', esc);
     return () => {
       document.documentElement.style.overflow = '';
@@ -296,10 +482,10 @@ const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; th
       window.scrollTo(0, scrollY);
       window.removeEventListener('keydown', esc);
     };
-  // 只在 mount/unmount 跑：onClose 由呼叫端 useCallback 固定住。
-  // （原本寫 react-hooks/exhaustive-deps，那是舊 ESLint 的命名空間，
-  //   換成 oxlint 之後形同虛設 —— 這條規則現在叫 @eslint-react/exhaustive-deps。）
-  // eslint-disable-next-line @eslint-react/exhaustive-deps
+    // 只在 mount/unmount 跑：onClose 由呼叫端 useCallback 固定住。
+    // （原本寫 react-hooks/exhaustive-deps，那是舊 ESLint 的命名空間，
+    //   換成 oxlint 之後形同虛設 —— 這條規則現在叫 @eslint-react/exhaustive-deps。）
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, []);
 
   const [err, setErr] = useState<string | null>(null);
@@ -331,7 +517,9 @@ const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; th
           <MermaidActions transformRef={transformRef} code={code} />
           <div className="mm-toolbar-right">
             <span className="mm-toolbar-hint">滾輪縮放 · 拖曳平移 · 雙擊還原</span>
-            <button className="mm-close-btn" onClick={onClose} title="關閉 (Esc)">✕</button>
+            <button className="mm-close-btn" onClick={onClose} title="關閉 (Esc)">
+              ✕
+            </button>
           </div>
         </div>
         {/* Canvas */}
@@ -353,7 +541,9 @@ const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; th
               contentStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '3rem' }}
             >
               {err ? (
-                <div className="mermaid-error"><span>⚠ {err}</span></div>
+                <div className="mermaid-error">
+                  <span>⚠ {err}</span>
+                </div>
               ) : (
                 <MermaidDiagram code={code} theme={theme} onError={setErr} onRendered={handleRendered} />
               )}
@@ -362,7 +552,7 @@ const MermaidFullscreen = ({ code, theme, onTheme, onClose }: { code: string; th
         </div>
       </motion.div>
     </motion.div>,
-    document.body
+    document.body,
   );
 };
 
@@ -376,7 +566,7 @@ export const MermaidBlock = ({ code }: { code: string }) => {
   // frontmatter 可能有巢狀的 config:，也可能就是扁平的一層——查不到就用外層那份
   const initCfg = lookup(parsed.config, 'config') ?? parsed.config;
   const cfgStr = (key: string): string | null =>
-    (typeof initCfg === 'object' && typeof initCfg[key] === 'string') ? initCfg[key] : null;
+    typeof initCfg === 'object' && typeof initCfg[key] === 'string' ? initCfg[key] : null;
   // frontmatter 仍可指定 theme；layout / look / direction 已無對應物（見檔頭調色盤那段），
   // 舊文章寫了也只是被忽略，不會壞。
   const initTheme = cfgStr('theme') ?? 'deep';
@@ -437,7 +627,13 @@ export const MermaidBlock = ({ code }: { code: string }) => {
         </TransformWrapper>
 
         {/* Expand button */}
-        <button type="button" className="mm-expand-btn" onClick={() => setFullscreen(true)} data-tooltip="放大檢視" aria-label="放大檢視">
+        <button
+          type="button"
+          className="mm-expand-btn"
+          onClick={() => setFullscreen(true)}
+          data-tooltip="放大檢視"
+          aria-label="放大檢視"
+        >
           {IconExpand}
         </button>
       </div>
@@ -445,12 +641,7 @@ export const MermaidBlock = ({ code }: { code: string }) => {
       {/* Fullscreen portal */}
       <AnimatePresence>
         {fullscreen && (
-          <MermaidFullscreen
-            code={code}
-            theme={theme}
-            onTheme={handleSetTheme}
-            onClose={handleCloseFullscreen}
-          />
+          <MermaidFullscreen code={code} theme={theme} onTheme={handleSetTheme} onClose={handleCloseFullscreen} />
         )}
       </AnimatePresence>
     </>

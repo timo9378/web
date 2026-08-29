@@ -6,7 +6,16 @@ import { useQuery } from '@tanstack/react-query';
 import { LocaleLink } from '@/i18n/locale-link';
 import { useLocale } from '@/hooks/useLocale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaRegHeart, FaHeart, FaRegComment, FaShareAlt, FaRegEye, FaSearch, FaTimes, FaChevronDown } from 'react-icons/fa';
+import {
+  FaRegHeart,
+  FaHeart,
+  FaRegComment,
+  FaShareAlt,
+  FaRegEye,
+  FaSearch,
+  FaTimes,
+  FaChevronDown,
+} from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import Comments from './Comments';
 import NebulaBackground from '@/components/backdrop/NebulaBackground';
@@ -24,14 +33,30 @@ export type Post = PostListItem;
 // Tag / Category 的手寫型別已移除：兩個端點都吃後端 specta 生成的
 // TagRow / CategoryRow（見 blogList.ts）。手寫那份把 post_count 標成可選、
 // 還允許 Tag 是裸字串，都與實際回應不符。
-interface HeatmapCell { date: Date; count: number; level: number }
+interface HeatmapCell {
+  date: Date;
+  count: number;
+  level: number;
+}
 
 /* ════════════════════════════════════════════════
    FloatingComments — 浮動留言視窗 (Portal)
    ════════════════════════════════════════════════ */
-const FloatingComments = ({ postId, postTitle, allowComments = true, onClose }: { postId: string | number; postTitle: string; allowComments?: boolean; onClose: () => void }) => {
+const FloatingComments = ({
+  postId,
+  postTitle,
+  allowComments = true,
+  onClose,
+}: {
+  postId: string | number;
+  postTitle: string;
+  allowComments?: boolean;
+  onClose: () => void;
+}) => {
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', handleEsc);
     // 防止背景滾動
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -64,7 +89,9 @@ const FloatingComments = ({ postId, postTitle, allowComments = true, onClose }: 
         >
           <div className="floating-comments-header">
             <h3>{postTitle}</h3>
-            <button className="floating-comments-close" onClick={onClose}><FaTimes /></button>
+            <button className="floating-comments-close" onClick={onClose}>
+              <FaTimes />
+            </button>
           </div>
           <div className="floating-comments-body">
             <Comments postId={postId} allowComments={allowComments} />
@@ -72,7 +99,7 @@ const FloatingComments = ({ postId, postTitle, allowComments = true, onClose }: 
         </motion.div>
       </motion.div>
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 };
 
@@ -97,201 +124,225 @@ const stagger: Variants = {
    NoteCard — 支援 record / column 兩種樣板
    ════════════════════════════════════════════════ */
 
-const NoteCard = React.memo(({ post, index, onOpenComments }: { post: Post; index: number; onOpenComments?: (postId: string | number, postTitle: string, allowComments: boolean) => void }) => {
-  const categoryLabel = useCategoryLabel();
-  const tagLabel = useTagLabel();
-  const { t } = useTranslation();
-  const prefetchArticle = usePrefetchArticle();
-  // 卡片上的愛心 = 文章頁反應列裡的 ❤️（post_reactions），不是舊的 posts.likes。
-  // 兩者以前各算各的，同一篇文章在列表和內頁會顯示不同的數字。
-  //
-  // 這裡沒有用 BlogPost 的 useReactions：那會讓列表上每張卡片各自發一個
-  // /reactions 請求（一頁十幾篇 = 十幾個請求）。列表的初始值改由後端在
-  // PostListItem.heart_count 一起送來，本地只處理按下去之後的增減。
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.heart_count);
-  const [shareToast, setShareToast] = useState(false);
-  const isColumn = post.layout_type === 'column';
+const NoteCard = React.memo(
+  ({
+    post,
+    index,
+    onOpenComments,
+  }: {
+    post: Post;
+    index: number;
+    onOpenComments?: (postId: string | number, postTitle: string, allowComments: boolean) => void;
+  }) => {
+    const categoryLabel = useCategoryLabel();
+    const tagLabel = useTagLabel();
+    const { t } = useTranslation();
+    const prefetchArticle = usePrefetchArticle();
+    // 卡片上的愛心 = 文章頁反應列裡的 ❤️（post_reactions），不是舊的 posts.likes。
+    // 兩者以前各算各的，同一篇文章在列表和內頁會顯示不同的數字。
+    //
+    // 這裡沒有用 BlogPost 的 useReactions：那會讓列表上每張卡片各自發一個
+    // /reactions 請求（一頁十幾篇 = 十幾個請求）。列表的初始值改由後端在
+    // PostListItem.heart_count 一起送來，本地只處理按下去之後的增減。
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(post.heart_count);
+    const [shareToast, setShareToast] = useState(false);
+    const isColumn = post.layout_type === 'column';
 
-  useEffect(() => {
-    // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
-    // key 與文章頁的反應列共用，所以在內頁按過的愛心，回到列表也是亮的
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    try { setLiked((JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[]).includes('❤️')); }
-    catch { /* localStorage 不可用就當作沒按過 */ }
-  }, [post.id]);
-
-  // 後端重新給值時（換頁、重新整理、切分類）跟著更新，否則會停在第一次 render 的數字
-  useEffect(() => {
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    setLikeCount(post.heart_count);
-  }, [post.heart_count]);
-
-  const handleLike = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const newState = !liked;
-    const delta = newState ? 1 : -1;
-    // optimistic：先動 UI，伺服器回真值再校正（與文章頁反應列同樣的流程）
-    setLiked(newState);
-    setLikeCount(c => Math.max(0, c + delta));
-    try {
-      const stored = JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[];
-      const next = newState ? [...new Set([...stored, '❤️'])] : stored.filter(x => x !== '❤️');
-      localStorage.setItem(`reactions:${post.id}`, JSON.stringify(next));
-    } catch { /* localStorage 不可用就略過，伺服器那筆還是會記 */ }
-    try {
-      const res = await fetch(`/api/posts/${post.id}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emoji: '❤️', delta }),
-      });
-      const data = await res.json() as { count?: number };
-      if (res.ok && typeof data.count === 'number') setLikeCount(data.count);
-    } catch (err) {
-      console.error('Like failed:', err);
-    }
-  };
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/blog/${post.id}`;
-    const shareData = { title: post.title, url: shareUrl };
-    // lib.dom 把 Web Share API 宣告成必然存在，桌面 Firefox 實際沒有 → 收窄成可選型別，
-    // 讓守衛在型別上也成立（否則 no-unnecessary-condition 會誤判它多餘）。
-    // 必須留在 nav 上呼叫：Navigator 不是 [Global] 介面，解構後呼叫會 Illegal invocation。
-    const nav: Partial<Navigator> = navigator;
-    if (nav.share) {
+    useEffect(() => {
+      // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
+      // key 與文章頁的反應列共用，所以在內頁按過的愛心，回到列表也是亮的
       try {
-        await nav.share(shareData);
-      } catch (err) {
-        // 使用者取消分享，不做處理
-        if (!(err instanceof Error && err.name === 'AbortError')) {
-          void navigator.clipboard.writeText(shareUrl);
-          setShareToast(true);
-          setTimeout(() => setShareToast(false), 2000);
-        }
+        // eslint-disable-next-line @eslint-react/set-state-in-effect
+        setLiked((JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[]).includes('❤️'));
+      } catch {
+        /* localStorage 不可用就當作沒按過 */
       }
-    } else {
-      void navigator.clipboard.writeText(shareUrl);
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 2000);
-    }
-  };
+    }, [post.id]);
 
-  const handleComment = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onOpenComments?.(post.id, post.title, post.allow_comments);
-  };
+    // 後端重新給值時（換頁、重新整理、切分類）跟著更新，否則會停在第一次 render 的數字
+    useEffect(() => {
+      // eslint-disable-next-line @eslint-react/set-state-in-effect
+      setLikeCount(post.heart_count);
+    }, [post.heart_count]);
 
-  // 列表頁優先顯示內文截斷，而非 AI 摘要。content_preview 是後端已截好的前 260 字
-  // （整篇 content 進列表會多 ~188KB）。
-  // markdown → 純文字：連結保留文字、圖片整個丟掉；`-` `*` `>` 只在行首當標記時吃掉，
-  // 不然 `tool-calling` 會被清成 `toolcalling`。
-  const excerpt = post.content_preview
-    ? post.content_preview
-        .replace(/<[^>]+>/g, '')
-        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-        .replace(/^\s{0,3}(#{1,6}\s+|[-*+]\s+|>\s?)/gm, '')
-        .replace(/[*`]/g, '')
-        .replace(/\n+/g, ' ')
-        .trim()
-        .substring(0, 220) + '...'
-    : '';
-  const dateObj = new Date(post.created_at);
-  const dayStr = dateObj.getDate();
-  const monthStr = dateObj.toLocaleDateString('zh-TW', { month: 'short' });
-  const fullDate = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+    const handleLike = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const newState = !liked;
+      const delta = newState ? 1 : -1;
+      // optimistic：先動 UI，伺服器回真值再校正（與文章頁反應列同樣的流程）
+      setLiked(newState);
+      setLikeCount((c) => Math.max(0, c + delta));
+      try {
+        const stored = JSON.parse(localStorage.getItem(`reactions:${post.id}`) ?? '[]') as string[];
+        const next = newState ? [...new Set([...stored, '❤️'])] : stored.filter((x) => x !== '❤️');
+        localStorage.setItem(`reactions:${post.id}`, JSON.stringify(next));
+      } catch {
+        /* localStorage 不可用就略過，伺服器那筆還是會記 */
+      }
+      try {
+        const res = await fetch(`/api/posts/${post.id}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji: '❤️', delta }),
+        });
+        const data = (await res.json()) as { count?: number };
+        if (res.ok && typeof data.count === 'number') setLikeCount(data.count);
+      } catch (err) {
+        console.error('Like failed:', err);
+      }
+    };
 
-  return (
-    <motion.article
-      className={`note-card${isColumn ? ' note-card--column' : ''}`}
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-40px' }}
-      layout
-    >
-      {/* 日期指示器 or 專欄小點 */}
-      {isColumn ? (
-        <div className="note-column-icon">
-          <span className="column-icon-dot" />
-        </div>
-      ) : (
-        <div className="note-date-indicator">
-          <span className="note-day">{dayStr}</span>
-          <span className="note-month">{monthStr}</span>
-        </div>
-      )}
+    const handleShare = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const shareUrl = `${window.location.origin}/blog/${post.id}`;
+      const shareData = { title: post.title, url: shareUrl };
+      // lib.dom 把 Web Share API 宣告成必然存在，桌面 Firefox 實際沒有 → 收窄成可選型別，
+      // 讓守衛在型別上也成立（否則 no-unnecessary-condition 會誤判它多餘）。
+      // 必須留在 nav 上呼叫：Navigator 不是 [Global] 介面，解構後呼叫會 Illegal invocation。
+      const nav: Partial<Navigator> = navigator;
+      if (nav.share) {
+        try {
+          await nav.share(shareData);
+        } catch (err) {
+          // 使用者取消分享，不做處理
+          if (!(err instanceof Error && err.name === 'AbortError')) {
+            void navigator.clipboard.writeText(shareUrl);
+            setShareToast(true);
+            setTimeout(() => setShareToast(false), 2000);
+          }
+        }
+      } else {
+        void navigator.clipboard.writeText(shareUrl);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
+      }
+    };
 
-      <div className="note-body">
-        {/* 頂部 meta */}
-        {(!isColumn || post.category) && (
-          <div className="note-meta-top">
-            {!isColumn && <span className="note-full-date">{fullDate}</span>}
-            {post.category && <span className="note-category">{categoryLabel(post.category)}</span>}
+    const handleComment = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpenComments?.(post.id, post.title, post.allow_comments);
+    };
+
+    // 列表頁優先顯示內文截斷，而非 AI 摘要。content_preview 是後端已截好的前 260 字
+    // （整篇 content 進列表會多 ~188KB）。
+    // markdown → 純文字：連結保留文字、圖片整個丟掉；`-` `*` `>` 只在行首當標記時吃掉，
+    // 不然 `tool-calling` 會被清成 `toolcalling`。
+    const excerpt = post.content_preview
+      ? post.content_preview
+          .replace(/<[^>]+>/g, '')
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+          .replace(/^\s{0,3}(#{1,6}\s+|[-*+]\s+|>\s?)/gm, '')
+          .replace(/[*`]/g, '')
+          .replace(/\n+/g, ' ')
+          .trim()
+          .substring(0, 220) + '...'
+      : '';
+    const dateObj = new Date(post.created_at);
+    const dayStr = dateObj.getDate();
+    const monthStr = dateObj.toLocaleDateString('zh-TW', { month: 'short' });
+    const fullDate = dateObj.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    return (
+      <motion.article
+        className={`note-card${isColumn ? ' note-card--column' : ''}`}
+        custom={index}
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-40px' }}
+        layout
+      >
+        {/* 日期指示器 or 專欄小點 */}
+        {isColumn ? (
+          <div className="note-column-icon">
+            <span className="column-icon-dot" />
+          </div>
+        ) : (
+          <div className="note-date-indicator">
+            <span className="note-day">{dayStr}</span>
+            <span className="note-month">{monthStr}</span>
           </div>
         )}
 
-        {/* 標題 */}
-        <LocaleLink
-          to={postPath(post)}
-          className="note-title-link"
-          viewTransition
-          onMouseEnter={() => prefetchArticle(post.id)}
-          onFocus={() => prefetchArticle(post.id)}
-        >
-          <h2 className="note-title">{post.title}</h2>
-        </LocaleLink>
-
-        {/* 摘要 */}
-        <p className="note-excerpt">{excerpt}</p>
-
-        {/* 標籤 */}
-        {post.tags.length > 0 && (
-          <div className="note-tags">
-            {post.tags.slice(0, 4).map((tag) => (
-              <span key={tag} className="note-tag">#{tagLabel(tag)}</span>
-            ))}
-          </div>
-        )}
-
-        {/* 底部互動列 */}
-        <div className="note-actions">
-          {/* aria-label 是必要的不是裝飾：讚數為 0 時 <span> 是空的、圖示是無名 SVG，
-              整顆按鈕對螢幕閱讀器就只剩「button」。axe 的 button-name 規則抓到的就是這個。 */}
-          <button
-            className={`note-action-btn ${liked ? 'liked' : ''}`}
-            aria-label={liked ? t('blog.unlike') : t('blog.like')}
-            aria-pressed={liked}
-            onClick={(e) => { void handleLike(e); }}
-          >
-            {liked ? <FaHeart /> : <FaRegHeart />}
-            <span>{likeCount > 0 ? likeCount : ''}</span>
-          </button>
-          <button className="note-action-btn" onClick={handleComment}>
-            <FaRegComment />
-            <span>{t('blog.comment')}</span>
-          </button>
-          <button className={`note-action-btn${shareToast ? ' shared' : ''}`} onClick={(e) => { void handleShare(e); }}>
-            <FaShareAlt />
-            <span>{shareToast ? t('blog.shareCopied') : t('blog.share')}</span>
-          </button>
-          {(post.view_count) > 0 && (
-            <span className="note-views">
-              <FaRegEye />
-              {post.view_count}
-            </span>
+        <div className="note-body">
+          {/* 頂部 meta */}
+          {(!isColumn || post.category) && (
+            <div className="note-meta-top">
+              {!isColumn && <span className="note-full-date">{fullDate}</span>}
+              {post.category && <span className="note-category">{categoryLabel(post.category)}</span>}
+            </div>
           )}
+
+          {/* 標題 */}
+          <LocaleLink
+            to={postPath(post)}
+            className="note-title-link"
+            viewTransition
+            onMouseEnter={() => prefetchArticle(post.id)}
+            onFocus={() => prefetchArticle(post.id)}
+          >
+            <h2 className="note-title">{post.title}</h2>
+          </LocaleLink>
+
+          {/* 摘要 */}
+          <p className="note-excerpt">{excerpt}</p>
+
+          {/* 標籤 */}
+          {post.tags.length > 0 && (
+            <div className="note-tags">
+              {post.tags.slice(0, 4).map((tag) => (
+                <span key={tag} className="note-tag">
+                  #{tagLabel(tag)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 底部互動列 */}
+          <div className="note-actions">
+            {/* aria-label 是必要的不是裝飾：讚數為 0 時 <span> 是空的、圖示是無名 SVG，
+              整顆按鈕對螢幕閱讀器就只剩「button」。axe 的 button-name 規則抓到的就是這個。 */}
+            <button
+              className={`note-action-btn ${liked ? 'liked' : ''}`}
+              aria-label={liked ? t('blog.unlike') : t('blog.like')}
+              aria-pressed={liked}
+              onClick={(e) => {
+                void handleLike(e);
+              }}
+            >
+              {liked ? <FaHeart /> : <FaRegHeart />}
+              <span>{likeCount > 0 ? likeCount : ''}</span>
+            </button>
+            <button className="note-action-btn" onClick={handleComment}>
+              <FaRegComment />
+              <span>{t('blog.comment')}</span>
+            </button>
+            <button
+              className={`note-action-btn${shareToast ? ' shared' : ''}`}
+              onClick={(e) => {
+                void handleShare(e);
+              }}
+            >
+              <FaShareAlt />
+              <span>{shareToast ? t('blog.shareCopied') : t('blog.share')}</span>
+            </button>
+            {post.view_count > 0 && (
+              <span className="note-views">
+                <FaRegEye />
+                {post.view_count}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </motion.article>
-  );
-});
+      </motion.article>
+    );
+  },
+);
 
 /* ════════════════════════════════════════════════
    ActivityHeatmap — 寫作活動熱圖（過去 26 週）
@@ -311,7 +362,7 @@ const ActivityHeatmap = React.memo(({ posts }: { posts: Post[] }) => {
 
     // 統計每日發文數
     const counts = new Map<string, number>();
-    posts.forEach(p => {
+    posts.forEach((p) => {
       if (!p.created_at) return;
       const d = new Date(p.created_at);
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -395,13 +446,21 @@ function Blog() {
   const [sortBy, setSortBy] = useState('newest');
   // 資料改由 TanStack Query 管理：route loader 已 prefetch 首屏（newest）→ SSR baked、
   // hydrate 後 useQuery 讀快取。切換排序 = 換 queryKey 自動 refetch（且帶 locale）。
-  const { data: posts = [], isPending: postsPending, error: postsError } = useQuery(postsListQueryOptions(locale, sortBy));
+  const {
+    data: posts = [],
+    isPending: postsPending,
+    error: postsError,
+  } = useQuery(postsListQueryOptions(locale, sortBy));
   const { data: allTags = [] } = useQuery(blogTagsQueryOptions(locale));
   const { data: allCategories = [] } = useQuery(blogCategoriesQueryOptions(locale));
   const loading = postsPending;
   const error = postsError ? (postsError instanceof Error ? postsError.message : t('blog.loadFailed')) : null;
   const [tagsExpanded, setTagsExpanded] = useState(false);
-  const [floatingComment, setFloatingComment] = useState<{ postId: string; postTitle: string; allowComments: boolean } | null>(null);
+  const [floatingComment, setFloatingComment] = useState<{
+    postId: string;
+    postTitle: string;
+    allowComments: boolean;
+  } | null>(null);
   const search = useRouterState({ select: (s) => s.location.search }) as { category?: string; tag?: string };
 
   const handleOpenComments = useCallback((postId: string | number, postTitle: string, allowComments: boolean) => {
@@ -473,7 +532,6 @@ function Blog() {
 
       {/* ── 主內容區 ── */}
       <div className="blog-content-wrapper">
-
         {/* ═══ 上方 Header 區 ═══ */}
         <div className="blog-header-area">
           {/* Hero 標題 */}
@@ -482,9 +540,7 @@ function Blog() {
               <span className="blog-title-gradient">{t('blog.heroTitle')}</span>
               <span className="blog-title-sub">· Notes</span>
             </h1>
-            <p className="blog-hero-desc">
-              記錄技術探索、開發心得與生活碎片。每一篇都是當下最真誠的思考。
-            </p>
+            <p className="blog-hero-desc">記錄技術探索、開發心得與生活碎片。每一篇都是當下最真誠的思考。</p>
           </motion.header>
 
           {/* 搜尋列 */}
@@ -511,7 +567,7 @@ function Blog() {
                 { value: 'newest', label: t('blog.sort.newest') },
                 { value: 'oldest', label: t('blog.sort.oldest') },
                 { value: 'popular', label: t('blog.sort.popular') },
-              ].map(opt => (
+              ].map((opt) => (
                 <button
                   key={opt.value}
                   className={`sort-pill ${sortBy === opt.value ? 'active' : ''}`}
@@ -522,36 +578,54 @@ function Blog() {
               ))}
             </div>
             <div className="stats-inline">
-              <span>{t('blog.statPosts')} <em>{posts.length}</em></span>
+              <span>
+                {t('blog.statPosts')} <em>{posts.length}</em>
+              </span>
               <span className="stats-sep">｜</span>
-              <span>{t('blog.statTags')} <em>{allTags.length}</em></span>
+              <span>
+                {t('blog.statTags')} <em>{allTags.length}</em>
+              </span>
               <span className="stats-sep">｜</span>
-              <span>{t('blog.statReads')} <em>{filteredPosts.reduce((sum, p) => sum + (p.view_count), 0)}</em></span>
+              <span>
+                {t('blog.statReads')} <em>{filteredPosts.reduce((sum, p) => sum + p.view_count, 0)}</em>
+              </span>
             </div>
           </motion.div>
 
           {/* 活動篩選 */}
           {(selectedTag || selectedCategory || searchTerm) && (
-            <motion.div className="active-filters" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+            <motion.div
+              className="active-filters"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+            >
               {selectedCategory && (
                 <span className="active-filter-chip">
                   📁 {selectedCategory}
-                  <button onClick={() => setSelectedCategory('')}><FaTimes /></button>
+                  <button onClick={() => setSelectedCategory('')}>
+                    <FaTimes />
+                  </button>
                 </span>
               )}
               {selectedTag && (
                 <span className="active-filter-chip">
                   🏷️ {selectedTag}
-                  <button onClick={() => setSelectedTag('')}><FaTimes /></button>
+                  <button onClick={() => setSelectedTag('')}>
+                    <FaTimes />
+                  </button>
                 </span>
               )}
               {searchTerm && (
                 <span className="active-filter-chip">
                   🔍 {searchTerm}
-                  <button onClick={() => setSearchTerm('')}><FaTimes /></button>
+                  <button onClick={() => setSearchTerm('')}>
+                    <FaTimes />
+                  </button>
                 </span>
               )}
-              <button className="clear-all-btn" onClick={clearFilters}>{t('blog.clearAll')}</button>
+              <button className="clear-all-btn" onClick={clearFilters}>
+                {t('blog.clearAll')}
+              </button>
             </motion.div>
           )}
         </div>
@@ -562,137 +636,152 @@ function Blog() {
               巢狀 main 會讓螢幕閱讀器拿到兩個「主要內容」地標（理由同 MainPage.tsx）。
               class 保留原樣，樣式不受影響——沒有任何 CSS 選的是 main 元素本身。 */}
           <div className="blog-main">
-          {filteredPosts.length === 0 ? (
-            <motion.div className="blog-empty" variants={fadeUp} initial="hidden" animate="visible">
-              <div className="empty-icon">📝</div>
-              <h3>{searchTerm || selectedTag || selectedCategory ? t('blog.emptyFiltered') : t('blog.emptyNone')}</h3>
-              <p>
-                {searchTerm || selectedTag || selectedCategory
-                  ? t('blog.emptyFilteredHint')
-                  : t('blog.emptyNoneHint')}
-              </p>
-              {(searchTerm || selectedTag || selectedCategory) && (
-                <button className="empty-clear-btn" onClick={clearFilters}>{t('blog.clearFilters')}</button>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div className="notes-timeline" variants={stagger} initial="hidden" animate="visible">
-              {groupedPosts.map((group) => (
-                <div key={`${group.year}-${group.month}`} className="timeline-group">
-                  <div className="timeline-group-label">{group.label}</div>
-                  {group.posts.map((post, i) => (
-                    <NoteCard key={post.id} post={post} index={i} onOpenComments={handleOpenComments} />
-                  ))}
-                </div>
-              ))}
-            </motion.div>
-          )}
+            {filteredPosts.length === 0 ? (
+              <motion.div className="blog-empty" variants={fadeUp} initial="hidden" animate="visible">
+                <div className="empty-icon">📝</div>
+                <h3>{searchTerm || selectedTag || selectedCategory ? t('blog.emptyFiltered') : t('blog.emptyNone')}</h3>
+                <p>
+                  {searchTerm || selectedTag || selectedCategory
+                    ? t('blog.emptyFilteredHint')
+                    : t('blog.emptyNoneHint')}
+                </p>
+                {(searchTerm || selectedTag || selectedCategory) && (
+                  <button className="empty-clear-btn" onClick={clearFilters}>
+                    {t('blog.clearFilters')}
+                  </button>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div className="notes-timeline" variants={stagger} initial="hidden" animate="visible">
+                {groupedPosts.map((group) => (
+                  <div key={`${group.year}-${group.month}`} className="timeline-group">
+                    <div className="timeline-group-label">{group.label}</div>
+                    {group.posts.map((post, i) => (
+                      <NoteCard key={post.id} post={post} index={i} onOpenComments={handleOpenComments} />
+                    ))}
+                  </div>
+                ))}
+              </motion.div>
+            )}
           </div>
 
           {/* ── 側邊欄 — 融入星空風格（去卡片化） ── */}
           <aside className="blog-sidebar">
-          {/* 分類 */}
-          {allCategories.length > 0 && (
-            <div className="sidebar-section">
-              <h3 className="sidebar-heading">{t('blog.sideCategories')}</h3>
-              <div className="category-list">
-                <button
-                  className={`category-item ${selectedCategory === '' ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory('')}
-                >
-                  全部
-                </button>
-                {allCategories.filter(cat => cat.post_count > 0).map(cat => (
+            {/* 分類 */}
+            {allCategories.length > 0 && (
+              <div className="sidebar-section">
+                <h3 className="sidebar-heading">{t('blog.sideCategories')}</h3>
+                <div className="category-list">
                   <button
-                    key={cat.name}
-                    className={`category-item ${selectedCategory === cat.name ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(cat.name)}
+                    className={`category-item ${selectedCategory === '' ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory('')}
                   >
-                    {categoryLabel(cat.name)}
-                    <span className="cat-count">{cat.post_count}</span>
+                    全部
                   </button>
-                ))}
+                  {allCategories
+                    .filter((cat) => cat.post_count > 0)
+                    .map((cat) => (
+                      <button
+                        key={cat.name}
+                        className={`category-item ${selectedCategory === cat.name ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(cat.name)}
+                      >
+                        {categoryLabel(cat.name)}
+                        <span className="cat-count">{cat.post_count}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* 標籤雲 */}
+            {allTags.length > 0 && (
+              <div className="sidebar-section">
+                <h3 className="sidebar-heading">{t('blog.sideTags')}</h3>
+                <div className="tag-cloud">
+                  <button
+                    className={`cloud-tag ${selectedTag === '' ? 'active' : ''}`}
+                    onClick={() => setSelectedTag('')}
+                  >
+                    全部
+                  </button>
+                  {tagsToShow.map((tag) => {
+                    const name = typeof tag === 'object' ? tag.name : tag;
+                    const count = typeof tag === 'object' ? tag.post_count : '';
+                    return (
+                      <button
+                        key={name}
+                        className={`cloud-tag ${selectedTag === name ? 'active' : ''}`}
+                        onClick={() => setSelectedTag(name)}
+                      >
+                        #{tagLabel(name)}
+                        {count ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+                {allTags.length > maxTagsShow && (
+                  <button className="tags-toggle" onClick={() => setTagsExpanded(!tagsExpanded)}>
+                    {tagsExpanded ? t('blog.collapse') : `${t('blog.expandAll')} (${allTags.length})`}
+                    <FaChevronDown className={`toggle-icon ${tagsExpanded ? 'expanded' : ''}`} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* 精選文章 */}
+            {featuredPosts.length > 0 && (
+              <div className="sidebar-section">
+                <h3 className="sidebar-heading">{t('blog.sideFeatured')}</h3>
+                <ul className="featured-list">
+                  {featuredPosts.map((p) => (
+                    <li key={p.id}>
+                      <LocaleLink
+                        to={postPath(p)}
+                        className="featured-link"
+                        onMouseEnter={() => prefetchArticle(p.id)}
+                        onFocus={() => prefetchArticle(p.id)}
+                      >
+                        <span className="featured-text">{p.title}</span>
+                        <span className="featured-date">
+                          {new Date(p.created_at).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </LocaleLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 寫作活動熱圖 */}
+            <div className="sidebar-section">
+              <h3 className="sidebar-heading">{t('blog.sideActivity')}</h3>
+              <ActivityHeatmap posts={posts} />
+            </div>
+
+            {/* 快速導航 */}
+            <div className="sidebar-section">
+              <h3 className="sidebar-heading">{t('blog.sideNav')}</h3>
+              <div className="quick-nav">
+                <LocaleLink to="/" className="nav-pill">
+                  🏠 {t('blog.navHome')}
+                </LocaleLink>
+                <LocaleLink to="/messages" className="nav-pill">
+                  💬 {t('blog.navMessages')}
+                </LocaleLink>
+                <LocaleLink to="/setup" className="nav-pill">
+                  🖥️ {t('blog.navSetup')}
+                </LocaleLink>
+                <LocaleLink to="/about#journey" className="nav-pill">
+                  🛤️ {t('blog.navJourney')}
+                </LocaleLink>
               </div>
             </div>
-          )}
-
-          {/* 標籤雲 */}
-          {allTags.length > 0 && (
-            <div className="sidebar-section">
-              <h3 className="sidebar-heading">{t('blog.sideTags')}</h3>
-              <div className="tag-cloud">
-                <button
-                  className={`cloud-tag ${selectedTag === '' ? 'active' : ''}`}
-                  onClick={() => setSelectedTag('')}
-                >
-                  全部
-                </button>
-                {tagsToShow.map(tag => {
-                  const name = typeof tag === 'object' ? tag.name : tag;
-                  const count = typeof tag === 'object' ? tag.post_count : '';
-                  return (
-                    <button
-                      key={name}
-                      className={`cloud-tag ${selectedTag === name ? 'active' : ''}`}
-                      onClick={() => setSelectedTag(name)}
-                    >
-                      #{tagLabel(name)}{count ? ` (${count})` : ''}
-                    </button>
-                  );
-                })}
-              </div>
-              {allTags.length > maxTagsShow && (
-                <button className="tags-toggle" onClick={() => setTagsExpanded(!tagsExpanded)}>
-                  {tagsExpanded ? t('blog.collapse') : `${t('blog.expandAll')} (${allTags.length})`}
-                  <FaChevronDown className={`toggle-icon ${tagsExpanded ? 'expanded' : ''}`} />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* 精選文章 */}
-          {featuredPosts.length > 0 && (
-            <div className="sidebar-section">
-              <h3 className="sidebar-heading">{t('blog.sideFeatured')}</h3>
-              <ul className="featured-list">
-                {featuredPosts.map(p => (
-                  <li key={p.id}>
-                    <LocaleLink
-                      to={postPath(p)}
-                      className="featured-link"
-                      onMouseEnter={() => prefetchArticle(p.id)}
-                      onFocus={() => prefetchArticle(p.id)}
-                    >
-                      <span className="featured-text">{p.title}</span>
-                      <span className="featured-date">
-                        {new Date(p.created_at).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })}
-                      </span>
-                    </LocaleLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* 寫作活動熱圖 */}
-          <div className="sidebar-section">
-            <h3 className="sidebar-heading">{t('blog.sideActivity')}</h3>
-            <ActivityHeatmap posts={posts} />
-          </div>
-
-          {/* 快速導航 */}
-          <div className="sidebar-section">
-            <h3 className="sidebar-heading">{t('blog.sideNav')}</h3>
-            <div className="quick-nav">
-              <LocaleLink to="/" className="nav-pill">🏠 {t('blog.navHome')}</LocaleLink>
-              <LocaleLink to="/messages" className="nav-pill">💬 {t('blog.navMessages')}</LocaleLink>
-              <LocaleLink to="/setup" className="nav-pill">🖥️ {t('blog.navSetup')}</LocaleLink>
-              <LocaleLink to="/about#journey" className="nav-pill">🛤️ {t('blog.navJourney')}</LocaleLink>
-            </div>
-          </div>
           </aside>
-        </div>{/* blog-layout */}
-      </div>{/* blog-content-wrapper */}
+        </div>
+        {/* blog-layout */}
+      </div>
+      {/* blog-content-wrapper */}
 
       {/* 浮動留言視窗 */}
       <AnimatePresence>

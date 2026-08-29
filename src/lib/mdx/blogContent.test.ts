@@ -70,16 +70,11 @@ describe('extractHeadings', () => {
 
   // 舊寫法是 `content.replace(/```[\s\S]*?```/g, '')`，這兩種情況它擋不住。
   it('沒閉合的 code block 也要擋住（寫到一半的草稿很常這樣）', () => {
-    expect(extractHeadings('# 真的\n```js\n// 下面這行是註解不是標題\n# 假的\n').map((h) => h.text)).toEqual([
-      '真的',
-    ]);
+    expect(extractHeadings('# 真的\n```js\n// 下面這行是註解不是標題\n# 假的\n').map((h) => h.text)).toEqual(['真的']);
   });
 
   it('`~~~` 也是合法的 fence', () => {
-    expect(extractHeadings('# 真的\n~~~js\n# 假的\n~~~\n## 也是真的').map((h) => h.text)).toEqual([
-      '真的',
-      '也是真的',
-    ]);
+    expect(extractHeadings('# 真的\n~~~js\n# 假的\n~~~\n## 也是真的').map((h) => h.text)).toEqual(['真的', '也是真的']);
   });
 
   it('不同標記不會互相收掉：``` 開的只有 ``` 關得掉', () => {

@@ -20,7 +20,9 @@ function KoimLoader({ size = 'md', text, fullscreen = false, inline = false }: K
     `koim-loader-shell--${size}`,
     fullscreen ? 'koim-loader-shell--fullscreen' : '',
     inline ? 'koim-loader-shell--inline' : '',
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     // role="status" + aria-live 是載入指示器的標準 live-region 寫法；
@@ -37,7 +39,9 @@ function KoimLoader({ size = 'md', text, fullscreen = false, inline = false }: K
         <p className="koim-loader-text">
           {text}
           <span className="koim-loader-dots">
-            <i></i><i></i><i></i>
+            <i></i>
+            <i></i>
+            <i></i>
           </span>
         </p>
       )}

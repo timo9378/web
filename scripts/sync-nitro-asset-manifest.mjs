@@ -43,7 +43,8 @@ const SERVER_ENTRY = '.output/server/index.mjs';
 //     "size": 1343311,
 //     "path": "../public/assets/index-XXXX.js"
 //   },
-const ENTRY = /"(?<key>\/[^"]*)":\s*\{\s*"type":\s*"(?<type>[^"]*)",\s*"etag":\s*"(?<etag>(?:[^"\\]|\\.)*)",\s*"mtime":\s*"(?<mtime>[^"]*)",\s*"size":\s*(?<size>\d+),\s*"path":\s*"(?<path>[^"]*)"\s*\}(?<comma>,?)/g;
+const ENTRY =
+  /"(?<key>\/[^"]*)":\s*\{\s*"type":\s*"(?<type>[^"]*)",\s*"etag":\s*"(?<etag>(?:[^"\\]|\\.)*)",\s*"mtime":\s*"(?<mtime>[^"]*)",\s*"size":\s*(?<size>\d+),\s*"path":\s*"(?<path>[^"]*)"\s*\}(?<comma>,?)/g;
 
 const entryPath = path.resolve(SERVER_ENTRY);
 if (!fs.existsSync(entryPath)) {

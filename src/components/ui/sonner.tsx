@@ -13,16 +13,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
           description: 'group-[.toast]:text-muted-foreground',
           success:
             'group-[.toast]:border-emerald-500/30 group-[.toast]:bg-emerald-500/10 group-[.toast]:text-emerald-200',
-          error:
-            'group-[.toast]:border-rose-500/30 group-[.toast]:bg-rose-500/10 group-[.toast]:text-rose-200',
-          warning:
-            'group-[.toast]:border-amber-500/30 group-[.toast]:bg-amber-500/10 group-[.toast]:text-amber-200',
-          info:
-            'group-[.toast]:border-sky-500/30 group-[.toast]:bg-sky-500/10 group-[.toast]:text-sky-200',
-          actionButton:
-            'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-          cancelButton:
-            'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+          error: 'group-[.toast]:border-rose-500/30 group-[.toast]:bg-rose-500/10 group-[.toast]:text-rose-200',
+          warning: 'group-[.toast]:border-amber-500/30 group-[.toast]:bg-amber-500/10 group-[.toast]:text-amber-200',
+          info: 'group-[.toast]:border-sky-500/30 group-[.toast]:bg-sky-500/10 group-[.toast]:text-sky-200',
+          actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+          cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
           closeButton:
             'group-[.toast]:border-border/60 group-[.toast]:bg-background/60 group-[.toast]:text-muted-foreground group-[.toast]:hover:text-foreground',
         },

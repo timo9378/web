@@ -59,6 +59,8 @@ export function useMonacoShortcuts({
     const disposable = editor.onKeyDown(handleKeyDown);
 
     // onKeyDown 依 monaco 的型別一定回 IDisposable，不需要再 typeof 檢查一次
-    return () => { disposable.dispose(); };
+    return () => {
+      disposable.dispose();
+    };
   }, [editor, onBold, onItalic, onLink, onImage, onUndo, onRedo]);
 }

@@ -18,10 +18,19 @@ const fmt = (s: number) => {
   return `${m}:${String(sec).padStart(2, '0')}`;
 };
 
-export default function VideoPlayer(
-  { src, poster, caption, width, height }:
-  { src: string; poster?: string; caption?: string; width?: number; height?: number },
-) {
+export default function VideoPlayer({
+  src,
+  poster,
+  caption,
+  width,
+  height,
+}: {
+  src: string;
+  poster?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -51,7 +60,10 @@ export default function VideoPlayer(
   const toggle = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) void v.play().catch(() => { /* 自動播放政策擋下時忽略 */ });
+    if (v.paused)
+      void v.play().catch(() => {
+        /* 自動播放政策擋下時忽略 */
+      });
     else v.pause();
   }, []);
 
@@ -76,7 +88,9 @@ export default function VideoPlayer(
   useEffect(() => {
     if (!scrubbing) return;
     const bar = wrapRef.current?.querySelector<HTMLElement>('.vp-progress');
-    const move = (e: PointerEvent) => { if (bar) seekTo(e.clientX, bar); };
+    const move = (e: PointerEvent) => {
+      if (bar) seekTo(e.clientX, bar);
+    };
     const stop = () => setScrubbing(false);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop);
@@ -126,8 +140,14 @@ export default function VideoPlayer(
   const toggleFullscreen = useCallback(() => {
     const el = wrapRef.current;
     if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => { /* 忽略 */ });
-    else void el.requestFullscreen().catch(() => { /* 忽略 */ });
+    if (document.fullscreenElement)
+      void document.exitFullscreen().catch(() => {
+        /* 忽略 */
+      });
+    else
+      void el.requestFullscreen().catch(() => {
+        /* 忽略 */
+      });
   }, []);
 
   const pct = duration > 0 ? (time / duration) * 100 : 0;
@@ -198,16 +218,29 @@ export default function VideoPlayer(
               // setPointerCapture：把這個指標「綁」到進度條上，滑鼠移出視窗之後仍然
               // 收得到 pointermove / pointerup——拖曳互動的標準做法。
               // 失敗（某些瀏覽器對特定指標型別會丟）也不影響，window 的監聽仍是後備。
-              try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 後備仍在 */ }
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {
+                /* 後備仍在 */
+              }
               setScrubbing(true);
               seekTo(e.clientX, e.currentTarget);
             }}
             onKeyDown={(e) => {
               const v = videoRef.current;
               if (!v) return;
-              if (e.key === 'ArrowRight') { v.currentTime = Math.min(v.duration, v.currentTime + 5); e.preventDefault(); }
-              if (e.key === 'ArrowLeft') { v.currentTime = Math.max(0, v.currentTime - 5); e.preventDefault(); }
-              if (e.key === ' ' || e.key === 'Enter') { toggle(); e.preventDefault(); }
+              if (e.key === 'ArrowRight') {
+                v.currentTime = Math.min(v.duration, v.currentTime + 5);
+                e.preventDefault();
+              }
+              if (e.key === 'ArrowLeft') {
+                v.currentTime = Math.max(0, v.currentTime - 5);
+                e.preventDefault();
+              }
+              if (e.key === ' ' || e.key === 'Enter') {
+                toggle();
+                e.preventDefault();
+              }
             }}
           >
             <div className="vp-progress-track" />
@@ -215,12 +248,17 @@ export default function VideoPlayer(
             <div className="vp-progress-knob" style={{ left: `${pct}%` }} />
           </div>
 
-          <span className="vp-time">{fmt(time)} / {fmt(duration)}</span>
+          <span className="vp-time">
+            {fmt(time)} / {fmt(duration)}
+          </span>
 
           <button
             type="button"
             className="vp-btn"
-            onClick={() => { const v = videoRef.current; if (v) v.muted = !v.muted; }}
+            onClick={() => {
+              const v = videoRef.current;
+              if (v) v.muted = !v.muted;
+            }}
             aria-label={muted ? '取消靜音' : '靜音'}
           >
             {muted ? <FaVolumeXmark aria-hidden /> : <FaVolumeHigh aria-hidden />}
@@ -230,7 +268,12 @@ export default function VideoPlayer(
             <FaDownload aria-hidden />
           </a>
 
-          <button type="button" className="vp-btn" onClick={toggleFullscreen} aria-label={fullscreen ? '離開全螢幕' : '全螢幕'}>
+          <button
+            type="button"
+            className="vp-btn"
+            onClick={toggleFullscreen}
+            aria-label={fullscreen ? '離開全螢幕' : '全螢幕'}
+          >
             {fullscreen ? <FaCompress aria-hidden /> : <FaExpand aria-hidden />}
           </button>
         </div>
@@ -241,7 +284,9 @@ export default function VideoPlayer(
           <button
             type="button"
             className="vp-diag-btn"
-            onClick={() => { void import('@/lib/videoDiag').then(({ bisectVideo }) => bisectVideo(src)); }}
+            onClick={() => {
+              void import('@/lib/videoDiag').then(({ bisectVideo }) => bisectVideo(src));
+            }}
           >
             開對照組（8 個版本並排，截圖給我）
           </button>

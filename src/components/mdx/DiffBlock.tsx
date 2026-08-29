@@ -14,8 +14,14 @@ function parseDiff(raw: string): { code: string; types: LineType[] } {
   const types: LineType[] = [];
   const code = lines
     .map((l) => {
-      if (l.startsWith('+')) { types.push('add'); return l.slice(1); }
-      if (l.startsWith('-')) { types.push('del'); return l.slice(1); }
+      if (l.startsWith('+')) {
+        types.push('add');
+        return l.slice(1);
+      }
+      if (l.startsWith('-')) {
+        types.push('del');
+        return l.slice(1);
+      }
       types.push('ctx');
       return l.startsWith(' ') ? l.slice(1) : l;
     })
@@ -34,16 +40,30 @@ function tagDiffLines(html: string, types: LineType[]): string {
   });
 }
 
-export default function DiffBlock({ code = '', lang = 'text', title }: { code?: string; lang?: string; title?: string }) {
+export default function DiffBlock({
+  code = '',
+  lang = 'text',
+  title,
+}: {
+  code?: string;
+  lang?: string;
+  title?: string;
+}) {
   const { code: clean, types } = useMemo(() => parseDiff(code), [code]);
   const [html, setHtml] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     highlightCode(clean, lang)
-      .then((h) => { if (!cancelled) setHtml(tagDiffLines(h, types)); })
-      .catch(() => { /* 失敗留 plain pre fallback */ });
-    return () => { cancelled = true; };
+      .then((h) => {
+        if (!cancelled) setHtml(tagDiffLines(h, types));
+      })
+      .catch(() => {
+        /* 失敗留 plain pre fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [clean, lang, types]);
 
   const adds = types.filter((t) => t === 'add').length;
@@ -53,7 +73,9 @@ export default function DiffBlock({ code = '', lang = 'text', title }: { code?: 
     <div className="code-block-wrapper mdx-diff">
       <div className="code-block-header">
         <span className="language-name">
-          <span className="language-emoji" aria-hidden>{langEmoji(lang)}</span>
+          <span className="language-emoji" aria-hidden>
+            {langEmoji(lang)}
+          </span>
           {title ?? lang}
         </span>
         <span className="mdx-diff-stat" aria-label={`新增 ${adds} 行、刪除 ${dels} 行`}>

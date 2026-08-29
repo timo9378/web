@@ -29,7 +29,15 @@ const bookArb = fc.record({
   published_date: fc.option(fc.string({ maxLength: 10 }), { nil: null }),
 });
 
-const SORTS = ['date_added_asc', 'date_added_desc', 'title_asc', 'title_desc', 'rating_desc', 'published_date_desc', ''];
+const SORTS = [
+  'date_added_asc',
+  'date_added_desc',
+  'title_asc',
+  'title_desc',
+  'rating_desc',
+  'published_date_desc',
+  '',
+];
 
 /** 依參考位址數個數，用來比對「兩個陣列裝的是同一批物件」。 */
 function countByRef<T>(arr: readonly T[]): Map<T, number> {
@@ -165,7 +173,10 @@ describe('filterAndSortWatchItems 的性質', () => {
         const out = filterAndSortWatchItems(list, '', sortBy);
         const firstMissing = out.findIndex((x) => !x.isoDate);
         if (firstMissing === -1) return;
-        expect(out.slice(firstMissing).every((x) => !x.isoDate), '缺日期的後面又冒出有日期的').toBe(true);
+        expect(
+          out.slice(firstMissing).every((x) => !x.isoDate),
+          '缺日期的後面又冒出有日期的',
+        ).toBe(true);
       }),
     );
   });

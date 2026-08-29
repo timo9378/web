@@ -20,8 +20,9 @@ describe('validateCommentDraft', () => {
   // 順序有意義：三個欄位都空的時候，要念「還沒寫內容」而不是「驗證碼錯誤」——
   // 後者對一個還沒開始填的人是莫名其妙的訊息。
   it('內容為空的優先權高於暱稱與驗證碼', () => {
-    expect(validateCommentDraft({ content: '', author: '', captchaAnswer: '', captchaSum: 7, requiresIdentity: true }))
-      .toBe('empty');
+    expect(
+      validateCommentDraft({ content: '', author: '', captchaAnswer: '', captchaSum: 7, requiresIdentity: true }),
+    ).toBe('empty');
   });
 
   it('匿名模式沒填暱稱擋下', () => {

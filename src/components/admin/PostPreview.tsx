@@ -16,19 +16,42 @@ import { renderMermaidSvgs } from '@/lib/mdx/mermaidRender';
 import { MermaidSvgContext } from '@/contexts/mermaidSvgs';
 
 // 行內連結 → hover 預覽卡（跟前台一致）；錨點（#foo）不預覽。
-const Anchor = ({ href, children, ...rest }: { href?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLAnchorElement>) => {
+const Anchor = ({
+  href,
+  children,
+  ...rest
+}: { href?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLAnchorElement>) => {
   const h = typeof href === 'string' ? href : '';
-  if (!h || h.startsWith('#')) return <a href={h} {...rest}>{children}</a>;
-  return <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>{children}</LinkHoverPreview>;
+  if (!h || h.startsWith('#'))
+    return (
+      <a href={h} {...rest}>
+        {children}
+      </a>
+    );
+  return (
+    <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>
+      {children}
+    </LinkHoverPreview>
+  );
 };
 const Img = ({ src, alt, ...rest }: { src?: string; alt?: string }) => <BlogImage src={src} alt={alt} {...rest} />;
 
 // MDX：pre 透傳（CodeBlock 自出 wrapper，避免 div-in-pre）。Markdown：不覆蓋 pre，跟前台管線對齊。
-const MDX_BASE = { code: CodeBlock, pre: ({ children }: { children?: React.ReactNode }) => <>{children}</>, p: CustomParagraph, img: Img, a: Anchor };
+const MDX_BASE = {
+  code: CodeBlock,
+  pre: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  p: CustomParagraph,
+  img: Img,
+  a: Anchor,
+};
 const MD_BASE = { code: CodeBlock, p: CustomParagraph, img: Img, a: Anchor } as Components;
 
 // 編譯結果：{ src } 記錄是哪份內容編出來的 → 內容變了但還沒編完時可顯示「準備預覽…」。
-interface Compiled { src: string; code?: string; error?: string }
+interface Compiled {
+  src: string;
+  code?: string;
+  error?: string;
+}
 
 export function PostPreview({ content, format }: { content: string; format?: string }) {
   const isMdx = format === 'mdx';
@@ -41,10 +64,17 @@ export function PostPreview({ content, format }: { content: string; format?: str
     let cancelled = false;
     const t = setTimeout(() => {
       renderMermaidSvgs({ data: content })
-        .then((m) => { if (!cancelled) setMermaidSvgs(m); })
-        .catch(() => { if (!cancelled) setMermaidSvgs({}); });
+        .then((m) => {
+          if (!cancelled) setMermaidSvgs(m);
+        })
+        .catch(() => {
+          if (!cancelled) setMermaidSvgs({});
+        });
     }, 400);
-    return () => { cancelled = true; clearTimeout(t); };
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [content]);
 
   // MDX 才需要編譯；debounce 400ms 避免每次打字都 RPC。setState 都在 async callback 內（非 effect 同步體）。
@@ -53,10 +83,17 @@ export function PostPreview({ content, format }: { content: string; format?: str
     let cancelled = false;
     const t = setTimeout(() => {
       compileMdx({ data: content })
-        .then((code) => { if (!cancelled) setCompiled({ src: content, code }); })
-        .catch((e: unknown) => { if (!cancelled) setCompiled({ src: content, error: e instanceof Error ? e.message : String(e) }); });
+        .then((code) => {
+          if (!cancelled) setCompiled({ src: content, code });
+        })
+        .catch((e: unknown) => {
+          if (!cancelled) setCompiled({ src: content, error: e instanceof Error ? e.message : String(e) });
+        });
     }, 400);
-    return () => { cancelled = true; clearTimeout(t); };
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [content, isMdx]);
 
   const body = useMemo(() => {

@@ -207,8 +207,7 @@ test('捲在文章深處重新整理，scroll restoration 不該造成位移', a
   const restored = await page.evaluate(() => window.scrollY);
   expect(
     r.cls,
-    `重整後 CLS=${r.cls.toFixed(4)}（還原到 scrollY=${restored}，docH=${r.docHeight}）` +
-      `\n位移來源：\n${blame(r)}\n`,
+    `重整後 CLS=${r.cls.toFixed(4)}（還原到 scrollY=${restored}，docH=${r.docHeight}）` + `\n位移來源：\n${blame(r)}\n`,
   ).toBeLessThan(GOOD);
 });
 
@@ -241,8 +240,7 @@ test('文章內的上傳圖片都要有 width/height，否則版面預留不了'
   // 這種「安靜地通過」比失敗更糟——CLS 守門原本就是這樣漏掉那個回歸的。
   expect(
     imgs.length,
-    'seed 的長文裡應該有上傳圖片（見 tests/e2e/seed.mjs 的 longArticle）——' +
-      '一張都沒有的話這條測試沒有測到東西',
+    'seed 的長文裡應該有上傳圖片（見 tests/e2e/seed.mjs 的 longArticle）——' + '一張都沒有的話這條測試沒有測到東西',
   ).toBeGreaterThan(0);
 
   const missing = imgs.filter((i) => !i.w || !i.h);

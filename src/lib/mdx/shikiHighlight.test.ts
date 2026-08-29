@@ -46,10 +46,7 @@ async function load() {
 }
 
 /** 高亮一次，回傳「最後真正拿去上色的語言」 */
-const langUsedFor = async (
-  highlight: (c: string, l?: string) => Promise<string>,
-  input?: string,
-): Promise<string> => {
+const langUsedFor = async (highlight: (c: string, l?: string) => Promise<string>, input?: string): Promise<string> => {
   await highlight('const a = 1', input);
   return calls.at(-1)?.lang ?? '';
 };

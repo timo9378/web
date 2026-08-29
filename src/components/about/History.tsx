@@ -8,12 +8,26 @@ const SITE_BIRTH = new Date('2025-04-01T00:00:00+08:00');
 
 // date 與 big 穩定；text 隨語系
 const MILESTONE_META = [
-  { date: '2025-04-01', big: true }, { date: '2025-04-05' }, { date: '2025-08-25', big: true }, { date: '2025-09-24' },
-  { date: '2025-10-07' }, { date: '2025-10-09' }, { date: '2025-10-10' }, { date: '2025-10-14', big: true },
-  { date: '2026-01-08' }, { date: '2026-02-19' }, { date: '2026-02-21' },
-  { date: '2026-04-20', big: true }, { date: '2026-04-26', big: true }, { date: '2026-05-15', big: true },
-  { date: '2026-05-25', big: true }, { date: '2026-05-28', big: true }, { date: '2026-06-24', big: true },
-  { date: '2026-06-26', big: true }, { date: '2026-07-14', big: true }, { date: '2026-07-19', big: true },
+  { date: '2025-04-01', big: true },
+  { date: '2025-04-05' },
+  { date: '2025-08-25', big: true },
+  { date: '2025-09-24' },
+  { date: '2025-10-07' },
+  { date: '2025-10-09' },
+  { date: '2025-10-10' },
+  { date: '2025-10-14', big: true },
+  { date: '2026-01-08' },
+  { date: '2026-02-19' },
+  { date: '2026-02-21' },
+  { date: '2026-04-20', big: true },
+  { date: '2026-04-26', big: true },
+  { date: '2026-05-15', big: true },
+  { date: '2026-05-25', big: true },
+  { date: '2026-05-28', big: true },
+  { date: '2026-06-24', big: true },
+  { date: '2026-06-26', big: true },
+  { date: '2026-07-14', big: true },
+  { date: '2026-07-19', big: true },
   { date: '2026-07-21', big: true },
 ];
 
@@ -145,31 +159,36 @@ const UPTIME_UNITS = {
 
 const HISTORY_EXTRAS = {
   'zh-TW': {
-    intro: '從 2025 年 4 月第一個 commit 到現在，記錄站點走過的每一個重要轉折。以下只挑出比較重要的時間點，碎碎念的變更就不列了。',
+    intro:
+      '從 2025 年 4 月第一個 commit 到現在，記錄站點走過的每一個重要轉折。以下只挑出比較重要的時間點，碎碎念的變更就不列了。',
     heading: '里程碑',
     thanks: '一路走來，感謝有你。',
     moreSides: '想看更多側面，或是找我聊天，可以從這裡開始：',
   },
   'zh-CN': {
-    intro: '从 2025 年 4 月第一个 commit 到现在，记录站点走过的每一个重要转折。以下只挑出比较重要的时间点，碎碎念的变更就不列了。',
+    intro:
+      '从 2025 年 4 月第一个 commit 到现在，记录站点走过的每一个重要转折。以下只挑出比较重要的时间点，碎碎念的变更就不列了。',
     heading: '里程碑',
     thanks: '一路走来，感谢有你。',
     moreSides: '想看更多侧面，或是找我聊天，可以从这里开始：',
   },
   en: {
-    intro: 'From the first commit in April 2025 to now — a log of every meaningful turn this site has taken. Only the bigger moments are listed; the small tweaks are skipped.',
+    intro:
+      'From the first commit in April 2025 to now — a log of every meaningful turn this site has taken. Only the bigger moments are listed; the small tweaks are skipped.',
     heading: 'Milestones',
     thanks: 'Thank you for being here along the way.',
     moreSides: 'Want to see more, or just say hi? Start here:',
   },
   ja: {
-    intro: '2025 年 4 月の最初の commit から今まで、サイトの重要な節目を記録しています。細かい変更は省いて、大きな出来事だけ残しました。',
+    intro:
+      '2025 年 4 月の最初の commit から今まで、サイトの重要な節目を記録しています。細かい変更は省いて、大きな出来事だけ残しました。',
     heading: 'マイルストーン',
     thanks: 'ここまで一緒に来てくれて、ありがとう。',
     moreSides: 'もっと知りたい、あるいは雑談したいなら、ここから：',
   },
   ko: {
-    intro: '2025 년 4 월 첫 커밋부터 지금까지, 사이트가 거쳐 온 중요한 변곡점을 기록했습니다. 자잘한 변경은 빼고 굵직한 사건만 모았어요.',
+    intro:
+      '2025 년 4 월 첫 커밋부터 지금까지, 사이트가 거쳐 온 중요한 변곡점을 기록했습니다. 자잘한 변경은 빼고 굵직한 사건만 모았어요.',
     heading: '마일스톤',
     thanks: '여기까지 함께해 줘서 고마워요.',
     moreSides: '더 보고 싶거나 이야기 나누고 싶다면, 여기서 시작하세요:',
@@ -226,25 +245,16 @@ function History() {
 
       <ul className="info-page-timeline">
         {milestones.map((m) => (
-          <li
-            key={m.key}
-            className={'info-page-timeline-item' + (m.big ? ' info-page-timeline-item--big' : '')}
-          >
+          <li key={m.key} className={'info-page-timeline-item' + (m.big ? ' info-page-timeline-item--big' : '')}>
             <span className="info-page-timeline-date">{m.date}</span>
-            <span className="info-page-timeline-text">
-              {m.big ? <strong>{m.text}</strong> : m.text}
-            </span>
+            <span className="info-page-timeline-text">{m.big ? <strong>{m.text}</strong> : m.text}</span>
           </li>
         ))}
       </ul>
 
-      <p style={{ marginTop: '2rem', fontWeight: 600, color: 'rgba(244,244,245,0.95)' }}>
-        {extras.thanks}
-      </p>
+      <p style={{ marginTop: '2rem', fontWeight: 600, color: 'rgba(244,244,245,0.95)' }}>{extras.thanks}</p>
 
-      <p style={{ marginTop: '2.5rem', color: 'rgba(229,229,245,0.55)', fontSize: '0.9rem' }}>
-        {extras.moreSides}
-      </p>
+      <p style={{ marginTop: '2.5rem', color: 'rgba(229,229,245,0.55)', fontSize: '0.9rem' }}>{extras.moreSides}</p>
       <LinkCard href="https://github.com/timo9378" />
     </InfoPage>
   );

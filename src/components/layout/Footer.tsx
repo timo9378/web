@@ -63,7 +63,9 @@ function Footer() {
                 Koim Stack
               </a>
               {' & '}
-              <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">Vite</a>
+              <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">
+                Vite
+              </a>
             </p>
             <div className="app-footer-meta">
               <span className="app-footer-viewers">
@@ -80,8 +82,12 @@ function Footer() {
           {/* 關於 */}
           <div className="app-footer-col">
             <h3 className="app-footer-col-title">{t('footer.sections.about')}</h3>
-            <LocaleLink to="/about-site" className="app-footer-link">{t('footer.links.aboutSite')}</LocaleLink>
-            <LocaleLink to="/about" className="app-footer-link">{t('footer.links.aboutMe')}</LocaleLink>
+            <LocaleLink to="/about-site" className="app-footer-link">
+              {t('footer.links.aboutSite')}
+            </LocaleLink>
+            <LocaleLink to="/about" className="app-footer-link">
+              {t('footer.links.aboutMe')}
+            </LocaleLink>
             <a
               href="https://github.com/timo9378/web"
               target="_blank"
@@ -95,8 +101,12 @@ function Footer() {
           {/* 更多 — 配備改放服務狀態（Kuma），配備仍可從導覽列「更多」進 */}
           <div className="app-footer-col">
             <h3 className="app-footer-col-title">{t('footer.sections.more')}</h3>
-            <LocaleLink to="/photos" className="app-footer-link">{t('footer.links.photos')}</LocaleLink>
-            <LocaleLink to="/activity" className="app-footer-link">{t('footer.links.activity')}</LocaleLink>
+            <LocaleLink to="/photos" className="app-footer-link">
+              {t('footer.links.photos')}
+            </LocaleLink>
+            <LocaleLink to="/activity" className="app-footer-link">
+              {t('footer.links.activity')}
+            </LocaleLink>
             <a
               href="https://status.koimsurai.com"
               target="_blank"
@@ -111,16 +121,13 @@ function Footer() {
           <div className="app-footer-col">
             <h3 className="app-footer-col-title">{t('footer.sections.contact')}</h3>
             {/* 寫留言改連留言板頁（原本 /#contact 在 lazy section 掛載前 hash 捲動會失敗） */}
-            <LocaleLink to="/messages" className="app-footer-link">{t('footer.links.messages')}</LocaleLink>
+            <LocaleLink to="/messages" className="app-footer-link">
+              {t('footer.links.messages')}
+            </LocaleLink>
             <a href="mailto:timo9378@gmail.com" className="app-footer-link">
               {t('footer.links.email')} <ExternalArrow />
             </a>
-            <a
-              href="https://github.com/timo9378"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="app-footer-link"
-            >
+            <a href="https://github.com/timo9378" target="_blank" rel="noopener noreferrer" className="app-footer-link">
               {t('footer.links.github')} <ExternalArrow />
             </a>
           </div>
@@ -140,7 +147,9 @@ function Footer() {
               {t('footer.links.sitemap')}
             </a>
             <span className="app-footer-bottom-sep">·</span>
-            <a href="/#contact" className="app-footer-bottom-link">{t('footer.links.subscribe')}</a>
+            <a href="/#contact" className="app-footer-bottom-link">
+              {t('footer.links.subscribe')}
+            </a>
           </div>
 
           <div className="app-footer-bottom-right">

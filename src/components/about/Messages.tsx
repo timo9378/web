@@ -46,33 +46,40 @@ const MESSAGES_BY_LANG: Record<string, Record<string, string>> = {
     issuesPost: '开单，比较好追踪。',
   },
   en: {
-    intro: 'This is the message board. It does not have to be about the posts — chit-chat, tech questions, collab pitches, or just a "hi I was here" all welcome.',
+    intro:
+      'This is the message board. It does not have to be about the posts — chit-chat, tech questions, collab pitches, or just a "hi I was here" all welcome.',
     rulesHeading: 'A few small rules',
     rule1Title: 'Use a slightly real nickname',
-    rule1Body: 'No need for your real name, but please avoid things like "123" or "test" — I won\'t be able to tell whether it\'s one person or several.',
+    rule1Body:
+      'No need for your real name, but please avoid things like "123" or "test" — I won\'t be able to tell whether it\'s one person or several.',
     rule2Title: 'Logged-in comments auto-fill your avatar',
-    rule2Body: 'Sign in with GitHub or Google and your avatar and nickname auto-fill. Anonymous is fine too, just type them in.',
+    rule2Body:
+      'Sign in with GitHub or Google and your avatar and nickname auto-fill. Anonymous is fine too, just type them in.',
     rule3Title: 'Comments are moderated',
-    rule3Body: 'They don\'t go public by default — keeps ads and spam out. Normal comments usually go through within 24h.',
+    rule3Body:
+      "They don't go public by default — keeps ads and spam out. Normal comments usually go through within 24h.",
     rule4Title: 'Markdown supported',
     rule4Body_pre: 'You can use',
     rule4Body_mid1: ', ',
     rule4Body_mid2: 'and other basic syntax.',
     contactHeading: 'Want to chat privately?',
-    contactPre: 'For things that don\'t belong in public, just email me:',
+    contactPre: "For things that don't belong in public, just email me:",
     contactMid: ', or check the',
     contactLinkLabel: 'contact section',
     contactPost: 'for other ways to reach me.',
     issuesPre: 'For bug reports or feature suggestions, file an issue on',
-    issuesPost: 'so it\'s easier to track.',
+    issuesPost: "so it's easier to track.",
   },
   ja: {
-    intro: 'ここはメッセージボードです。記事と関係なくても OK で、雑談・技術的な質問・コラボのお誘い・「通りすがりに足あと残したい」だけでも歓迎です。',
+    intro:
+      'ここはメッセージボードです。記事と関係なくても OK で、雑談・技術的な質問・コラボのお誘い・「通りすがりに足あと残したい」だけでも歓迎です。',
     rulesHeading: 'ちょっとしたルール',
     rule1Title: '本名っぽいニックネームで',
-    rule1Body: '本名でなくて構いませんが、「123」「test」みたいに同じ人なのか別人なのか分からない名前は避けてください。',
+    rule1Body:
+      '本名でなくて構いませんが、「123」「test」みたいに同じ人なのか別人なのか分からない名前は避けてください。',
     rule2Title: 'ログインするとアバターが自動入力',
-    rule2Body: 'GitHub / Google でログインすると、アバターとニックネームが自動で入ります。匿名でも OK で、その場合は手入力で。',
+    rule2Body:
+      'GitHub / Google でログインすると、アバターとニックネームが自動で入ります。匿名でも OK で、その場合は手入力で。',
     rule3Title: 'コメントは審査します',
     rule3Body: 'デフォルトでは公開されません（広告 / spam 対策）。普通のコメントなら通常 24 時間以内に通します。',
     rule4Title: 'Markdown 対応',
@@ -88,14 +95,18 @@ const MESSAGES_BY_LANG: Record<string, Record<string, string>> = {
     issuesPost: 'で issue を立ててもらえると助かります。',
   },
   ko: {
-    intro: '여기는 메시지 보드입니다. 글 내용과 직접 관련 없어도 괜찮고, 잡담·기술 질문·협업 제안·그냥 발자국만 남기고 가는 것도 모두 환영입니다.',
+    intro:
+      '여기는 메시지 보드입니다. 글 내용과 직접 관련 없어도 괜찮고, 잡담·기술 질문·협업 제안·그냥 발자국만 남기고 가는 것도 모두 환영입니다.',
     rulesHeading: '작은 규칙 몇 가지',
     rule1Title: '조금은 진짜 같은 닉네임으로',
-    rule1Body: '본명일 필요는 없지만, 「123」「test」처럼 같은 사람인지 다른 사람인지 구분이 안 되는 닉네임은 피해 주세요.',
+    rule1Body:
+      '본명일 필요는 없지만, 「123」「test」처럼 같은 사람인지 다른 사람인지 구분이 안 되는 닉네임은 피해 주세요.',
     rule2Title: '로그인 댓글은 아바타가 자동 입력',
-    rule2Body: 'GitHub / Google 로 로그인하면 아바타와 닉네임이 자동으로 채워집니다. 익명도 가능하고, 그 경우 직접 입력하시면 됩니다.',
+    rule2Body:
+      'GitHub / Google 로 로그인하면 아바타와 닉네임이 자동으로 채워집니다. 익명도 가능하고, 그 경우 직접 입력하시면 됩니다.',
     rule3Title: '댓글은 검토 후 공개',
-    rule3Body: '기본적으로 바로 공개되지 않습니다 — 광고/스팸 방지용이에요. 일반 댓글이라면 보통 24시간 안에 통과시킵니다.',
+    rule3Body:
+      '기본적으로 바로 공개되지 않습니다 — 광고/스팸 방지용이에요. 일반 댓글이라면 보통 24시간 안에 통과시킵니다.',
     rule4Title: 'Markdown 지원',
     rule4Body_pre: '다음 같은 기본 문법을 쓸 수 있어요:',
     rule4Body_mid1: ', ',
@@ -138,7 +149,11 @@ function Messages() {
           <strong>{c.rule3Title}</strong> — {c.rule3Body}
         </li>
         <li>
-          <strong>{c.rule4Title}</strong> — {c.rule4Body_pre} <code>**bold**</code>{c.rule4Body_mid1}<code>`code`</code>{c.rule4Body_mid1}<code>[link](url)</code> {c.rule4Body_mid2}
+          <strong>{c.rule4Title}</strong> — {c.rule4Body_pre} <code>**bold**</code>
+          {c.rule4Body_mid1}
+          <code>`code`</code>
+          {c.rule4Body_mid1}
+          <code>[link](url)</code> {c.rule4Body_mid2}
         </li>
       </ol>
 
@@ -152,7 +167,10 @@ function Messages() {
 
       <p>
         {c.issuesPre}
-        <a href="https://github.com/timo9378/web/issues" target="_blank" rel="noopener noreferrer"> GitHub Issues </a>
+        <a href="https://github.com/timo9378/web/issues" target="_blank" rel="noopener noreferrer">
+          {' '}
+          GitHub Issues{' '}
+        </a>
         {c.issuesPost}
       </p>
     </InfoPage>

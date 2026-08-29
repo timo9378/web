@@ -14,11 +14,13 @@ import { useTranslation } from 'react-i18next';
 import KoimLoader from '@/components/common/KoimLoader';
 import NebulaBackground from '@/components/backdrop/NebulaBackground';
 import './Music.css';
-import type {
-  NowPlayingResponse, RecentPlayItem, SpotifyTrack, TopGenre,
-} from '@koimsurai/api-types';
+import type { NowPlayingResponse, RecentPlayItem, SpotifyTrack, TopGenre } from '@koimsurai/api-types';
 
-interface RGB { r: number; g: number; b: number }
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
 
 // Spotify 相關型別全部改吃後端 specta 生成的（backend handlers::spotify）。
 // 後端不再原樣轉發 Spotify 的 JSON，而是先反序列化成自己的形狀再送出 ——
@@ -27,10 +29,25 @@ interface RGB { r: number; g: number; b: number }
 export type { AudioFeature } from '@koimsurai/api-types';
 export type NowPlaying = NowPlayingResponse;
 // 前端合成：沒在播時拿「最近播放」頂上顯示，因此多一個 played_at（API 本身沒有這欄）
-interface NowPlayingData extends NowPlayingResponse { isLive: boolean; played_at?: string }
-export interface RecentlyPlayedState { tracks?: RecentPlayItem[]; configured?: boolean; error?: string }
-export interface TopGenresState { genres?: TopGenre[]; configured?: boolean; error?: string }
-export interface TopTracksState { tracks?: SpotifyTrack[]; configured?: boolean; error?: string }
+interface NowPlayingData extends NowPlayingResponse {
+  isLive: boolean;
+  played_at?: string;
+}
+export interface RecentlyPlayedState {
+  tracks?: RecentPlayItem[];
+  configured?: boolean;
+  error?: string;
+}
+export interface TopGenresState {
+  genres?: TopGenre[];
+  configured?: boolean;
+  error?: string;
+}
+export interface TopTracksState {
+  tracks?: SpotifyTrack[];
+  configured?: boolean;
+  error?: string;
+}
 
 /* ─── 色彩提取工具：從專輯封面取主色調 ─── */
 const extractDominantColor = (imageUrl: string): Promise<RGB> => {
@@ -42,15 +59,23 @@ const extractDominantColor = (imageUrl: string): Promise<RGB> => {
       canvas.width = 50;
       canvas.height = 50;
       const ctx = canvas.getContext('2d');
-      if (!ctx) { resolve({ r: 127, g: 90, b: 240 }); return; }
+      if (!ctx) {
+        resolve({ r: 127, g: 90, b: 240 });
+        return;
+      }
       ctx.drawImage(img, 0, 0, 50, 50);
       const data = ctx.getImageData(0, 0, 50, 50).data;
-      let r = 0, g = 0, b = 0, count = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        count = 0;
       for (let i = 0; i < data.length; i += 16) {
         // 過濾太暗或太亮的像素
-        if (data[i] + data[i + 1] + data[i + 2] > 60 &&
-          data[i] + data[i + 1] + data[i + 2] < 700) {
-          r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
+        if (data[i] + data[i + 1] + data[i + 2] > 60 && data[i] + data[i + 1] + data[i + 2] < 700) {
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          count++;
         }
       }
       if (count > 0) {
@@ -96,7 +121,6 @@ const Music = () => {
     if (coverUrl) void extractDominantColor(coverUrl).then(setDominantColor);
   }, [nowPlaying]);
 
-
   /* ─── 工具 ─── */
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -132,7 +156,7 @@ const Music = () => {
         isLive: false,
         item: recent.track,
         progress_ms: 0,
-        played_at: recent.played_at
+        played_at: recent.played_at,
       };
     }
     return null;
@@ -156,7 +180,7 @@ const Music = () => {
 
   const npData = getNowPlayingData();
   const trackAnalytics = getTrackAnalytics();
-  const decadeMax = trackAnalytics?.decades.length ? Math.max(...trackAnalytics.decades.map(d => d.count)) : 1;
+  const decadeMax = trackAnalytics?.decades.length ? Math.max(...trackAnalytics.decades.map((d) => d.count)) : 1;
 
   return (
     <div className="music-page" ref={containerRef} style={glowStyle}>
@@ -188,11 +212,7 @@ const Music = () => {
             <div className="np-ambient-glow" />
             <div className="np-content">
               <div className="np-cover-area">
-                <img
-                  src={npData.item?.album.images.at(0)?.url}
-                  alt={npData.item?.name}
-                  className="np-cover"
-                />
+                <img src={npData.item?.album.images.at(0)?.url} alt={npData.item?.name} className="np-cover" />
                 {/* Audio Visualizer */}
                 <div className={`np-visualizer ${npData.isLive ? 'active' : ''}`}>
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -208,7 +228,7 @@ const Music = () => {
                   {npData.isLive ? t('music.nowPlaying') : t('music.lastPlayed')}
                 </div>
                 <h2 className="np-title">{npData.item?.name}</h2>
-                <p className="np-artist">{npData.item?.artists.map(a => a.name).join(', ')}</p>
+                <p className="np-artist">{npData.item?.artists.map((a) => a.name).join(', ')}</p>
                 <p className="np-album">{npData.item?.album.name}</p>
                 {npData.isLive && (npData.progress_ms ?? 0) > 0 && npData.item?.duration_ms && (
                   <div className="np-progress-area">
@@ -224,12 +244,15 @@ const Music = () => {
                     </div>
                   </div>
                 )}
-                {!npData.isLive && npData.played_at && (
-                  // 相對時間（formatDate 用 new Date()）server/client 算出來可能差一分鐘 →
-                  // hydration text mismatch（React #418）。suppressHydrationWarning：保留 SSR 文字
-                  // （SEO 看得到）、client 自行更新、不當成錯配。
-                  <p className="np-last-played" suppressHydrationWarning>{formatDate(npData.played_at)}</p>
-                )}
+                {!npData.isLive &&
+                  npData.played_at && (
+                    // 相對時間（formatDate 用 new Date()）server/client 算出來可能差一分鐘 →
+                    // hydration text mismatch（React #418）。suppressHydrationWarning：保留 SSR 文字
+                    // （SEO 看得到）、client 自行更新、不當成錯配。
+                    <p className="np-last-played" suppressHydrationWarning>
+                      {formatDate(npData.played_at)}
+                    </p>
+                  )}
                 <a
                   href={npData.item?.external_urls.spotify}
                   target="_blank"
@@ -279,7 +302,6 @@ const Music = () => {
         {/* ═══ Content ═══ */}
         <div className="music-main-content">
           <AnimatePresence mode="wait">
-
             {/* ── 最近播放 ── */}
             {activeTab === 'recent' && (
               <motion.div
@@ -298,9 +320,17 @@ const Music = () => {
                       <div className="config-hint">
                         <p>如何配置 Spotify API:</p>
                         <ol>
-                          <li>前往 <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">Spotify Developer Dashboard</a></li>
+                          <li>
+                            前往{' '}
+                            <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">
+                              Spotify Developer Dashboard
+                            </a>
+                          </li>
                           <li>創建應用並獲取 Client ID 和 Client Secret</li>
-                          <li>在 server/.env 中設置: <code>SPOTIFY_CLIENT_ID</code>, <code>SPOTIFY_CLIENT_SECRET</code>, <code>SPOTIFY_REFRESH_TOKEN</code></li>
+                          <li>
+                            在 server/.env 中設置: <code>SPOTIFY_CLIENT_ID</code>, <code>SPOTIFY_CLIENT_SECRET</code>,{' '}
+                            <code>SPOTIFY_REFRESH_TOKEN</code>
+                          </li>
                           <li>重啟後端服務器</li>
                         </ol>
                       </div>
@@ -341,21 +371,35 @@ const Music = () => {
                           />
                           <div className="tr-title-col">
                             <span className="tr-name">{item.track.name}</span>
-                            <span className="tr-artist">{item.track.artists.map(a => a.name).join(', ')}</span>
+                            <span className="tr-artist">{item.track.artists.map((a) => a.name).join(', ')}</span>
                           </div>
                           <div className="tr-features-col">
                             {feat ? (
                               <>
-                                <FeatureBar label={t('music.features.energy')} value={feat.energy} color="var(--feat-energy)" />
-                                <FeatureBar label={t('music.features.dance')} value={feat.danceability} color="var(--feat-dance)" />
-                                <FeatureBar label={t('music.features.valence')} value={feat.valence} color="var(--feat-valence)" />
+                                <FeatureBar
+                                  label={t('music.features.energy')}
+                                  value={feat.energy}
+                                  color="var(--feat-energy)"
+                                />
+                                <FeatureBar
+                                  label={t('music.features.dance')}
+                                  value={feat.danceability}
+                                  color="var(--feat-dance)"
+                                />
+                                <FeatureBar
+                                  label={t('music.features.valence')}
+                                  value={feat.valence}
+                                  color="var(--feat-valence)"
+                                />
                               </>
                             ) : (
                               <span className="tr-no-feat">—</span>
                             )}
                           </div>
                           <span className="tr-duration">{formatDuration(item.track.duration_ms)}</span>
-                          <span className="tr-time" suppressHydrationWarning>{formatDate(item.played_at)}</span>
+                          <span className="tr-time" suppressHydrationWarning>
+                            {formatDate(item.played_at)}
+                          </span>
                         </motion.a>
                       );
                     })}
@@ -378,7 +422,9 @@ const Music = () => {
               >
                 <h2 className="section-heading">{t('music.genresHeading')}</h2>
                 {topGenres?.error ? (
-                  <div className="music-error-box"><p>{topGenres.error}</p></div>
+                  <div className="music-error-box">
+                    <p>{topGenres.error}</p>
+                  </div>
                 ) : (topGenres?.genres?.length ?? 0) > 0 ? (
                   <div className="galaxy-bubbles">
                     {(topGenres?.genres ?? []).map((genre, index) => {
@@ -430,7 +476,7 @@ const Music = () => {
                       { value: 'short_term', label: t('music.range.short') },
                       { value: 'medium_term', label: t('music.range.medium') },
                       { value: 'long_term', label: t('music.range.long') },
-                    ].map(r => (
+                    ].map((r) => (
                       <button
                         key={r.value}
                         className={`range-pill ${timeRange === r.value ? 'active' : ''}`}
@@ -442,7 +488,9 @@ const Music = () => {
                   </div>
                 </div>
                 {topTracks?.error ? (
-                  <div className="music-error-box"><p>{topTracks.error}</p></div>
+                  <div className="music-error-box">
+                    <p>{topTracks.error}</p>
+                  </div>
                 ) : (topTracks?.tracks?.length ?? 0) > 0 ? (
                   <div className="track-row-list">
                     <div className="track-row track-row-header">
@@ -475,14 +523,26 @@ const Music = () => {
                           />
                           <div className="tr-title-col">
                             <span className="tr-name">{track.name}</span>
-                            <span className="tr-artist">{track.artists.map(a => a.name).join(', ')}</span>
+                            <span className="tr-artist">{track.artists.map((a) => a.name).join(', ')}</span>
                           </div>
                           <div className="tr-features-col">
                             {feat ? (
                               <>
-                                <FeatureBar label={t('music.features.energy')} value={feat.energy} color="var(--feat-energy)" />
-                                <FeatureBar label={t('music.features.dance')} value={feat.danceability} color="var(--feat-dance)" />
-                                <FeatureBar label={t('music.features.valence')} value={feat.valence} color="var(--feat-valence)" />
+                                <FeatureBar
+                                  label={t('music.features.energy')}
+                                  value={feat.energy}
+                                  color="var(--feat-energy)"
+                                />
+                                <FeatureBar
+                                  label={t('music.features.dance')}
+                                  value={feat.danceability}
+                                  color="var(--feat-dance)"
+                                />
+                                <FeatureBar
+                                  label={t('music.features.valence')}
+                                  value={feat.valence}
+                                  color="var(--feat-valence)"
+                                />
                               </>
                             ) : (
                               <span className="tr-no-feat">—</span>
@@ -514,7 +574,9 @@ const Music = () => {
                 <p className="analytics-subtitle">
                   {t('music.analyticsSubtitle', {
                     count: trackAnalytics?.totalTracks ?? 0,
-                    range: t(`music.range.${({ short_term: 'short', medium_term: 'medium', long_term: 'long' } as Record<string, string>)[timeRange]}`),
+                    range: t(
+                      `music.range.${({ short_term: 'short', medium_term: 'medium', long_term: 'long' } as Record<string, string>)[timeRange]}`,
+                    ),
                   })}
                 </p>
                 {trackAnalytics ? (
@@ -554,19 +616,19 @@ const Music = () => {
                         <h3 className="decade-chart-title">{t('music.analytics.decadeTitle')}</h3>
                         <div className="decade-bars">
                           {trackAnalytics.decades.map(({ decade, count }) => (
-                              <div key={decade} className="decade-row">
-                                <span className="decade-label">{decade}</span>
-                                <div className="decade-bar-track">
-                                  <motion.div
-                                    className="decade-bar-fill"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${(count / decadeMax) * 100}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                  />
-                                </div>
-                                <span className="decade-count">{count}</span>
+                            <div key={decade} className="decade-row">
+                              <span className="decade-label">{decade}</span>
+                              <div className="decade-bar-track">
+                                <motion.div
+                                  className="decade-bar-fill"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${(count / decadeMax) * 100}%` }}
+                                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                                />
                               </div>
-                            ))}
+                              <span className="decade-count">{count}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -614,7 +676,9 @@ const AnalyticGauge = ({ label, sublabel, value }: { label: string; sublabel: st
         <svg viewBox="0 0 100 100" className="gauge-svg">
           <circle cx="50" cy="50" r="42" className="gauge-bg" />
           <motion.circle
-            cx="50" cy="50" r="42"
+            cx="50"
+            cy="50"
+            r="42"
             className="gauge-fill"
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
@@ -622,7 +686,10 @@ const AnalyticGauge = ({ label, sublabel, value }: { label: string; sublabel: st
             transition={{ duration: 1.2, ease: 'easeOut' }}
           />
         </svg>
-        <div className="gauge-value">{percent}<span className="gauge-percent">%</span></div>
+        <div className="gauge-value">
+          {percent}
+          <span className="gauge-percent">%</span>
+        </div>
       </div>
     </div>
   );

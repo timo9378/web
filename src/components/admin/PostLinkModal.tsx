@@ -28,10 +28,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
 
   // 文章清單改由 TanStack Query 讀（開啟才抓）；reuse 公開 recentPostsQueryOptions(300)。
   const { data: allPosts = [], isFetching: loading } = useQuery({ ...recentPostsQueryOptions(300), enabled: isOpen });
-  const posts = useMemo(
-    () => allPosts.filter((p) => p.status === 'published' || !p.status),
-    [allPosts],
-  );
+  const posts = useMemo(() => allPosts.filter((p) => p.status === 'published' || !p.status), [allPosts]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,12 +44,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return posts.slice(0, 50);
-    return posts
-      .filter((p) =>
-        (p.title).toLowerCase().includes(q) ||
-        (p.excerpt).toLowerCase().includes(q)
-      )
-      .slice(0, 50);
+    return posts.filter((p) => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q)).slice(0, 50);
   }, [posts, query]);
 
   if (!isOpen) return null;
@@ -98,11 +90,7 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
             </button>
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
-            {loading && (
-              <div className="px-4 py-6 text-center text-sm text-zinc-500">
-                載入文章清單中…
-              </div>
-            )}
+            {loading && <div className="px-4 py-6 text-center text-sm text-zinc-500">載入文章清單中…</div>}
             {!loading && filtered.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-zinc-500">
                 {query ? '找不到符合的文章' : '沒有可用的文章'}
@@ -119,14 +107,8 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
                     >
                       <FaFileAlt className="text-zinc-500 mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm text-zinc-100 truncate">
-                          {p.title}
-                        </div>
-                        {p.excerpt && (
-                          <div className="text-xs text-zinc-500 truncate mt-0.5">
-                            {p.excerpt}
-                          </div>
-                        )}
+                        <div className="text-sm text-zinc-100 truncate">{p.title}</div>
+                        {p.excerpt && <div className="text-xs text-zinc-500 truncate mt-0.5">{p.excerpt}</div>}
                       </div>
                       <code className="text-[10px] text-zinc-600 mt-1 shrink-0">/blog/{p.id}</code>
                     </button>
@@ -137,7 +119,9 @@ const PostLinkModal = ({ isOpen, onClose, onSelect }: PostLinkModalProps) => {
           </div>
           <div className="px-4 py-2 text-[11px] text-zinc-600 border-t border-zinc-800 flex items-center justify-between">
             <span>↑↓ 選擇 · Enter 選第一筆 · Esc 關閉</span>
-            <span>{filtered.length} / {posts.length} 篇</span>
+            <span>
+              {filtered.length} / {posts.length} 篇
+            </span>
           </div>
         </motion.div>
       </motion.div>

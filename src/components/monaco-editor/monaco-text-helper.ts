@@ -37,10 +37,7 @@ export class MonacoTextHelper {
       startLineNumber: selection.endLineNumber,
       startColumn: selection.endColumn,
       endLineNumber: selection.endLineNumber,
-      endColumn: Math.min(
-        model.getLineMaxColumn(selection.endLineNumber),
-        selection.endColumn + after.length
-      ),
+      endColumn: Math.min(model.getLineMaxColumn(selection.endLineNumber), selection.endColumn + after.length),
     });
 
     // 如果已有格式，則移除

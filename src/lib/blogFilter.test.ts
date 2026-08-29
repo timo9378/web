@@ -37,10 +37,7 @@ describe('filterPosts', () => {
   });
 
   it('分類是精確比對', () => {
-    expect(titles(filterPosts(POSTS, { ...NONE, selectedCategory: '技術' }))).toEqual([
-      'Rust 入門',
-      'TypeScript 型別',
-    ]);
+    expect(titles(filterPosts(POSTS, { ...NONE, selectedCategory: '技術' }))).toEqual(['Rust 入門', 'TypeScript 型別']);
   });
 
   // 三個條件是**交集**不是聯集——弄反的話畫面上是「篩了等於沒篩」
@@ -59,10 +56,7 @@ describe('filterPosts', () => {
   });
 
   it('保持原本的先後順序', () => {
-    expect(titles(filterPosts(POSTS, { ...NONE, selectedCategory: '技術' }))).toEqual([
-      'Rust 入門',
-      'TypeScript 型別',
-    ]);
+    expect(titles(filterPosts(POSTS, { ...NONE, selectedCategory: '技術' }))).toEqual(['Rust 入門', 'TypeScript 型別']);
   });
 
   it('空清單不會炸', () => {

@@ -40,7 +40,6 @@ test.describe('地標結構', () => {
       expect(mains, `${path} 有 ${mains} 個 <main>；HTML 規範只允許一個非隱藏的 main`).toBe(1);
     });
   }
-
 });
 
 /**

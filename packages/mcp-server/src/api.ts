@@ -91,9 +91,7 @@ export class ApiClient {
     if (!res.ok) {
       const msg =
         parsed && typeof parsed === 'object'
-          ? ((parsed as Record<string, unknown>).error ??
-              (parsed as Record<string, unknown>).message ??
-              text)
+          ? ((parsed as Record<string, unknown>).error ?? (parsed as Record<string, unknown>).message ?? text)
           : text || res.statusText;
       throw new Error(`${method} ${path} → ${res.status}: ${String(msg)}`);
     }
@@ -102,12 +100,7 @@ export class ApiClient {
 
   /** 上傳檔案（multipart/form-data，欄位名 file——對齊後端 multer.single('file')）。
    *  Bearer 認證 + 401 自動清 token 重登一次。FormData 每次 send 重建（body 只能消費一次）。 */
-  async uploadFile<T = unknown>(
-    path: string,
-    bytes: Uint8Array,
-    filename: string,
-    contentType?: string,
-  ): Promise<T> {
+  async uploadFile<T = unknown>(path: string, bytes: Uint8Array, filename: string, contentType?: string): Promise<T> {
     const send = (bearer: string): Promise<Response> => {
       const form = new FormData();
       // @types/node 26 起 Uint8Array 泛型化為 Uint8Array<ArrayBufferLike>;Blob/BlobPart 要
@@ -140,9 +133,7 @@ export class ApiClient {
     if (!res.ok) {
       const msg =
         parsed && typeof parsed === 'object'
-          ? ((parsed as Record<string, unknown>).error ??
-              (parsed as Record<string, unknown>).message ??
-              text)
+          ? ((parsed as Record<string, unknown>).error ?? (parsed as Record<string, unknown>).message ?? text)
           : text || res.statusText;
       throw new Error(`POST ${path} → ${res.status}: ${String(msg)}`);
     }

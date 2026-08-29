@@ -48,5 +48,4 @@ export const toggleCommandPalette = () => {
 };
 
 /** 面板是否開著。訂閱式，任何元件都讀得到。 */
-export const useCommandPaletteOpen = () =>
-  useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+export const useCommandPaletteOpen = () => useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

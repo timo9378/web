@@ -97,7 +97,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '多檔程式碼分頁（依副檔名帶檔案圖示）',
     whenToUse: '同一份改動牽涉多個檔案時，讓讀者切著看。',
     props: 'files=[{ name, lang, code }]',
-    example: "<CodeTabs files={[{ name: 'index.ts', lang: 'ts', code: '…' }, { name: 'test.ts', lang: 'ts', code: '…' }]} />",
+    example:
+      "<CodeTabs files={[{ name: 'index.ts', lang: 'ts', code: '…' }, { name: 'test.ts', lang: 'ts', code: '…' }]} />",
   },
   {
     name: 'Install',
@@ -123,7 +124,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '各種圖表（line/area/bar/pie/donut/scatter/radar，色盲安全色盤）',
     whenToUse: '有多筆數據要比較或看趨勢時。',
     props: 'type、data、series（多序列的欄位名）、categoryKey、xKey/yKey（scatter）、stacked、title、unit、height',
-    example: "<Chart type=\"line\" data={[{ label:'v1', A:20, B:12 }]} series={['A','B']} title=\"吞吐趨勢\" unit=\"tok/s\" />",
+    example:
+      '<Chart type="line" data={[{ label:\'v1\', A:20, B:12 }]} series={[\'A\',\'B\']} title="吞吐趨勢" unit="tok/s" />',
     note: 'pie/donut 用 data={[{ label, value }]}；scatter 用 data={[{ x, y }]} 搭 xKey/yKey。',
   },
   {
@@ -132,7 +134,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '單色階長條圖（Chart 的簡化版）',
     whenToUse: '只是幾個數字的單純對比（benchmark），不需要多序列時。',
     props: 'data=[{ label, value }]、title、unit',
-    example: "<BarChart title=\"吞吐對比\" unit=\"tok/s\" data={[{ label: 'int8', value: 42 }, { label: 'fp16', value: 31 }]} />",
+    example:
+      '<BarChart title="吞吐對比" unit="tok/s" data={[{ label: \'int8\', value: 42 }, { label: \'fp16\', value: 31 }]} />',
   },
   {
     name: 'InteractiveChart',
@@ -140,7 +143,7 @@ export const BLOCKS: BlockDef[] = [
     summary: '互動圖表：讀者拉滑桿即時改值重繪',
     whenToUse: '想讓讀者自己試「如果參數變成 X 會怎樣」。',
     props: 'type（bar|line|area）、data=[{ label, value }]、title、unit、min/max/step',
-    example: "<InteractiveChart type=\"bar\" data={[{ label:'方案A', value:40 }]} title=\"延遲估算\" unit=\"ms\" />",
+    example: '<InteractiveChart type="bar" data={[{ label:\'方案A\', value:40 }]} title="延遲估算" unit="ms" />',
   },
   {
     name: 'Stats',
@@ -167,7 +170,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '前後圖對比滑桿（拖曳分隔線）',
     whenToUse: 'UI 改版、修圖前後、破圖修復——兩張同構圖的對照。',
     props: 'before、after（圖片 URL）、beforeLabel、afterLabel、caption、alt',
-    example: '<ImageCompare before="/uploads/a.png" after="/uploads/b.png" beforeLabel="修前" afterLabel="修後" caption="…" />',
+    example:
+      '<ImageCompare before="/uploads/a.png" after="/uploads/b.png" beforeLabel="修前" afterLabel="修後" caption="…" />',
     note: '圖片先用 koimsurai_upload_image 上傳拿 /uploads/… 網址。',
   },
   {
@@ -201,7 +205,8 @@ export const BLOCKS: BlockDef[] = [
     name: 'Steps',
     category: 'layout',
     summary: '編號要點／步驟（數字圈 + 標題 + 內文）',
-    whenToUse: '**凡是「一、二、三」這種編號清單都用它**——教學流程、三個問題／發現／原因、依序拆解的分析。不要自己在正文打「**一、…**」粗體編號。',
+    whenToUse:
+      '**凡是「一、二、三」這種編號清單都用它**——教學流程、三個問題／發現／原因、依序拆解的分析。不要自己在正文打「**一、…**」粗體編號。',
     example: '<Steps><Step title="無樣式閃爍">…</Step><Step title="雙渲染">…</Step></Steps>',
   },
   {
@@ -245,7 +250,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '文末參考連結區（依網域自動帶品牌 icon）',
     whenToUse: '有參考資料／延伸閱讀清單時。**別用裸網址的 markdown list**（那會每條都彈 hover 卡、很吵）。',
     props: 'items=[{ label, links: [{ text, href }] }]、title',
-    example: "<Refs items={[{ label: 'TanStack Start', links: [{ text: '官網', href: 'https://tanstack.com/start' }] }]} />",
+    example:
+      "<Refs items={[{ label: 'TanStack Start', links: [{ text: '官網', href: 'https://tanstack.com/start' }] }]} />",
     note: '站內文章想要「卡片」樣式，改成讓整段只放一個 /blog/ 連結（會自動變站內文章卡）。',
   },
 
@@ -256,7 +262,8 @@ export const BLOCKS: BlockDef[] = [
     summary: '內嵌投票（真投票，票數存後端）',
     whenToUse: '想收集讀者意見／技術選型統計時，例如「你的專案用哪個方案？」。',
     props: 'id（全站唯一）、question、options=[{ key, label }]、showTotal',
-    example: "<Poll id=\"blog-render\" question=\"你的部落格怎麼渲染？\" options={[{ key: 'ssr', label: '單次 SSR' }, { key: 'isr', label: 'SSG／ISR' }]} />",
+    example:
+      "<Poll id=\"blog-render\" question=\"你的部落格怎麼渲染？\" options={[{ key: 'ssr', label: '單次 SSR' }, { key: 'isr', label: 'SSG／ISR' }]} />",
     note: '⚠ id 與 option key 一旦發布就不可改（改了等於換一份投票、票數歸零）；label 才是顯示文字。同一瀏覽器只能投一次。',
   },
 ];
@@ -289,7 +296,9 @@ export function renderBlocksForGuide(): string {
       lines.push(`  例：${b.example}`);
       if (b.note) lines.push(`  ⚠ ${b.note}`);
       for (const c of children) {
-        lines.push(`  - **<${c.name}>**（${b.name} 的子元件）${c.summary}｜例：${c.example}${c.note ? `｜⚠ ${c.note}` : ''}`);
+        lines.push(
+          `  - **<${c.name}>**（${b.name} 的子元件）${c.summary}｜例：${c.example}${c.note ? `｜⚠ ${c.note}` : ''}`,
+        );
       }
     }
     lines.push('');

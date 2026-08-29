@@ -131,4 +131,3 @@ export function createI18n(locale: Locale): I18nInstance {
   });
   return instance;
 }
-

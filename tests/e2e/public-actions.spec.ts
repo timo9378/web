@@ -42,9 +42,7 @@ test.describe('電子報訂閱', () => {
 
     // 訂閱狀態存在 localStorage（元件註解寫的 koim_newsletter_subscriber）——
     // 沒存住的話讀者每次進文章都會被再問一次，而他其實已經訂了。
-    const stored = await page.evaluate(() =>
-      window.localStorage.getItem('koim_newsletter_subscriber'),
-    );
+    const stored = await page.evaluate(() => window.localStorage.getItem('koim_newsletter_subscriber'));
     expect(stored, '訂閱狀態要留在 localStorage').toContain(email);
   });
 
@@ -93,9 +91,7 @@ test.describe('留言按讚', () => {
     const countOf = async () => Number((await like.locator('span').innerText()).trim());
     const before = await countOf();
 
-    const posted = page.waitForResponse(
-      (r) => r.url().includes('/like') && r.request().method() === 'POST',
-    );
+    const posted = page.waitForResponse((r) => r.url().includes('/like') && r.request().method() === 'POST');
     await like.click();
     await posted;
 
@@ -111,9 +107,7 @@ test.describe('留言按讚', () => {
     await expect(like).toBeVisible({ timeout: 15_000 });
 
     if (!(await like.isDisabled())) {
-      const posted = page.waitForResponse(
-        (r) => r.url().includes('/like') && r.request().method() === 'POST',
-      );
+      const posted = page.waitForResponse((r) => r.url().includes('/like') && r.request().method() === 'POST');
       await like.click();
       await posted;
     }
