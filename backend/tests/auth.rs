@@ -356,7 +356,7 @@ async fn me_rejects_token_for_a_deleted_user() {
 
 /// 簽一個 OAuth 形狀的 token（帶 userId + provider）。
 fn oauth_token(user_id: i64, provider: &str) -> String {
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     let claims = json!({ "userId": user_id, "provider": provider, "iat": now, "exp": now + 3600 });
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),

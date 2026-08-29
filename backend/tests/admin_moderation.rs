@@ -415,7 +415,7 @@ async fn add_user(pool: &sqlx::SqlitePool, provider_id: &str, role: &str) -> i64
 
 /// 以某個 oauth_users 列的身分簽 token（`authorize` 會拿 userId 去查角色）。
 fn oauth_owner_token(user_id: i64) -> String {
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &json!({ "userId": user_id, "provider": "github", "iat": now, "exp": now + 3600 }),

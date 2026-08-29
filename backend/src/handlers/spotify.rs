@@ -15,20 +15,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::state::AppState;
-use crate::util::{js_normalize_numbers, js_truthy};
+use crate::util::{js_normalize_numbers, js_truthy, now_ms};
 
 const TOP_GENRES_TTL: i64 = 6 * 60 * 60 * 1000;
 const TOP_TRACKS_TTL: i64 = 60 * 60 * 1000;
 const SPOTIFY_TOP_COOLDOWN: i64 = 60 * 60 * 1000;
 const AUDIO_FEATURES_TTL: i64 = 24 * 60 * 60 * 1000;
 const AUDIO_FEATURES_COOLDOWN: i64 = 60 * 60 * 1000;
-
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
 
 /// axios 錯誤形狀：HTTP（帶上游狀態與 body）或網路/設定錯（只有 message）。
 enum SpErr {
@@ -38,18 +31,18 @@ enum SpErr {
 }
 
 impl SpErr {
-    fn status(&self) -> Option<StatusCode> {
+    const fn status(&self) -> Option<StatusCode> {
         match self {
-            SpErr::Http(s, _) => Some(*s),
+            Self::Http(s, _) => Some(*s),
             _ => None,
         }
     }
     /// `error.response?.data || error.message`
     fn details(&self) -> Value {
         match self {
-            SpErr::NotConfigured => Value::from("Spotify credentials not configured"),
-            SpErr::Http(_, body) => body.clone(),
-            SpErr::Net(m) => Value::from(m.clone()),
+            Self::NotConfigured => Value::from("Spotify credentials not configured"),
+            Self::Http(_, body) => body.clone(),
+            Self::Net(m) => Value::from(m.clone()),
         }
     }
 }
@@ -89,13 +82,13 @@ async fn access_token(state: &AppState) -> Result<String, SpErr> {
         .map_err(|e| SpErr::Net(e.to_string()))?;
     let status = resp.status();
     let body = resp.text().await.map_err(|e| SpErr::Net(e.to_string()))?;
-    let mut v: Value = serde_json::from_str(&body).unwrap_or(Value::from(body));
+    let mut v: Value = serde_json::from_str(&body).unwrap_or_else(|_| Value::from(body));
     js_normalize_numbers(&mut v);
     if !status.is_success() {
         return Err(SpErr::Http(status, v));
     }
     let token = v.get("access_token").and_then(|t| t.as_str()).unwrap_or("").to_string();
-    let expires_in = v.get("expires_in").and_then(|e| e.as_i64()).unwrap_or(0);
+    let expires_in = v.get("expires_in").and_then(serde_json::Value::as_i64).unwrap_or(0);
     let expiry = now_ms() + expires_in * 1000 - 60_000; // 提前 1 分鐘更新
     *state.spotify.token.lock() = Some((token.clone(), expiry));
     Ok(token)
@@ -120,8 +113,11 @@ async fn sp_get(
     let resp = req.send().await.map_err(|e| SpErr::Net(e.to_string()))?;
     let status = resp.status();
     let body = resp.text().await.map_err(|e| SpErr::Net(e.to_string()))?;
-    let mut v: Value =
-        if body.is_empty() { Value::Null } else { serde_json::from_str(&body).unwrap_or(Value::from(body)) };
+    let mut v: Value = if body.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_str(&body).unwrap_or_else(|_| Value::from(body))
+    };
     js_normalize_numbers(&mut v);
     if !status.is_success() {
         return Err(SpErr::Http(status, v));
@@ -303,7 +299,7 @@ pub async fn recently_played(State(state): State<AppState>) -> Response {
 pub async fn now_playing(State(state): State<AppState>) -> Response {
     let token = match access_token(&state).await {
         Ok(t) => t,
-        Err(SpErr::NotConfigured) | Err(_) => {
+        Err(SpErr::NotConfigured | _) => {
             return Json(NowPlayingResponse::default()).into_response();
         }
     };
@@ -324,13 +320,16 @@ pub async fn now_playing(State(state): State<AppState>) -> Response {
     responses((status = 200, description = "最常聽曲風 Top（動態 JSON，第三方 proxy）")))]
 pub async fn top_genres(State(state): State<AppState>) -> Response {
     let now = now_ms();
-    if let Some((data, exp)) = state.spotify.top_genres.lock().clone()
+    // clone 出來再判斷，guard 就不會活到 if-let 的 body（見 quote.rs 的同款註解）。
+    let cached = state.spotify.top_genres.lock().clone();
+    if let Some((data, exp)) = cached
         && exp > now
     {
         return Json(data).into_response();
     }
     if state.spotify.top_disabled_until.load(Ordering::Relaxed) > now {
-        if let Some((data, _)) = state.spotify.top_genres.lock().clone() {
+        let stale = state.spotify.top_genres.lock().clone();
+        if let Some((data, _)) = stale {
             return Json(data).into_response();
         }
         return (StatusCode::TOO_MANY_REQUESTS, Json(json!({ "error": "Spotify rate limited, try later" })))
@@ -371,9 +370,10 @@ pub async fn top_genres(State(state): State<AppState>) -> Response {
             Json(payload).into_response()
         }
         Err(e) => {
-            if matches!(e.status(), Some(StatusCode::FORBIDDEN) | Some(StatusCode::TOO_MANY_REQUESTS)) {
+            if matches!(e.status(), Some(StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS)) {
                 state.spotify.top_disabled_until.store(now + SPOTIFY_TOP_COOLDOWN, Ordering::Relaxed);
-                if let Some((data, _)) = state.spotify.top_genres.lock().clone() {
+                let stale = state.spotify.top_genres.lock().clone();
+                if let Some((data, _)) = stale {
                     return Json(data).into_response();
                 }
             }
@@ -427,7 +427,7 @@ pub async fn top_tracks(State(state): State<AppState>, Query(q): Query<TopTracks
             Json(payload).into_response()
         }
         Err(e) => {
-            if matches!(e.status(), Some(StatusCode::FORBIDDEN) | Some(StatusCode::TOO_MANY_REQUESTS)) {
+            if matches!(e.status(), Some(StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS)) {
                 state.spotify.top_disabled_until.store(now + SPOTIFY_TOP_COOLDOWN, Ordering::Relaxed);
                 if let Some((data, _)) = &cached {
                     return Json(data.clone()).into_response();
@@ -498,11 +498,12 @@ pub async fn audio_features(State(state): State<AppState>, Query(q): Query<Audio
                     g.insert(f.id.clone(), (f.clone(), expires));
                     cached.insert(f.id.clone(), f);
                 }
+                drop(g); // 迴圈跑完就不需要鎖了，別讓它拖到 if-let 結束
             }
             respond(&cached)
         }
         Err(e) => {
-            if matches!(e.status(), Some(StatusCode::FORBIDDEN) | Some(StatusCode::TOO_MANY_REQUESTS)) {
+            if matches!(e.status(), Some(StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS)) {
                 state.spotify.af_disabled_until.store(now + AUDIO_FEATURES_COOLDOWN, Ordering::Relaxed);
             }
             respond(&cached)
@@ -530,6 +531,9 @@ pub async fn me(State(state): State<AppState>) -> Response {
 /// 簡版 HTML（原 Express 版有整頁 CSS；此頁僅 admin 重新授權時用一次）。
 #[utoipa::path(get, path = "/api/spotify/callback", tag = "integrations",
     responses((status = 200, description = "Spotify OAuth 回呼：授權碼換 refresh token（HTML 頁，一次性 setup）")))]
+// clippy 的 implicit_hasher 建議把 HashMap 的 hasher 開成泛型參數，但 axum 的 handler
+// 必須是具體型別才推得出 Handler impl，加了泛型就註冊不進 router。
+#[allow(clippy::implicit_hasher, reason = "axum handler 簽名不能帶額外泛型參數")]
 pub async fn spotify_callback(
     State(state): State<AppState>,
     Query(q): Query<std::collections::HashMap<String, String>>,
@@ -831,7 +835,7 @@ mod tests {
         let v = body_of(resp).await;
         let af = v["audio_features"].as_array().unwrap();
         assert_eq!(af.len(), 2);
-        assert!(af.iter().all(|x| x.is_null()));
+        assert!(af.iter().all(serde_json::Value::is_null));
         assert!(st.spotify.af_disabled_until.load(Ordering::Relaxed) > now_ms(), "403 也要熔斷");
         unsafe { set_creds(false) };
     }

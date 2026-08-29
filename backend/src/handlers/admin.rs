@@ -757,7 +757,8 @@ pub async fn update_tag(
         Ok(r) if r.rows_affected() == 0 => {
             (StatusCode::NOT_FOUND, Json(ErrorResponse { error: "標籤不存在".into() })).into_response()
         }
-        Ok(r) => Json(TagUpdated { id, name, updated: r.rows_affected() as i64 }).into_response(),
+        Ok(r) => Json(TagUpdated { id, name, updated: i64::try_from(r.rows_affected()).unwrap_or(i64::MAX) })
+            .into_response(),
         Err(e) if is_unique_violation(&e) => {
             (StatusCode::CONFLICT, Json(ErrorResponse { error: "標籤名稱已存在".into() })).into_response()
         }
@@ -855,9 +856,9 @@ async fn unique_post_slug(
 }
 
 /// slug = 提供的（非空）或由 name 生成。
-fn resolve_slug(slug: &Option<String>, name: &str) -> String {
+fn resolve_slug(slug: Option<&str>, name: &str) -> String {
     match slug {
-        Some(s) if !s.is_empty() => s.clone(),
+        Some(s) if !s.is_empty() => s.to_owned(),
         _ => gen_slug(name),
     }
 }
@@ -882,7 +883,7 @@ pub async fn create_category(
         return (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "分類名稱為必填".into() }))
             .into_response();
     }
-    let slug = resolve_slug(&body.slug, &name);
+    let slug = resolve_slug(body.slug.as_deref(), &name);
     let description = body.description.clone().unwrap_or_default();
     let short_description = body.short_description.clone().unwrap_or_default();
     match sqlx::query(
@@ -965,7 +966,7 @@ pub async fn update_category(
         }
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
-    let slug = resolve_slug(&body.slug, &name);
+    let slug = resolve_slug(body.slug.as_deref(), &name);
     let description = body.description.clone().unwrap_or_default();
     let short_description = body.short_description.clone().unwrap_or_default();
     let updated = match sqlx::query(
@@ -1008,7 +1009,8 @@ pub async fn update_category(
             .await;
     }
     // 注意：回應無 short_description（對齊 Express）
-    Json(CategoryUpdated { id, name, slug, description, updated: updated as i64 }).into_response()
+    Json(CategoryUpdated { id, name, slug, description, updated: i64::try_from(updated).unwrap_or(i64::MAX) })
+        .into_response()
 }
 
 #[utoipa::path(delete, path = "/api/admin/categories/{id}", tag = "admin", security(("bearer" = [])),
@@ -1046,8 +1048,11 @@ pub async fn delete_category(
         Err(e) => return crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     };
     match sqlx::query("DELETE FROM categories WHERE id = ?").bind(id).execute(&state.pool).await {
-        Ok(_) => Json(CategoryDeleted { message: "分類已刪除".into(), affected_posts: affected as i64 })
-            .into_response(),
+        Ok(_) => Json(CategoryDeleted {
+            message: "分類已刪除".into(),
+            affected_posts: i64::try_from(affected).unwrap_or(i64::MAX),
+        })
+        .into_response(),
         Err(e) => crate::error::internal_error(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
 }
@@ -1364,7 +1369,6 @@ fn truthy_s(v: Option<&Value>) -> Option<String> {
 /// JS `Number(v)` 強制轉換：undefined→NaN(None)、null→0、''→0、bool→0/1、字串 parse 失敗→NaN。
 fn js_number(v: Option<&Value>) -> Option<f64> {
     match v {
-        None => None, // NaN
         Some(Value::Null) => Some(0.0),
         Some(Value::Bool(b)) => Some(if *b { 1.0 } else { 0.0 }),
         Some(Value::Number(n)) => n.as_f64(),
@@ -1376,16 +1380,18 @@ fn js_number(v: Option<&Value>) -> Option<f64> {
                 t.parse::<f64>().ok() // 失敗 → None (NaN)
             }
         }
+        // undefined（None）與 array/object → NaN
         _ => None,
     }
 }
 
 /// series_order 綁定：整數值綁 i64、其餘 f64。
-pub(crate) fn bind_num<'q>(
-    q: sqlx::query::Query<'q, sqlx::Sqlite, sqlx::sqlite::SqliteArguments>,
+pub(crate) fn bind_num(
+    q: sqlx::query::Query<'_, sqlx::Sqlite, sqlx::sqlite::SqliteArguments>,
     n: Option<f64>,
-) -> sqlx::query::Query<'q, sqlx::Sqlite, sqlx::sqlite::SqliteArguments> {
+) -> sqlx::query::Query<'_, sqlx::Sqlite, sqlx::sqlite::SqliteArguments> {
     match n {
+        #[allow(clippy::cast_possible_truncation, reason = "arm 的 guard 已保證整值且 |f| < 9e15")]
         Some(f) if f.fract() == 0.0 && f.abs() < 9e15 => q.bind(f as i64),
         Some(f) => q.bind(f),
         None => q.bind(Option::<i64>::None),
@@ -1497,11 +1503,8 @@ pub async fn admin_create_post(State(state): State<AppState>, req: Request) -> R
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty());
     let series_order = js_number(b.get("series_order")).filter(|f| f.is_finite());
-    let allow_comments: i64 = if b.contains_key("allow_comments") {
-        if js_truthy(b.get("allow_comments")) { 1 } else { 0 }
-    } else {
-        1
-    };
+    let allow_comments: i64 =
+        if b.contains_key("allow_comments") { i64::from(js_truthy(b.get("allow_comments"))) } else { 1 };
 
     // 網址 slug：呼叫端沒給就由英文標題（或原標題）自動產生，並確保唯一。
     let slug = unique_post_slug(
@@ -1651,7 +1654,7 @@ pub async fn admin_update_post(
     };
     let allow_comments: (i64, Option<i64>) = match b.get("allow_comments") {
         None => (0, None),
-        Some(v) => (1, Some(if js_truthy(Some(v)) { 1 } else { 0 })),
+        Some(v) => (1, Some(i64::from(js_truthy(Some(v))))),
     };
 
     // slug：只有呼叫端明確帶 slug 才動。改名時把舊 slug 存進 post_slug_history，
@@ -1714,7 +1717,7 @@ pub async fn admin_update_post(
     .bind(b.get("title").and_then(to_s))
     .bind(b.get("content").and_then(to_s))
     .bind(b.get("excerpt").and_then(to_s))
-    .bind(if b.contains_key("category") { 1i64 } else { 0 })
+    .bind(i64::from(b.contains_key("category")))
     .bind(b.get("category").and_then(to_s))
     .bind(b.get("status").and_then(to_s))
     .bind(b.get("layout_type").and_then(to_s))
@@ -1966,7 +1969,7 @@ pub async fn admin_batch_comment_status(
     let ids: Vec<i64> = body
         .get("ids")
         .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|x| x.as_i64()).collect())
+        .map(|a| a.iter().filter_map(serde_json::Value::as_i64).collect())
         .unwrap_or_default();
     let status = body.get("status").and_then(|v| v.as_str()).unwrap_or("");
     if ids.is_empty() || !matches!(status, "pending" | "approved" | "spam" | "trash") {

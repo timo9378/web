@@ -191,7 +191,7 @@ pub async fn csp_report(State(state): State<AppState>, headers: HeaderMap, body:
     }
     // 形狀不對就丟掉——這個端點是公開的，不先驗一下等於幫別人往資料庫塞任意 JSON
     let Ok(v) = serde_json::from_slice::<serde_json::Value>(&body) else { return StatusCode::ACCEPTED };
-    if !v.get("csp-report").is_some_and(|r| r.is_object()) {
+    if !v.get("csp-report").is_some_and(serde_json::Value::is_object) {
         return StatusCode::ACCEPTED;
     }
 
@@ -262,7 +262,7 @@ mod tests {
             std::env::set_var(
                 "SENTRY_FRONTEND_DSN",
                 format!("{host}/{project}").replace("://", &format!("://{key}@")),
-            )
+            );
         };
         unsafe { std::env::remove_var("SENTRY_TUNNEL_PUBLIC_KEY") };
         server

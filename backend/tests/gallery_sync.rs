@@ -297,12 +297,12 @@ async fn 來源目錄不存在時回_500_並說清楚是哪個路徑() {
 
 #[tokio::test]
 async fn 同步需要管理員身分() {
-    let _out = OutDir::new("auth");
+    let out = OutDir::new("auth");
     let (app, _pool) = test_app().await;
     let (status, _) = request(&app, "POST", "/api/admin/gallery/sync", None, None).await;
     assert_eq!(status, 401);
     // 沒帶身分時連掃描都不該開始（掃 NAS 是有成本的操作）
-    assert!(!_out.has("manifest.json"));
+    assert!(!out.has("manifest.json"));
 }
 
 #[tokio::test]

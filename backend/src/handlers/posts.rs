@@ -165,12 +165,7 @@ pub(crate) fn available_locales_with_source(row: &PostRow, source: &str) -> Vec<
     list
 }
 
-fn split_tags(tags: &Option<String>) -> Vec<String> {
-    match tags {
-        Some(s) if !s.is_empty() => s.split(',').map(|x| x.to_string()).collect(),
-        _ => vec![],
-    }
-}
+use crate::util::split_tags;
 
 // ── GET /api/posts（分頁列表）────────────────────────────────────────────
 #[derive(Debug, Deserialize)]
@@ -240,7 +235,7 @@ async fn heart_counts(state: &AppState, ids: &[i64]) -> std::collections::HashMa
     }
     // id 是 DB 來的 i64，不是使用者輸入，所以內插進 IN (...) 沒有注入面；
     // sqlx 沒有辦法 bind 一個可變長度的清單。
-    let placeholders = ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(",");
+    let placeholders = ids.iter().map(std::string::ToString::to_string).collect::<Vec<_>>().join(",");
     let sql = format!(
         "SELECT post_id, count FROM post_reactions \
          WHERE emoji = '❤️' AND post_id IN ({placeholders})"
@@ -398,12 +393,12 @@ pub async fn list_posts(
             updated_at: row.updated_at.clone(),
             source_language: source_lang(row).to_string(),
             available_locales: available_locales(row),
-            tags: split_tags(&row.tags),
+            tags: split_tags(row.tags.as_deref()),
         });
     }
 
     let (resp_total, total_pages) = if requested_locale.is_some() {
-        let n = posts.len() as i64;
+        let n = i64::try_from(posts.len()).unwrap_or(i64::MAX);
         (n, if limit > 0 { (n + limit - 1) / limit } else { 0 })
     } else {
         (total, if limit > 0 { (total + limit - 1) / limit } else { 0 })
@@ -484,36 +479,35 @@ pub async fn get_post(
     .fetch_optional(&state.pool)
     .await?;
 
-    let row = match row {
-        Some(r) => Some(r),
-        None => {
-            // 數字 → 當 id；否則查舊 slug 對應的 post_id
-            let by_id = id.parse::<i64>().ok();
-            let resolved_id = match by_id {
-                Some(n) => Some(n),
-                None => {
-                    sqlx::query_scalar::<_, i64>("SELECT post_id FROM post_slug_history WHERE old_slug = ?")
-                        .bind(&id)
-                        .fetch_optional(&state.pool)
-                        .await?
-                }
-            };
-            match resolved_id {
-                Some(n) => {
-                    sqlx::query_as::<_, PostRow>(
-                        "SELECT p.*, GROUP_CONCAT(t.name) as tags \
-                         FROM posts p \
-                         LEFT JOIN post_tags pt ON p.id = pt.post_id \
-                         LEFT JOIN tags t ON pt.tag_id = t.id \
-                         WHERE p.id = ? \
-                         GROUP BY p.id",
-                    )
-                    .bind(n)
+    let row = if let Some(r) = row {
+        Some(r)
+    } else {
+        // 數字 → 當 id；否則查舊 slug 對應的 post_id
+        let by_id = id.parse::<i64>().ok();
+        let resolved_id = match by_id {
+            Some(n) => Some(n),
+            None => {
+                sqlx::query_scalar::<_, i64>("SELECT post_id FROM post_slug_history WHERE old_slug = ?")
+                    .bind(&id)
                     .fetch_optional(&state.pool)
                     .await?
-                }
-                None => None,
             }
+        };
+        match resolved_id {
+            Some(n) => {
+                sqlx::query_as::<_, PostRow>(
+                    "SELECT p.*, GROUP_CONCAT(t.name) as tags \
+                     FROM posts p \
+                     LEFT JOIN post_tags pt ON p.id = pt.post_id \
+                     LEFT JOIN tags t ON pt.tag_id = t.id \
+                     WHERE p.id = ? \
+                     GROUP BY p.id",
+                )
+                .bind(n)
+                .fetch_optional(&state.pool)
+                .await?
+            }
+            None => None,
         }
     };
 
@@ -561,7 +555,7 @@ pub async fn get_post(
         source_language: source.clone(),
         is_source,
         available_locales: available_locales(&row),
-        tags: split_tags(&row.tags),
+        tags: split_tags(row.tags.as_deref()),
     })
     .into_response())
 }

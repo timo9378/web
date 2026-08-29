@@ -18,7 +18,7 @@ fn cookie_file_path(database_url: &str) -> PathBuf {
         return PathBuf::from(p);
     }
     let path = database_url.trim_start_matches("sqlite://");
-    let dir = std::path::Path::new(path).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let dir = std::path::Path::new(path).parent().map(std::path::Path::to_path_buf).unwrap_or_default();
     dir.join(".bahamut-cookie.json")
 }
 
@@ -42,7 +42,7 @@ pub fn build_state(database_url: &str, urls: &crate::state::ExternalUrls) -> Arc
     let client = AniGamer::new(
         ClientOptions::new(jar).base_urls(&urls.bahamut_api, &urls.bahamut_web).on_cookies_rotated(Arc::new(
             move |jar| {
-                let ok = jar.get("BAHARUNE").map(|b| b.contains('.')).unwrap_or(false);
+                let ok = jar.get("BAHARUNE").is_some_and(|b| b.contains('.'));
                 if ok && let Ok(json) = serde_json::to_string_pretty(jar) {
                     // callback 為同步簽名（crate 內 async 路徑呼叫）；3.5KB 寫檔亞毫秒，可接受
                     if let Err(e) = std::fs::write(&cf, json) {
@@ -72,14 +72,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use crate::state::AppState;
-use crate::util::{bind_val, iso_from_millis};
-
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
+use crate::util::{bind_val, iso_from_millis, now_ms};
 
 /// bahamutPushAuth：X-Bahamut-Token（constant-time）或 admin JWT。
 ///
@@ -216,7 +209,7 @@ async fn maybe_alert_discord(state: &AppState, msg: &str) {
 
 async fn check_bahamut_jwt_expiry(state: &AppState) {
     let baharune = state.bahamut.client.cookies().get("BAHARUNE").cloned();
-    let is_jwt = baharune.as_deref().map(|b| b != "deleted" && b.contains('.')).unwrap_or(false);
+    let is_jwt = baharune.as_deref().is_some_and(|b| b != "deleted" && b.contains('.'));
     if !is_jwt {
         let shown: String = baharune.clone().unwrap_or_else(|| "undefined".into()).chars().take(24).collect();
         maybe_alert_discord(
@@ -288,7 +281,7 @@ async fn tmdb_search_tv_id(state: &AppState, token: &str, title: &str) -> Option
                 return None;
             }
             let j: Value = serde_json::from_str(&resp.text().await.ok()?).ok()?;
-            j.pointer("/results/0/id").and_then(|v| v.as_i64())
+            j.pointer("/results/0/id").and_then(serde_json::Value::as_i64)
         }
     };
     if let Some(id) = q(title.to_string()).await {
@@ -427,7 +420,7 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
                 })]
             });
         for ep in &eps {
-            let video_sn = ep.get("videoSn").and_then(|v| v.as_i64());
+            let video_sn = ep.get("videoSn").and_then(serde_json::Value::as_i64);
             let Some(video_sn) = video_sn.filter(|&v| v != 0) else { continue };
             let ep_title = ep.get("title").and_then(|v| v.as_str()).unwrap_or("");
             let ep_label = ep_re.captures(ep_title).and_then(|c| c.get(1)).map(|m| m.as_str().to_string());
@@ -481,9 +474,8 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
 
 /// 啟動 bahamut 同步 worker（`ENABLE_BAHAMUT_SYNC=1` 才啟動；30s 首跑 + 6h 週期）。
 pub fn spawn_sync(state: AppState) {
-    let enabled = std::env::var("ENABLE_BAHAMUT_SYNC")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
+    let enabled =
+        std::env::var("ENABLE_BAHAMUT_SYNC").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
     if !enabled {
         tracing::info!("[Bahamut] sync worker disabled (ENABLE_BAHAMUT_SYNC unset) — Express cron 仍為寫者");
         return;
@@ -493,7 +485,7 @@ pub fn spawn_sync(state: AppState) {
         tokio::time::sleep(Duration::from_secs(delay)).await;
         loop {
             let _ = sync_bahamut_history(&state).await;
-            tokio::time::sleep(Duration::from_secs(6 * 3600)).await;
+            tokio::time::sleep(Duration::from_hours(6)).await;
         }
     });
 }

@@ -43,7 +43,7 @@ async fn admin_role_token(pool: &sqlx::SqlitePool) -> String {
     .fetch_one(pool)
     .await
     .unwrap();
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &json!({ "userId": id, "iat": now, "exp": now + 3600 }),

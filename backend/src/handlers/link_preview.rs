@@ -123,7 +123,7 @@ fn decode_entities(s: &str) -> String {
 }
 
 /// 顯示用文字的長度上限。只給標題／摘要／站名——**不要用在網址上**。
-fn clamp_text(s: String) -> String {
+fn clamp_text(s: &str) -> String {
     s.chars().take(400).collect()
 }
 
@@ -321,14 +321,17 @@ pub async fn link_preview(
 
     if let Some(html) = fetched {
         // 文字欄位才套長度上限；image 是網址，截斷會直接讓預簽章失效（見 decode_entities）
-        out.title =
-            meta_content(&html, &["og:title", "twitter:title"]).or_else(|| title_tag(&html)).map(clamp_text);
-        out.description =
-            meta_content(&html, &["og:description", "twitter:description", "description"]).map(clamp_text);
+        out.title = meta_content(&html, &["og:title", "twitter:title"])
+            .or_else(|| title_tag(&html))
+            .as_deref()
+            .map(clamp_text);
+        out.description = meta_content(&html, &["og:description", "twitter:description", "description"])
+            .as_deref()
+            .map(clamp_text);
         out.image = meta_content(&html, &["og:image", "og:image:url", "twitter:image"])
             .and_then(|img| absolutize(&url, &img));
         if let Some(sn) = meta_content(&html, &["og:site_name"]) {
-            out.site_name = Some(clamp_text(sn));
+            out.site_name = Some(clamp_text(&sn));
         }
         // 站方自己宣告的 icon 優先於猜的 /favicon.ico——很多站根本沒有那支檔。
         // 實測 zed.dev/favicon.ico 是 500，它宣告的是 /favicon_black_16.png，
@@ -359,12 +362,7 @@ pub async fn link_preview(
     Ok(with_cache_headers(out, response_max_age(image_expiry, now)))
 }
 
-fn now_epoch() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0)
-}
+use crate::util::now_secs as now_epoch;
 
 /// 這次回應可以讓瀏覽器／CDN 留多久。
 ///
@@ -474,10 +472,10 @@ mod tests {
     #[test]
     fn 文字欄位仍然有長度上限() {
         // 截斷本身是對的，只是不該套在網址上
-        assert_eq!(clamp_text("字".repeat(500)).chars().count(), 400);
-        assert_eq!(clamp_text("短".to_string()), "短");
+        assert_eq!(clamp_text(&"字".repeat(500)).chars().count(), 400);
+        assert_eq!(clamp_text("短"), "短");
         // 以字元計，不是位元組——切在多位元組字元中間會 panic
-        assert_eq!(clamp_text("é".repeat(500)).chars().count(), 400);
+        assert_eq!(clamp_text(&"é".repeat(500)).chars().count(), 400);
     }
 
     #[test]

@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use axum::{Json, extract::State};
 use serde::Serialize;
 use sqlx::FromRow;
@@ -32,21 +30,18 @@ pub struct StatsResponse {
 #[utoipa::path(get, path = "/api/stats", tag = "stats", responses((status = 200, body = StatsResponse)))]
 pub async fn site_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>, AppError> {
     let row = sqlx::query_as::<_, StatsRow>(
-        r#"
+        r"
         SELECT
           COUNT(*) AS total_posts,
           COALESCE(SUM(LENGTH(content)), 0) AS total_chars
         FROM posts
         WHERE status = 'published'
-        "#,
+        ",
     )
     .fetch_one(&state.pool)
     .await?;
 
-    let now_ms = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(SITE_START_AT_MS);
+    let now_ms = crate::util::now_ms();
     let days = std::cmp::max(1, (now_ms - SITE_START_AT_MS) / 86_400_000);
 
     Ok(Json(StatsResponse {

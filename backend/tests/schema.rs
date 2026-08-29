@@ -19,6 +19,7 @@
 //! 目前是 **131 句寫死的有檢查、22 句動態的檢查不到**。那 22 句會被計數並逐條印出來
 //! ——**不靜靜地跳過**，不然「131 句全過」看起來會像「全部都過」。
 
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -55,7 +56,8 @@ async fn migrations_replay_on_an_empty_database() {
         .expect("讀 migrations 目錄")
         .filter_map(Result::ok)
         .filter(|e| e.path().extension().is_some_and(|x| x == "sql"))
-        .count() as i64;
+        .count();
+    let on_disk = i64::try_from(on_disk).expect("migration 檔數不可能超過 i64");
     assert_eq!(applied, on_disk, "跑掉的 migration 數與目錄裡的 .sql 數對不上");
     assert!(on_disk > 0, "一支 migration 都沒有，這個測試就沒有意義了");
 }
@@ -85,7 +87,7 @@ async fn schema_text(pool: &sqlx::SqlitePool) -> String {
         if normalized.is_empty() {
             continue; // 自動索引（sqlite_autoindex_*）沒有 sql，已被上面過濾掉
         }
-        out.push_str(&format!("{kind} {name}\n  {normalized}\n\n"));
+        let _ = write!(out, "{kind} {name}\n  {normalized}\n\n");
     }
     out
 }
@@ -118,7 +120,7 @@ async fn schema_matches_snapshot() {
         for i in 0..a.len().max(b.len()) {
             let (x, y) = (a.get(i).copied().unwrap_or(""), b.get(i).copied().unwrap_or(""));
             if x != y {
-                diff.push_str(&format!("  第 {} 行\n    快照: {y}\n    實際: {x}\n", i + 1));
+                let _ = write!(diff, "  第 {} 行\n    快照: {y}\n    實際: {x}\n", i + 1);
             }
         }
         panic!(
@@ -169,7 +171,7 @@ fn read_rust_string(src: &str, start: usize) -> Option<(String, usize)> {
                     // 行接續：吃掉換行與下一行的前導空白（Rust 的規則）
                     Some(b'\n') => {
                         i += 1;
-                        while b.get(i).is_some_and(|c| c.is_ascii_whitespace()) {
+                        while b.get(i).is_some_and(u8::is_ascii_whitespace) {
                             i += 1;
                         }
                         // 補一個分隔，不然 `SELECT a\<換行>FROM t` 會黏成 `aFROM`。
@@ -269,13 +271,11 @@ fn extract(src: &str, file: &str) -> Extracted {
             }
         }
 
-        match read_rust_string(src, j) {
-            Some((sql, _)) => out.literals.push((file.to_string(), sql)),
-            None => {
-                let snippet = src[j..].chars().take(60).collect::<String>();
-                out.dynamic
-                    .push(format!("{file}: {}", snippet.split_whitespace().collect::<Vec<_>>().join(" ")));
-            }
+        if let Some((sql, _)) = read_rust_string(src, j) {
+            out.literals.push((file.to_string(), sql));
+        } else {
+            let snippet = src[j..].chars().take(60).collect::<String>();
+            out.dynamic.push(format!("{file}: {}", snippet.split_whitespace().collect::<Vec<_>>().join(" ")));
         }
     }
     out
@@ -363,7 +363,13 @@ fn rust_string_reader_handles_the_shapes_that_appear_in_this_codebase() {
     let cont = "\"SELECT a \\\n         FROM t\"";
     assert_eq!(read_rust_string(cont, 0).unwrap().0, "SELECT a FROM t");
     // raw string
-    assert_eq!(read_rust_string(r##"r#"SELECT "x""#"##, 0).unwrap().0, r#"SELECT "x""#);
+    // ⚠️ clippy 的 needless_raw_string_hashes 會叫你把這裡的 `r##` 減成 `r#`——那是錯的。
+    // 這串字面值的**內容**就是 `r#"SELECT "x""#`，裡面帶著 `"#`，少一層 hash 字串會在
+    // 那裡提早結束（實測：unclosed delimiter，直接編不過）。
+    #[allow(clippy::needless_raw_string_hashes, reason = "內容本身含 \"#，減 hash 會提早結束")]
+    {
+        assert_eq!(read_rust_string(r##"r#"SELECT "x""#"##, 0).unwrap().0, "SELECT \"x\"");
+    }
     // 不是字面值 → None（呼叫端會計為動態，不會誤判成通過）
     assert!(read_rust_string("sql.as_str()", 0).is_none());
     assert!(read_rust_string("format!(\"x\")", 0).is_none());

@@ -47,7 +47,7 @@ fn oauth_token(user_id: Option<i64>, provider: Option<&str>) -> String {
     if let Some(p) = provider {
         claims["provider"] = json!(p);
     }
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     claims["exp"] = json!(now + 3600);
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),

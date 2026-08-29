@@ -26,13 +26,13 @@ pub struct SeriesListResponse {
 #[utoipa::path(get, path = "/api/series", tag = "series", responses((status = 200, body = SeriesListResponse)))]
 pub async fn list_series(State(state): State<AppState>) -> Result<Json<SeriesListResponse>, AppError> {
     let series = sqlx::query_as::<_, SeriesRow>(
-        r#"
+        r"
         SELECT series_name AS name, COUNT(*) AS count, MIN(created_at) AS first_at, MAX(created_at) AS last_at
         FROM posts
         WHERE series_name IS NOT NULL AND series_name <> '' AND status = 'published'
         GROUP BY series_name
         ORDER BY last_at DESC
-        "#,
+        ",
     )
     .fetch_all(&state.pool)
     .await?;
@@ -70,7 +70,7 @@ pub async fn series_by_name(
     Path(name): Path<String>,
 ) -> Result<Json<SeriesDetailResponse>, AppError> {
     let posts = sqlx::query_as::<_, SeriesPostRow>(
-        r#"
+        r"
         SELECT id, title, excerpt, series_name, series_order, created_at
         FROM posts
         WHERE series_name = ? AND status = 'published'
@@ -78,7 +78,7 @@ pub async fn series_by_name(
           CASE WHEN series_order IS NULL THEN 1 ELSE 0 END,
           series_order ASC,
           created_at ASC
-        "#,
+        ",
     )
     .bind(&name)
     .fetch_all(&state.pool)

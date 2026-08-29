@@ -234,7 +234,7 @@ pub(crate) async fn test_state_with(external: ExternalUrls) -> AppState {
     sqlx::migrate!("./migrations").run(&pool).await.expect("run migrations");
 
     let tmp =
-        std::env::temp_dir().join(format!("koimsurai-test-{}-{:p}", std::process::id(), &pool as *const _));
+        std::env::temp_dir().join(format!("koimsurai-test-{}-{:p}", std::process::id(), &raw const pool));
     std::fs::create_dir_all(&tmp).expect("create temp dir");
     let fake_db_url = format!("sqlite://{}/db.sqlite", tmp.display());
 
@@ -253,10 +253,7 @@ pub(crate) async fn test_state_with(external: ExternalUrls) -> AppState {
 /// OWNER 角色的 JWT（帶 exp），給需要過 `require_admin` 的測試用。
 #[cfg(test)]
 pub(crate) fn test_owner_token() -> String {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system clock after epoch")
-        .as_secs() as i64;
+    let now = crate::util::now_secs();
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &serde_json::json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now, "exp": now + 3600 }),

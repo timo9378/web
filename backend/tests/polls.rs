@@ -142,7 +142,7 @@ async fn 選項數到上限之後只擋新選項_既有的照樣投得下去() {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!(n, MAX_OPTIONS as i64, "被擋下的新選項不該留下列");
+    assert_eq!(n, i64::try_from(MAX_OPTIONS).unwrap(), "被擋下的新選項不該留下列");
 }
 
 #[tokio::test]

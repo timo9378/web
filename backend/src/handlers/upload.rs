@@ -5,6 +5,8 @@
 //! → `thumbhash` crate（spec port）→ base64url。實測對 sharp 版：尺寸公式 100% 對齊、
 //! hash 2/5 byte 相同、3/5 差 ≤2 字元（±1 量化係數，解碼後模糊圖視覺零差異）。
 
+use std::fmt::Write as _;
+
 use axum::{
     Json,
     extract::{FromRequest, Multipart, Request, State},
@@ -19,7 +21,7 @@ use serde_json::json;
 use crate::{auth::require_admin, state::AppState};
 
 fn uploads_base() -> std::path::PathBuf {
-    std::env::var("UPLOAD_BASE_DIR").map(Into::into).unwrap_or_else(|_| "/usr/src/app/storage/uploads".into())
+    std::env::var("UPLOAD_BASE_DIR").map_or_else(|_| "/usr/src/app/storage/uploads".into(), Into::into)
 }
 
 /// ffmpeg / ffprobe 的執行檔名，可用 env 覆寫。
@@ -42,8 +44,10 @@ fn fit_inside(w: u32, h: u32, max: u32) -> (u32, u32) {
     if w <= max && h <= max {
         return (w, h);
     }
-    let ratio = (max as f64 / w as f64).min(max as f64 / h as f64);
-    ((w as f64 * ratio).round().max(1.0) as u32, (h as f64 * ratio).round().max(1.0) as u32)
+    let ratio = (f64::from(max) / f64::from(w)).min(f64::from(max) / f64::from(h));
+    // ratio < 1（上面已擋 w、h 都 ≤ max），所以縮完一定小於原尺寸；max(1.0) 保證非負
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "只縮不放且已 max(1.0)")]
+    ((f64::from(w) * ratio).round().max(1.0) as u32, (f64::from(h) * ratio).round().max(1.0) as u32)
 }
 
 /// 上傳圖片的中繼資料：thumbhash + **原始像素尺寸**。
@@ -93,6 +97,8 @@ const FFMPEG_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
 /// 一個有值一個是 0，順序還不保證。
 fn parse_rotation(stdout: &str) -> Option<i32> {
     let deg = stdout.lines().filter_map(|l| l.trim().parse::<f64>().ok()).find(|d| *d != 0.0)?;
+    // exiftool 的旋轉角度只會是 -360..=360，i32 綽綽有餘
+    #[allow(clippy::cast_possible_truncation, reason = "來源是 exiftool 的角度，值域 -360..=360")]
     Some(deg.round() as i32)
 }
 
@@ -195,12 +201,9 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
     if let Err(e) = require_admin(req.headers(), &state).await {
         return e.into_response();
     }
-    let mut multipart = match Multipart::from_request(req, &state).await {
-        Ok(m) => m,
-        // 非 multipart body：multer 情境下 req.file undefined → 400
-        Err(_) => {
-            return (StatusCode::BAD_REQUEST, Json(json!({ "error": "No file uploaded" }))).into_response();
-        }
+    // 非 multipart body：multer 情境下 req.file undefined → 400
+    let Ok(mut multipart) = Multipart::from_request(req, &state).await else {
+        return (StatusCode::BAD_REQUEST, Json(json!({ "error": "No file uploaded" }))).into_response();
     };
     // multer.single('file')：只取 name=='file' 的欄位
     let mut file: Option<(String, String, Vec<u8>)> = None; // (original_name, mimetype, bytes)
@@ -223,10 +226,7 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
     };
 
     // 路徑/檔名：storage/uploads/YYYY/MM/{Date.now()}-{round(rand*1E9)}{ext}
-    let now_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0);
+    let now_ms = crate::util::now_ms();
     // Express 用 new Date().getFullYear()/getMonth()＝容器本地時區（compose TZ=Asia/Taipei）
     // → chrono Local（尊重 TZ env）對齊，月界不會放錯目錄。
     let now_local = chrono::Local::now();
@@ -266,7 +266,7 @@ pub async fn upload(State(state): State<AppState>, req: Request) -> Response {
             //
             // 順序固定 th → w → h：前端的解析用具名參數不靠順序，但固定寫法讓
             // 既有內容的 diff 讀得懂，也讓 `#th=` 那條舊 regex 照樣命中（`&` 會斷開）。
-            file_url.push_str(&format!("#th={}&w={}&h={}", m.hash, m.width, m.height));
+            let _ = write!(file_url, "#th={}&w={}&h={}", m.hash, m.width, m.height);
         }
     }
 
@@ -287,7 +287,8 @@ mod tests {
 
     /// 造一張純色 PNG，給 thumbhash 用。
     fn png(w: u32, h: u32) -> Vec<u8> {
-        let img = image::RgbImage::from_fn(w, h, |x, _| image::Rgb([(x % 256) as u8, 128, 64]));
+        let img =
+            image::RgbImage::from_fn(w, h, |x, _| image::Rgb([u8::try_from(x % 256).unwrap_or(0), 128, 64]));
         let mut buf = std::io::Cursor::new(Vec::new());
         image::DynamicImage::ImageRgb8(img).write_to(&mut buf, image::ImageFormat::Png).unwrap();
         buf.into_inner()

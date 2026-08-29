@@ -148,10 +148,7 @@ async fn upsert_oauth_user(
 
 /// 簽 30d OAuth JWT + 組回應（google/github 共用）。
 fn finish(state: &AppState, provider: &str, user: &OauthUser) -> Response {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
+    let now = crate::util::now_secs();
     let role = user.role.clone().filter(|r| !r.is_empty()).unwrap_or_else(|| "USER".into());
     let claims = json!({
         "userId": user.id,
@@ -162,14 +159,11 @@ fn finish(state: &AppState, provider: &str, user: &OauthUser) -> Response {
         "iat": now,
         "exp": now + 30 * 24 * 60 * 60,
     });
-    let token =
-        match encode(&Header::default(), &claims, &EncodingKey::from_secret(state.jwt_secret.as_bytes())) {
-            Ok(t) => t,
-            Err(_) => {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "登入失敗" })))
-                    .into_response();
-            }
-        };
+    let Ok(token) =
+        encode(&Header::default(), &claims, &EncodingKey::from_secret(state.jwt_secret.as_bytes()))
+    else {
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "登入失敗" }))).into_response();
+    };
     Json(json!({
         "token": token,
         "user": {
@@ -241,7 +235,7 @@ pub async fn google_callback(
         _ => return err_500(),
     };
     // const { id, name, email, picture }（id String() 化）
-    let id = info.get("id").map(crate::util::js_interp).unwrap_or_else(|| "undefined".into());
+    let id = info.get("id").map_or_else(|| "undefined".into(), crate::util::js_interp);
     let name = info.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
     let email = info.get("email").and_then(|v| v.as_str()).unwrap_or("").to_string();
     let picture = info.get("picture").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -309,7 +303,7 @@ pub async fn github_callback(
         },
         _ => return err_500(),
     };
-    let id = info.get("id").map(crate::util::js_interp).unwrap_or_else(|| "undefined".into());
+    let id = info.get("id").map_or_else(|| "undefined".into(), crate::util::js_interp);
     let login = info.get("login").and_then(|v| v.as_str()).unwrap_or("");
     let name = info.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty());
     let email = info.get("email").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -328,7 +322,7 @@ pub async fn github_callback(
         && r.status().is_success()
         && let Ok(Value::Array(arr)) = serde_json::from_str::<Value>(&r.text().await.unwrap_or_default())
         && let Some(primary) =
-            arr.iter().find(|e| e.get("primary").and_then(|p| p.as_bool()).unwrap_or(false))
+            arr.iter().find(|e| e.get("primary").and_then(serde_json::Value::as_bool).unwrap_or(false))
         && let Some(em) = primary.get("email").and_then(|v| v.as_str())
     {
         user_email = em.to_string();

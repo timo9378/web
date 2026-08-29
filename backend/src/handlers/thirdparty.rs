@@ -62,15 +62,11 @@ async fn fetch_json_lenient(
 // ⚠️ `iso_from_millis` 與 `civil_from_days` 原本在這裡也有一份，跟 util.rs 那份
 // 逐字相同。手刻的曆法算式最怕兩份各自演化——錯了不會爆，只會讓某個日期差一天。
 // 已經合併到 util.rs，那邊有「逐日對照 chrono 走完 1900–2200」的測試罩著。
-use crate::util::{civil_from_days, iso_from_millis};
+use crate::util::{civil_from_days, iso_from_millis, now_ms};
 
 /// 今日 UTC 日期字串（`new Date().toISOString().split('T')[0]`）。
 fn today_utc() -> String {
-    let ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0);
-    let (y, m, d) = civil_from_days(ms.div_euclid(86_400_000));
+    let (y, m, d) = civil_from_days(now_ms().div_euclid(86_400_000));
     format!("{y:04}-{m:02}-{d:02}")
 }
 
@@ -135,7 +131,7 @@ pub async fn github_user(State(state): State<AppState>, Path(username): Path<Str
         name: s("name"),
         avatar_url: s("avatar_url"),
         html_url: s("html_url"),
-        public_repos: v.get("public_repos").and_then(|x| x.as_i64()),
+        public_repos: v.get("public_repos").and_then(serde_json::Value::as_i64),
         error: s("message"),
     })
     .into_response()
@@ -196,12 +192,12 @@ pub async fn github_repos(
         .filter_map(|r| {
             // id / name / html_url 缺任一就整筆不收：那三個是 render 一張卡片的必需品
             Some(GithubRepo {
-                id: r.get("id").and_then(|x| x.as_i64())?,
+                id: r.get("id").and_then(serde_json::Value::as_i64)?,
                 name: r.get("name").and_then(|x| x.as_str())?.to_string(),
                 html_url: r.get("html_url").and_then(|x| x.as_str())?.to_string(),
                 description: r.get("description").and_then(|x| x.as_str()).map(String::from),
                 language: r.get("language").and_then(|x| x.as_str()).map(String::from),
-                stargazers_count: r.get("stargazers_count").and_then(|x| x.as_i64()).unwrap_or(0),
+                stargazers_count: r.get("stargazers_count").and_then(serde_json::Value::as_i64).unwrap_or(0),
             })
         })
         .collect();
@@ -268,7 +264,7 @@ pub async fn github_contributions(
     };
     // login 走 GraphQL variable（不拼字串）；from/to 上面已經驗過只有四位數字組成
     let query = format!(
-        r#"query($login: String!) {{
+        r"query($login: String!) {{
              user(login: $login) {{
                contributionsCollection{args} {{
                  contributionCalendar {{
@@ -277,7 +273,7 @@ pub async fn github_contributions(
                  }}
                }}
              }}
-           }}"#
+           }}"
     );
     let body = json!({ "query": query, "variables": { "login": username } }).to_string();
     let resp = state
@@ -309,13 +305,14 @@ pub async fn github_contributions(
                 .filter_map(|d| {
                     Some(GithubContributionDay {
                         date: d.get("date").and_then(|x| x.as_str())?.to_string(),
-                        count: d.get("contributionCount").and_then(|x| x.as_i64()).unwrap_or(0),
+                        count: d.get("contributionCount").and_then(serde_json::Value::as_i64).unwrap_or(0),
                     })
                 })
                 .collect()
         })
         .unwrap_or_default();
-    let total = cal.and_then(|c| c.get("totalContributions")).and_then(|t| t.as_i64()).unwrap_or(0);
+    let total =
+        cal.and_then(|c| c.get("totalContributions")).and_then(serde_json::Value::as_i64).unwrap_or(0);
     Json(GithubContributionsResponse { contributions, total, error: None }).into_response()
 }
 
@@ -395,7 +392,7 @@ pub async fn github_events(State(state): State<AppState>, Path(username): Path<S
     };
 
     if let Some(t) = &token {
-        for ev in events.iter_mut() {
+        for ev in &mut events {
             let is_push = ev.get("type").and_then(|v| v.as_str()) == Some("PushEvent");
             if !is_push {
                 continue;
@@ -404,8 +401,7 @@ pub async fn github_events(State(state): State<AppState>, Path(username): Path<S
             let commits_empty = p
                 .and_then(|p| p.get("commits"))
                 .and_then(|c| c.as_array())
-                .map(|a| a.is_empty())
-                .unwrap_or(true);
+                .is_none_or(std::vec::Vec::is_empty);
             let before = p.and_then(|p| p.get("before")).filter(|v| js_truthy(Some(v))).cloned();
             let head = p.and_then(|p| p.get("head")).filter(|v| js_truthy(Some(v))).cloned();
             let repo = ev.pointer("/repo/name").and_then(|v| v.as_str()).map(String::from);
@@ -479,7 +475,7 @@ fn github_event_from(ev: &Value) -> Option<GithubEvent> {
             commits,
             before: ps("before"),
             head: ps("head"),
-            size: p.and_then(|p| p.get("size")).and_then(|v| v.as_i64()),
+            size: p.and_then(|p| p.get("size")).and_then(serde_json::Value::as_i64),
         },
     })
 }
@@ -564,7 +560,7 @@ fn waka_stats_from(data: &Value) -> Vec<WakatimeStat> {
                     Some(WakatimeStat {
                         name: x.get("name").and_then(|v| v.as_str())?.to_string(),
                         text: x.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                        percent: x.get("percent").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                        percent: x.get("percent").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
                     })
                 })
                 .collect()
@@ -584,7 +580,7 @@ async fn waka_get(http: &reqwest::Client, url: &str, key: &str) -> Result<Value,
     let status = resp.status();
     let body =
         resp.text().await.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Value::from(e.to_string())))?;
-    let mut v: Value = serde_json::from_str(&body).unwrap_or(Value::from(body));
+    let mut v: Value = serde_json::from_str(&body).unwrap_or_else(|_| Value::from(body));
     crate::util::js_normalize_numbers(&mut v);
     if status.is_success() { Ok(v) } else { Err((status, v)) }
 }
@@ -634,9 +630,9 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
     let mut actual_start: Option<f64> = None;
     let mut actual_end: Option<f64> = None;
     for d in &dur_list {
-        if let Some(t) = d.get("time").and_then(|v| v.as_f64()) {
+        if let Some(t) = d.get("time").and_then(serde_json::Value::as_f64) {
             actual_start = Some(actual_start.map_or(t, |e| e.min(t)));
-            let end = t + d.get("duration").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            let end = t + d.get("duration").and_then(serde_json::Value::as_f64).unwrap_or(0.0);
             actual_end = Some(actual_end.map_or(end, |e| e.max(end)));
         }
     }
@@ -645,13 +641,16 @@ pub async fn wakatime_today(State(state): State<AppState>) -> Response {
     Json(WakatimeTodayResponse {
         grand_total: gt.map(|g| WakatimeGrandTotal {
             text: g.get("text").and_then(|v| v.as_str()).map(String::from),
-            total_seconds: g.get("total_seconds").and_then(|v| v.as_f64()),
+            total_seconds: g.get("total_seconds").and_then(serde_json::Value::as_f64),
         }),
         start: summary.get("start").and_then(|v| v.as_str()).map(String::from),
         end: summary.get("end").and_then(|v| v.as_str()).map(String::from),
         actual_coding_time: WakatimeActualCodingTime {
-            // JS new Date(x*1000)：ms 取整（ToInteger 截斷）
+            // JS new Date(x*1000)：ms 取整（ToInteger 截斷）。Rust 的 f64→i64 是飽和轉換，
+            // 這裡要的就是 JS 那個截斷語意，不是「可能出錯的轉換」。
+            #[allow(clippy::cast_possible_truncation, reason = "刻意複製 JS ToInteger 的截斷語意")]
             start: actual_start.map(|t| iso_from_millis((t * 1000.0) as i64)),
+            #[allow(clippy::cast_possible_truncation, reason = "刻意複製 JS ToInteger 的截斷語意")]
             end: actual_end.map(|t| iso_from_millis((t * 1000.0) as i64)),
             has_data: !dur_list.is_empty(),
         },
@@ -763,10 +762,10 @@ fn steam_games_from(v: &Value) -> Vec<SteamGame> {
         .map(|a| {
             a.iter()
                 .map(|g| SteamGame {
-                    appid: g.get("appid").and_then(|x| x.as_i64()),
+                    appid: g.get("appid").and_then(serde_json::Value::as_i64),
                     name: g.get("name").and_then(|x| x.as_str()).map(String::from),
-                    playtime_2weeks: g.get("playtime_2weeks").and_then(|x| x.as_i64()),
-                    playtime_forever: g.get("playtime_forever").and_then(|x| x.as_i64()),
+                    playtime_2weeks: g.get("playtime_2weeks").and_then(serde_json::Value::as_i64),
+                    playtime_forever: g.get("playtime_forever").and_then(serde_json::Value::as_i64),
                 })
                 .collect()
         })
@@ -806,7 +805,7 @@ fn steam_player_from(p: &Value) -> SteamPlayer {
         personaname: s("personaname"),
         avatarfull: s("avatarfull"),
         profileurl: s("profileurl"),
-        personastate: p.get("personastate").and_then(|v| v.as_i64()),
+        personastate: p.get("personastate").and_then(serde_json::Value::as_i64),
         gameid: s("gameid"),
     }
 }
@@ -822,7 +821,7 @@ async fn steam_games(state: &AppState, url: &str, with_count: bool) -> Response 
         Ok(v) => Json(SteamGamesResponse {
             games: steam_games_from(&v),
             game_count: with_count
-                .then(|| v.pointer("/response/game_count").and_then(|x| x.as_i64()))
+                .then(|| v.pointer("/response/game_count").and_then(serde_json::Value::as_i64))
                 .flatten(),
             error: None,
         })
@@ -1103,13 +1102,6 @@ pub async fn books_search_external(
 const STEAM_PROFILE_REFRESH_AFTER: i64 = 30 * 60 * 1000;
 const STEAM_PROFILE_RETRY_BACKOFF: i64 = 5 * 60 * 1000;
 
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
-
 /// _fetchHttps 等價（瀏覽器 UA；json 版套 number 正規化）。
 async fn steam_fetch_json(http: &reqwest::Client, url: &str) -> Result<Value, String> {
     let body = steam_fetch_text(http, url).await?;
@@ -1157,9 +1149,9 @@ fn parse_mini_profile(html: &str) -> SteamCustomization {
         .and_then(|r| r.captures(html))
     {
         out.featured_badge = Some(SteamFeaturedBadge {
-            icon: c.get(1).map(|m| m.as_str()).unwrap_or("").to_string(),
-            name: c.get(2).map(|m| m.as_str().trim()).unwrap_or("").to_string(),
-            xp: c.get(3).map(|m| m.as_str().trim()).unwrap_or("").to_string(),
+            icon: c.get(1).map_or("", |m| m.as_str()).to_string(),
+            name: c.get(2).map_or("", |m| m.as_str().trim()).to_string(),
+            xp: c.get(3).map_or("", |m| m.as_str().trim()).to_string(),
         });
     }
     out
@@ -1224,15 +1216,14 @@ pub struct SteamProfileResponse {
 
 /// _refreshSteamProfile 等價（呼叫端負責 inflight dedup）。成功寫快取、失敗只更新 lastTriedAt。
 async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<SteamProfile, String> {
-    let account_id = match id.parse::<i64>() {
-        Ok(n) => (n - 76_561_197_960_265_728i64).to_string(),
-        Err(_) => {
-            // invalid STEAM_ID：同樣走失敗路徑
-            if let Some(c) = state.steam.cache.lock().as_mut() {
-                c.last_tried_at = now_ms();
-            }
-            return Err("invalid STEAM_ID".to_string());
+    let account_id = if let Ok(n) = id.parse::<i64>() {
+        (n - 76_561_197_960_265_728i64).to_string()
+    } else {
+        // invalid STEAM_ID：同樣走失敗路徑
+        if let Some(c) = state.steam.cache.lock().as_mut() {
+            c.last_tried_at = now_ms();
         }
+        return Err("invalid STEAM_ID".to_string());
     };
     let u1 =
         format!("{}/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={id}", state.external.steam_api);
@@ -1250,21 +1241,21 @@ async fn refresh_steam_profile(state: &AppState, key: &str, id: &str) -> Result<
         let level = level?;
         let badges = badges.unwrap_or(Value::Null);
         let player_obj = player.pointer("/response/players/0");
-        let lvl = level.pointer("/response/player_level").and_then(|v| v.as_i64());
+        let lvl = level.pointer("/response/player_level").and_then(serde_json::Value::as_i64);
         let (Some(player_obj), Some(level)) = (player_obj, lvl) else {
             return Err("incomplete response from Steam".to_string());
         };
         let badge_count =
-            badges.pointer("/response/badges").and_then(|b| b.as_array()).map(|a| a.len()).unwrap_or(0);
+            badges.pointer("/response/badges").and_then(|b| b.as_array()).map_or(0, std::vec::Vec::len);
         Ok(SteamProfile {
             player: steam_player_from(player_obj),
             level,
-            xp: badges.pointer("/response/player_xp").and_then(|v| v.as_i64()).unwrap_or(0),
+            xp: badges.pointer("/response/player_xp").and_then(serde_json::Value::as_i64).unwrap_or(0),
             xp_to_next: badges
                 .pointer("/response/player_xp_needed_to_level_up")
-                .and_then(|v| v.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0),
-            badge_count: badge_count as i64,
+            badge_count: i64::try_from(badge_count).unwrap_or(i64::MAX),
             customization: parse_mini_profile(&mini_html.unwrap_or_default()),
             profile_url: format!("https://steamcommunity.com/profiles/{id}"),
         })
@@ -1316,12 +1307,13 @@ pub async fn steam_profile(State(state): State<AppState>) -> Response {
     }
     // 首抓：持鎖去重；等鎖期間別人可能已抓好 → 再查一次快取
     let _g = state.steam.refresh_lock.lock().await;
-    if let Some(c) = state.steam.cache.lock().clone() {
+    let cached = state.steam.cache.lock().clone();
+    if let Some(c) = cached {
         return Json(SteamProfileResponse { profile: c.data, cached_at: c.fetched_at }).into_response();
     }
     match refresh_steam_profile(&state, &key, &id).await {
         Ok(profile) => {
-            let cached_at = state.steam.cache.lock().as_ref().map(|c| c.fetched_at).unwrap_or(now_ms());
+            let cached_at = state.steam.cache.lock().as_ref().map_or_else(now_ms, |c| c.fetched_at);
             Json(SteamProfileResponse { profile, cached_at }).into_response()
         }
         Err(e) => (
@@ -1757,6 +1749,9 @@ mod tests {
         assert_eq!(waka_auth(""), "Basic ");
     }
 
+    // 這裡的 percent 是從 JSON 原樣讀進來、沒有經過任何運算就寫進欄位，
+    // 驗的就是「原封不動」，所以要的正是精確相等而不是 epsilon 比較。
+    #[allow(clippy::float_cmp, reason = "驗的是 JSON 原值有沒有被改動，不是計算結果")]
     #[test]
     fn waka_stats_from_跳過沒有名字的列並補預設值() {
         let v = json!([
@@ -1820,10 +1815,7 @@ mod tests {
 
         // 查的日期必須真的是「今天」。這條看起來瑣碎，但 today_utc 回空字串或亂值時
         // WakaTime 會回一片空白，而畫面上就是「今天沒寫程式」——沒有任何錯誤。
-        let (y, m, d) = crate::util::civil_from_days(
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64
-                / 86_400_000,
-        );
+        let (y, m, d) = crate::util::civil_from_days(crate::util::now_ms() / 86_400_000);
         let today = format!("{y:04}-{m:02}-{d:02}");
         let reqs = server.received_requests().await.unwrap();
         let summ = reqs.iter().find(|r| r.url.path().ends_with("/summaries")).unwrap();
@@ -1982,7 +1974,7 @@ mod tests {
             ev.as_object_mut().unwrap().remove(missing);
             assert!(github_event_from(&ev).is_none(), "缺 {missing} 應該整筆不收");
         }
-        let mut no_repo = full.clone();
+        let mut no_repo = full;
         no_repo["repo"] = json!({});
         assert!(github_event_from(&no_repo).is_none(), "缺 repo.name 也一樣");
     }

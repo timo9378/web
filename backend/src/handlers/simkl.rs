@@ -189,9 +189,9 @@ async fn upsert_show_episodes(state: &AppState, item: &Value) -> u32 {
     let poster = poster_for(tmdb, show.get("poster").and_then(|v| v.as_str()));
 
     let mut n = 0u32;
-    for season in show.get("seasons").and_then(|v| v.as_array()).map(|a| a.as_slice()).unwrap_or(&[]) {
+    for season in show.get("seasons").and_then(|v| v.as_array()).map_or(&[][..], std::vec::Vec::as_slice) {
         let s_num = as_i64(season.get("number")).unwrap_or(0);
-        for ep in season.get("episodes").and_then(|v| v.as_array()).map(|a| a.as_slice()).unwrap_or(&[]) {
+        for ep in season.get("episodes").and_then(|v| v.as_array()).map_or(&[][..], std::vec::Vec::as_slice) {
             let e_num = as_i64(ep.get("number")).unwrap_or(0);
             let label = format!("S{s_num:02}E{e_num:02}");
             // 逐集的 watched_at；沒有就退回整部劇的 last_watched_at
@@ -247,12 +247,11 @@ pub async fn sync_once(state: &AppState) -> (u32, u32) {
     }
 
     // 步驟 3：有變才拉。有游標就走增量；沒有就是首次同步（Phase 1）。
-    let path = match cursor.as_deref() {
-        Some(from) => format!("/sync/all-items/?extended=full&episode_watched_at=yes&date_from={from}"),
-        None => {
-            tracing::info!("[Simkl] 首次同步（無游標）— 拉完整清單");
-            "/sync/all-items/?extended=full".to_string()
-        }
+    let path = if let Some(from) = cursor.as_deref() {
+        format!("/sync/all-items/?extended=full&episode_watched_at=yes&date_from={from}")
+    } else {
+        tracing::info!("[Simkl] 首次同步（無游標）— 拉完整清單");
+        "/sync/all-items/?extended=full".to_string()
     };
 
     let Some(data) = simkl_get(state, &path).await else {
@@ -263,14 +262,14 @@ pub async fn sync_once(state: &AppState) -> (u32, u32) {
 
     let mut films = 0u32;
     let mut episodes = 0u32;
-    for item in data.get("movies").and_then(|v| v.as_array()).map(|a| a.as_slice()).unwrap_or(&[]) {
+    for item in data.get("movies").and_then(|v| v.as_array()).map_or(&[][..], std::vec::Vec::as_slice) {
         if upsert_film(state, item).await {
             films += 1;
         }
     }
     // shows 與 anime 的結構相同（都用 `show` 鍵），分開回傳而已
     for key in ["shows", "anime"] {
-        for item in data.get(key).and_then(|v| v.as_array()).map(|a| a.as_slice()).unwrap_or(&[]) {
+        for item in data.get(key).and_then(|v| v.as_array()).map_or(&[][..], std::vec::Vec::as_slice) {
             episodes += upsert_show_episodes(state, item).await;
         }
     }
