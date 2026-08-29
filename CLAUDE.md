@@ -417,6 +417,34 @@ cargo llvm-cov nextest --locked --fail-under-regions 78   # 門檻以 ci.yml 為
 # specta：改過會進 API 的 struct 就要重跑 export_types 並提交，否則 drift gate 會擋
 ```
 
+### clippy 的規則在 **根目錄 `Cargo.toml` 的 `[workspace.lints.clippy]`**
+
+不是預設的那五組。開的是 `pedantic` 整組 + 六條個別挑進來的 nursery
+（`or_fun_call`、`significant_drop_in_scrutinee`、`significant_drop_tightening`、
+`redundant_clone`、`missing_const_for_fn`、`use_self`）。`backend/Cargo.toml` 用
+`[lints] workspace = true` 繼承——**新增 crate 時要記得寫這一行，忘了不會有錯誤訊息，
+那個 crate 就是完全沒有 lint**。
+
+⚠️ **nursery 整組不要開**：`option_if_let_else`（56 個）這類公認會讓程式更難讀的都在
+裡面。**`clippy::cargo` 也不要開**：246 個全是 `cargo_common_metadata` /
+`multiple_crate_versions`，對私有 binary 沒有意義。
+
+⚠️ 那九條 `allow` 每一條都標了導入當下的數量與理由，**要拿掉之前先讀理由**。最大宗是
+`doc_markdown`（468 個），它要求中文註解裡的 Express / SQLite 這些字加反引號。
+
+⚠️ **clippy 不是永遠對的，這四類照著改會壞**（都留了 `#[allow]` + `reason`）：
+
+| 位置 | clippy 說 | 為什麼不能照做 |
+|---|---|---|
+| `books.rs` `serialize_rating` | `&Option<f64>` → `Option<&f64>` | 簽名是 serde `serialize_with` 的契約，改了編不過 |
+| `tests/schema.rs` 的 `r##` 字面值 | 減一層 hash | 內容本身含 `"#`，減了字串提早結束（實測 unclosed delimiter） |
+| `spotify_callback` 的 `HashMap` | 加 `S: BuildHasher` 泛型 | axum handler 帶泛型就推不出 `Handler` impl，註冊不進 router |
+| 幾何／演算法內部的 cast | 用 `try_from` | 值域是**證得出來**的（`civil_from_days`、只縮不放的 `fit_inside`、已 `clamp` 的百分比） |
+
+⚠️ 2026-07-11 遷移時那次 audit（`backend/STRANGLER.md`「統一 audit」）是**人工**照 20 條
+反模式表掃的，規則沒被固化，所以此後新寫的程式有將近一年沒有把關——2026-08-30 補設定時
+一次冒出 534 個。**設定檔比一次性的 audit 重要**。
+
 ⚠️ **跑測試一律用 `cargo nextest run --no-fail-fast`。`cargo test` 在這個專案是壞的，
 不要拿它的結果下任何判斷。**
 
