@@ -96,9 +96,9 @@ pub async fn site_rss(State(state): State<AppState>, Query(q): Query<RssQuery>) 
     );
 
     static TAG_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"<[^>]+>").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"<[^>]+>").expect("字面 regex"));
     static MD_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"[#*`>\-\n]").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"[#*`>\-\n]").expect("字面 regex"));
 
     let items: Vec<String> = rows
         .iter()

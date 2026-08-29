@@ -244,14 +244,14 @@ async fn check_bahamut_jwt_expiry(state: &AppState) {
 fn simplify_anime_title(t: &str) -> String {
     static SUBS: std::sync::LazyLock<[(regex::Regex, &'static str); 4]> = std::sync::LazyLock::new(|| {
         [
-            (regex::Regex::new(r"[（(]\s*第[^)）]*[)）]").unwrap(), " "),
-            (regex::Regex::new(r"\s*第[一二三四五六七八九十百零\d]+[季期]\s*$").unwrap(), ""),
-            (regex::Regex::new(r"\s*[Ss](?:eason)?\s*\d+\s*$").unwrap(), ""),
-            (regex::Regex::new(r"\s*\[[^\]]*\]\s*").unwrap(), " "),
+            (regex::Regex::new(r"[（(]\s*第[^)）]*[)）]").expect("字面 regex"), " "),
+            (regex::Regex::new(r"\s*第[一二三四五六七八九十百零\d]+[季期]\s*$").expect("字面 regex"), ""),
+            (regex::Regex::new(r"\s*[Ss](?:eason)?\s*\d+\s*$").expect("字面 regex"), ""),
+            (regex::Regex::new(r"\s*\[[^\]]*\]\s*").expect("字面 regex"), " "),
         ]
     });
     static WS_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"\s+").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\s+").expect("字面 regex"));
     let mut s = t.to_string();
     for (re, rep) in SUBS.iter() {
         s = re.replace_all(&s, *rep).into_owned();
@@ -398,7 +398,7 @@ pub async fn sync_bahamut_history(state: &AppState) -> Value {
 
     // upsert 每集（展開 raw.history）
     static EP_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"\[([^\]]+)\]\s*$").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"\[([^\]]+)\]\s*$").expect("字面 regex"));
     let ep_re = &*EP_RE;
     for entry in &all {
         if entry.anime_sn == 0 {

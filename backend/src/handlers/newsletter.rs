@@ -75,7 +75,7 @@ pub async fn subscribe(
     }
     // Express regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     static EMAIL_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").expect("字面 regex"));
     let re = &*EMAIL_RE;
     if !re.is_match(&email) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "Invalid email format" }))).into_response();

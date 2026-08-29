@@ -1082,7 +1082,7 @@ pub async fn books_search_external(
     };
     let no_space: String = input.chars().filter(|c| !c.is_whitespace()).collect();
     static ISBN_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"^[\d-]{10,17}$").unwrap());
+        std::sync::LazyLock::new(|| regex::Regex::new(r"^[\d-]{10,17}$").expect("字面 regex"));
     let is_isbn = ISBN_RE.is_match(&no_space);
     let search_query = if is_isbn {
         format!("isbn:{}", input.chars().filter(|c| *c != '-' && !c.is_whitespace()).collect::<String>())
