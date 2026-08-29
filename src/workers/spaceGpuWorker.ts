@@ -8,11 +8,31 @@
 // 這裡協定極簡：init / resize / running 三種訊息，錯誤一律回報主執行緒處理。
 import { createStarfieldRunner, type StarfieldRunner } from '../lib/starfieldGpu';
 
-interface InitMsg { type: 'init'; canvas: OffscreenCanvas; width: number; height: number; dpr: number }
-interface ResizeMsg { type: 'resize'; width: number; height: number }
-interface RunningMsg { type: 'running'; value: boolean }
-interface ScrollMsg { type: 'scroll'; y: number }
-interface SaturnMsg { type: 'saturn'; visible: boolean; animate: boolean }
+interface InitMsg {
+  type: 'init';
+  canvas: OffscreenCanvas;
+  width: number;
+  height: number;
+  dpr: number;
+}
+interface ResizeMsg {
+  type: 'resize';
+  width: number;
+  height: number;
+}
+interface RunningMsg {
+  type: 'running';
+  value: boolean;
+}
+interface ScrollMsg {
+  type: 'scroll';
+  y: number;
+}
+interface SaturnMsg {
+  type: 'saturn';
+  visible: boolean;
+  animate: boolean;
+}
 type InMsg = InitMsg | ResizeMsg | RunningMsg | ScrollMsg | SaturnMsg;
 
 let runner: StarfieldRunner | null = null;

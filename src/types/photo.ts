@@ -12,7 +12,7 @@ export type PhotoManifest = GalleryPhoto;
 
 // 瀑布流頭部項目類型。只在下面的 MasonryItemType 聯集裡出現，外部不需要拿到這個類別本身。
 class MasonryHeaderItem {
-  static readonly default = new MasonryHeaderItem()
+  static readonly default = new MasonryHeaderItem();
 }
 
-export type MasonryItemType = PhotoManifest | MasonryHeaderItem
+export type MasonryItemType = PhotoManifest | MasonryHeaderItem;

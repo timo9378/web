@@ -6,8 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, MailX, RefreshCw, Search, Download, Trash2, type LucideIcon } from 'lucide-react';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { lookupOr } from '../../lib/tableLookup';
@@ -15,11 +21,29 @@ import { lookupOr } from '../../lib/tableLookup';
 /** `GET /api/newsletter/subscribers` 的單列，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 type Subscriber = SubscriberRow;
 
-interface StatusConfigEntry { label: string; color: string; bg: string; border: string; icon: LucideIcon }
+interface StatusConfigEntry {
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+  icon: LucideIcon;
+}
 
 const STATUS_CONFIG: Record<string, StatusConfigEntry> = {
-  active:       { label: '已訂閱',   color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', icon: Mail },
-  unsubscribed: { label: '已退訂',   color: 'text-zinc-400',    bg: 'bg-zinc-400/10',    border: 'border-zinc-400/20',    icon: MailX },
+  active: {
+    label: '已訂閱',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-400/10',
+    border: 'border-emerald-400/20',
+    icon: Mail,
+  },
+  unsubscribed: {
+    label: '已退訂',
+    color: 'text-zinc-400',
+    bg: 'bg-zinc-400/10',
+    border: 'border-zinc-400/20',
+    icon: MailX,
+  },
 };
 
 export default function SubscribersManager() {
@@ -27,11 +51,17 @@ export default function SubscribersManager() {
   // 訂閱列表改由 TanStack Query 讀：active / unsubscribed 兩把（原 Promise.all 兩抓）。
   const { data: active = [], isPending: la } = useQuery(adminSubscribersByStatusQueryOptions('active'));
   const { data: unsubscribed = [], isPending: lu } = useQuery(adminSubscribersByStatusQueryOptions('unsubscribed'));
-  const allSubscribers = useMemo<Record<string, Subscriber[]>>(() => ({ active, unsubscribed }), [active, unsubscribed]);
+  const allSubscribers = useMemo<Record<string, Subscriber[]>>(
+    () => ({ active, unsubscribed }),
+    [active, unsubscribed],
+  );
   const isLoading = la || lu;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; sub: Subscriber | null }>({ open: false, sub: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; sub: Subscriber | null }>({
+    open: false,
+    sub: null,
+  });
 
   // 呼叫時才讀 token，不在 render 期讀：localStorage 是外部可變狀態，render 必須是純的
   //（react-hooks/purity）。順帶修掉一個實質問題——原本 token 在 render 當下就固定了，
@@ -57,7 +87,7 @@ export default function SubscribersManager() {
         body: JSON.stringify({ email: sub.email }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? '退訂失敗');
       }
       toast.success(`已將 ${sub.email} 標記為退訂`);
@@ -68,17 +98,10 @@ export default function SubscribersManager() {
   };
 
   const exportCSV = () => {
-    const rows = visible.map((s) => [
-      s.email,
-      s.name ?? '',
-      s.status,
-      s.subscribed_at ?? '',
-      s.unsubscribed_at ?? '',
-    ]);
-    const csv = [
-      ['email', 'name', 'status', 'subscribed_at', 'unsubscribed_at'],
-      ...rows,
-    ].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const rows = visible.map((s) => [s.email, s.name ?? '', s.status, s.subscribed_at ?? '', s.unsubscribed_at ?? '']);
+    const csv = [['email', 'name', 'status', 'subscribed_at', 'unsubscribed_at'], ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -92,8 +115,11 @@ export default function SubscribersManager() {
     if (!s) return '-';
     const d = new Date(s);
     return d.toLocaleDateString('zh-TW', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -114,7 +140,9 @@ export default function SubscribersManager() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => { void invalidateSubs(); }}
+            onClick={() => {
+              void invalidateSubs();
+            }}
             disabled={isLoading}
             className="gap-2"
           >
@@ -135,7 +163,9 @@ export default function SubscribersManager() {
               type="button"
               onClick={() => setStatusFilter(status)}
               className={`rounded-xl border ${config.border} ${config.bg} p-4 flex items-center gap-3 text-left transition-all ${
-                statusFilter === status ? 'ring-1 ring-offset-2 ring-offset-background ring-violet-400/40' : 'opacity-70 hover:opacity-100'
+                statusFilter === status
+                  ? 'ring-1 ring-offset-2 ring-offset-background ring-violet-400/40'
+                  : 'opacity-70 hover:opacity-100'
               }`}
             >
               <div className={`p-2 rounded-lg ${config.bg}`}>
@@ -176,14 +206,18 @@ export default function SubscribersManager() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={5} className="text-center py-12 text-muted-foreground">
-                  <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" /> 載入中...
-                </td></tr>
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-muted-foreground">
+                    <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" /> 載入中...
+                  </td>
+                </tr>
               ) : visible.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 text-muted-foreground">
-                  <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  {searchQuery ? '找不到符合的訂閱者' : (statusFilter === 'active' ? '尚無訂閱者' : '沒有退訂紀錄')}
-                </td></tr>
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-muted-foreground">
+                    <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    {searchQuery ? '找不到符合的訂閱者' : statusFilter === 'active' ? '尚無訂閱者' : '沒有退訂紀錄'}
+                  </td>
+                </tr>
               ) : (
                 visible.map((s) => (
                   <tr key={s.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
@@ -223,7 +257,10 @@ export default function SubscribersManager() {
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
               className="bg-rose-500 hover:bg-rose-600"
-              onClick={() => { if (deleteDialog.sub) void handleUnsubscribe(deleteDialog.sub); setDeleteDialog({ open: false, sub: null }); }}
+              onClick={() => {
+                if (deleteDialog.sub) void handleUnsubscribe(deleteDialog.sub);
+                setDeleteDialog({ open: false, sub: null });
+              }}
             >
               標記退訂
             </AlertDialogAction>

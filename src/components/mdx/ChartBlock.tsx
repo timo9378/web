@@ -77,7 +77,12 @@ const norm = (s: (string | SeriesDef)[] | undefined, data: Row[], catKey: string
     .map((k) => ({ key: k }));
 };
 
-function ChartTip({ active, payload, label, unit }: {
+function ChartTip({
+  active,
+  payload,
+  label,
+  unit,
+}: {
   active?: boolean;
   payload?: { name?: string; value?: number | string; color?: string; dataKey?: string }[];
   label?: string | number;

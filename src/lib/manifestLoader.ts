@@ -22,7 +22,7 @@ export async function loadPhotosManifest(): Promise<PhotoManifest[]> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json() as PhotosManifestData;
+    const data = (await response.json()) as PhotosManifestData;
 
     console.log(`✅ 載入 ${data.totalPhotos} 張照片`);
     console.log(`📅 生成時間: ${data.generatedAt}`);
@@ -42,7 +42,7 @@ export async function loadPhotosManifest(): Promise<PhotoManifest[]> {
  */
 function loadLocalPhotos(): PhotoManifest[] {
   const imageModules = import.meta.glob('../assets/Portfolio/*.{webp,jpg,jpeg,png,gif,svg}', {
-    eager: true
+    eager: true,
   });
 
   return Object.entries(imageModules).map(([path, module], index) => {
@@ -112,5 +112,3 @@ const EMPTY_EXIF = {
   WhiteBalance: null,
   MeteringMode: null,
 } as const;
-
-

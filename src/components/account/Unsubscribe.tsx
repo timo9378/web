@@ -20,7 +20,11 @@ function Unsubscribe() {
   const token = search.token;
   // token 驗證讀取改由 TanStack Query（consume 生成 SubscriberByToken）；
   // 退訂 POST 仍是 mutation，用 action 狀態驅動 confirm→pending→done。
-  const { data: subscriber, isLoading, isError } = useQuery({
+  const {
+    data: subscriber,
+    isLoading,
+    isError,
+  } = useQuery({
     ...subscriberByTokenQueryOptions(token ?? ''),
     enabled: !!token,
   });
@@ -64,7 +68,7 @@ function Unsubscribe() {
         body: JSON.stringify({ token }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? t('unsubscribe.unsubscribeFailed'));
       }
       setAction('done');
@@ -77,23 +81,29 @@ function Unsubscribe() {
   return (
     <div className="unsubscribe-shell">
       <div className="unsubscribe-card">
-        <LocaleLink to="/" className="unsubscribe-brand">✦ Koimsurai</LocaleLink>
+        <LocaleLink to="/" className="unsubscribe-brand">
+          ✦ Koimsurai
+        </LocaleLink>
 
-        {phase === PHASE.loading && (
-          <p className="unsubscribe-status">{t('unsubscribe.verifying')}</p>
-        )}
+        {phase === PHASE.loading && <p className="unsubscribe-status">{t('unsubscribe.verifying')}</p>}
 
         {phase === PHASE.confirm && subscriber && (
           <>
             <h1 className="unsubscribe-title">{t('unsubscribe.confirmTitle')}</h1>
             <p className="unsubscribe-body">
-              <Trans i18nKey="unsubscribe.bodyConfirm" values={{ email: subscriber.email }} components={{ em: <span className="unsubscribe-email" /> }} />
+              <Trans
+                i18nKey="unsubscribe.bodyConfirm"
+                values={{ email: subscriber.email }}
+                components={{ em: <span className="unsubscribe-email" /> }}
+              />
             </p>
             <div className="unsubscribe-actions">
               <button
                 type="button"
                 className="unsubscribe-btn unsubscribe-btn--danger"
-                onClick={() => { void handleConfirm(); }}
+                onClick={() => {
+                  void handleConfirm();
+                }}
               >
                 {t('unsubscribe.btnConfirm')}
               </button>
@@ -104,9 +114,7 @@ function Unsubscribe() {
           </>
         )}
 
-        {phase === PHASE.pending && (
-          <p className="unsubscribe-status">{t('unsubscribe.processing')}</p>
-        )}
+        {phase === PHASE.pending && <p className="unsubscribe-status">{t('unsubscribe.processing')}</p>}
 
         {phase === PHASE.done && (
           <>
@@ -114,7 +122,11 @@ function Unsubscribe() {
             <p className="unsubscribe-body">
               {subscriber?.email && (
                 <>
-                  <Trans i18nKey="unsubscribe.bodyDoneEmail" values={{ email: subscriber.email }} components={{ em: <span className="unsubscribe-email" /> }} />
+                  <Trans
+                    i18nKey="unsubscribe.bodyDoneEmail"
+                    values={{ email: subscriber.email }}
+                    components={{ em: <span className="unsubscribe-email" /> }}
+                  />
                   <br />
                 </>
               )}

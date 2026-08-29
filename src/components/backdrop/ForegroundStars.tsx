@@ -21,14 +21,15 @@ const ForegroundStars = ({ count = 50 }: ForegroundStarsProps) => {
   // Math.random 在 render 期通常會造成 hydration mismatch，這裡安全：本元件掛在
   // AppShell 的 <ClientOnly> → SpaceBackdropShell → DomSpaceEffects 底下，從不 SSR。
   const stars = useMemo<Star[]>(
-    () => Array.from({ length: count }, (_, id) => ({
-      id,
-      x: Math.random() * 100, // %
-      y: Math.random() * 100, // %
-      size: Math.random() * 2.5 + 1.5, // 1.5px to 4px
-      brightness: Math.random() * 0.5 + 0.5, // 0.5 to 1.0
-      parallaxFactor: Math.random() * 0.03 + 0.01, // 0.01 to 0.04 (adjust for sensitivity)
-    })),
+    () =>
+      Array.from({ length: count }, (_, id) => ({
+        id,
+        x: Math.random() * 100, // %
+        y: Math.random() * 100, // %
+        size: Math.random() * 2.5 + 1.5, // 1.5px to 4px
+        brightness: Math.random() * 0.5 + 0.5, // 0.5 to 1.0
+        parallaxFactor: Math.random() * 0.03 + 0.01, // 0.01 to 0.04 (adjust for sensitivity)
+      })),
     [count],
   );
 
@@ -41,16 +42,15 @@ const ForegroundStars = ({ count = 50 }: ForegroundStarsProps) => {
       const el = containerRef.current;
       if (!el) return;
       // 計算滑鼠相對於容器中心的位置 (-0.5 to 0.5)
-      el.style.setProperty('--mx', String((event.clientX / el.clientWidth) - 0.5));
-      el.style.setProperty('--my', String((event.clientY / el.clientHeight) - 0.5));
+      el.style.setProperty('--mx', String(event.clientX / el.clientWidth - 0.5));
+      el.style.setProperty('--my', String(event.clientY / el.clientHeight - 0.5));
     };
 
     const currentRef = containerRef.current; // Capture ref value
     if (currentRef) {
-        // Attach listener to the container itself or window
-        window.addEventListener('mousemove', handleMouseMove);
+      // Attach listener to the container itself or window
+      window.addEventListener('mousemove', handleMouseMove);
     }
-
 
     return () => {
       if (currentRef) {
@@ -61,19 +61,21 @@ const ForegroundStars = ({ count = 50 }: ForegroundStarsProps) => {
 
   return (
     <div className="foreground-stars-container" ref={containerRef}>
-      {stars.map(star => (
+      {stars.map((star) => (
         <div
           key={star.id}
           className="foreground-star"
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            opacity: star.brightness,
-            // 視差幅度交給 CSS：transform 由 --mx/--my（容器層）× --pf（本顆）算出
-            '--pf': star.parallaxFactor,
-          } as CSSProperties}
+          style={
+            {
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              opacity: star.brightness,
+              // 視差幅度交給 CSS：transform 由 --mx/--my（容器層）× --pf（本顆）算出
+              '--pf': star.parallaxFactor,
+            } as CSSProperties
+          }
         />
       ))}
     </div>

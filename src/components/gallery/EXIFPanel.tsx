@@ -24,8 +24,7 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
   // 原本是 `new Date(dateString)` 直接丟進 toLocaleString：manifest 裡多數是 exiftool
   // 的 "2023:04:27 10:56:22"，new Date 給 Invalid Date，而 toLocaleString 對 Invalid Date
   // **不會 throw**（回字串 "Invalid Date"），所以那個 try/catch 從來沒接到過東西。
-  const formatDate = (dateString?: string | null): string =>
-    exifDateTimeText(dateString) ?? dateString ?? 'N/A';
+  const formatDate = (dateString?: string | null): string => exifDateTimeText(dateString) ?? dateString ?? 'N/A';
 
   // EXIF 數值在 manifest 裡有兩種形狀：舊 Node builder 寫 exiftool 的格式化字串
   // （"1/640"、"f/1.4"、"32 mm"），Rust 的 sync 寫數字。之前型別只標 string，三個
@@ -135,8 +134,7 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
                 <span className="exif-label">焦距</span>
                 <span className="exif-value">
                   {formatFocalLength(photo.exif.FocalLength)}
-                  {photo.exif.FocalLengthIn35mmFormat &&
-                    ` (${formatFocalLength(photo.exif.FocalLengthIn35mmFormat)})`}
+                  {photo.exif.FocalLengthIn35mmFormat && ` (${formatFocalLength(photo.exif.FocalLengthIn35mmFormat)})`}
                 </span>
               </div>
             )}
@@ -213,7 +211,6 @@ const EXIFPanel = memo(({ photo }: EXIFPanelProps) => {
             </div>
           </div>
         )}
-
       </div>
     </motion.div>
   );

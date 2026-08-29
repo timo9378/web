@@ -85,7 +85,7 @@ export async function renderWithProviders(ui: ReactNode, options: RenderOptions 
     //   React 才會把 effect 都跑完再回來（少了它 oxlint 也會報 require-await）。
     await Promise.resolve();
     result = render(
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ParallaxProvider>
             <PageVisibilityProvider isVisible>

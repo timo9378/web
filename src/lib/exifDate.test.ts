@@ -10,7 +10,13 @@ const ISO_Z = '2025-07-27T21:45:09.000Z'; // 舊 Rust 版（時區是捏造的�
 describe('parseExifWallClock', () => {
   it('帶時區：取字面的牆上時間，offset 另外留著', () => {
     expect(parseExifWallClock(OFFSET)).toEqual({
-      year: 2023, month: 4, day: 27, hour: 10, minute: 56, second: 22, offset: '+08:00',
+      year: 2023,
+      month: 4,
+      day: 27,
+      hour: 10,
+      minute: 56,
+      second: 22,
+      offset: '+08:00',
     });
   });
 

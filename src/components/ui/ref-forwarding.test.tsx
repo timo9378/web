@@ -46,7 +46,11 @@ describe('ref 轉發到底層 DOM 節點', () => {
 
   it('Card / CardContent（純 div，型別從 HTMLAttributes 換成 ComponentProps）', () => {
     const ref = createRef<HTMLDivElement>();
-    render(<Card ref={ref}><CardContent>內容</CardContent></Card>);
+    render(
+      <Card ref={ref}>
+        <CardContent>內容</CardContent>
+      </Card>,
+    );
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
     cleanup();
   });
@@ -56,8 +60,12 @@ describe('ref 轉發到底層 DOM 節點', () => {
     const cell = createRef<HTMLTableCellElement>();
     render(
       <Table ref={table}>
-        <TableBody><TableRow><TableCell ref={cell}>格子</TableCell></TableRow></TableBody>
-      </Table>
+        <TableBody>
+          <TableRow>
+            <TableCell ref={cell}>格子</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
     );
     expect(table.current).toBeInstanceOf(HTMLTableElement);
     expect(cell.current?.textContent).toBe('格子');
@@ -94,7 +102,9 @@ describe('callback ref 也要收得到（react-hook-form 用的就是這種）',
       name: 'slug',
       value: 'hello',
       onChange: () => undefined,
-      ref: (el: HTMLInputElement | null) => { node = el; },
+      ref: (el: HTMLInputElement | null) => {
+        node = el;
+      },
     };
     render(<Input {...field} />);
     expect(node).toBeInstanceOf(HTMLInputElement);

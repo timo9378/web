@@ -71,29 +71,35 @@ const localeTab = (p: Page, label: string) => p.getByRole('button', { name: new 
 
 /** 用 admin API 撈出所有 e2e 建立的文章，收尾時刪掉。 */
 async function cleanupPosts(page: Page) {
-  await page.evaluate(async ({ key, prefix }) => {
-    const token = window.localStorage.getItem(key);
-    const headers = { Authorization: `Bearer ${token ?? ''}` };
-    const r = await fetch('/api/admin/posts?limit=200', { headers });
-    if (!r.ok) return;
-    const body = await r.json() as { posts?: { id: number; title: string }[] };
-    for (const p of body.posts ?? []) {
-      if (p.title?.startsWith(prefix)) {
-        await fetch(`/api/admin/posts/${p.id}`, { method: 'DELETE', headers });
+  await page.evaluate(
+    async ({ key, prefix }) => {
+      const token = window.localStorage.getItem(key);
+      const headers = { Authorization: `Bearer ${token ?? ''}` };
+      const r = await fetch('/api/admin/posts?limit=200', { headers });
+      if (!r.ok) return;
+      const body = (await r.json()) as { posts?: { id: number; title: string }[] };
+      for (const p of body.posts ?? []) {
+        if (p.title?.startsWith(prefix)) {
+          await fetch(`/api/admin/posts/${p.id}`, { method: 'DELETE', headers });
+        }
       }
-    }
-  }, { key: 'koimsurai_user_token', prefix: E2E_POST_PREFIX });
+    },
+    { key: 'koimsurai_user_token', prefix: E2E_POST_PREFIX },
+  );
 }
 
 /** 目前有幾篇標題等於 name 的文章（含草稿）——驗「有沒有重複建立」用。 */
 async function countPostsNamed(page: Page, name: string): Promise<number> {
-  return page.evaluate(async ({ key, name }) => {
-    const token = window.localStorage.getItem(key);
-    const r = await fetch('/api/admin/posts?limit=200', { headers: { Authorization: `Bearer ${token ?? ''}` } });
-    if (!r.ok) return -1;
-    const body = await r.json() as { posts?: { title: string }[] };
-    return (body.posts ?? []).filter((p) => p.title === name).length;
-  }, { key: 'koimsurai_user_token', name });
+  return page.evaluate(
+    async ({ key, name }) => {
+      const token = window.localStorage.getItem(key);
+      const r = await fetch('/api/admin/posts?limit=200', { headers: { Authorization: `Bearer ${token ?? ''}` } });
+      if (!r.ok) return -1;
+      const body = (await r.json()) as { posts?: { title: string }[] };
+      return (body.posts ?? []).filter((p) => p.title === name).length;
+    },
+    { key: 'koimsurai_user_token', name },
+  );
 }
 
 test.describe('文章編輯器', () => {
@@ -131,9 +137,7 @@ test.describe('文章編輯器', () => {
     // 再存一次：此時有 id，應該走 PUT
     await page.getByRole('button', { name: '儲存草稿' }).click();
     await expect(page.getByText('草稿已儲存').first()).toBeVisible({ timeout: 15_000 });
-    await expect
-      .poll(() => countPostsNamed(page, name), { message: '第二次儲存不該再建一篇' })
-      .toBe(1);
+    await expect.poll(() => countPostsNamed(page, name), { message: '第二次儲存不該再建一篇' }).toBe(1);
   });
 
   /** 草稿不該出現在公開清單——「還沒寫完就見客」是最不該發生的一種。 */
@@ -147,7 +151,7 @@ test.describe('文章編輯器', () => {
 
     const listed = await page.evaluate(async (t) => {
       const r = await fetch('/api/posts');
-      const b = await r.json() as { posts?: { title: string }[] };
+      const b = (await r.json()) as { posts?: { title: string }[] };
       return (b.posts ?? []).some((p) => p.title === t);
     }, name);
     expect(listed, '草稿不該出現在 /api/posts').toBe(false);
@@ -169,11 +173,15 @@ test.describe('文章編輯器', () => {
 
     await page.getByRole('button', { name: '發佈文章' }).click();
     await expect
-      .poll(async () => page.evaluate(async (t) => {
-        const r = await fetch('/api/posts');
-        const b = await r.json() as { posts?: { title: string }[] };
-        return (b.posts ?? []).some((p) => p.title === t);
-      }, name), { message: '發佈後應該出現在 /api/posts', timeout: 20_000 })
+      .poll(
+        async () =>
+          page.evaluate(async (t) => {
+            const r = await fetch('/api/posts');
+            const b = (await r.json()) as { posts?: { title: string }[] };
+            return (b.posts ?? []).some((p) => p.title === t);
+          }, name),
+        { message: '發佈後應該出現在 /api/posts', timeout: 20_000 },
+      )
       .toBe(true);
 
     await page.goto('/blog');
@@ -208,7 +216,8 @@ test.describe('文章編輯器', () => {
     // 這一步才是回歸點：第二次切回 English
     await localeTab(page, 'English').click();
     await expect(titleInput(page), '第二次切回來不該顯示舊內容').toHaveValue('english title');
-    await expect.poll(() => contentText(page), { message: '第二次切回來的內容要是 English 那份' })
+    await expect
+      .poll(() => contentText(page), { message: '第二次切回來的內容要是 English 那份' })
       .toBe('English body.');
 
     // 再回繁體一次，確認來回多次都穩
@@ -278,8 +287,7 @@ test.describe('文章編輯器', () => {
     await titleInput(page).fill(name);
     await typeContent(page, '還沒存就關掉的內容。');
 
-    await expect(page.getByText('已自動備份'), 'debounce 1.2s 之後要出現備份提示')
-      .toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('已自動備份'), 'debounce 1.2s 之後要出現備份提示').toBeVisible({ timeout: 15_000 });
 
     // 直接重新整理（模擬誤關分頁後再打開）
     await page.reload();
@@ -317,8 +325,7 @@ test.describe('文章編輯器', () => {
 
     await page.getByRole('button', { name: '存並回列表' }).click();
     await expect(page).toHaveURL(/\/admin\/posts$/, { timeout: 20_000 });
-    await expect(page.getByText(name).first(), '列表上要看得到剛存的那篇')
-      .toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(name).first(), '列表上要看得到剛存的那篇').toBeVisible({ timeout: 15_000 });
   });
 
   /**
@@ -337,16 +344,14 @@ test.describe('文章編輯器', () => {
     // 重新開一次同一篇：內容要載回來
     await gotoEditor(page, editUrl);
     await expect(titleInput(page)).toHaveValue(name, { timeout: 15_000 });
-    await expect.poll(() => contentText(page), { message: '既有內容要載進編輯器' })
-      .toBe('原始內容。');
+    await expect.poll(() => contentText(page), { message: '既有內容要載進編輯器' }).toBe('原始內容。');
 
     await typeContent(page, '改過的內容。', { clear: true });
     await page.getByRole('button', { name: '儲存草稿' }).click();
     await expect(page.getByText('草稿已儲存').first()).toBeVisible({ timeout: 15_000 });
 
     await gotoEditor(page, editUrl);
-    await expect.poll(() => contentText(page), { message: '改動要真的存進去' })
-      .toBe('改過的內容。');
+    await expect.poll(() => contentText(page), { message: '改動要真的存進去' }).toBe('改過的內容。');
   });
 
   /**
@@ -394,8 +399,8 @@ test.describe('文章編輯器', () => {
 
     // 反面：確認它真的有去抓 /monaco/vs（沒抓代表根本沒用到 Monaco，
     // 上面那個「零外部請求」就變成一條恆真的假斷言）
-    const monacoRequests = await page.evaluate(() =>
-      performance.getEntriesByType('resource').filter((e) => e.name.includes('/monaco/vs/')).length,
+    const monacoRequests = await page.evaluate(
+      () => performance.getEntriesByType('resource').filter((e) => e.name.includes('/monaco/vs/')).length,
     );
     expect(monacoRequests, '沒有任何 /monaco/vs 的請求——loader 可能沒指到自架路徑').toBeGreaterThan(0);
   });

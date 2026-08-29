@@ -5,7 +5,9 @@
 // subscribe 必須是模組層級的穩定參考：每次 render 換一個新函式會讓 React 重新訂閱。
 export const subscribeScroll = (cb: () => void) => {
   window.addEventListener('scroll', cb, { passive: true });
-  return () => { window.removeEventListener('scroll', cb); };
+  return () => {
+    window.removeEventListener('scroll', cb);
+  };
 };
 
 /** 已捲動比例 0–1。文件不長於視窗時回 0。 */

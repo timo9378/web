@@ -56,7 +56,10 @@ export async function extractExif(filePath: string): Promise<ExtractedExif> {
     // 用巢狀 optional 索引取值；型別給到「可遞迴的未知物件」即可，不必用 any。
     // exifreader 的結構是 tags[群組][標籤].description，各層都可能不存在。
     // 存取一律走 optional chaining，型別給到這個形狀即可，不必用 any。
-    interface ExifTag { description?: string; value?: unknown }
+    interface ExifTag {
+      description?: string;
+      value?: unknown;
+    }
     type ExifGroup = Record<string, ExifTag | undefined>;
     const tagData = tags as unknown as Record<string, ExifGroup | undefined>;
 

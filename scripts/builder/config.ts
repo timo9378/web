@@ -86,9 +86,7 @@ export async function loadConfig(): Promise<BuilderConfig> {
     console.log(`  Trying to load config from: ${configPath}`);
 
     // 嘗試載入 builder.config.js
-    const userConfig = await import(configPath).then(
-      (m) => m.default || m
-    );
+    const userConfig = await import(configPath).then((m) => m.default || m);
     console.log('  ✅ Config loaded successfully');
     return { ...defaultConfig, ...userConfig };
   } catch (error) {

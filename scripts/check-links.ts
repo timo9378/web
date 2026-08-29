@@ -33,8 +33,7 @@ import { stripCode } from './strip-code';
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
 const SITE_HOST = new URL(SITE).hostname;
 
-const UA =
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
 
 /**
  * 有些站的**網頁**對非瀏覽器客戶端不給正常回應，但它們都有不擋 bot 的官方 API。
@@ -208,13 +207,14 @@ async function main(): Promise<void> {
   let skipped404 = 0;
   for (const p of posts) {
     for (const lang of localesOf(p)) {
-      const url = lang
-        ? `${SITE}/api/posts/${p.id}?lang=${encodeURIComponent(lang)}`
-        : `${SITE}/api/posts/${p.id}`;
+      const url = lang ? `${SITE}/api/posts/${p.id}?lang=${encodeURIComponent(lang)}` : `${SITE}/api/posts/${p.id}`;
       const res = await fetchOwn(url);
       // 走到這裡的 404 代表 available_locales 與實際內容不一致（資料問題），
       // 不再是「正常的沒翻譯」——數出來，多了就該去看後端。
-      if (res.status === 404) { skipped404 += 1; continue; }
+      if (res.status === 404) {
+        skipped404 += 1;
+        continue;
+      }
       if (!res.ok) continue;
       const post = (await res.json()) as PostDetail;
       if (!post.content) continue;
@@ -292,8 +292,7 @@ async function main(): Promise<void> {
 //
 // 沒有這道判斷的話，測試 `import` 進來就會立刻打正式站抓全部文章——
 // 而這支腳本被封鎖的原因正是請求量，測試不該是幫兇。
-const runDirectly = process.argv[1] !== undefined
-  && import.meta.url === pathToFileURL(process.argv[1]).href;
+const runDirectly = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (runDirectly) {
   main().catch((e: unknown) => {

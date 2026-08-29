@@ -46,11 +46,18 @@ export function ownerToken(): string {
  */
 export async function signIn(page: Page) {
   await page.goto('/');
-  await page.evaluate(([key, value]) => { window.localStorage.setItem(key, value); }, [TOKEN_KEY, ownerToken()] as const);
+  await page.evaluate(
+    ([key, value]) => {
+      window.localStorage.setItem(key, value);
+    },
+    [TOKEN_KEY, ownerToken()] as const,
+  );
 }
 
 export async function signOut(page: Page) {
-  await page.evaluate((key) => { window.localStorage.removeItem(key); }, TOKEN_KEY);
+  await page.evaluate((key) => {
+    window.localStorage.removeItem(key);
+  }, TOKEN_KEY);
 }
 
 /**
@@ -72,7 +79,9 @@ export async function signOut(page: Page) {
 export async function gotoAdmin(page: Page, path: string, heading: string | RegExp) {
   await expect(async () => {
     await page.evaluate(
-      ([key, value]) => { window.localStorage.setItem(key, value); },
+      ([key, value]) => {
+        window.localStorage.setItem(key, value);
+      },
       [TOKEN_KEY, ownerToken()] as const,
     );
     await page.goto(path);
@@ -93,7 +102,9 @@ export async function gotoAdminUntil(page: Page, path: string, ready: (p: Page) 
   if (page.url() === 'about:blank') await signIn(page);
   await expect(async () => {
     await page.evaluate(
-      ([key, value]) => { window.localStorage.setItem(key, value); },
+      ([key, value]) => {
+        window.localStorage.setItem(key, value);
+      },
       [TOKEN_KEY, ownerToken()] as const,
     );
     await page.goto(path);

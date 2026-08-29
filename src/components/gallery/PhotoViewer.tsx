@@ -10,13 +10,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Keyboard, Thumbs } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { exifYmd } from '@/lib/exifDate';
-import {
-  selectedPhotoAtom,
-  viewerOpenAtom,
-  closeViewerAtom,
-  photosAtom,
-  currentIndexAtom,
-} from '@/store/photoStore';
+import { selectedPhotoAtom, viewerOpenAtom, closeViewerAtom, photosAtom, currentIndexAtom } from '@/store/photoStore';
 import type { PhotoManifest } from '@/types/photo';
 import ProgressiveImage from './ProgressiveImage';
 import GalleryThumbnail from './GalleryThumbnail';
@@ -38,7 +32,9 @@ const PhotoViewer: React.FC = () => {
 
   // 鍵盤快捷鍵（原生實作，取代 react-use 的 useKey — 整包只用到這一個 hook）
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeViewer(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeViewer();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [closeViewer]);
@@ -75,9 +71,7 @@ const PhotoViewer: React.FC = () => {
   // TS 把 photos[i] 當成必然存在，?? 會被判成多餘——但執行期越界就是 undefined。
   // 這裡的條件與原本 effect 裡的守衛一字對應。
   const currentPhoto: PhotoManifest | undefined =
-    currentIndex >= 0 && currentIndex < photos.length
-      ? photos[currentIndex]
-      : (selectedPhoto ?? undefined);
+    currentIndex >= 0 && currentIndex < photos.length ? photos[currentIndex] : (selectedPhoto ?? undefined);
 
   // 初始化 Swiper 索引
   useEffect(() => {
@@ -141,16 +135,27 @@ const PhotoViewer: React.FC = () => {
                 // 必須留在 nav 上呼叫：Navigator 不是 [Global] 介面，解構後會 Illegal invocation。
                 const nav: Partial<Navigator> = navigator;
                 if (nav.share) {
-                  nav.share({
-                    title: currentPhoto.title || '照片分享',
-                    text: `查看我的照片作品`,
-                    url: window.location.href,
-                  }).catch(() => { /* 使用者取消分享 */ });
+                  nav
+                    .share({
+                      title: currentPhoto.title || '照片分享',
+                      text: `查看我的照片作品`,
+                      url: window.location.href,
+                    })
+                    .catch(() => {
+                      /* 使用者取消分享 */
+                    });
                 }
               }}
               title="分享"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                 <polyline points="16 6 12 2 8 6" />
                 <line x1="12" y1="2" x2="12" y2="15" />
@@ -167,7 +172,14 @@ const PhotoViewer: React.FC = () => {
               }}
               title="關閉 (ESC)"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -175,22 +187,32 @@ const PhotoViewer: React.FC = () => {
           </div>
 
           {/* 縮放比例顯示 */}
-          {imageScale > 1 && (
-            <div className="zoom-indicator">
-              {imageScale.toFixed(1)}x
-            </div>
-          )}
+          {imageScale > 1 && <div className="zoom-indicator">{imageScale.toFixed(1)}x</div>}
 
           {/* 主圖輪播區域 */}
           <div className="photo-viewer-main">
             {/* 自訂導航按鈕 - 上一張 */}
             <button aria-label="上一張照片" className="custom-swiper-button-prev" onClick={(e) => e.stopPropagation()}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
             <button aria-label="下一張照片" className="custom-swiper-button-next" onClick={(e) => e.stopPropagation()}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>

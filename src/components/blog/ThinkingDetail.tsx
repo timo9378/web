@@ -43,7 +43,9 @@ function ThinkingDetail() {
       <div className="tk-scrim" />
 
       <div className="tk-wrap tk-wrap--detail">
-        <LocaleLink to="/thinking" className="tk-back">← {t('thinking.back')}</LocaleLink>
+        <LocaleLink to="/thinking" className="tk-back">
+          ← {t('thinking.back')}
+        </LocaleLink>
 
         {thought === undefined && <KoimLoader inline size="sm" />}
         {thought === null && <p className="tk-empty">{t('thinking.notFound')}</p>}
@@ -54,7 +56,17 @@ function ThinkingDetail() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <ThoughtCard th={thought} isAdmin={isAdmin} onDelete={(tid) => { void del(tid); }} onEdit={(tid, content) => { void edit(tid, content); }} detail />
+            <ThoughtCard
+              th={thought}
+              isAdmin={isAdmin}
+              onDelete={(tid) => {
+                void del(tid);
+              }}
+              onEdit={(tid, content) => {
+                void edit(tid, content);
+              }}
+              detail
+            />
             <div className="tk-comments">
               <Comments postId={thought.id} basePath="thoughts" />
             </div>

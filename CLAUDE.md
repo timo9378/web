@@ -313,9 +313,26 @@ pnpm typecheck:scripts
 pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --max-warnings 0
 pnpm exec oxlint scripts server packages --max-warnings 0
 pnpm lint:css      # biome，只管 CSS
+pnpm check:format  # oxfmt，只管 JS/TS
 pnpm test          # vitest
 pnpm build         # vite + nitro
 ```
+
+⚠️ **`oxfmt` 排的不是只有 js/ts——它也會排 css / json / md**，所以 `.oxfmtrc.json`
+把這三類都列進 `ignorePatterns`。每一條都是實際撞到才加的，不要以為是保守而拿掉：
+
+| 排除 | 拿掉會怎樣 |
+|---|---|
+| `**/*.css` | 那是 biome 的地盤，而兩邊 quoteStyle 相反（biome 雙引號、oxfmt 單引號）→ `pnpm lint:css` 一次冒出 32 個 error |
+| `**/*.json` | 會重排 `tests/e2e/computed-style.baseline/` 那 15 個機器產生的基準檔 |
+| `**/*.md` | 會用字元數把中文表格撐開對齊，CJK 寬度對不上，純雜訊 |
+
+⚠️ **pre-commit 裡 oxfmt 要排在 oxlint 之後。** 它會把單行的 `if (x) { a; return; }`
+展開成多行，而 `// eslint-disable-next-line` 只蓋下一行——展開之後違規就跑到抑制範圍
+外了。導入那次一次撞到 6 處，`tsc` 與 `build` 全綠，只有 `--max-warnings 0` 抓得到。
+
+⚠️ 導入 oxfmt 的那筆 218 檔格式化在 `.git-blame-ignore-revs` 裡。本機要生效得設一次
+`git config blame.ignoreRevsFile .git-blame-ignore-revs`（GitHub 會自動讀）。
 
 ⚠️ **`vite` 釘死在 8.0.16，不要升。** 8.2.2 會讓 Excalidraw 的字型 subsetting 那條
 路徑進到 bundle，而它用 `eval` —— 全站 CSP 沒有 `'unsafe-eval'`，於是瀏覽器擋掉、

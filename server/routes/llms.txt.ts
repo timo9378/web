@@ -33,8 +33,9 @@ export default defineEventHandler(async (event) => {
   }
 
   let md = '# 宙と木 · Koimsurai\n\n';
-  md += '> Koimsurai（timo9378）的個人網站與技術部落格。以開發、除錯、自架服務、AI 應用的長篇實作紀錄為主，'
-    + '多為繁體中文（部分另有 English / 日本語 / 한국어 / 简体中文）。\n\n';
+  md +=
+    '> Koimsurai（timo9378）的個人網站與技術部落格。以開發、除錯、自架服務、AI 應用的長篇實作紀錄為主，' +
+    '多為繁體中文（部分另有 English / 日本語 / 한국어 / 简体中文）。\n\n';
 
   md += '## 主要頁面\n\n';
   for (const [path, desc] of PAGES) md += `- [${SITE_URL}${path}](${SITE_URL}${path}): ${desc}\n`;

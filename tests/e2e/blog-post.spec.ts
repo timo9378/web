@@ -92,7 +92,9 @@ test.describe('文章頁的互動', () => {
     // mermaid 的全螢幕鈕 aria-label 剛好就是「放大檢視」，而圖表排在圖片前面——
     // 只比對前綴的話 .first() 會抓到圖表的鈕，然後對著沒開的燈箱等 20 秒。
     // 原本會過只是因為種子文章裡沒有圖表；線上的文章圖表與圖片本來就常常同時出現。
-    const zoom = article(page).getByRole('button', { name: /^放大檢視：/ }).first();
+    const zoom = article(page)
+      .getByRole('button', { name: /^放大檢視：/ })
+      .first();
     await expect(zoom, '圖片要包成可聚焦的按鈕').toBeVisible({ timeout: 15_000 });
 
     // 燈箱是 createPortal 出去的，不在 <article> 底下——用整頁的選擇器
@@ -136,12 +138,10 @@ test.describe('文章頁的互動', () => {
 
     // mermaid + ELK 是動態 import 的，第一次要抓好幾百 KB → timeout 放寬
     const svg = render.locator('svg');
-    await expect(svg, 'mermaid 應該把圖畫成 SVG（沒畫出來 = lib 沒載到或渲染丟例外）')
-      .toBeVisible({ timeout: 30_000 });
+    await expect(svg, 'mermaid 應該把圖畫成 SVG（沒畫出來 = lib 沒載到或渲染丟例外）').toBeVisible({ timeout: 30_000 });
 
     // 解析失敗時元件是渲染 .mermaid-error + 原始碼，那也「看得到東西」——要明確排除
-    await expect(article(page).locator('.mermaid-error'), 'mermaid 不該落到錯誤框')
-      .toHaveCount(0);
+    await expect(article(page).locator('.mermaid-error'), 'mermaid 不該落到錯誤框').toHaveCount(0);
 
     // 空的 <svg> 也會 visible。節點文字在才代表真的畫完了。
     await expect(svg, '圖上要有節點文字').toContainText('開始');
@@ -196,9 +196,7 @@ test.describe('文章頁的互動', () => {
     );
     await expect(poll.locator('.mdx-poll-opt--mine'), '要標出自己投的那一項').toHaveCount(1);
 
-    await expect
-      .poll(async () => (await counts()).a, { message: '投票應該寫進 DB' })
-      .toBe(before.a + 1);
+    await expect.poll(async () => (await counts()).a, { message: '投票應該寫進 DB' }).toBe(before.a + 1);
 
     // localStorage 記住 → 重新整理之後不該又變回「可投票」
     await page.reload();

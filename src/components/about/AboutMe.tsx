@@ -1,4 +1,7 @@
-interface QuickFact { label: string; value: string }
+interface QuickFact {
+  label: string;
+  value: string;
+}
 
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -59,7 +62,7 @@ const PARAGRAPHS_BY_LANG: Record<string, string[]> = {
   ],
   en: [
     "I'm Koimsurai, born in 2004 in Yunlin, Taiwan. Currently a 4th-year IM student at National Taiwan University of Science and Technology (NTUST), interning as a software engineer at MSI — where I'm effectively responsible for frontend framework standards and underlying architecture design within my team.",
-    "I have prior experience with C++, Python, Golang and app development. At MSI I led the adoption of a modern lightweight Tauri + Rust architecture to replace bulky legacy systems; built cross-environment CI/CD pipelines from scratch; and shipped an AI deployment architecture for cloud–edge hybrid workloads. My stack spans frontend UI/UX down to low-level memory management, plus debugging cross-platform builds and security issues.",
+    'I have prior experience with C++, Python, Golang and app development. At MSI I led the adoption of a modern lightweight Tauri + Rust architecture to replace bulky legacy systems; built cross-environment CI/CD pipelines from scratch; and shipped an AI deployment architecture for cloud–edge hybrid workloads. My stack spans frontend UI/UX down to low-level memory management, plus debugging cross-platform builds and security issues.',
     "Outside work I'm a HomeLab enthusiast — maintaining a 24/7 server cluster and building a personal Web NAS OS (Next.js + Rust) and my own AI assistant from scratch.",
     "I served as president of NTUST's IM student council and as a programming instructor. I rely on Notion and GitHub to organize complex info, and Figma for UI design. I believe great software needs both solid foundations and an effortless feel across products and users. Hoping to keep making impact in system architecture and AI integration.",
   ],
@@ -83,45 +86,51 @@ const AboutMe = () => {
   const QUICK_FACTS = lookupOr(QUICK_FACTS_BY_LANG, lang, QUICK_FACTS_BY_LANG['zh-TW']);
   const PARAGRAPHS = lookupOr(PARAGRAPHS_BY_LANG, lang, PARAGRAPHS_BY_LANG['zh-TW']);
   return (
-  <section id="about-me" className="home-section about-me-v2">
-    <div className="home-section-eyebrow">
-      <span className="section-label">About</span>
-      <span className="section-eyebrow-count">{t('home.aboutMe.eyebrow')}</span>
-    </div>
+    <section id="about-me" className="home-section about-me-v2">
+      <div className="home-section-eyebrow">
+        <span className="section-label">About</span>
+        <span className="section-eyebrow-count">{t('home.aboutMe.eyebrow')}</span>
+      </div>
 
-    <div className="about-grid">
-      <motion.div
-        className="about-bio"
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <h2 className="section-hero-title">{t('home.aboutMe.titleLine1')}<br />{t('home.aboutMe.titleLine2')}</h2>
-        {PARAGRAPHS.map((p) => (
-          <p key={p} className="about-paragraph">{p}</p>
-        ))}
-      </motion.div>
-
-      <motion.aside
-        className="about-facts glass-card"
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-      >
-        <span className="section-label about-facts-label">Quick Facts</span>
-        <dl>
-          {QUICK_FACTS.map((f) => (
-            <div key={f.label} className="about-fact-row">
-              <dt>{f.label}</dt>
-              <dd>{f.value}</dd>
-            </div>
+      <div className="about-grid">
+        <motion.div
+          className="about-bio"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <h2 className="section-hero-title">
+            {t('home.aboutMe.titleLine1')}
+            <br />
+            {t('home.aboutMe.titleLine2')}
+          </h2>
+          {PARAGRAPHS.map((p) => (
+            <p key={p} className="about-paragraph">
+              {p}
+            </p>
           ))}
-        </dl>
-      </motion.aside>
-    </div>
-  </section>
+        </motion.div>
+
+        <motion.aside
+          className="about-facts glass-card"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+        >
+          <span className="section-label about-facts-label">Quick Facts</span>
+          <dl>
+            {QUICK_FACTS.map((f) => (
+              <div key={f.label} className="about-fact-row">
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </motion.aside>
+      </div>
+    </section>
   );
 };
 

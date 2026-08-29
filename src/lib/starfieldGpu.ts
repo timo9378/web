@@ -9,7 +9,20 @@
 // 參數對齊現行 pmndrs 星空（intensity 0.9 / threshold 0.25）。之後單 canvas 合併時
 // 這裡的 pass 換成 setMRT(mrt({output, emissive})) 做 selective bloom（官方文件同款）。
 import * as THREE from 'three/webgpu';
-import { pass, mrt, output, float, instancedBufferAttribute, uv, time, sin, mix, smoothstep, vec3, vec4 } from 'three/tsl';
+import {
+  pass,
+  mrt,
+  output,
+  float,
+  instancedBufferAttribute,
+  uv,
+  time,
+  sin,
+  mix,
+  smoothstep,
+  vec3,
+  vec4,
+} from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 
 export const STAR_COUNT = 26000; // 14k 主層 + 12k 星系層（≈舊棧全部點數 27.1k；WebGPU 下加星幾乎免費）
@@ -78,11 +91,7 @@ function buildStarLayer(cfg: StarLayerCfg): THREE.Sprite {
     const r = cfg.rMin + Math.random() * (cfg.rMax - cfg.rMin);
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    positions.set([
-      r * Math.sin(phi) * Math.cos(theta),
-      r * Math.sin(phi) * Math.sin(theta),
-      r * Math.cos(phi),
-    ], i * 3);
+    positions.set([r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi)], i * 3);
     // 尺寸：偏態分佈（多小星、少亮星）
     scales[i] = 0.5 + Math.pow(Math.random(), 2.5) * 1.3;
     phases[i] = Math.random() * Math.PI * 2;
@@ -111,7 +120,9 @@ function buildStarLayer(cfg: StarLayerCfg): THREE.Sprite {
   const phase = instancedBufferAttribute<'float'>(new THREE.InstancedBufferAttribute(phases, 1), 'float');
   const amp = phase.mul(0.008).add(0.008); // 0.008~0.058：舊版等級「幾乎看不出來的呼吸」（使用者對比定調）
   const speed = phase.mul(0.06).add(0.25); // 0.25~0.63 rad/s
-  const twinkle = sin(time.mul(speed).add(phase.mul(7.0))).mul(amp).add(amp.oneMinus());
+  const twinkle = sin(time.mul(speed).add(phase.mul(7.0)))
+    .mul(amp)
+    .add(amp.oneMinus());
   mat.opacityNode = falloff.mul(twinkle);
 
   // per-star 尺寸（scaleNode 乘在 sprite 縮放上）
@@ -162,8 +173,13 @@ async function buildSaturn(): Promise<SaturnRig> {
   const rings = new THREE.Mesh(
     new THREE.RingGeometry(1.5, 2.2, 64),
     new THREE.MeshStandardMaterial({
-      map: ringsMap, side: THREE.DoubleSide, transparent: true, opacity: 0.8,
-      color: '#e7c8a0', roughness: 0.9, metalness: 0.1,
+      map: ringsMap,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.8,
+      color: '#e7c8a0',
+      roughness: 0.9,
+      metalness: 0.1,
     }),
   );
   ringHolder.add(rings);
@@ -204,7 +220,9 @@ async function buildSaturn(): Promise<SaturnRig> {
   };
 }
 
-export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runner: StarfieldRunner; backend: 'WebGPU' | 'WebGL2' }> {
+export async function createStarfieldRunner(
+  init: StarfieldInit,
+): Promise<{ runner: StarfieldRunner; backend: 'WebGPU' | 'WebGL2' }> {
   const renderer = new THREE.WebGPURenderer({
     // 型別只收 HTMLCanvasElement；OffscreenCanvas 在 runtime 相容（官方 worker 範例同款用法）
     canvas: init.canvas as HTMLCanvasElement,
@@ -216,7 +234,9 @@ export async function createStarfieldRunner(init: StarfieldInit): Promise<{ runn
   // 覆蓋 three 的預設處理（只 console.error 一行），改成回報給呼叫端重建。見 onDeviceLost 的註解。
   // 要在 init() 之前掛：WebGPU 的 device.lost promise 是在 init 裡建 device 時就接上的。
   renderer.onDeviceLost = (info: { api?: string; message?: string; reason?: string | null }) => {
-    init.onDeviceLost?.(`${info.api ?? 'GPU'} device lost: ${info.message ?? '未知'}${info.reason ? ` (${info.reason})` : ''}`);
+    init.onDeviceLost?.(
+      `${info.api ?? 'GPU'} device lost: ${info.message ?? '未知'}${info.reason ? ` (${info.reason})` : ''}`,
+    );
   };
   await renderer.init();
   const backend: 'WebGPU' | 'WebGL2' =

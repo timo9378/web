@@ -1,0 +1,10 @@
+# 大規模但零語意的 commit，讓 git blame 跳過它們，才不會整份檔案的作者都變成
+# 「那次格式化」。GitHub 的 blame 會自動讀這個檔；本機要自己設一次：
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# 只放「純格式／純搬移」的 SHA。有任何行為變動的 commit 不要加進來——
+# 加了就等於把那次改動從 blame 裡藏起來，之後追問題會追不到人。
+
+# style: 用 oxfmt 統一 JS/TS 格式（218 檔）
+f4ca192c76ed70c7cb9f7ef86c168ebc6bec9854

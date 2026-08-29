@@ -5,7 +5,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PollResponse } from '@koimsurai/api-types';
 
-interface PollOption { key?: string; label?: string }
+interface PollOption {
+  key?: string;
+  label?: string;
+}
 interface Props {
   id?: string;
   question?: string;
@@ -32,7 +35,11 @@ export default function PollBlock({ id, question, options = [], showTotal = true
     if (!id) return;
     let cancelled = false;
     let prev: string | null = null;
-    try { prev = localStorage.getItem(votedKey(id)); } catch { /* 不可用就當沒投過 */ }
+    try {
+      prev = localStorage.getItem(votedKey(id));
+    } catch {
+      /* 不可用就當沒投過 */
+    }
     const applyPrev = () => {
       if (cancelled || !prev) return;
       setMyVote(prev);
@@ -47,28 +54,40 @@ export default function PollBlock({ id, question, options = [], showTotal = true
         applyPrev();
       })
       .catch(applyPrev); // 抓票數失敗仍要標出「已投過」，且題目與選項照樣顯示
-                         // （中止時 applyPrev 會被 cancelled 擋掉，不會亂動狀態）
-    return () => { cancelled = true; ac.abort(); };
+    // （中止時 applyPrev 會被 cancelled 擋掉，不會亂動狀態）
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
   }, [id]);
 
-  const vote = useCallback((optKey: string) => {
-    if (!id || myVote || busy) return;
-    setBusy(true);
-    fetch(`/api/polls/${encodeURIComponent(id)}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ option: optKey }),
-    })
-      .then((r) => (r.ok ? (r.json() as Promise<Counts>) : null))
-      .then((d) => {
-        if (d) setCounts(d);
-        setMyVote(optKey);
-        setRevealed(true);
-        try { localStorage.setItem(votedKey(id), optKey); } catch { /* 忽略 */ }
+  const vote = useCallback(
+    (optKey: string) => {
+      if (!id || myVote || busy) return;
+      setBusy(true);
+      fetch(`/api/polls/${encodeURIComponent(id)}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ option: optKey }),
       })
-      .catch(() => { /* 失敗就維持未投票狀態，讓使用者可再試 */ })
-      .finally(() => setBusy(false));
-  }, [id, myVote, busy]);
+        .then((r) => (r.ok ? (r.json() as Promise<Counts>) : null))
+        .then((d) => {
+          if (d) setCounts(d);
+          setMyVote(optKey);
+          setRevealed(true);
+          try {
+            localStorage.setItem(votedKey(id), optKey);
+          } catch {
+            /* 忽略 */
+          }
+        })
+        .catch(() => {
+          /* 失敗就維持未投票狀態，讓使用者可再試 */
+        })
+        .finally(() => setBusy(false));
+    },
+    [id, myVote, busy],
+  );
 
   if (!id || !options.length) return null;
   const total = counts?.total ?? 0;

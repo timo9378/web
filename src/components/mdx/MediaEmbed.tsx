@@ -12,10 +12,19 @@ function toDim(v: string | number | undefined): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
-export function Video(
-  { src, poster, caption, width, height }:
-  { src?: string; poster?: string; caption?: string; width?: string | number; height?: string | number },
-) {
+export function Video({
+  src,
+  poster,
+  caption,
+  width,
+  height,
+}: {
+  src?: string;
+  poster?: string;
+  caption?: string;
+  width?: string | number;
+  height?: string | number;
+}) {
   if (!src) return null;
   return <VideoPlayer src={src} poster={poster} caption={caption} width={toDim(width)} height={toDim(height)} />;
 }
@@ -45,7 +54,9 @@ export function YouTube({ id, title = 'YouTube 影片' }: { id?: string; title?:
           //   縮圖會被擋掉，facade 變成一個空白按鈕，而且畫面上完全看不出原因。
           style={{ backgroundImage: `url(https://img.youtube.com/vi/${id}/hqdefault.jpg)` }}
         >
-          <span className="mdx-youtube-play" aria-hidden>▶</span>
+          <span className="mdx-youtube-play" aria-hidden>
+            ▶
+          </span>
         </button>
       )}
     </div>

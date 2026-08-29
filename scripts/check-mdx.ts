@@ -24,8 +24,17 @@ import { LOCALES, localesOf } from './post-locales';
 import { stripCode } from './strip-code';
 
 const SITE = (process.env.SITE_URL ?? 'https://koimsurai.com').replace(/\/$/, '');
-interface PostListItem { id: number; title: string; available_locales?: string[] }
-interface PostDetail { id: number; title: string; content: string | null; format: string | null }
+interface PostListItem {
+  id: number;
+  title: string;
+  available_locales?: string[];
+}
+interface PostDetail {
+  id: number;
+  title: string;
+  content: string | null;
+  format: string | null;
+}
 
 const label = (lang: string) => lang || 'zh-TW（原文）';
 
@@ -38,7 +47,9 @@ async function main() {
   const { posts } = (await listRes.json()) as { posts: PostListItem[] };
   // 不是每篇都 × 5：只抓 available_locales 真的有的那些（見 post-locales.ts）。
   const planned = posts.reduce((n, p) => n + localesOf(p).length, 0);
-  console.log(`${SITE} — ${posts.length} 篇已發布，共 ${planned} 個語系版本要編譯（上限 ${posts.length * LOCALES.length}）\n`);
+  console.log(
+    `${SITE} — ${posts.length} 篇已發布，共 ${planned} 個語系版本要編譯（上限 ${posts.length * LOCALES.length}）\n`,
+  );
 
   const failures: string[] = [];
   let compiled = 0;
@@ -81,8 +92,9 @@ async function main() {
       }
       // 編得過不代表 render 得出來：用到沒註冊的 block，runSync 產出的程式碼會引用
       // undefined 元件 → 讀者打開才看到錯誤頁。在這裡先抓出來。
-      const unknown = [...new Set([...stripCode(post.content).matchAll(/<([A-Z][A-Za-z0-9]*)[\s/>]/g)].map((x) => x[1]))]
-        .filter((tag) => !registered.has(tag));
+      const unknown = [
+        ...new Set([...stripCode(post.content).matchAll(/<([A-Z][A-Za-z0-9]*)[\s/>]/g)].map((x) => x[1])),
+      ].filter((tag) => !registered.has(tag));
       if (unknown.length) {
         failures.push(`#${p.id} [${label(lang)}] ${post.title}\n      用到沒註冊的 block：${unknown.join(', ')}`);
       }

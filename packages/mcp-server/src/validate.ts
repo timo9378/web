@@ -20,9 +20,42 @@ const lineOf = (text: string, index: number): number => text.slice(0, index).spl
 
 /** MDX 基礎元素以外、文章可用的標籤（HTML 原生標籤不當成未知元件）。 */
 const HTML_OK = new Set([
-  'br', 'img', 'a', 'b', 'i', 'em', 'strong', 'code', 'pre', 'kbd', 'sup', 'sub', 'small',
-  'details', 'summary', 'div', 'span', 'p', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
-  'video', 'source', 'figure', 'figcaption', 'blockquote', 'hr', 'mark', 'del', 'ins',
+  'br',
+  'img',
+  'a',
+  'b',
+  'i',
+  'em',
+  'strong',
+  'code',
+  'pre',
+  'kbd',
+  'sup',
+  'sub',
+  'small',
+  'details',
+  'summary',
+  'div',
+  'span',
+  'p',
+  'ul',
+  'ol',
+  'li',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'td',
+  'th',
+  'video',
+  'source',
+  'figure',
+  'figcaption',
+  'blockquote',
+  'hr',
+  'mark',
+  'del',
+  'ins',
 ]);
 
 const ALERT_TYPES = 'NOTE|TIP|IMPORTANT|WARNING|CAUTION';
@@ -154,20 +187,25 @@ async function compileCheck(content: string): Promise<Finding[]> {
     const line = typeof err.line === 'number' ? err.line : undefined;
     // 「語法編不過」與「編得過但前端渲染不了」是兩種不同的問題，修法也不同
     if (err.name === 'MdxUnsupportedError') {
-      return [{
+      return [
+        {
+          severity: 'error',
+          line,
+          message: `MDX 用了前端不支援的構造：${err.message}`,
+          fix:
+            '前端是用序列化的樹渲染的（沒有 eval），所以文章裡不能有運算式。' +
+            '要算的東西請做成元件（元件那一側沒有任何限制），或把結果直接寫出來。',
+        },
+      ];
+    }
+    return [
+      {
         severity: 'error',
         line,
-        message: `MDX 用了前端不支援的構造：${err.message}`,
-        fix: '前端是用序列化的樹渲染的（沒有 eval），所以文章裡不能有運算式。'
-          + '要算的東西請做成元件（元件那一側沒有任何限制），或把結果直接寫出來。',
-      }];
-    }
-    return [{
-      severity: 'error',
-      line,
-      message: `MDX 編譯失敗：${err.reason ?? err.message ?? String(e)}`,
-      fix: '前台遇到這個會靜默退回 markdown（讀者會看到裸露的標籤原始碼）。常見原因：正文裡的 < 或 { 沒包成 `inline code`、標籤沒閉合。',
-    }];
+        message: `MDX 編譯失敗：${err.reason ?? err.message ?? String(e)}`,
+        fix: '前台遇到這個會靜默退回 markdown（讀者會看到裸露的標籤原始碼）。常見原因：正文裡的 < 或 { 沒包成 `inline code`、標籤沒閉合。',
+      },
+    ];
   }
 }
 

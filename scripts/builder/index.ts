@@ -60,7 +60,7 @@ async function processPhoto(
   index: number,
   /** 同 id 的舊資料。策展欄位（tags / tagsEn / description）只存在 manifest 裡，
       重新處理時得從這裡帶回來——照片本身沒有這些資訊。 */
-  existing?: PhotoManifest
+  existing?: PhotoManifest,
 ): Promise<PhotoManifest | null> {
   try {
     const fileName = path.basename(inputPath);
@@ -136,9 +136,7 @@ async function processPhoto(
         MeteringMode: exifData.meteringMode ?? null,
       },
 
-      gps: exifData.gps
-        ? { ...exifData.gps, altitude: exifData.gps.altitude ?? null }
-        : null,
+      gps: exifData.gps ? { ...exifData.gps, altitude: exifData.gps.altitude ?? null } : null,
       shootTime: shootTime ?? null,
 
       // ⚠️ 標籤是 RAM++ 標的、只存在 manifest 裡，照片本身沒有。原本這裡寫死 `[]`，
@@ -230,13 +228,7 @@ export async function build() {
         }
       }
 
-      const manifest = await processPhoto(
-        inputPath,
-        config.output.directory,
-        config,
-        i + 1,
-        existing
-      );
+      const manifest = await processPhoto(inputPath, config.output.directory, config, i + 1, existing);
 
       if (manifest) {
         manifests.push(manifest);
@@ -256,11 +248,7 @@ export async function build() {
     };
 
     await fs.mkdir(path.dirname(config.output.manifestPath), { recursive: true });
-    await fs.writeFile(
-      config.output.manifestPath,
-      JSON.stringify(manifestData, null, 2),
-      'utf-8'
-    );
+    await fs.writeFile(config.output.manifestPath, JSON.stringify(manifestData, null, 2), 'utf-8');
 
     console.log(`  ✅ Manifest 已生成: ${config.output.manifestPath}`);
 

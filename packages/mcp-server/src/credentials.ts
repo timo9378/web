@@ -20,10 +20,9 @@ export function resolveCredentials(): Credentials {
   if (fromEnv.token || (fromEnv.username && fromEnv.password)) return fromEnv;
 
   // 退回檔案：KOIMSURAI_ENV_FILE 指定，或專案根的 .env.backend（cwd = 專案根）
-  const candidates = [
-    process.env.KOIMSURAI_ENV_FILE,
-    resolve(process.cwd(), '.env.backend'),
-  ].filter((p): p is string => Boolean(p));
+  const candidates = [process.env.KOIMSURAI_ENV_FILE, resolve(process.cwd(), '.env.backend')].filter((p): p is string =>
+    Boolean(p),
+  );
 
   for (const path of candidates) {
     const parsed = tryParseEnvFile(path);
@@ -54,10 +53,7 @@ function tryParseEnvFile(path: string): Record<string, string> | null {
     if (eq < 0) continue;
     const key = line.slice(0, eq).trim();
     let val = line.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
     out[key] = val;

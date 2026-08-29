@@ -4,9 +4,7 @@ import { LocaleLink } from '@/i18n/locale-link';
 import { useLocaleNavigate } from '@/hooks/useLocale';
 import { stripLocalePrefix } from '@/i18n/start-i18n';
 import { useTranslation } from 'react-i18next';
-import { FaUser,
-  FaGithub, FaGoogle, FaSignOutAlt, FaCog,
-} from 'react-icons/fa';
+import { FaUser, FaGithub, FaGoogle, FaSignOutAlt, FaCog } from 'react-icons/fa';
 import { HouseIcon, BookOpenTextIcon, LayoutGridIcon } from '@animateicons/react/lucide';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/auth';
@@ -18,7 +16,10 @@ import MobileNav from './MobileNav';
 import meAvatar from '@/assets/me-avatar.webp';
 import './Header.css';
 
-interface AnimIconHandle { startAnimation?: () => void; stopAnimation?: () => void }
+interface AnimIconHandle {
+  startAnimation?: () => void;
+  stopAnimation?: () => void;
+}
 
 /* 導覽列 trigger 的動畫 icon — 跟選單內同款（@animateicons imperative handle），
    hover prop 由 MegaMenu 的 trigger hover/open 狀態 cloneElement 注入 */
@@ -73,7 +74,9 @@ function Header(_props: HeaderProps) {
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => { window.removeEventListener('scroll', handleScroll); };
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -95,7 +98,9 @@ function Header(_props: HeaderProps) {
       if (userMenuRef.current && !userMenuRef.current.contains(target)) setShowUserMenu(false);
     };
     if (showHomeMenu || showMoreMenu || showBlogMenu || showUserMenu) document.addEventListener('mousedown', handler);
-    return () => { document.removeEventListener('mousedown', handler); };
+    return () => {
+      document.removeEventListener('mousedown', handler);
+    };
   }, [showHomeMenu, showMoreMenu, showBlogMenu, showUserMenu]);
 
   const handleNavClick = (e: MouseEvent<Element>, sectionId: string) => {
@@ -112,12 +117,19 @@ function Header(_props: HeaderProps) {
   const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
     const nav = e.currentTarget;
     const rect = nav.getBoundingClientRect();
-    nav.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
-    nav.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+    nav.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+    nav.style.setProperty('--my', ((e.clientY - rect.top) / rect.height) * 100 + '%');
   };
 
   return (
-    <header className={'site-header ' + (isScrolled && !mobileOpen ? 'scrolled ' : '') + (navHidden && !mobileOpen ? 'nav-hidden ' : '') + (mobileOpen ? 'menu-open ' : '')}>
+    <header
+      className={
+        'site-header ' +
+        (isScrolled && !mobileOpen ? 'scrolled ' : '') +
+        (navHidden && !mobileOpen ? 'nav-hidden ' : '') +
+        (mobileOpen ? 'menu-open ' : '')
+      }
+    >
       <LocaleLink to="/" className="site-brand" aria-label={t('nav.backHome')} onClick={() => setMobileOpen(false)}>
         <img src={meAvatar} alt="" className="site-brand-img" />
       </LocaleLink>
@@ -133,17 +145,21 @@ function Header(_props: HeaderProps) {
             label={t('nav.home')}
             icon={(hover) => <TriggerAnimIcon Comp={HouseIcon} hover={hover} />}
             to="/"
-            active={(isHomePage && !location.hash)
-                 || bare.startsWith('about-site')
-                 || bare.startsWith('history')
-                 || bare.startsWith('messages')
-                 || bare.startsWith('friends')
-                 || bare.startsWith('thinking')
-                 || bare.startsWith('about')
-                 || bare.startsWith('portfolio')}
+            active={
+              (isHomePage && !location.hash) ||
+              bare.startsWith('about-site') ||
+              bare.startsWith('history') ||
+              bare.startsWith('messages') ||
+              bare.startsWith('friends') ||
+              bare.startsWith('thinking') ||
+              bare.startsWith('about') ||
+              bare.startsWith('portfolio')
+            }
           >
             <HomeMenuContent
-              onSectionClick={(e, sectionId) => { handleNavClick(e, sectionId); }}
+              onSectionClick={(e, sectionId) => {
+                handleNavClick(e, sectionId);
+              }}
             />
           </MegaMenuItem>
 
@@ -152,9 +168,7 @@ function Header(_props: HeaderProps) {
             label={t('nav.notes')}
             icon={(hover) => <TriggerAnimIcon Comp={BookOpenTextIcon} hover={hover} />}
             to="/blog"
-            active={bare.startsWith('blog')
-                 || bare.startsWith('bookshelf')
-                 || bare.startsWith('music')}
+            active={bare.startsWith('blog') || bare.startsWith('bookshelf') || bare.startsWith('music')}
           >
             <BlogMenuContent />
           </MegaMenuItem>
@@ -163,10 +177,12 @@ function Header(_props: HeaderProps) {
             id="more"
             label={t('nav.more')}
             icon={(hover) => <TriggerAnimIcon Comp={LayoutGridIcon} hover={hover} />}
-            active={bare.startsWith('photos')
-                 || bare.startsWith('activity')
-                 || bare.startsWith('setup')
-                 || bare.startsWith('watch')}
+            active={
+              bare.startsWith('photos') ||
+              bare.startsWith('activity') ||
+              bare.startsWith('setup') ||
+              bare.startsWith('watch')
+            }
           >
             <MoreMenuContent />
           </MegaMenuItem>
@@ -183,7 +199,12 @@ function Header(_props: HeaderProps) {
       <div className="header-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* User Avatar / Login */}
         <div className="user-area" ref={userMenuRef}>
-          <button className="user-avatar-btn" onClick={() => setShowUserMenu(!showUserMenu)} aria-label={t('user.menuLabel')} aria-expanded={showUserMenu}>
+          <button
+            className="user-avatar-btn"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            aria-label={t('user.menuLabel')}
+            aria-expanded={showUserMenu}
+          >
             {isLoggedIn && user?.avatar ? (
               <img src={user.avatar} alt={user.displayName} className="user-avatar-img" referrerPolicy="no-referrer" />
             ) : (
@@ -192,7 +213,13 @@ function Header(_props: HeaderProps) {
           </button>
           <AnimatePresence>
             {showUserMenu && (
-              <motion.div className="user-dropdown" initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.2 }}>
+              <motion.div
+                className="user-dropdown"
+                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                transition={{ duration: 0.2 }}
+              >
                 {isLoggedIn ? (
                   <>
                     <div className="user-dropdown-header">
@@ -201,11 +228,23 @@ function Header(_props: HeaderProps) {
                     </div>
                     <div className="user-dropdown-divider" />
                     {isAdmin && (
-                      <button className="user-dropdown-item" onClick={() => { window.location.assign('/admin'); setShowUserMenu(false); }}>
+                      <button
+                        className="user-dropdown-item"
+                        onClick={() => {
+                          window.location.assign('/admin');
+                          setShowUserMenu(false);
+                        }}
+                      >
                         <FaCog /> {t('user.adminPanel')}
                       </button>
                     )}
-                    <button className="user-dropdown-item" onClick={() => { logout(); setShowUserMenu(false); }}>
+                    <button
+                      className="user-dropdown-item"
+                      onClick={() => {
+                        logout();
+                        setShowUserMenu(false);
+                      }}
+                    >
                       <FaSignOutAlt /> {t('user.logout')}
                     </button>
                   </>
@@ -216,20 +255,26 @@ function Header(_props: HeaderProps) {
                     </div>
                     <div className="user-dropdown-divider" />
                     {providers.github.enabled && (
-                      <button className="user-dropdown-item" onClick={() => {
-                        sessionStorage.setItem('oauth_return_to', location.pathname);
-                        const redirectUri = `${window.location.origin}/auth/callback`;
-                        window.location.href = getGitHubAuthUrl(redirectUri) + '&state=github';
-                      }}>
+                      <button
+                        className="user-dropdown-item"
+                        onClick={() => {
+                          sessionStorage.setItem('oauth_return_to', location.pathname);
+                          const redirectUri = `${window.location.origin}/auth/callback`;
+                          window.location.href = getGitHubAuthUrl(redirectUri) + '&state=github';
+                        }}
+                      >
                         <FaGithub /> {t('user.signInWithGithub')}
                       </button>
                     )}
                     {providers.google.enabled && (
-                      <button className="user-dropdown-item" onClick={() => {
-                        sessionStorage.setItem('oauth_return_to', location.pathname);
-                        const redirectUri = `${window.location.origin}/auth/callback`;
-                        window.location.href = getGoogleAuthUrl(redirectUri) + '&state=google';
-                      }}>
+                      <button
+                        className="user-dropdown-item"
+                        onClick={() => {
+                          sessionStorage.setItem('oauth_return_to', location.pathname);
+                          const redirectUri = `${window.location.origin}/auth/callback`;
+                          window.location.href = getGoogleAuthUrl(redirectUri) + '&state=google';
+                        }}
+                      >
                         <FaGoogle /> {t('user.signInWithGoogle')}
                       </button>
                     )}
@@ -243,29 +288,53 @@ function Header(_props: HeaderProps) {
           </AnimatePresence>
         </div>
 
-        <button className={'mobile-toggle ' + (mobileOpen ? 'open' : '')} onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle navigation">
-          <span /><span /><span />
+        <button
+          className={'mobile-toggle ' + (mobileOpen ? 'open' : '')}
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Toggle navigation"
+        >
+          <span />
+          <span />
+          <span />
         </button>
       </div>
 
       <AnimatePresence>
         {showDownloadModal && (
           <>
-            <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDownloadModal(false)} />
-            <motion.div className="download-popover" initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              className="modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDownloadModal(false)}
+            />
+            <motion.div
+              className="download-popover"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
               <h3>{t('nav.downloadResume')}</h3>
-              <a href="/Resume/Software Engineer.pdf" download="Koimsurai_Resume_Software_Engineer.pdf" className="popover-link">
+              <a
+                href="/Resume/Software Engineer.pdf"
+                download="Koimsurai_Resume_Software_Engineer.pdf"
+                className="popover-link"
+              >
                 <span>💼</span> {t('nav.resumeSE')}
               </a>
               <a href="/Resume/School Clubs.pdf" download="Koimsurai_Resume_School_Clubs.pdf" className="popover-link">
                 <span>🎓</span> {t('nav.resumeClubs')}
               </a>
-              <button className="popover-close" onClick={() => setShowDownloadModal(false)}>{t('common.close')}</button>
+              <button className="popover-close" onClick={() => setShowDownloadModal(false)}>
+                {t('common.close')}
+              </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-    </header >
+    </header>
   );
 }
 

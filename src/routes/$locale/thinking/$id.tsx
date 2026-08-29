@@ -21,7 +21,12 @@ export const Route = createFileRoute('/$locale/thinking/$id')({
     const locale = localeFromPrefix(params.locale) ?? DEFAULT_LOCALE;
     // 碎念本身不分語系（內容就一份），但 canonical/og:locale 要跟著路由
     return {
-      meta: pageMeta(thoughtTitle(thought.content), thought.content, `/${params.locale}/thinking/${thought.id}`, locale),
+      meta: pageMeta(
+        thoughtTitle(thought.content),
+        thought.content,
+        `/${params.locale}/thinking/${thought.id}`,
+        locale,
+      ),
     };
   },
   component: localeWrap(ThinkingDetail),

@@ -97,13 +97,13 @@ const AdminBreadcrumb = () => {
           return (
             <React.Fragment key={href}>
               <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbAnchor href={href} label={label} />
-                )}
+                {isLast ? <BreadcrumbPage>{label}</BreadcrumbPage> : <BreadcrumbAnchor href={href} label={label} />}
               </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator><ChevronRight /></BreadcrumbSeparator>}
+              {!isLast && (
+                <BreadcrumbSeparator>
+                  <ChevronRight />
+                </BreadcrumbSeparator>
+              )}
             </React.Fragment>
           );
         })}
@@ -115,7 +115,13 @@ const AdminBreadcrumb = () => {
 // path 用 Link 的 `to` 型別而不是 string：側欄路徑寫錯（或某天路由改名）會在編譯期就被抓到。
 // 這是換到 TanStack 之後真正多拿到的東西——react-router 時代這裡是純字串，打錯要等點下去才知道。
 type AdminPath = NonNullable<LinkProps['to']>;
-interface SidebarItem { id: string; icon: LucideIcon; label: string; path: AdminPath; ownerOnly?: boolean }
+interface SidebarItem {
+  id: string;
+  icon: LucideIcon;
+  label: string;
+  path: AdminPath;
+  ownerOnly?: boolean;
+}
 
 const sidebarItems: SidebarItem[] = [
   { id: 'dashboard', icon: LayoutDashboard, label: '儀表板', path: '/admin/dashboard' },
@@ -151,7 +157,7 @@ const AdminLayout = () => {
   }, []);
 
   // 過濾 sidebar：ownerOnly 僅 OWNER 可見
-  const visibleSidebarItems = sidebarItems.filter(item => !item.ownerOnly || isOwner);
+  const visibleSidebarItems = sidebarItems.filter((item) => !item.ownerOnly || isOwner);
 
   return (
     <div className="min-h-screen admin-layout deep-space-bg">
@@ -181,9 +187,9 @@ const AdminLayout = () => {
       {/* Sidebar - Desktop */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-border/40",
-          sidebarOpen ? "w-52" : "w-[60px]",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          'fixed left-0 top-0 z-40 h-screen transition-all duration-300 border-r border-border/40',
+          sidebarOpen ? 'w-52' : 'w-[60px]',
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
         <div className="flex h-full flex-col">
@@ -200,13 +206,19 @@ const AdminLayout = () => {
                     <span className="text-[11px] text-muted-foreground truncate leading-tight">管理後台</span>
                   </div>
                 </div>
-                <button onClick={() => setSidebarOpen(false)} className="shrink-0 size-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground/80 hover:bg-accent/50 transition-colors">
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="shrink-0 size-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground/80 hover:bg-accent/50 transition-colors"
+                >
                   <PanelLeftClose className="size-4" />
                 </button>
               </div>
             ) : (
               <div className="flex w-full justify-center">
-                <button onClick={() => setSidebarOpen(true)} className="shrink-0 size-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground/80 hover:bg-accent/50 transition-colors">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="shrink-0 size-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground/80 hover:bg-accent/50 transition-colors"
+                >
                   <PanelLeftOpen className="size-4" />
                 </button>
               </div>
@@ -224,11 +236,11 @@ const AdminLayout = () => {
                   key={item.id}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-2.5 w-full rounded-lg px-2.5 py-[7px] text-[13px] transition-colors",
+                    'flex items-center gap-2.5 w-full rounded-lg px-2.5 py-[7px] text-[13px] transition-colors',
                     isActive
-                      ? "bg-accent/80 text-foreground"
-                      : "text-muted-foreground hover:text-foreground/80 hover:bg-accent/40",
-                    !sidebarOpen && "justify-center px-0"
+                      ? 'bg-accent/80 text-foreground'
+                      : 'text-muted-foreground hover:text-foreground/80 hover:bg-accent/40',
+                    !sidebarOpen && 'justify-center px-0',
                   )}
                 >
                   <Icon className="size-[16px] shrink-0" />
@@ -244,8 +256,8 @@ const AdminLayout = () => {
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "flex items-center gap-2.5 w-full rounded-lg transition-colors hover:bg-accent/30 p-1",
-                    !sidebarOpen && "justify-center p-0"
+                    'flex items-center gap-2.5 w-full rounded-lg transition-colors hover:bg-accent/30 p-1',
+                    !sidebarOpen && 'justify-center p-0',
                   )}
                 >
                   <Avatar className="size-7 shrink-0">
@@ -256,8 +268,12 @@ const AdminLayout = () => {
                   </Avatar>
                   {sidebarOpen && (
                     <div className="flex flex-col min-w-0 text-left">
-                      <span className="text-[13px] font-medium text-foreground/80 truncate leading-tight">{user?.displayName ?? '管理員'}</span>
-                      <span className="text-[11px] text-muted-foreground truncate leading-tight">{user?.email ?? ''}</span>
+                      <span className="text-[13px] font-medium text-foreground/80 truncate leading-tight">
+                        {user?.displayName ?? '管理員'}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground truncate leading-tight">
+                        {user?.email ?? ''}
+                      </span>
                     </div>
                   )}
                 </button>
@@ -265,7 +281,11 @@ const AdminLayout = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>我的帳戶</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { void navigate({ to: '/' }); }}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    void navigate({ to: '/' });
+                  }}
+                >
                   <Home className="mr-2 h-4 w-4" />
                   回到前台
                 </DropdownMenuItem>
@@ -285,38 +305,43 @@ const AdminLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div
-        className={cn(
-          "transition-all duration-300 relative z-10",
-          sidebarOpen ? "md:ml-52" : "md:ml-[60px]"
-        )}
-      >
+      <div className={cn('transition-all duration-300 relative z-10', sidebarOpen ? 'md:ml-52' : 'md:ml-[60px]')}>
         {/* Header */}
-        <header
-          className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 glass-subtle px-4 sm:px-6"
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 glass-subtle px-4 sm:px-6">
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X /> : <Menu />}
           </Button>
 
           <AdminBreadcrumb />
 
-          {pathname.includes('/admin/posts/edit') || pathname.includes('/admin/posts/create') || pathname === '/admin/posts/new' ? (
+          {pathname.includes('/admin/posts/edit') ||
+          pathname.includes('/admin/posts/create') ||
+          pathname === '/admin/posts/new' ? (
             <div className="ml-auto flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground/80 px-2.5" onClick={() => document.getElementById('save-draft-btn')?.click()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground/80 px-2.5"
+                onClick={() => document.getElementById('save-draft-btn')?.click()}
+              >
                 <Save className="size-3.5" />
                 儲存草稿
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground/80 px-2.5" onClick={() => document.getElementById('save-exit-btn')?.click()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground/80 px-2.5"
+                onClick={() => document.getElementById('save-exit-btn')?.click()}
+              >
                 <SaveAll className="size-3.5" />
                 存並回列表
               </Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 text-foreground/80 border-border/50 hover:bg-accent/50 px-3" onClick={() => document.getElementById('publish-btn')?.click()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5 text-foreground/80 border-border/50 hover:bg-accent/50 px-3"
+                onClick={() => document.getElementById('publish-btn')?.click()}
+              >
                 <Send className="size-3.5" />
                 發佈文章
               </Button>
@@ -334,10 +359,7 @@ const AdminLayout = () => {
       {mobileMenuOpen && (
         // 手機側欄的遮罩，點它收起選單；鍵盤路徑是選單本身的開關鈕
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-        <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
+        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
     </div>
   );

@@ -8,13 +8,20 @@ import Comments from '@/components/blog/Comments';
 import '@/components/common/article-shell.css';
 import './InfoPage.css';
 
-interface PagerLink { to: string; title: string }
-interface Heading { id: string; text: string; level: number }
+interface PagerLink {
+  to: string;
+  title: string;
+}
+interface Heading {
+  id: string;
+  text: string;
+  level: number;
+}
 
 interface InfoPageProps {
   title: string;
   subtitle?: string;
-  slug?: string;           // 用來當 Comments 的 postId
+  slug?: string; // 用來當 Comments 的 postId
   prev?: PagerLink | null; // { to, title } | null
   next?: PagerLink | null; // { to, title } | null
   closingNote?: ReactNode; // 末尾的小字（例：本站已運行 X 天）
@@ -32,15 +39,7 @@ interface InfoPageProps {
  *
  * 用 contentRef 內容自動偵測 h2/h3 來建 TOC，呼叫端只要丟 children 就好。
  */
-function InfoPage({
-  title,
-  subtitle,
-  slug,
-  prev,
-  next,
-  closingNote,
-  children,
-}: InfoPageProps) {
+function InfoPage({ title, subtitle, slug, prev, next, closingNote, children }: InfoPageProps) {
   const contentRef = useRef<HTMLElement>(null);
   const tocRef = useRef<HTMLElement>(null);
   const [headings, setHeadings] = useState<Heading[]>([]);
@@ -61,7 +60,11 @@ function InfoPage({
   // 兩個 getSnapshot 都回傳純量（number / string），不會因為每次新建物件而無限重繪。
   // activeId 的快照閉包會隨 headings 變動而重建 —— 那正好是我們要的：headings 一改，
   // 元件重繪、快照重算。
-  const progress = useSyncExternalStore(subscribeScroll, () => scrollRatio() * 100, () => 0);
+  const progress = useSyncExternalStore(
+    subscribeScroll,
+    () => scrollRatio() * 100,
+    () => 0,
+  );
   const activeId = useSyncExternalStore(
     subscribeScroll,
     () => {
@@ -89,7 +92,6 @@ function InfoPage({
 
   return (
     <div className="blog-post-container info-page" style={{ fontFamily: 'inherit' }}>
-
       {/* 同一塊 dim overlay 蓋在 starfield 上面，跟 BlogPost 一致的暗色感 */}
       <div className="blog-post-dim-overlay" />
 
@@ -160,11 +162,19 @@ function InfoPage({
                 <h3>目錄</h3>
                 <div className="reading-progress-circle">
                   <svg viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none" stroke="var(--post-accent)" strokeWidth="3"
-                      strokeDasharray={progress + ', 100'} />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.08)"
+                      strokeWidth="3"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="var(--post-accent)"
+                      strokeWidth="3"
+                      strokeDasharray={progress + ', 100'}
+                    />
                   </svg>
                   <span className="progress-text">{Math.round(progress)}%</span>
                 </div>

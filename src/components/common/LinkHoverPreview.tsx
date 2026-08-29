@@ -54,7 +54,15 @@ const CARD_W = 300;
 const CARD_H = 300; // 估高（圖 158 + 文字區）——只用來決定要不要翻到上方
 const GAP = 12;
 
-export function LinkHoverPreview({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+export function LinkHoverPreview({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number; above: boolean } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,10 +81,7 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
       // 還會因為蓋住連結而立刻觸發 mouseleave（= 使用者說的「有時候跑不出來」）。
       const spaceBelow = window.innerHeight - r.bottom;
       const above = spaceBelow < CARD_H + GAP && r.top > CARD_H + GAP;
-      const x = Math.min(
-        Math.max(r.left + r.width / 2 - CARD_W / 2, GAP),
-        window.innerWidth - CARD_W - GAP,
-      );
+      const x = Math.min(Math.max(r.left + r.width / 2 - CARD_W / 2, GAP), window.innerWidth - CARD_W - GAP);
       setPos({ x, y: above ? r.top - CARD_H - GAP : r.bottom + GAP, above });
       setOpen(true);
     }, HOVER_OPEN_DELAY);
@@ -110,51 +115,56 @@ export function LinkHoverPreview({ href, children, className }: { href: string; 
         {children}
       </a>
 
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {open && pos && (
-            <motion.div
-              className="lhp-card"
-              initial={{ opacity: 0, y: pos.above ? 6 : -6, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: pos.above ? 6 : -6, scale: 0.96 }}
-              transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-              /* 只給 left/top —— transform 保留給 framer（見 openSoon 的註解） */
-              style={{ left: pos.x, top: pos.y }}
-              onMouseEnter={cancelClose}
-              onMouseLeave={closeSoon}
-            >
-              {isPending ? (
-                <div className="lhp-skel" />
-              ) : data?.image ? (
-                <img className="lhp-img" src={proxied(data.image)} alt="" loading="lazy" />
-              ) : (
-                /* 降級卡：沒有 og:image 時用 favicon + 站名撐版面，高度與圖片卡一致 */
-                <div className="lhp-fallback">
-                  {/* ⚠ favicon 可能根本不存在（站方沒宣告時後端只能猜 /favicon.ico，
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {open && pos && (
+              <motion.div
+                className="lhp-card"
+                initial={{ opacity: 0, y: pos.above ? 6 : -6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: pos.above ? 6 : -6, scale: 0.96 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                /* 只給 left/top —— transform 保留給 framer（見 openSoon 的註解） */
+                style={{ left: pos.x, top: pos.y }}
+                onMouseEnter={cancelClose}
+                onMouseLeave={closeSoon}
+              >
+                {isPending ? (
+                  <div className="lhp-skel" />
+                ) : data?.image ? (
+                  <img className="lhp-img" src={proxied(data.image)} alt="" loading="lazy" />
+                ) : (
+                  /* 降級卡：沒有 og:image 時用 favicon + 站名撐版面，高度與圖片卡一致 */
+                  <div className="lhp-fallback">
+                    {/* ⚠ favicon 可能根本不存在（站方沒宣告時後端只能猜 /favicon.ico，
                       而很多站沒有那支檔）。抓不到時把 <img> 自己藏起來——不處理的話
                       降級卡上會掛一個瀏覽器預設的破圖示，比沒有圖還難看。 */}
-                  {data?.favicon && (
-                    <img
-                      className="lhp-favicon"
-                      src={proxied(data.favicon)}
-                      alt=""
-                      loading="lazy"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  )}
-                  <span className="lhp-site">{data?.site_name ?? new URL(href, 'https://koimsurai.com').hostname}</span>
+                    {data?.favicon && (
+                      <img
+                        className="lhp-favicon"
+                        src={proxied(data.favicon)}
+                        alt=""
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span className="lhp-site">
+                      {data?.site_name ?? new URL(href, 'https://koimsurai.com').hostname}
+                    </span>
+                  </div>
+                )}
+                <div className="lhp-body">
+                  <div className="lhp-title">{data?.title ?? href}</div>
+                  {data?.description && <div className="lhp-desc">{data.description}</div>}
                 </div>
-              )}
-              <div className="lhp-body">
-                <div className="lhp-title">{data?.title ?? href}</div>
-                {data?.description && <div className="lhp-desc">{data.description}</div>}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body,
-      )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </>
   );
 }

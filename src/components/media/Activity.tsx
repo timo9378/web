@@ -35,7 +35,11 @@ export type SteamProfile = SteamProfileResponse;
 type GithubUser = GithubUserResponse;
 export type GithubContributions = GithubContributionsResponse;
 
-export interface ServerStatus { status: string; responseTime: number; lastCheck: Date }
+export interface ServerStatus {
+  status: string;
+  responseTime: number;
+  lastCheck: Date;
+}
 
 // 以下三個是 **client 端把多支端點併起來的聚合形狀**，不是任何一支 API 的回應，
 // 所以留在前端定義；元素型別才是後端來的。
@@ -64,7 +68,6 @@ export interface GithubData {
   error?: string;
 }
 
-
 const Activity = () => {
   const { t, i18n } = useTranslation();
   const { isVisible } = usePageVisibility();
@@ -77,8 +80,11 @@ const Activity = () => {
   const { data: githubData = null, isLoading: githubLoading } = useQuery(githubQueryOptions);
   const { data: serverStatus = null } = useQuery(serverStatusQueryOptions);
   const [contributionYear, setContributionYear] = useState('last');
-  const { data: contributions = null, isFetching: contributionsFetching, refetch: refetchContributions } =
-    useQuery(contributionsQueryOptions(contributionYear));
+  const {
+    data: contributions = null,
+    isFetching: contributionsFetching,
+    refetch: refetchContributions,
+  } = useQuery(contributionsQueryOptions(contributionYear));
   const isRefreshing = contributionsFetching;
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
@@ -126,7 +132,9 @@ const Activity = () => {
   const steamIsInGame = Boolean(steamData?.playerInfo?.gameid);
   const steamStateText = steamIsInGame
     ? t('activity.steam.ingame')
-    : (steamData?.playerInfo?.personastate === 1 ? t('activity.steam.online') : t('activity.steam.offline'));
+    : steamData?.playerInfo?.personastate === 1
+      ? t('activity.steam.online')
+      : t('activity.steam.offline');
   const sortedOwnedGames = steamData?.ownedGames
     ? [...steamData.ownedGames].sort((a, b) => (b.playtime_forever ?? 0) - (a.playtime_forever ?? 0)).slice(0, 30)
     : [];
@@ -135,13 +143,17 @@ const Activity = () => {
   const contributionCount = contributions?.total ?? 0;
   // render 必須是純函式：new Date() 放進 state initializer（只在首次 render 求值）
   const [heatmapCurrentYear] = useState(() => new Date().getFullYear());
-  const heatmapYears = ['last', String(heatmapCurrentYear), String(heatmapCurrentYear - 1), String(heatmapCurrentYear - 2)];
+  const heatmapYears = [
+    'last',
+    String(heatmapCurrentYear),
+    String(heatmapCurrentYear - 1),
+    String(heatmapCurrentYear - 2),
+  ];
 
   // 不再等所有 API 好才進頁面：各區靠自己的 query 資料條件渲染（null → 先隱藏，到齊再補），
   // 進頁面立刻 render 骨架 + nebula 背景，比舊的全螢幕 loading gate 快很多。
   return (
     <div className={`activity-page ${!isVisible ? 'is-hidden' : ''}`}>
-
       <div className="activity-dim-overlay" />
       <div className="activity-nebula-bg">
         <div className="nebula-layer activity-nebula-1" />
@@ -165,7 +177,11 @@ const Activity = () => {
           <div className="status-bar-left">
             <div className={`status-dot-inline ${serverStatus?.status ?? 'checking'}`} />
             <span className="status-bar-text">
-              {serverStatus?.status === 'online' ? 'Server Online' : serverStatus?.status === 'offline' ? 'Offline' : 'Checking...'}
+              {serverStatus?.status === 'online'
+                ? 'Server Online'
+                : serverStatus?.status === 'offline'
+                  ? 'Offline'
+                  : 'Checking...'}
             </span>
             {(serverStatus?.responseTime ?? 0) > 0 && (
               <span className="status-bar-meta">{serverStatus?.responseTime}ms</span>
@@ -173,9 +189,16 @@ const Activity = () => {
           </div>
           <div className="status-bar-right">
             {/* uptime / 時鐘用 new Date()，server 與 client render 時間不同 → suppressHydrationWarning */}
-            <span className="status-bar-meta" suppressHydrationWarning>Uptime {uptime.days}d {uptime.hours}h</span>
+            <span className="status-bar-meta" suppressHydrationWarning>
+              Uptime {uptime.days}d {uptime.hours}h
+            </span>
             <span className="status-bar-time" suppressHydrationWarning>
-              {currentTime.toLocaleTimeString(i18n.resolvedLanguage ?? 'zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+              {currentTime.toLocaleTimeString(i18n.resolvedLanguage ?? 'zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+              })}
             </span>
           </div>
         </motion.div>
@@ -198,7 +221,9 @@ const Activity = () => {
           </div>
           <span className="hero-divider" />
           <div className="hero-number-item">
-            <span className="hero-num">{githubData?.recentRepos?.reduce((s, r) => s + r.stargazers_count, 0) ?? 0}</span>
+            <span className="hero-num">
+              {githubData?.recentRepos?.reduce((s, r) => s + r.stargazers_count, 0) ?? 0}
+            </span>
             <span className="hero-label">Stars</span>
           </div>
           <span className="hero-divider" />
@@ -210,76 +235,82 @@ const Activity = () => {
 
         {/* ─── Section 3a: Steam Profile — Steam hover-card 風格 ─── */}
         {steamData?.playerInfo && (
-            <motion.a
-              href={steamProfile?.profileUrl ?? steamData.playerInfo.profileurl ?? undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`steam-profile-card ${steamIsInGame ? 'is-in-game' : ''} ${steamData.playerInfo.personastate === 1 ? 'is-online' : 'is-offline'}`}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              {steamCust?.nameplateWebm && (
-                <video
-                  className="steam-profile-bg"
-                  autoPlay muted loop playsInline
-                  poster={steamCust.nameplateMp4 ?? undefined}
-                >
-                  <source src={steamCust.nameplateWebm} type="video/webm" />
-                  {steamCust.nameplateMp4 && <source src={steamCust.nameplateMp4} type="video/mp4" />}
-                </video>
-              )}
-              <div className="steam-profile-overlay" />
-              <div className="steam-profile-content">
-                <div className="steam-profile-avatar-wrap">
-                  <img
-                    src={(steamHasAnimAvatar ? steamCust?.animatedAvatar : steamData.playerInfo.avatarfull) ?? undefined}
-                    alt="Steam avatar"
-                    className="steam-profile-avatar"
-                  />
-                  {steamCust?.avatarFrame && (
-                    <img className="steam-profile-avatar-frame" src={steamCust.avatarFrame} alt="" aria-hidden />
-                  )}
-                </div>
-                <div className="steam-profile-meta">
-                  <div className="steam-profile-name-row">
-                    {/* h2 不是 h3：頁面只有一個 sr-only 的 h1，這是它底下的第一層區塊標題。
+          <motion.a
+            href={steamProfile?.profileUrl ?? steamData.playerInfo.profileurl ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`steam-profile-card ${steamIsInGame ? 'is-in-game' : ''} ${steamData.playerInfo.personastate === 1 ? 'is-online' : 'is-offline'}`}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            {steamCust?.nameplateWebm && (
+              <video
+                className="steam-profile-bg"
+                autoPlay
+                muted
+                loop
+                playsInline
+                poster={steamCust.nameplateMp4 ?? undefined}
+              >
+                <source src={steamCust.nameplateWebm} type="video/webm" />
+                {steamCust.nameplateMp4 && <source src={steamCust.nameplateMp4} type="video/mp4" />}
+              </video>
+            )}
+            <div className="steam-profile-overlay" />
+            <div className="steam-profile-content">
+              <div className="steam-profile-avatar-wrap">
+                <img
+                  src={(steamHasAnimAvatar ? steamCust?.animatedAvatar : steamData.playerInfo.avatarfull) ?? undefined}
+                  alt="Steam avatar"
+                  className="steam-profile-avatar"
+                />
+                {steamCust?.avatarFrame && (
+                  <img className="steam-profile-avatar-frame" src={steamCust.avatarFrame} alt="" aria-hidden />
+                )}
+              </div>
+              <div className="steam-profile-meta">
+                <div className="steam-profile-name-row">
+                  {/* h2 不是 h3：頁面只有一個 sr-only 的 h1，這是它底下的第一層區塊標題。
                         ⚠ 這個跳級**本機測不出來**——沒有 Steam 金鑰時整個區塊不 render，
                         所以是部署後對正式站跑 axe 才發現的。 */}
-                    <h2 className="steam-profile-name">{steamData.playerInfo.personaname}</h2>
-                    {steamProfile?.level != null && (
-                      <span className="steam-profile-level" title={`${steamProfile.xp} XP · 還需 ${steamProfile.xpToNext} XP 升級`}>
-                        Lv.{steamProfile.level}
-                      </span>
-                    )}
-                  </div>
-                  <div className="steam-profile-status">
-                    <span className="steam-profile-dot" />
-                    {steamStateText}
-                    <span className="steam-profile-divider">·</span>
-                    {t('activity.gamesUnit', { count: steamData.gameCount })}
-                    {steamProfile?.badgeCount ? (
-                      <>
-                        <span className="steam-profile-divider">·</span>
-                        {t('activity.badgesUnit', { count: steamProfile.badgeCount })}
-                      </>
-                    ) : null}
-                  </div>
-                  {/* customization 一定在（Rust 那邊不是 Option），只有 featuredBadge 會沒有；
-                      xp 也是必有的字串（miniprofile 上就是 "1,234 XP" 這種格式化過的值） */}
-                  {steamProfile?.customization.featuredBadge && (
-                    <div className="steam-profile-featured" title={steamProfile.customization.featuredBadge.xp}>
-                      <img src={steamProfile.customization.featuredBadge.icon} alt="" />
-                      <span>{steamProfile.customization.featuredBadge.name}</span>
-                    </div>
+                  <h2 className="steam-profile-name">{steamData.playerInfo.personaname}</h2>
+                  {steamProfile?.level != null && (
+                    <span
+                      className="steam-profile-level"
+                      title={`${steamProfile.xp} XP · 還需 ${steamProfile.xpToNext} XP 升級`}
+                    >
+                      Lv.{steamProfile.level}
+                    </span>
                   )}
                 </div>
-                <span className="koim-btn steam-profile-cta-btn">
-                  Steam<span aria-hidden>→</span>
-                </span>
+                <div className="steam-profile-status">
+                  <span className="steam-profile-dot" />
+                  {steamStateText}
+                  <span className="steam-profile-divider">·</span>
+                  {t('activity.gamesUnit', { count: steamData.gameCount })}
+                  {steamProfile?.badgeCount ? (
+                    <>
+                      <span className="steam-profile-divider">·</span>
+                      {t('activity.badgesUnit', { count: steamProfile.badgeCount })}
+                    </>
+                  ) : null}
+                </div>
+                {/* customization 一定在（Rust 那邊不是 Option），只有 featuredBadge 會沒有；
+                      xp 也是必有的字串（miniprofile 上就是 "1,234 XP" 這種格式化過的值） */}
+                {steamProfile?.customization.featuredBadge && (
+                  <div className="steam-profile-featured" title={steamProfile.customization.featuredBadge.xp}>
+                    <img src={steamProfile.customization.featuredBadge.icon} alt="" />
+                    <span>{steamProfile.customization.featuredBadge.name}</span>
+                  </div>
+                )}
               </div>
-            </motion.a>
+              <span className="koim-btn steam-profile-cta-btn">
+                Steam<span aria-hidden>→</span>
+              </span>
+            </div>
+          </motion.a>
         )}
 
         {/* ─── Section 3b: 最近遊玩 — horizontal snap scroll ─── */}
@@ -293,9 +324,13 @@ const Activity = () => {
           >
             <header className="steam-recent-header">
               <h2 className="section-label">
-                {steamData?.playerInfo?.gameid ? t('activity.steam.playingTwoWeeks') : t('activity.steam.recentTwoWeeks')}
+                {steamData?.playerInfo?.gameid
+                  ? t('activity.steam.playingTwoWeeks')
+                  : t('activity.steam.recentTwoWeeks')}
               </h2>
-              <span className="steam-recent-count">{t('activity.titlesUnit', { count: steamData?.recentGames?.length ?? 0 })}</span>
+              <span className="steam-recent-count">
+                {t('activity.titlesUnit', { count: steamData?.recentGames?.length ?? 0 })}
+              </span>
             </header>
             {/* 不掛 role="list"/"listitem"：原本 role="listitem" 蓋在 <a> 上會覆寫連結語意，
                 報讀器不再說「連結」，反而比沒有 list 語意更糟。這裡是一排連結卡片，
@@ -336,9 +371,13 @@ const Activity = () => {
                     <div className="steam-recent-info">
                       <h3 className="steam-recent-title">{g.name}</h3>
                       <div className="steam-recent-stats">
-                        <span>{t('activity.playtime2w')} {formatPlaytime(g.playtime_2weeks ?? 0)}</span>
+                        <span>
+                          {t('activity.playtime2w')} {formatPlaytime(g.playtime_2weeks ?? 0)}
+                        </span>
                         <span className="steam-recent-divider">·</span>
-                        <span>{t('activity.playtimeTotal')} {formatPlaytime(g.playtime_forever ?? 0)}</span>
+                        <span>
+                          {t('activity.playtimeTotal')} {formatPlaytime(g.playtime_forever ?? 0)}
+                        </span>
                       </div>
                     </div>
                   </a>
@@ -359,9 +398,7 @@ const Activity = () => {
           >
             <div className="code-pulse-left">
               <h2 className="section-label">CODE PULSE</h2>
-              <div className="code-pulse-today">
-                {wakatimeData.today?.text ?? '0 hrs 0 mins'}
-              </div>
+              <div className="code-pulse-today">{wakatimeData.today?.text ?? '0 hrs 0 mins'}</div>
               <span className="code-pulse-sub">{t('activity.wakatime.todayCoding')}</span>
             </div>
             <div className="code-pulse-right">
@@ -404,26 +441,31 @@ const Activity = () => {
           >
             <div className="heatmap-section-header">
               {githubData?.user && (
-                <a href={githubData.user.html_url ?? undefined} target="_blank" rel="noopener noreferrer" className="heatmap-profile">
+                <a
+                  href={githubData.user.html_url ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="heatmap-profile"
+                >
                   <img src={githubData.user.avatar_url ?? undefined} alt="GitHub" className="heatmap-avatar" />
                   <span>{githubData.user.name ?? githubData.user.login}</span>
                 </a>
               )}
               {contributions && (
-                  <div className="heatmap-total">
-                    {contributionYear === 'last' ? (
-                      <Trans
-                        i18nKey="activity.github.contributions"
-                        values={{ count: contributionCount }}
-                        components={{ b: <span className="heatmap-total-num" /> }}
-                      />
-                    ) : (
-                      <>
-                        <span className="heatmap-total-num">{contributionCount}</span>
-                        <span className="heatmap-total-label">contributions in {contributionYear}</span>
-                      </>
-                    )}
-                  </div>
+                <div className="heatmap-total">
+                  {contributionYear === 'last' ? (
+                    <Trans
+                      i18nKey="activity.github.contributions"
+                      values={{ count: contributionCount }}
+                      components={{ b: <span className="heatmap-total-num" /> }}
+                    />
+                  ) : (
+                    <>
+                      <span className="heatmap-total-num">{contributionCount}</span>
+                      <span className="heatmap-total-label">contributions in {contributionYear}</span>
+                    </>
+                  )}
+                </div>
               )}
               <button
                 type="button"
@@ -436,7 +478,17 @@ const Activity = () => {
                 title={t('activity.refresh')}
                 aria-label="刷新貢獻圖"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M21 2v6h-6" />
                   <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
                   <path d="M3 22v-6h6" />
@@ -445,7 +497,7 @@ const Activity = () => {
               </button>
             </div>
             <div className="heatmap-year-selector">
-              {heatmapYears.map(y => (
+              {heatmapYears.map((y) => (
                 <button
                   key={y}
                   type="button"
@@ -490,7 +542,9 @@ const Activity = () => {
             <div className="heatmap-legend">
               <span>Less</span>
               <div className="legend-squares">
-                {[0, 1, 2, 3, 4].map(l => <div key={l} className={`legend-square level-${l}`} />)}
+                {[0, 1, 2, 3, 4].map((l) => (
+                  <div key={l} className={`legend-square level-${l}`} />
+                ))}
               </div>
               <span>More</span>
             </div>
@@ -526,45 +580,47 @@ const Activity = () => {
                     </div>
                   ))
                 : githubData?.recentCommits?.slice(0, 8).map((event) => (
-                <div key={event.id} className="commit-event">
-                  <div className="commit-event-header">
-                    <div className="commit-dot" />
-                    <span className="commit-repo">{event.repo.name.split('/')[1]}</span>
-                    <span className="commit-when">{formatDate(event.created_at)}</span>
-                  </div>
-                  <div className="commit-messages">
-                    {event.payload.commits.length > 0 ? (
-                      <>
-                        {event.payload.commits.slice(0, 3).map((commit) => (
+                    <div key={event.id} className="commit-event">
+                      <div className="commit-event-header">
+                        <div className="commit-dot" />
+                        <span className="commit-repo">{event.repo.name.split('/')[1]}</span>
+                        <span className="commit-when">{formatDate(event.created_at)}</span>
+                      </div>
+                      <div className="commit-messages">
+                        {event.payload.commits.length > 0 ? (
+                          <>
+                            {event.payload.commits.slice(0, 3).map((commit) => (
+                              <a
+                                key={commit.sha}
+                                className="commit-msg-row"
+                                href={`https://github.com/${event.repo.name}/commit/${commit.sha}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <code className="commit-sha">{commit.sha.slice(0, 7)}</code>
+                                <span className="commit-msg">{commit.message.split('\n')[0]}</span>
+                              </a>
+                            ))}
+                            {event.payload.commits.length > 3 && (
+                              <span className="commit-more">+{event.payload.commits.length - 3} more</span>
+                            )}
+                          </>
+                        ) : (
                           <a
-                            key={commit.sha}
                             className="commit-msg-row"
-                            href={`https://github.com/${event.repo.name}/commit/${commit.sha}`}
+                            href={`https://github.com/${event.repo.name}/compare/${event.payload.before?.slice(0, 7)}...${event.payload.head?.slice(0, 7)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <code className="commit-sha">{commit.sha.slice(0, 7)}</code>
-                            <span className="commit-msg">{commit.message.split('\n')[0]}</span>
+                            <code className="commit-sha">{event.payload.head?.slice(0, 7) ?? '—'}</code>
+                            <span className="commit-msg">
+                              Pushed {event.payload.size ?? 1} commit{(event.payload.size ?? 1) > 1 ? 's' : ''}
+                            </span>
                           </a>
-                        ))}
-                        {event.payload.commits.length > 3 && (
-                          <span className="commit-more">+{event.payload.commits.length - 3} more</span>
                         )}
-                      </>
-                    ) : (
-                      <a
-                        className="commit-msg-row"
-                        href={`https://github.com/${event.repo.name}/compare/${event.payload.before?.slice(0, 7)}...${event.payload.head?.slice(0, 7)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <code className="commit-sha">{event.payload.head?.slice(0, 7) ?? '—'}</code>
-                        <span className="commit-msg">Pushed {event.payload.size ?? 1} commit{(event.payload.size ?? 1) > 1 ? 's' : ''}</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      </div>
+                    </div>
+                  ))}
             </div>
           </motion.div>
         )}
@@ -603,53 +659,53 @@ const Activity = () => {
 
         {/* ─── Section 8: Game Gallery — auto-scroll marquee ─── */}
         {(steamData?.ownedGames?.length ?? 0) > 0 && (
-            <motion.div
-              className="game-gallery-section"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="game-gallery-header">
-                <h2 className="section-label">GAME LIBRARY</h2>
-                <span className="game-gallery-count">{steamData?.gameCount} games</span>
+          <motion.div
+            className="game-gallery-section"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="game-gallery-header">
+              <h2 className="section-label">GAME LIBRARY</h2>
+              <span className="game-gallery-count">{steamData?.gameCount} games</span>
+            </div>
+            <div className="game-marquee-wrapper">
+              <div className="game-marquee-track">
+                {[...sortedOwnedGames, ...sortedOwnedGames].map((game) => (
+                  <a
+                    key={game.appid}
+                    href={`https://store.steampowered.com/app/${game.appid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="game-gallery-item"
+                  >
+                    <img
+                      src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
+                      alt={game.name ?? ''}
+                      loading="lazy"
+                      onError={(e) => {
+                        // header.jpg 沒上 → 試 capsule；capsule 也失敗 → 藏 img（露出 placeholder），
+                        // 不再讓破圖 + alt 文字閃（跟 steam-recent-cover 同一套 fallback）。
+                        const img = e.currentTarget;
+                        if (!img.dataset.fallback) {
+                          img.dataset.fallback = '1';
+                          img.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`;
+                        } else {
+                          img.style.display = 'none';
+                          img.parentElement?.classList.add('is-fallback');
+                        }
+                      }}
+                    />
+                    <div className="game-gallery-info">
+                      <span>{game.name}</span>
+                      <span className="game-gallery-time">{formatPlaytime(game.playtime_forever ?? 0)}</span>
+                    </div>
+                  </a>
+                ))}
               </div>
-              <div className="game-marquee-wrapper">
-                <div className="game-marquee-track">
-                  {[...sortedOwnedGames, ...sortedOwnedGames].map((game) => (
-                    <a
-                      key={game.appid}
-                      href={`https://store.steampowered.com/app/${game.appid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="game-gallery-item"
-                    >
-                      <img
-                        src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
-                        alt={game.name ?? ''}
-                        loading="lazy"
-                        onError={(e) => {
-                          // header.jpg 沒上 → 試 capsule；capsule 也失敗 → 藏 img（露出 placeholder），
-                          // 不再讓破圖 + alt 文字閃（跟 steam-recent-cover 同一套 fallback）。
-                          const img = e.currentTarget;
-                          if (!img.dataset.fallback) {
-                            img.dataset.fallback = '1';
-                            img.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`;
-                          } else {
-                            img.style.display = 'none';
-                            img.parentElement?.classList.add('is-fallback');
-                          }
-                        }}
-                      />
-                      <div className="game-gallery-info">
-                        <span>{game.name}</span>
-                        <span className="game-gallery-time">{formatPlaytime(game.playtime_forever ?? 0)}</span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+            </div>
+          </motion.div>
         )}
 
         {/* ─── Section 9: Repos — simple list ─── */}
@@ -663,7 +719,7 @@ const Activity = () => {
           >
             <h2 className="section-label">RECENT REPOS</h2>
             <div className="repos-list">
-              {githubData?.recentRepos?.map(repo => (
+              {githubData?.recentRepos?.map((repo) => (
                 <a key={repo.id} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="repo-row">
                   <div className="repo-row-left">
                     <h3>{repo.name}</h3>
@@ -683,19 +739,50 @@ const Activity = () => {
             </div>
           </motion.div>
         )}
-
       </div>
     </div>
   );
 };
 
 const getLanguageColor = (lang: string) => {
-  const c: Record<string, string> = { JavaScript:'#f1e05a', TypeScript:'#2b7489', Python:'#3572A5', Java:'#b07219', 'C++':'#f34b7d', C:'#555', Go:'#00ADD8', Rust:'#dea584', PHP:'#4F5D95', Ruby:'#701516', Swift:'#ffac45', Kotlin:'#F18E33', Dart:'#00B4AB', HTML:'#e34c26', CSS:'#563d7c' };
+  const c: Record<string, string> = {
+    JavaScript: '#f1e05a',
+    TypeScript: '#2b7489',
+    Python: '#3572A5',
+    Java: '#b07219',
+    'C++': '#f34b7d',
+    C: '#555',
+    Go: '#00ADD8',
+    Rust: '#dea584',
+    PHP: '#4F5D95',
+    Ruby: '#701516',
+    Swift: '#ffac45',
+    Kotlin: '#F18E33',
+    Dart: '#00B4AB',
+    HTML: '#e34c26',
+    CSS: '#563d7c',
+  };
   return c[lang] ?? '#8257e6';
 };
 
 const getLanguageColorGradient = (lang: string) => {
-  const g: Record<string, string> = { JavaScript:'rgba(241,224,90,0.8),rgba(241,224,90,0.4)', TypeScript:'rgba(43,116,137,0.8),rgba(43,116,137,0.4)', Python:'rgba(53,114,165,0.8),rgba(53,114,165,0.4)', Java:'rgba(176,114,25,0.8),rgba(176,114,25,0.4)', 'C++':'rgba(243,75,125,0.8),rgba(243,75,125,0.4)', C:'rgba(85,85,85,0.8),rgba(85,85,85,0.4)', Go:'rgba(0,173,216,0.8),rgba(0,173,216,0.4)', Rust:'rgba(222,165,132,0.8),rgba(222,165,132,0.4)', PHP:'rgba(79,93,149,0.8),rgba(79,93,149,0.4)', Ruby:'rgba(112,21,22,0.8),rgba(112,21,22,0.4)', Swift:'rgba(255,172,69,0.8),rgba(255,172,69,0.4)', Kotlin:'rgba(241,142,51,0.8),rgba(241,142,51,0.4)', Dart:'rgba(0,180,171,0.8),rgba(0,180,171,0.4)', HTML:'rgba(227,76,38,0.8),rgba(227,76,38,0.4)', CSS:'rgba(86,61,124,0.8),rgba(86,61,124,0.4)' };
+  const g: Record<string, string> = {
+    JavaScript: 'rgba(241,224,90,0.8),rgba(241,224,90,0.4)',
+    TypeScript: 'rgba(43,116,137,0.8),rgba(43,116,137,0.4)',
+    Python: 'rgba(53,114,165,0.8),rgba(53,114,165,0.4)',
+    Java: 'rgba(176,114,25,0.8),rgba(176,114,25,0.4)',
+    'C++': 'rgba(243,75,125,0.8),rgba(243,75,125,0.4)',
+    C: 'rgba(85,85,85,0.8),rgba(85,85,85,0.4)',
+    Go: 'rgba(0,173,216,0.8),rgba(0,173,216,0.4)',
+    Rust: 'rgba(222,165,132,0.8),rgba(222,165,132,0.4)',
+    PHP: 'rgba(79,93,149,0.8),rgba(79,93,149,0.4)',
+    Ruby: 'rgba(112,21,22,0.8),rgba(112,21,22,0.4)',
+    Swift: 'rgba(255,172,69,0.8),rgba(255,172,69,0.4)',
+    Kotlin: 'rgba(241,142,51,0.8),rgba(241,142,51,0.4)',
+    Dart: 'rgba(0,180,171,0.8),rgba(0,180,171,0.4)',
+    HTML: 'rgba(227,76,38,0.8),rgba(227,76,38,0.4)',
+    CSS: 'rgba(86,61,124,0.8),rgba(86,61,124,0.4)',
+  };
   return g[lang] ?? 'rgba(130,87,230,0.8),rgba(130,87,230,0.4)';
 };
 

@@ -36,10 +36,15 @@ export const steamQueryOptions = queryOptions({
         fetch(apiUrl('/api/steam/recent-games')).then((r) => r.json() as Promise<SteamGamesResponse>),
         fetch(apiUrl('/api/steam/player')).then((r) => r.json() as Promise<SteamPlayerResponse>),
         fetch(apiUrl('/api/steam/owned-games')).then((r) => r.json() as Promise<SteamGamesResponse>),
-        fetch(apiUrl('/api/steam/profile')).then((r) => (r.ok ? (r.json() as Promise<SteamProfileResponse>) : null)).catch(() => null),
+        fetch(apiUrl('/api/steam/profile'))
+          .then((r) => (r.ok ? (r.json() as Promise<SteamProfileResponse>) : null))
+          .catch(() => null),
       ]);
       if (recentRes.error ?? playerRes.error) {
-        return { steamData: { error: recentRes.error ?? playerRes.error ?? undefined, configured: false }, steamProfile: null };
+        return {
+          steamData: { error: recentRes.error ?? playerRes.error ?? undefined, configured: false },
+          steamProfile: null,
+        };
       }
       return {
         steamData: {
@@ -94,7 +99,9 @@ export const githubQueryOptions = queryOptions({
       const [userData, eventsData, reposData] = await Promise.all([
         fetch(apiUrl(`/api/github/user/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubUserResponse>),
         fetch(apiUrl(`/api/github/events/${GITHUB_USERNAME}`)).then((r) => r.json() as Promise<GithubEventsResponse>),
-        fetch(apiUrl(`/api/github/repos/${GITHUB_USERNAME}?limit=5`)).then((r) => r.json() as Promise<GithubReposResponse>),
+        fetch(apiUrl(`/api/github/repos/${GITHUB_USERNAME}?limit=5`)).then(
+          (r) => r.json() as Promise<GithubReposResponse>,
+        ),
       ]);
       if (userData.error ?? eventsData.error) return { error: userData.error ?? eventsData.error ?? undefined };
       const pushEvents = eventsData.events.filter((e: GithubEvent) => e.type === 'PushEvent').slice(0, 10);

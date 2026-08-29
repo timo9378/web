@@ -55,9 +55,7 @@ test.describe('片庫', () => {
 
     // 大小寫不該影響——使用者不會照著原標題的大小寫打
     await search.fill('angel');
-    await expect
-      .poll(() => cards(page).count(), { message: '搜尋沒有忽略大小寫', timeout: 10_000 })
-      .toBe(1);
+    await expect.poll(() => cards(page).count(), { message: '搜尋沒有忽略大小寫', timeout: 10_000 }).toBe(1);
 
     await search.fill('這個一定找不到zzz');
     await expect(page.locator('.wl-info'), '找不到要講話，不是給一片空白').toContainText('沒有符合的結果', {

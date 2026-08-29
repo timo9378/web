@@ -60,8 +60,7 @@ async function watchViolations(page: Page): Promise<() => Promise<Violation[]>> 
       });
     });
   });
-  return async () =>
-    page.evaluate(() => (window as unknown as { __csp: Violation[] }).__csp ?? []);
+  return async () => page.evaluate(() => (window as unknown as { __csp: Violation[] }).__csp ?? []);
 }
 
 function report(path: string, v: Violation[]): string {

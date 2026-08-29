@@ -51,7 +51,11 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
   const [dislikes, setDislikes] = useState(th.dislikes);
   const key = 'tk_react_' + th.id;
   const [reacted, setReacted] = useState(() => {
-    try { return localStorage.getItem(key) ?? ''; } catch { return ''; }
+    try {
+      return localStorage.getItem(key) ?? '';
+    } catch {
+      return '';
+    }
   });
   const [showComments, setShowComments] = useState(false);
 
@@ -59,9 +63,13 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
   // 進到 modal 後只能靠 Tab 找關閉鈕。補上 Escape 才算兩邊都有路。
   useEffect(() => {
     if (!showComments) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowComments(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowComments(false);
+    };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); };
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
   }, [showComments]);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(th.content);
@@ -74,12 +82,14 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prev: reacted, next }),
       });
-      const d = await r.json().catch(() => ({})) as { likes?: number; dislikes?: number };
+      const d = (await r.json().catch(() => ({}))) as { likes?: number; dislikes?: number };
       if (typeof d.likes === 'number') setLikes(d.likes);
       if (typeof d.dislikes === 'number') setDislikes(d.dislikes);
       localStorage.setItem(key, next);
       setReacted(next);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const saveEdit = () => {
@@ -91,9 +101,13 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
     <div className="tk-card">
       <div className="tk-card-head">
         <span className="tk-author">{AUTHOR}</span>
-        <time className="tk-time" dateTime={th.created_at}>{relTime(th.created_at)}</time>
+        <time className="tk-time" dateTime={th.created_at}>
+          {relTime(th.created_at)}
+        </time>
         {th.edited && th.updated_at && (
-          <span className="tk-edited" data-edited={`編輯於 ${fullCh(th.updated_at)}`}>（已編輯）</span>
+          <span className="tk-edited" data-edited={`編輯於 ${fullCh(th.updated_at)}`}>
+            （已編輯）
+          </span>
         )}
       </div>
 
@@ -101,8 +115,12 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         <div className="tk-edit">
           <textarea className="tk-edit-text" value={editText} onChange={(e) => setEditText(e.target.value)} rows={3} />
           <div className="tk-edit-row">
-            <button className="tk-edit-save" onClick={saveEdit}>儲存</button>
-            <button className="tk-edit-cancel" onClick={() => setEditing(false)}>取消</button>
+            <button className="tk-edit-save" onClick={saveEdit}>
+              儲存
+            </button>
+            <button className="tk-edit-cancel" onClick={() => setEditing(false)}>
+              取消
+            </button>
           </div>
         </div>
       ) : (
@@ -112,26 +130,44 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
       {/* href 的 `?? undefined`：後端的 Option 是 null，React 對 null 與 undefined 都是
           「不要這個屬性」，只是 href 的型別只收 undefined。行為與型別化之前一致。 */}
       {th.ref_type === 'link' && th.ref && (
-        <a className="tk-embed tk-embed--link tk-linkcard" href={th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
+        <a
+          className="tk-embed tk-embed--link tk-linkcard"
+          href={th.ref_url ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <div className="tk-embed-info">
             <h2 className="tk-embed-title">{th.ref.title ?? th.ref_url}</h2>
             {th.ref.desc && <p className="tk-embed-desc">{th.ref.desc}</p>}
-            <span className="tk-embed-meta"><span className="tk-embed-site">🌐 {th.ref.site}</span></span>
+            <span className="tk-embed-meta">
+              <span className="tk-embed-site">🌐 {th.ref.site}</span>
+            </span>
           </div>
           {th.ref.image && <img className="tk-linkcard-img" src={th.ref.image} alt="" loading="lazy" />}
         </a>
       )}
 
       {th.ref_type === 'media' && th.ref && (
-        <a className="tk-embed tk-embed--media tk-media" href={th.ref.url ?? th.ref_url ?? undefined} target="_blank" rel="noopener noreferrer">
+        <a
+          className="tk-embed tk-embed--media tk-media"
+          href={th.ref.url ?? th.ref_url ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <div className="tk-embed-info">
-            <span className="tk-embed-kind">{th.ref.kind} · {th.ref.year}</span>
+            <span className="tk-embed-kind">
+              {th.ref.kind} · {th.ref.year}
+            </span>
             <h2 className="tk-embed-title">{th.ref.title}</h2>
             {th.ref.overview && <p className="tk-embed-desc">{th.ref.overview}</p>}
-            <span className="tk-embed-meta">★ {th.ref.rating} · {th.ref.genres} · {th.ref.source}</span>
+            <span className="tk-embed-meta">
+              ★ {th.ref.rating} · {th.ref.genres} · {th.ref.source}
+            </span>
           </div>
           {/* 沒標題就給空 alt：海報只是旁邊那行標題的裝飾，硬掛一個假的替代文字更糟 */}
-          {th.ref.poster && <img className="tk-media-poster" src={th.ref.poster} alt={th.ref.title ?? ''} loading="lazy" />}
+          {th.ref.poster && (
+            <img className="tk-media-poster" src={th.ref.poster} alt={th.ref.title ?? ''} loading="lazy" />
+          )}
         </a>
       )}
 
@@ -139,14 +175,28 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
 
       <div className="tk-card-foot">
         <div className="tk-stats">
-          <button className={'tk-ic' + (reacted === 'like' ? ' is-like' : '')} onClick={() => { void react('like'); }} aria-label="讚">
+          <button
+            className={'tk-ic' + (reacted === 'like' ? ' is-like' : '')}
+            onClick={() => {
+              void react('like');
+            }}
+            aria-label="讚"
+          >
             <Heart size={16} /> <span>{likes}</span>
           </button>
-          <button className={'tk-ic' + (reacted === 'dislike' ? ' is-dislike' : '')} onClick={() => { void react('dislike'); }} aria-label="倒讚">
+          <button
+            className={'tk-ic' + (reacted === 'dislike' ? ' is-dislike' : '')}
+            onClick={() => {
+              void react('dislike');
+            }}
+            aria-label="倒讚"
+          >
             <ThumbsDown size={16} /> <span>{dislikes}</span>
           </button>
           {detail ? (
-            <span className="tk-ic tk-ic--static"><MessageCircle size={16} /> <span>{th.comment_count}</span></span>
+            <span className="tk-ic tk-ic--static">
+              <MessageCircle size={16} /> <span>{th.comment_count}</span>
+            </span>
           ) : (
             <button className="tk-ic" onClick={() => setShowComments(true)} aria-label="留言">
               <MessageCircle size={16} /> <span>{th.comment_count}</span>
@@ -155,32 +205,56 @@ export default function ThoughtCard({ th, isAdmin, onDelete, onEdit, detail = fa
         </div>
         <div className="tk-foot-actions">
           {isAdmin && (
-            <button className="tk-act" onClick={() => { setEditText(th.content); setEditing(true); }}>編輯</button>
+            <button
+              className="tk-act"
+              onClick={() => {
+                setEditText(th.content);
+                setEditing(true);
+              }}
+            >
+              編輯
+            </button>
           )}
-          {isAdmin && <button className="tk-act tk-act--del" onClick={() => onDelete?.(th.id)}>刪除</button>}
-          {!detail && <LocaleLink className="tk-view" to={`/thinking/${th.id}`}>查看 →</LocaleLink>}
+          {isAdmin && (
+            <button className="tk-act tk-act--del" onClick={() => onDelete?.(th.id)}>
+              刪除
+            </button>
+          )}
+          {!detail && (
+            <LocaleLink className="tk-view" to={`/thinking/${th.id}`}>
+              查看 →
+            </LocaleLink>
+          )}
         </div>
       </div>
 
-      {showComments && createPortal(
-        // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
-        // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
-        // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
-        // 同上：本次已補上 Escape 監聽（見 showComments 的 effect），另有關閉鈕
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-        <div className="tk-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowComments(false); }}>
-          <div className="tk-modal">
-            <div className="tk-modal-head">
-              <span>評論</span>
-              <button className="tk-modal-close" onClick={() => setShowComments(false)} aria-label="關閉">✕</button>
+      {showComments &&
+        createPortal(
+          // 用 e.target === e.currentTarget 判斷「點在遮罩本身」，而不是靠內層 div
+          // stopPropagation 擋冒泡：後者等於在一個非互動元素上掛 onClick，只為了
+          // 攔事件。改掉之後內層那層純事件管線的 onClick 可以整個拿掉。
+          // 同上：本次已補上 Escape 監聽（見 showComments 的 effect），另有關閉鈕
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+          <div
+            className="tk-modal-overlay"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowComments(false);
+            }}
+          >
+            <div className="tk-modal">
+              <div className="tk-modal-head">
+                <span>評論</span>
+                <button className="tk-modal-close" onClick={() => setShowComments(false)} aria-label="關閉">
+                  ✕
+                </button>
+              </div>
+              <div className="tk-modal-body">
+                <Comments postId={th.id} basePath="thoughts" />
+              </div>
             </div>
-            <div className="tk-modal-body">
-              <Comments postId={th.id} basePath="thoughts" />
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

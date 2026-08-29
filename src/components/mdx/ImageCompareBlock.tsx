@@ -29,8 +29,12 @@ export default function ImageCompareBlock({
           itemOne={<ReactCompareSliderImage src={before} alt={alt ? `${alt}（${beforeLabel}）` : beforeLabel} />}
           itemTwo={<ReactCompareSliderImage src={after} alt={alt ? `${alt}（${afterLabel}）` : afterLabel} />}
         />
-        <span className="mdx-imgcompare-badge mdx-imgcompare-badge--before" aria-hidden>{beforeLabel}</span>
-        <span className="mdx-imgcompare-badge mdx-imgcompare-badge--after" aria-hidden>{afterLabel}</span>
+        <span className="mdx-imgcompare-badge mdx-imgcompare-badge--before" aria-hidden>
+          {beforeLabel}
+        </span>
+        <span className="mdx-imgcompare-badge mdx-imgcompare-badge--after" aria-hidden>
+          {afterLabel}
+        </span>
       </div>
       {caption ? <figcaption>{caption}</figcaption> : null}
     </figure>

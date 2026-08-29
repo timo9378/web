@@ -46,8 +46,24 @@ function ownerToken() {
   return `${head}.${body}.${createHmac('sha256', 'e2e-secret').update(`${head}.${body}`).digest('base64url')}`;
 }
 
-const PUBLIC = ['/', '/about', '/blog', '/blog/7', '/photos', '/setup', '/history', '/friends',
-  '/bookshelf', '/watch', '/music', '/messages', '/about-site', '/journey', '/portfolio', '/activity'];
+const PUBLIC = [
+  '/',
+  '/about',
+  '/blog',
+  '/blog/7',
+  '/photos',
+  '/setup',
+  '/history',
+  '/friends',
+  '/bookshelf',
+  '/watch',
+  '/music',
+  '/messages',
+  '/about-site',
+  '/journey',
+  '/portfolio',
+  '/activity',
+];
 const ADMIN = ['/admin/dashboard', '/admin/posts', '/admin/tags', '/admin/categories', '/admin/comments'];
 
 if (!fs.existsSync(OUT_DIR)) {
@@ -137,7 +153,9 @@ const avg = tot.t / rows.length;
 
 console.log(`\n檔案：${rows.length}/${allSrc.length} 有載入（${never.length} 個完全沒碰到）`);
 console.log(`已載入檔的 statements：${tot.c}/${tot.t} = ${((tot.c / tot.t) * 100).toFixed(1)}%`);
-console.log(`把沒載入的也算進分母（以平均檔案大小估）：約 ${((tot.c / (tot.t + avg * never.length)) * 100).toFixed(1)}%`);
+console.log(
+  `把沒載入的也算進分母（以平均檔案大小估）：約 ${((tot.c / (tot.t + avg * never.length)) * 100).toFixed(1)}%`,
+);
 
 if (never.length) {
   const byDir = {};
@@ -152,6 +170,9 @@ if (never.length) {
 }
 
 console.log('\n覆蓋率最低的 14 個（>=30 statements）：');
-for (const r of rows.filter((r) => r.total >= 30).sort((a, b) => a.pct - b.pct).slice(0, 14)) {
+for (const r of rows
+  .filter((r) => r.total >= 30)
+  .sort((a, b) => a.pct - b.pct)
+  .slice(0, 14)) {
   console.log(`  ${r.pct.toFixed(0).padStart(3)}%  ${r.f}  (${r.covered}/${r.total})`);
 }

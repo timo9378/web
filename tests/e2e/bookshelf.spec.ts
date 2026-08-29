@@ -44,9 +44,7 @@ test.describe('書櫃', () => {
 
     // 作者也要吃得到——只比對標題的話，「想找某個作者寫的書」這個用法整個失效
     await search.fill('村上');
-    await expect
-      .poll(() => cards(page).count(), { message: '搜尋沒有涵蓋作者欄', timeout: 10_000 })
-      .toBe(1);
+    await expect.poll(() => cards(page).count(), { message: '搜尋沒有涵蓋作者欄', timeout: 10_000 }).toBe(1);
     expect((await titles(page))[0]).toContain('海邊的卡夫卡');
 
     // 找不到的時候要講話，不是給一片空白
@@ -65,9 +63,7 @@ test.describe('書櫃', () => {
 
     await openFilters(page);
     await statusSelect(page).selectOption('reading');
-    await expect
-      .poll(() => cards(page).count(), { message: '狀態篩選沒有生效', timeout: 10_000 })
-      .toBeLessThan(total);
+    await expect.poll(() => cards(page).count(), { message: '狀態篩選沒有生效', timeout: 10_000 }).toBeLessThan(total);
 
     // 留下來的每一張都得真的是「在讀」——只數數量的話，篩選條件寫錯欄位也會過
     const badges = await page.locator('.book-card .status-badge').allInnerTexts();

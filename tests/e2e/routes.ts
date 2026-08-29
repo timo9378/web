@@ -79,9 +79,7 @@ function rawPaths(): string[] {
  *
  * 一樣不手寫清單：新增後台頁會自動被掃到。
  */
-const ADMIN_SKIP = [
-  { re: /^\/admin\/login$/, why: '只是舊書籤的轉址頁，沒有內容可驗' },
-];
+const ADMIN_SKIP = [{ re: /^\/admin\/login$/, why: '只是舊書籤的轉址頁，沒有內容可驗' }];
 
 /** 後台的參數化路由 → 種子資料裡真的存在的 id。 */
 const ADMIN_PARAM_FIXTURES: Record<string, string> = {
@@ -113,7 +111,5 @@ export function discoverRoutes(): RouteCase[] {
   }
   // 語系路由抽一條驗 i18n（全 5 語 × 全頁面太慢，且問題模式一樣）
   paths.add('/en/blog');
-  return [...paths]
-    .sort((a, b) => a.localeCompare(b))
-    .map((path) => ({ path, expect: CONTENT[path] }));
+  return [...paths].sort((a, b) => a.localeCompare(b)).map((path) => ({ path, expect: CONTENT[path] }));
 }

@@ -17,10 +17,13 @@ const API_URL: string = (import.meta.env.VITE_API_URL as string | undefined) ?? 
 
 // 書封走後端 image-proxy：① 把 http://books.google.com 升 https（去掉 mixed-content 警告）
 // ② 變成同源資源，crossOrigin canvas 取色才不會被 CORS 擋（Google Books 不送 CORS header）。
-const proxiedCover = (url?: string): string =>
-  url ? `${API_URL}/image-proxy?url=${encodeURIComponent(url)}` : '';
+const proxiedCover = (url?: string): string => (url ? `${API_URL}/image-proxy?url=${encodeURIComponent(url)}` : '');
 
-interface RGB { r: number; g: number; b: number }
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
 
 /** `GET /api/books` 的單本，型別由後端 Rust struct 生成（見 backend/SPECTA_PLAN.md）。 */
 type Book = BookRow;
@@ -47,22 +50,40 @@ const extractDominantColor = (imgSrc?: string): Promise<RGB> =>
         if (!ctx) return resolve(fallback);
         ctx.drawImage(img, 0, 0, 50, 50);
         const data = ctx.getImageData(0, 0, 50, 50).data;
-        let rSum = 0, gSum = 0, bSum = 0, count = 0;
+        let rSum = 0,
+          gSum = 0,
+          bSum = 0,
+          count = 0;
         for (let i = 0; i < data.length; i += 16) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const r = data[i],
+            g = data[i + 1],
+            b = data[i + 2];
           const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-          if (brightness > 30 && brightness < 230) { rSum += r; gSum += g; bSum += b; count++; }
+          if (brightness > 30 && brightness < 230) {
+            rSum += r;
+            gSum += g;
+            bSum += b;
+            count++;
+          }
         }
         if (count === 0) return resolve(fallback);
         resolve({ r: Math.round(rSum / count), g: Math.round(gSum / count), b: Math.round(bSum / count) });
-      } catch { resolve(fallback); }
+      } catch {
+        resolve(fallback);
+      }
     };
     img.onerror = () => resolve(fallback);
     img.src = imgSrc;
   });
 
 /* ── Book card with cover-glow ── */
-const BookCard = ({ book, delay, onClick, getStatusBadge, renderStars }: {
+const BookCard = ({
+  book,
+  delay,
+  onClick,
+  getStatusBadge,
+  renderStars,
+}: {
   book: Book;
   delay: number;
   onClick: () => void;
@@ -79,7 +100,7 @@ const BookCard = ({ book, delay, onClick, getStatusBadge, renderStars }: {
   }, [book.cover_url]);
 
   const style: CSSProperties | undefined = glowColor
-    ? { '--cover-r': glowColor.r, '--cover-g': glowColor.g, '--cover-b': glowColor.b } as CSSProperties
+    ? ({ '--cover-r': glowColor.r, '--cover-g': glowColor.g, '--cover-b': glowColor.b } as CSSProperties)
     : undefined;
 
   return (
@@ -95,7 +116,9 @@ const BookCard = ({ book, delay, onClick, getStatusBadge, renderStars }: {
         {book.cover_url ? (
           <img ref={imgRef} src={proxiedCover(book.cover_url)} alt={book.title} className="book-cover" loading="lazy" />
         ) : (
-          <div className="book-cover-placeholder"><FaBook /></div>
+          <div className="book-cover-placeholder">
+            <FaBook />
+          </div>
         )}
         <div className="status-badge" style={{ backgroundColor: getStatusBadge(book.reading_status).color }}>
           {getStatusBadge(book.reading_status).text}
@@ -140,9 +163,9 @@ const Bookshelf = () => {
 
   const getStatusBadge = (status?: string | null) => {
     const badges: Record<'read' | 'reading' | 'to-read', { text: string; color: string }> = {
-      'read': { text: t('bookshelf.statuses.read'), color: '#10b981' },
-      'reading': { text: t('bookshelf.statuses.reading'), color: '#3b82f6' },
-      'to-read': { text: t('bookshelf.statuses.toRead'), color: '#f59e0b' }
+      read: { text: t('bookshelf.statuses.read'), color: '#10b981' },
+      reading: { text: t('bookshelf.statuses.reading'), color: '#3b82f6' },
+      'to-read': { text: t('bookshelf.statuses.toRead'), color: '#f59e0b' },
     };
     const key = status === 'read' || status === 'reading' || status === 'to-read' ? status : 'to-read';
     return badges[key];
@@ -225,121 +248,116 @@ const Bookshelf = () => {
           )}
         </motion.div>
 
-      {/* Search and Filter Bar */}
-      <motion.div
-        className="search-filter-bar"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder={t('bookshelf.searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          {searchTerm && (
-            <button className="clear-search" onClick={() => setSearchTerm('')}>
-              <FaTimes />
-            </button>
-          )}
-        </div>
-
-        <button
-          className="filter-toggle"
-          onClick={() => setShowFilters(!showFilters)}
+        {/* Search and Filter Bar */}
+        <motion.div
+          className="search-filter-bar"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
         >
-          <FaFilter /> {t('bookshelf.filter')}
-        </button>
-
-        <button
-          className="view-mode-toggle"
-          onClick={() => setIs3DMode(!is3DMode)}
-        >
-          {is3DMode ? t('bookshelf.twoDView') : `🌌 ${t('bookshelf.zeroGravity')}`}
-        </button>
-      </motion.div>
-
-      {/* Filter Panel */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            className="filter-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="filter-group">
-              <label>{t('bookshelf.filterStatus')}</label>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="all">{t('common.all')}</option>
-                <option value="read">{t('bookshelf.statuses.read')}</option>
-                <option value="reading">{t('bookshelf.statuses.reading')}</option>
-                <option value="to-read">{t('bookshelf.statuses.toRead')}</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>{t('bookshelf.filterRating')}</label>
-              <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
-                <option value="all">{t('common.all')}</option>
-                <option value="5">⭐⭐⭐⭐⭐</option>
-                <option value="4">⭐⭐⭐⭐</option>
-                <option value="3">⭐⭐⭐</option>
-                <option value="2">⭐⭐</option>
-                <option value="1">⭐</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>{t('bookshelf.filterSort')}</label>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="date_added_desc">{t('bookshelf.sortOpts.dateAddedDesc')}</option>
-                <option value="date_added_asc">{t('bookshelf.sortOpts.dateAddedAsc')}</option>
-                <option value="title_asc">{t('bookshelf.sortOpts.titleAsc')}</option>
-                <option value="title_desc">{t('bookshelf.sortOpts.titleDesc')}</option>
-                <option value="rating_desc">{t('bookshelf.sortOpts.ratingDesc')}</option>
-                <option value="published_date_desc">{t('bookshelf.sortOpts.publishedDateDesc')}</option>
-              </select>
-            </div>
-
-            <button className="clear-filters" onClick={clearFilters}>
-              {t('bookshelf.filterClear')}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Books Grid */}
-      <motion.div
-        className="books-grid"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        {filteredBooks.length === 0 ? (
-          <div className="no-books">
-            <FaBook className="no-books-icon" />
-            <p>目前沒有符合條件的書籍</p>
-          </div>
-        ) : (
-          filteredBooks.map((book, i) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              delay={i * 0.04}
-              onClick={() => setSelectedBook(book)}
-              getStatusBadge={getStatusBadge}
-              renderStars={renderStars}
+          <div className="search-box">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder={t('bookshelf.searchPlaceholder')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
             />
-          ))
-        )}
-      </motion.div>
-      </div>{/* end bookshelf-content-wrapper */}
+            {searchTerm && (
+              <button className="clear-search" onClick={() => setSearchTerm('')}>
+                <FaTimes />
+              </button>
+            )}
+          </div>
+
+          <button className="filter-toggle" onClick={() => setShowFilters(!showFilters)}>
+            <FaFilter /> {t('bookshelf.filter')}
+          </button>
+
+          <button className="view-mode-toggle" onClick={() => setIs3DMode(!is3DMode)}>
+            {is3DMode ? t('bookshelf.twoDView') : `🌌 ${t('bookshelf.zeroGravity')}`}
+          </button>
+        </motion.div>
+
+        {/* Filter Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              className="filter-panel"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="filter-group">
+                <label>{t('bookshelf.filterStatus')}</label>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                  <option value="all">{t('common.all')}</option>
+                  <option value="read">{t('bookshelf.statuses.read')}</option>
+                  <option value="reading">{t('bookshelf.statuses.reading')}</option>
+                  <option value="to-read">{t('bookshelf.statuses.toRead')}</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>{t('bookshelf.filterRating')}</label>
+                <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)}>
+                  <option value="all">{t('common.all')}</option>
+                  <option value="5">⭐⭐⭐⭐⭐</option>
+                  <option value="4">⭐⭐⭐⭐</option>
+                  <option value="3">⭐⭐⭐</option>
+                  <option value="2">⭐⭐</option>
+                  <option value="1">⭐</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>{t('bookshelf.filterSort')}</label>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="date_added_desc">{t('bookshelf.sortOpts.dateAddedDesc')}</option>
+                  <option value="date_added_asc">{t('bookshelf.sortOpts.dateAddedAsc')}</option>
+                  <option value="title_asc">{t('bookshelf.sortOpts.titleAsc')}</option>
+                  <option value="title_desc">{t('bookshelf.sortOpts.titleDesc')}</option>
+                  <option value="rating_desc">{t('bookshelf.sortOpts.ratingDesc')}</option>
+                  <option value="published_date_desc">{t('bookshelf.sortOpts.publishedDateDesc')}</option>
+                </select>
+              </div>
+
+              <button className="clear-filters" onClick={clearFilters}>
+                {t('bookshelf.filterClear')}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Books Grid */}
+        <motion.div
+          className="books-grid"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {filteredBooks.length === 0 ? (
+            <div className="no-books">
+              <FaBook className="no-books-icon" />
+              <p>目前沒有符合條件的書籍</p>
+            </div>
+          ) : (
+            filteredBooks.map((book, i) => (
+              <BookCard
+                key={book.id}
+                book={book}
+                delay={i * 0.04}
+                onClick={() => setSelectedBook(book)}
+                getStatusBadge={getStatusBadge}
+                renderStars={renderStars}
+              />
+            ))
+          )}
+        </motion.div>
+      </div>
+      {/* end bookshelf-content-wrapper */}
 
       {/* Book Detail Modal */}
       <AnimatePresence>
@@ -375,10 +393,8 @@ const Bookshelf = () => {
 
                 <div className="modal-details">
                   <h2>{selectedBook.title}</h2>
-                  
-                  {selectedBook.authors && (
-                    <p className="modal-author">作者: {selectedBook.authors}</p>
-                  )}
+
+                  {selectedBook.authors && <p className="modal-author">作者: {selectedBook.authors}</p>}
 
                   <div className="modal-meta">
                     {selectedBook.publisher && (
@@ -430,10 +446,14 @@ const Bookshelf = () => {
                   {(selectedBook.date_started ?? selectedBook.date_finished) && (
                     <div className="modal-dates">
                       {selectedBook.date_started && (
-                        <p><strong>開始閱讀:</strong> {new Date(selectedBook.date_started).toLocaleDateString('zh-TW')}</p>
+                        <p>
+                          <strong>開始閱讀:</strong> {new Date(selectedBook.date_started).toLocaleDateString('zh-TW')}
+                        </p>
                       )}
                       {selectedBook.date_finished && (
-                        <p><strong>完成閱讀:</strong> {new Date(selectedBook.date_finished).toLocaleDateString('zh-TW')}</p>
+                        <p>
+                          <strong>完成閱讀:</strong> {new Date(selectedBook.date_finished).toLocaleDateString('zh-TW')}
+                        </p>
                       )}
                     </div>
                   )}
@@ -447,19 +467,19 @@ const Bookshelf = () => {
       {/* 3D 零重力圖書館(client-only,lazy)*/}
       {is3DMode && (
         <Suspense fallback={null}>
-        <ZeroGravityLibrary
-          books={filteredBooks.map(book => ({
-            id: book.id,
-            title: book.title,
-            authors: book.authors ? book.authors.split(',') : [],
-            // 生成型別是 `| null`（serde 語意）；ZGL 的介面用 optional，`?? undefined` 橋接。
-            coverUrl: book.cover_url ?? undefined,
-            description: book.description ?? undefined,
-            publishedDate: book.published_date ?? undefined,
-            pageCount: book.page_count ?? undefined,
-          }))}
-          onClose={() => setIs3DMode(false)}
-        />
+          <ZeroGravityLibrary
+            books={filteredBooks.map((book) => ({
+              id: book.id,
+              title: book.title,
+              authors: book.authors ? book.authors.split(',') : [],
+              // 生成型別是 `| null`（serde 語意）；ZGL 的介面用 optional，`?? undefined` 橋接。
+              coverUrl: book.cover_url ?? undefined,
+              description: book.description ?? undefined,
+              publishedDate: book.published_date ?? undefined,
+              pageCount: book.page_count ?? undefined,
+            }))}
+            onClose={() => setIs3DMode(false)}
+          />
         </Suspense>
       )}
     </div>

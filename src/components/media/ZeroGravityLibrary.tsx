@@ -36,10 +36,7 @@ function useDragObject() {
       // 設定拖動平面 (平行於相機視角)
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
-        cameraDirection,
-        currentPositionRef.current
-      );
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(cameraDirection, currentPositionRef.current);
 
       // 計算點擊點與物體中心的偏移
       dragPlaneRef.current.projectPoint(e.point, intersectionRef.current);
@@ -124,10 +121,7 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
       // 設定拖動平面
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
-        cameraDirection,
-        groupRef.current.position
-      );
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(cameraDirection, groupRef.current.position);
 
       // 計算偏移
       const intersection = new THREE.Vector3();
@@ -164,7 +158,7 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
   // 縮放動畫
   const { scale } = useSpring({
     scale: isSelected ? 1.5 : hovered ? 1.15 : 1,
-    config: { tension: 280, friction: 60 }
+    config: { tension: 280, friction: 60 },
   });
 
   return (
@@ -181,17 +175,13 @@ function Book3DWithTexture({ book, initialPosition, onClick, isSelected, onDragS
       {/* 書本主體 */}
       <mesh ref={meshRef} castShadow receiveShadow>
         <boxGeometry args={[bookWidth, bookHeight, bookDepth]} />
-        <meshStandardMaterial
-          map={texture}
-          metalness={0.2}
-          roughness={0.6}
-        />
+        <meshStandardMaterial map={texture} metalness={0.2} roughness={0.6} />
       </mesh>
 
       {/* 光暈效果 */}
       {(hovered || isSelected || isDragging) && (
         <pointLight
-          color={isDragging ? "#fbbf24" : isSelected ? "#c4b5fd" : "#7f5af0"}
+          color={isDragging ? '#fbbf24' : isSelected ? '#c4b5fd' : '#7f5af0'}
           intensity={isDragging ? 3 : isSelected ? 2 : 1}
           distance={3}
         />
@@ -260,10 +250,7 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
       // 設定拖動平面
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
-      dragPlaneRef.current.setFromNormalAndCoplanarPoint(
-        cameraDirection,
-        groupRef.current.position
-      );
+      dragPlaneRef.current.setFromNormalAndCoplanarPoint(cameraDirection, groupRef.current.position);
 
       // 計算偏移
       const intersection = new THREE.Vector3();
@@ -300,7 +287,7 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
   // 縮放動畫
   const { scale } = useSpring({
     scale: isSelected ? 1.5 : hovered ? 1.15 : 1,
-    config: { tension: 280, friction: 60 }
+    config: { tension: 280, friction: 60 },
   });
 
   return (
@@ -318,10 +305,10 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
       <mesh ref={meshRef} castShadow receiveShadow>
         <boxGeometry args={[bookWidth, bookHeight, bookDepth]} />
         <meshStandardMaterial
-          color='#7f5af0'
+          color="#7f5af0"
           metalness={0.5}
           roughness={0.3}
-          emissive='#7f5af0'
+          emissive="#7f5af0"
           emissiveIntensity={0.4}
           toneMapped={false}
         />
@@ -330,7 +317,7 @@ function Book3DNoTexture({ book, initialPosition, onClick, isSelected, onDragSta
       {/* 光暈效果 */}
       {(hovered || isSelected || isDragging) && (
         <pointLight
-          color={isDragging ? "#fbbf24" : isSelected ? "#c4b5fd" : "#7f5af0"}
+          color={isDragging ? '#fbbf24' : isSelected ? '#c4b5fd' : '#7f5af0'}
           intensity={isDragging ? 3 : isSelected ? 2 : 1}
           distance={3}
         />
@@ -573,15 +560,7 @@ function Scene({ books, onBookClick, selectedBook }: SceneProps) {
       <pointLight position={[0, -8, 0]} intensity={0.6} distance={60} decay={1} />
 
       {/* 背景星空 */}
-      <Stars
-        radius={300}
-        depth={50}
-        count={5000}
-        factor={4}
-        saturation={0}
-        fade
-        speed={1}
-      />
+      <Stars radius={300} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
       {/* 知識黑洞 */}
       <KnowledgeBlackHole />
@@ -611,13 +590,7 @@ function Scene({ books, onBookClick, selectedBook }: SceneProps) {
 
       {/* Post-processing: Bloom */}
       <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.8}
-          luminanceSmoothing={0.3}
-          intensity={0.8}
-          radius={0.4}
-          mipmapBlur
-        />
+        <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.3} intensity={0.8} radius={0.4} mipmapBlur />
       </EffectComposer>
     </>
   );
@@ -642,11 +615,7 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
       >
         <Suspense fallback={null}>
-          <Scene
-            books={books}
-            onBookClick={setSelectedBook}
-            selectedBook={selectedBook}
-          />
+          <Scene books={books} onBookClick={setSelectedBook} selectedBook={selectedBook} />
         </Suspense>
       </Canvas>
 
@@ -659,7 +628,9 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
             <span className="zg-brand-sub">{books.length} books in orbit</span>
           </div>
           <button className="zg-close-btn" onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
             {t('bookshelf.zg.back')}
           </button>
         </div>
@@ -678,7 +649,9 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
         {selectedBook && (
           <div className="zg-detail-panel">
             <button className="zg-detail-close" aria-label="關閉書籍詳情" onClick={() => setSelectedBook(null)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
             </button>
             {selectedBook.coverUrl && (
               <img src={selectedBook.coverUrl} alt={selectedBook.title} className="zg-detail-cover" />
@@ -687,9 +660,7 @@ export default function ZeroGravityLibrary({ books = [], onClose }: ZeroGravityL
             {(selectedBook.authors?.length ?? 0) > 0 && (
               <p className="zg-detail-author">{selectedBook.authors?.join(', ')}</p>
             )}
-            {selectedBook.description && (
-              <p className="zg-detail-desc">{selectedBook.description}</p>
-            )}
+            {selectedBook.description && <p className="zg-detail-desc">{selectedBook.description}</p>}
             <div className="zg-detail-meta">
               {selectedBook.publishedDate && <span>{selectedBook.publishedDate}</span>}
               {selectedBook.pageCount && <span>{selectedBook.pageCount} 頁</span>}

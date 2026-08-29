@@ -38,7 +38,9 @@ export function Note({ children, title }: { children?: ReactNode; title?: string
   return (
     <aside className="mdx-note">
       <div className="mdx-note-label">
-        <span className="mdx-note-quote" aria-hidden>❝</span>
+        <span className="mdx-note-quote" aria-hidden>
+          ❝
+        </span>
         {title ?? '站長註'}
       </div>
       <div className="mdx-note-content">{children}</div>
@@ -84,9 +86,14 @@ export function Annot({ children, note }: { children?: ReactNode; note?: ReactNo
   // 捲動就收起來，比追著重算位置單純，也符合預期。
   useEffect(() => {
     if (!show) return;
-    const close = () => { setOpen(false); setHover(false); };
+    const close = () => {
+      setOpen(false);
+      setHover(false);
+    };
     window.addEventListener('scroll', close, { passive: true });
-    return () => { window.removeEventListener('scroll', close); };
+    return () => {
+      window.removeEventListener('scroll', close);
+    };
   }, [show]);
 
   return (
@@ -118,7 +125,9 @@ export function Annot({ children, note }: { children?: ReactNode; note?: ReactNo
       {show && pos
         ? createPortal(
             <div
-              className={pos.below ? 'annot-card annot-card--portal annot-card--below' : 'annot-card annot-card--portal'}
+              className={
+                pos.below ? 'annot-card annot-card--portal annot-card--below' : 'annot-card annot-card--portal'
+              }
               role="tooltip"
               style={{ left: pos.left, top: pos.top }}
             >
@@ -312,12 +321,7 @@ export function Spoiler({ children }: { children?: ReactNode }) {
     return <span className="spoiler spoiler--revealed">{children}</span>;
   }
   return (
-    <button
-      type="button"
-      className="spoiler"
-      title="點擊顯示"
-      onClick={() => setRevealed(true)}
-    >
+    <button type="button" className="spoiler" title="點擊顯示" onClick={() => setRevealed(true)}>
       {children}
     </button>
   );
@@ -347,7 +351,10 @@ export function Poll(props: {
 
 /** 文末參考連結區（每列標籤 + 連結，依網域自動帶品牌 icon，不觸發 hover 卡）。
  *  <Refs items={[{ label:'anigamer · TS', links:[{ text:'GitHub', href:'…' }, { text:'npm', href:'…' }] }]} /> */
-export function Refs(props: { items?: { label?: string; links?: { text: string; href: string }[] }[]; title?: string }) {
+export function Refs(props: {
+  items?: { label?: string; links?: { text: string; href: string }[] }[];
+  title?: string;
+}) {
   return <RefsImpl {...props} />;
 }
 
@@ -404,7 +411,11 @@ export function Step({ title, children }: { title?: ReactNode; children?: ReactN
 /** 專案結構樹。tree 用屬性字串傳，縮排（每 2 空格一層）表層級、結尾 / 為資料夾：
  *  <FileTree tree={`src/\n  components/\n    Button.tsx\n  index.ts\npackage.json`} /> */
 export function FileTree({ tree = '' }: { tree?: string }) {
-  const lines = tree.replace(/^\n+/, '').replace(/\n+$/, '').split('\n').filter((l) => l.trim());
+  const lines = tree
+    .replace(/^\n+/, '')
+    .replace(/\n+$/, '')
+    .split('\n')
+    .filter((l) => l.trim());
   return (
     <div className="mdx-filetree">
       {lines.map((line, i) => {
@@ -413,9 +424,15 @@ export function FileTree({ tree = '' }: { tree?: string }) {
         const isFolder = name.endsWith('/');
         return (
           // 靜態清單、不重排 → index 併入 key 安全
-          // eslint-disable-next-line @eslint-react/no-array-index-key
-          <div key={`${i}-${name}`} className={isFolder ? 'mdx-filetree-row mdx-filetree-row--folder' : 'mdx-filetree-row'} style={{ paddingLeft: `${indent * 0.55 + 0.2}rem` }}>
-            <span className="mdx-filetree-icon" aria-hidden>{isFolder ? '📁' : '📄'}</span>
+          <div
+            // eslint-disable-next-line @eslint-react/no-array-index-key
+            key={`${i}-${name}`}
+            className={isFolder ? 'mdx-filetree-row mdx-filetree-row--folder' : 'mdx-filetree-row'}
+            style={{ paddingLeft: `${indent * 0.55 + 0.2}rem` }}
+          >
+            <span className="mdx-filetree-icon" aria-hidden>
+              {isFolder ? '📁' : '📄'}
+            </span>
             <span className="mdx-filetree-name">{isFolder ? name.slice(0, -1) : name}</span>
           </div>
         );
@@ -430,7 +447,13 @@ export function Stats({ children }: { children?: ReactNode }) {
 }
 
 /** 單一數字磚。trend 可選（up 綠 / down 紅 / flat 灰）。 */
-export function Stat({ label, value, unit, trend, hint }: {
+export function Stat({
+  label,
+  value,
+  unit,
+  trend,
+  hint,
+}: {
   label?: ReactNode;
   value?: ReactNode;
   unit?: string;

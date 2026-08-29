@@ -60,9 +60,19 @@ export default defineEventHandler(async (event) => {
   }
 
   /** 一組 <url>：basePath 的每個語系各一筆，每筆都帶完整且相同的 alternate 清單。 */
-  const urlSet = (basePath: string, locales: readonly Locale[], lastmod: string, changefreq: string, priority: string) => {
+  const urlSet = (
+    basePath: string,
+    locales: readonly Locale[],
+    lastmod: string,
+    changefreq: string,
+    priority: string,
+  ) => {
     const alternates =
-      locales.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE_URL}${localePathname(l, basePath)}"/>\n`).join('') +
+      locales
+        .map(
+          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE_URL}${localePathname(l, basePath)}"/>\n`,
+        )
+        .join('') +
       `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}${localePathname(DEFAULT_LOCALE, basePath)}"/>\n`;
     return locales
       .map(

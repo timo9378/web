@@ -2,7 +2,17 @@
 // 協商／bot 偵測，以及「每 render 獨立 i18n instance」的隔離保證（SSR 不互踩的關鍵）。
 import { describe, expect, it } from 'vitest';
 
-import { LOCALE_LABELS, buildAlternateLinks, createI18n, localeFromPathname, localeFromPrefix, localeUrl, pickLocaleFromAcceptLanguage, stripLocalePrefix, toLocales } from './start-i18n';
+import {
+  LOCALE_LABELS,
+  buildAlternateLinks,
+  createI18n,
+  localeFromPathname,
+  localeFromPrefix,
+  localeUrl,
+  pickLocaleFromAcceptLanguage,
+  stripLocalePrefix,
+  toLocales,
+} from './start-i18n';
 import { isBotUserAgent } from '@/lib/bot';
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/lib/locales';
 
@@ -118,10 +128,7 @@ describe('翻譯資源與常數一致性', () => {
   });
   it('五語 bundle 的 key 集合一致（漏翻會在這裡現形）', () => {
     const keysOf = (locale: (typeof SUPPORTED_LOCALES)[number]) => {
-      const bundle = createI18n(locale).getResourceBundle(locale, 'common') as Record<
-        string,
-        unknown
-      >;
+      const bundle = createI18n(locale).getResourceBundle(locale, 'common') as Record<string, unknown>;
       const flat: string[] = [];
       const walk = (obj: Record<string, unknown>, prefix: string) => {
         for (const [k, v] of Object.entries(obj)) {

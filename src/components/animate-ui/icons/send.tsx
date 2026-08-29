@@ -1,7 +1,14 @@
-'use client';;
+'use client';
 import { motion } from 'framer-motion';
 
-import { getVariants, useAnimateIconContext, IconWrapper, type AnimateIconAnimations, type IconComponentProps, type IconProps } from '@/components/animate-ui/icons/icon';
+import {
+  getVariants,
+  useAnimateIconContext,
+  IconWrapper,
+  type AnimateIconAnimations,
+  type IconComponentProps,
+  type IconProps,
+} from '@/components/animate-ui/icons/icon';
 
 const animations: AnimateIconAnimations = {
   default: {
@@ -32,14 +39,11 @@ const animations: AnimateIconAnimations = {
     },
 
     path1: {},
-    path2: {}
-  }
+    path2: {},
+  },
 };
 
-function IconComponent({
-  size,
-  ...props
-}: IconComponentProps) {
+function IconComponent({ size, ...props }: IconComponentProps) {
   const { controls } = useAnimateIconContext();
   const variants = getVariants(animations);
 
@@ -54,18 +58,16 @@ function IconComponent({
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      {...props}>
+      {...props}
+    >
       <motion.g variants={variants.group} initial="initial" animate={controls}>
         <motion.path
           d="M14.5,21.7c.1.3.4.4.7.3.1,0,.2-.2.3-.3L22,2.7c0-.3,0-.5-.3-.6-.1,0-.2,0-.3,0L2.3,8.5c-.3,0-.4.4-.3.6,0,.1.2.2.3.3l7.9,3.2c.5.2.9.6,1.1,1.1l3.2,7.9Z"
           variants={variants.path1}
           initial="initial"
-          animate={controls} />
-        <motion.path
-          d="M21.9,2.1l-10.9,10.9"
-          variants={variants.path2}
-          initial="initial"
-          animate={controls} />
+          animate={controls}
+        />
+        <motion.path d="M21.9,2.1l-10.9,10.9" variants={variants.path2} initial="initial" animate={controls} />
       </motion.g>
     </motion.svg>
   );

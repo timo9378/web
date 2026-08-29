@@ -44,11 +44,13 @@ let _manifestCallbacks: ((map: Map<string, Photo>) => void)[] = [];
 const fetchManifest = (): Promise<Map<string, Photo>> => {
   if (_manifestCache) return Promise.resolve(_manifestCache);
   if (_manifestLoading) {
-    return new Promise<Map<string, Photo>>((resolve) => { _manifestCallbacks.push(resolve); });
+    return new Promise<Map<string, Photo>>((resolve) => {
+      _manifestCallbacks.push(resolve);
+    });
   }
   _manifestLoading = true;
   return fetch('/api/gallery/photos')
-    .then((r) => (r.ok ? r.json() as Promise<{ photos?: Photo[] } | null> : null))
+    .then((r) => (r.ok ? (r.json() as Promise<{ photos?: Photo[] } | null>) : null))
     .then((data) => {
       if (data?.photos) {
         // 建立 URL → photo 的快速查詢 map
@@ -99,7 +101,10 @@ const getNASDisplayUrl = (src?: string): string | undefined => {
   return src;
 };
 
-interface ThumbPlaceholder { dataUrl: string; aspectRatio: number }
+interface ThumbPlaceholder {
+  dataUrl: string;
+  aspectRatio: number;
+}
 
 /**
  * 從圖片 URL 的 fragment 解出上傳時寫進去的原始像素尺寸（`#th=…&w=1142&h=724`）。
@@ -148,7 +153,7 @@ const decodeThumbHashFromSrc = (src?: string): ThumbPlaceholder | null => {
   if (!m) return null;
   try {
     let b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
-    b64 += '='.repeat((4 - b64.length % 4) % 4);
+    b64 += '='.repeat((4 - (b64.length % 4)) % 4);
     const binary = atob(b64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -194,19 +199,24 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
   }, [src, isNAS]);
 
   // 判斷 EXIF 是否有足夠資訊顯示（至少要有拍攝參數或相機/鏡頭資訊）
-  const hasExifContent = exifData != null && (
-    exifData.make != null || exifData.model != null || exifData.LensModel != null ||
-    exifData.FNumber != null || exifData.ISO != null || exifData.ExposureTime != null ||
-    exifData.FocalLength != null || exifData.FocalLengthIn35mmFormat != null
-  );
+  const hasExifContent =
+    exifData != null &&
+    (exifData.make != null ||
+      exifData.model != null ||
+      exifData.LensModel != null ||
+      exifData.FNumber != null ||
+      exifData.ISO != null ||
+      exifData.ExposureTime != null ||
+      exifData.FocalLength != null ||
+      exifData.FocalLengthIn35mmFormat != null);
   // 只有日期 → 不顯示 EXIF overlay（避免只顯示一個 📅 日期很奇怪）
   const showExif = isNAS && showInfo && hasExifContent;
 
   // 相機資訊：優先 make+model，fallback 到 LensModel
   const cameraLabel = exifData
-    ? ((exifData.make && exifData.model)
+    ? exifData.make && exifData.model
       ? `${exifData.make} ${exifData.model}`
-      : (exifData.model ?? ''))
+      : (exifData.model ?? '')
     : '';
 
   // 鏡頭資訊：去除與相機名稱重複的部分
@@ -240,28 +250,32 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
           onClick={() => setShowLightbox(true)}
           aria-label={alt ? `放大檢視：${alt}` : '放大檢視圖片'}
         >
-        <img
-          {...props}
-          src={displaySrc}
-          alt={alt ?? ''}
-          // ⚠ 這兩個屬性是版面預留的唯一來源（見 decodeSizeFromSrc）。
-          // CSS 的 `max-width:100%; height:auto` 照樣負責縮放，屬性只是讓瀏覽器
-          // 在圖片載入**之前**就知道要留多高。舊文章沒有 w/h 時退回 undefined，
-          // 行為與這次修正前相同。
-          width={size?.width}
-          height={size?.height}
-          onLoad={() => setImgLoaded(true)}
-          className={`blog-image-clickable${placeholder && !imgLoaded ? ' blog-image-loading' : ''}`}
-          loading="lazy"
-          decoding="async"
-          style={placeholder ? {
-            ...(props.style ?? {}),
-            backgroundImage: `url(${placeholder.dataUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            aspectRatio: placeholder.aspectRatio,
-          } : props.style}
-        />
+          <img
+            {...props}
+            src={displaySrc}
+            alt={alt ?? ''}
+            // ⚠ 這兩個屬性是版面預留的唯一來源（見 decodeSizeFromSrc）。
+            // CSS 的 `max-width:100%; height:auto` 照樣負責縮放，屬性只是讓瀏覽器
+            // 在圖片載入**之前**就知道要留多高。舊文章沒有 w/h 時退回 undefined，
+            // 行為與這次修正前相同。
+            width={size?.width}
+            height={size?.height}
+            onLoad={() => setImgLoaded(true)}
+            className={`blog-image-clickable${placeholder && !imgLoaded ? ' blog-image-loading' : ''}`}
+            loading="lazy"
+            decoding="async"
+            style={
+              placeholder
+                ? {
+                    ...(props.style ?? {}),
+                    backgroundImage: `url(${placeholder.dataUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    aspectRatio: placeholder.aspectRatio,
+                  }
+                : props.style
+            }
+          />
         </button>
         {/* NAS 圖片 hover overlay — 顯示完整 EXIF（從下滑入） */}
         {isNAS && exifData && hasExifContent && (
@@ -271,13 +285,17 @@ export const BlogImage = ({ src, alt, ...props }: BlogImageProps) => {
             {exifData.FNumber && <span>ƒ/{exifData.FNumber}</span>}
             {exifData.ISO != null && <span>ISO {exifData.ISO}</span>}
             {exifData.ExposureTime && <span>{exifData.ExposureTime}s</span>}
-            {(exifData.FocalLength ?? exifData.FocalLengthIn35mmFormat) != null && <span>{exifData.FocalLengthIn35mmFormat ? `${exifData.FocalLengthIn35mmFormat.replace(' mm', 'mm')}` : exifData.FocalLength}</span>}
+            {(exifData.FocalLength ?? exifData.FocalLengthIn35mmFormat) != null && (
+              <span>
+                {exifData.FocalLengthIn35mmFormat
+                  ? `${exifData.FocalLengthIn35mmFormat.replace(' mm', 'mm')}`
+                  : exifData.FocalLength}
+              </span>
+            )}
           </span>
         )}
       </span>
-      {showLightbox && (
-        <ImageLightbox src={fullSrc} alt={alt} onClose={() => setShowLightbox(false)} />
-      )}
+      {showLightbox && <ImageLightbox src={fullSrc} alt={alt} onClose={() => setShowLightbox(false)} />}
     </>
   );
 };
@@ -344,6 +362,6 @@ function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
         </button>
       </motion.div>
     </AnimatePresence>,
-    document.body
+    document.body,
   );
 }

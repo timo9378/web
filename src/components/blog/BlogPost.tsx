@@ -3,7 +3,14 @@ import { useParams, useRouterState, useNavigate, ClientOnly } from '@tanstack/re
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { LocaleLink } from '@/i18n/locale-link';
 import { useLocale } from '@/hooks/useLocale';
-import { postDetailQueryOptions, blogCategoriesDetailQueryOptions, recentPostsQueryOptions, postReactionsQueryOptions, seriesQueryOptions, type CategoryInfo } from '@/data/blogList';
+import {
+  postDetailQueryOptions,
+  blogCategoriesDetailQueryOptions,
+  recentPostsQueryOptions,
+  postReactionsQueryOptions,
+  seriesQueryOptions,
+  type CategoryInfo,
+} from '@/data/blogList';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import type { PostDetailResponse, PostListItem, ReactionRow } from '@koimsurai/api-types';
@@ -24,9 +31,17 @@ import ReactDOM from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation, Trans } from 'react-i18next';
 import {
-  FaRegHeart, FaHeart, FaLink, FaRegComment, FaArrowUp,
-  FaEnvelope, FaShareAlt, FaRss, FaTimes,
-  FaTwitter, FaFacebook,
+  FaRegHeart,
+  FaHeart,
+  FaLink,
+  FaRegComment,
+  FaArrowUp,
+  FaEnvelope,
+  FaShareAlt,
+  FaRss,
+  FaTimes,
+  FaTwitter,
+  FaFacebook,
 } from 'react-icons/fa';
 import Comments from './Comments';
 import { BlogImage } from '@/components/blog/BlogImage';
@@ -54,32 +69,51 @@ import { lookup } from '@/lib/tableLookup';
 /// 呼叫端用 `data.message === 'success'` 擋掉，所以這裡只描述成功形狀。
 type Post = PostDetailResponse & { date?: string };
 
-interface Heading { id: string; text: string; level: number }
+interface Heading {
+  id: string;
+  text: string;
+  level: number;
+}
 
 /**
  * 「sidebar 文章連結」附帶 hover preview 行為
  * 因為要在 map iteration 內呼叫 hook，必須抽成子元件
  */
-const PreviewablePostLink = React.memo(({ post, className, children, viewTransition, style, current }: { post: { id: number | string; slug?: string | null; title: string }; className?: string; children?: React.ReactNode; viewTransition?: boolean; style?: React.CSSProperties; current?: boolean }) => {
-  // hover 預覽卡已移除（連同 article-preview 那整套）——側欄只是純連結。
-  // current 也走同一個 <a>（只換 class）：若「目前這篇」改渲 <span>，換文章時該列的元素類型
-  // 由 a→span，React 必定卸載重掛 → 新 DOM 節點 → 進場動畫重播 = 使用者看到「被點的那列
-  // 整組消失再跑一次」。維持同型別才能讓 React 重用節點、只有真正新露出的列才播動畫。
-  return (
-    <LocaleLink
-      to={postPath(post)}
-      className={className}
-      title={post.title}
-      viewTransition={viewTransition}
-      style={style}
-      aria-current={current ? 'page' : undefined}
-    >
-      {children}
-    </LocaleLink>
-  );
-});
+const PreviewablePostLink = React.memo(
+  ({
+    post,
+    className,
+    children,
+    viewTransition,
+    style,
+    current,
+  }: {
+    post: { id: number | string; slug?: string | null; title: string };
+    className?: string;
+    children?: React.ReactNode;
+    viewTransition?: boolean;
+    style?: React.CSSProperties;
+    current?: boolean;
+  }) => {
+    // hover 預覽卡已移除（連同 article-preview 那整套）——側欄只是純連結。
+    // current 也走同一個 <a>（只換 class）：若「目前這篇」改渲 <span>，換文章時該列的元素類型
+    // 由 a→span，React 必定卸載重掛 → 新 DOM 節點 → 進場動畫重播 = 使用者看到「被點的那列
+    // 整組消失再跑一次」。維持同型別才能讓 React 重用節點、只有真正新露出的列才播動畫。
+    return (
+      <LocaleLink
+        to={postPath(post)}
+        className={className}
+        title={post.title}
+        viewTransition={viewTransition}
+        style={style}
+        aria-current={current ? 'page' : undefined}
+      >
+        {children}
+      </LocaleLink>
+    );
+  },
+);
 PreviewablePostLink.displayName = 'PreviewablePostLink';
-
 
 /* ── helpers ── */
 
@@ -110,7 +144,6 @@ const FONT_OPTIONS = [
   { id: 'source-han', name: '思源黑體' },
 ];
 
-
 /* ══════════════════════════
    CodeBlock
    ══════════════════════════ */
@@ -120,14 +153,34 @@ const TERMINAL_LANGS = new Set(['bash', 'sh', 'shell', 'zsh', 'console', 'termin
 // 非原文語系的文章：頂部掛「AI 翻譯、未經人工審校」提示（站長無法人工審日/韓等語法）。
 // 文字用目標語言寫（提示會出現在該語系頁），連回原文（source_language，走不帶 prefix 的規範路徑）。
 const AI_TRANSLATION_NOTICE: Record<string, { text: string; original: string }> = {
-  en: { text: 'AI-translated from the original (Traditional Chinese) — not human-reviewed, so wording may be imperfect.', original: 'View original' },
-  ja: { text: 'この記事は原文（繁体字中国語）からのAI翻訳です。人手による校正はしていないため、表現に不自然さが残る場合があります。', original: '原文を見る' },
-  ko: { text: '이 글은 원문(번체 중국어)의 AI 번역본이며, 사람이 검수하지 않아 표현이 어색할 수 있습니다.', original: '원문 보기' },
+  en: {
+    text: 'AI-translated from the original (Traditional Chinese) — not human-reviewed, so wording may be imperfect.',
+    original: 'View original',
+  },
+  ja: {
+    text: 'この記事は原文（繁体字中国語）からのAI翻訳です。人手による校正はしていないため、表現に不自然さが残る場合があります。',
+    original: '原文を見る',
+  },
+  ko: {
+    text: '이 글은 원문(번체 중국어)의 AI 번역본이며, 사람이 검수하지 않아 표현이 어색할 수 있습니다.',
+    original: '원문 보기',
+  },
   'zh-CN': { text: '本文由原文（繁体中文）AI 翻译，未经人工审校，措辞可能不够自然。', original: '查看原文' },
 };
 
 // 後台編輯器預覽（PostPreview）也重用這批 → export，讓預覽跟前台同一套渲染（shiki/mermaid/terminal）。
-export const CodeBlock = ({ node: _node, inline, className, children, ...props }: { node?: unknown; inline?: boolean; className?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>) => {
+export const CodeBlock = ({
+  node: _node,
+  inline,
+  className,
+  children,
+  ...props
+}: {
+  node?: unknown;
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+} & React.HTMLAttributes<HTMLElement>) => {
   const { t } = useTranslation();
   const [isCopied, setIsCopied] = useState(false);
   const [highlighted, setHighlighted] = useState<string | null>(null);
@@ -136,10 +189,13 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
   const codeText = nodeText(children).replace(/\n$/, '');
 
   // 自動偵測 mermaid 圖表：有 language tag 或內容以 mermaid 關鍵字開頭
-  const isMermaid = lang === 'mermaid' || (
-    !inline && (lang === 'text' || !match) &&
-    /^(---|graph\s|flowchart\s|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|sankey)/m.test(codeText.trim())
-  );
+  const isMermaid =
+    lang === 'mermaid' ||
+    (!inline &&
+      (lang === 'text' || !match) &&
+      /^(---|graph\s|flowchart\s|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|sankey)/m.test(
+        codeText.trim(),
+      ));
 
   // Shiki lazy 反白 — 渲染後 idle 才開始，載入前先顯示 plain pre
   useEffect(() => {
@@ -153,14 +209,25 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
     let idleId: number | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     if (ric) {
-      idleId = ric(() => { void run(); }, { timeout: 1500 });
+      idleId = ric(
+        () => {
+          void run();
+        },
+        { timeout: 1500 },
+      );
     } else {
-      timeoutId = setTimeout(() => { void run(); }, 80);
+      timeoutId = setTimeout(() => {
+        void run();
+      }, 80);
     }
     function run() {
-      return highlightCode(codeText, lang).then((html) => {
-        if (!cancelled) setHighlighted(html);
-      }).catch(() => { /* fallback 留 plain pre */ });
+      return highlightCode(codeText, lang)
+        .then((html) => {
+          if (!cancelled) setHighlighted(html);
+        })
+        .catch(() => {
+          /* fallback 留 plain pre */
+        });
     }
     return () => {
       cancelled = true;
@@ -192,7 +259,9 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
       return (
         <div className="terminal-block">
           <div className="terminal-bar">
-            <span className="terminal-glyph" aria-hidden>❯_</span>
+            <span className="terminal-glyph" aria-hidden>
+              ❯_
+            </span>
             <span className="terminal-title">{lang}</span>
             <button onClick={handleCopy} className="copy-button">
               {isCopied ? t('blog.codeCopied') : t('blog.codeCopy')}
@@ -220,7 +289,9 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
       <div className="code-block-wrapper">
         <div className="code-block-header">
           <span className="language-name">
-            <span className="language-emoji" aria-hidden>{langEmoji(lang)}</span>
+            <span className="language-emoji" aria-hidden>
+              {langEmoji(lang)}
+            </span>
             {lang}
           </span>
           <button onClick={handleCopy} className="copy-button">
@@ -231,13 +302,21 @@ export const CodeBlock = ({ node: _node, inline, className, children, ...props }
       </div>
     );
   }
-  return <code className={className} {...props}>{children}</code>;
+  return (
+    <code className={className} {...props}>
+      {children}
+    </code>
+  );
 };
 
 /* ══════════════════════════
    Custom paragraph — detect standalone link lines for LinkCard
    ══════════════════════════ */
-export const CustomParagraph = ({ children, node: _node, ...props }: { children?: React.ReactNode; node?: unknown } & React.HTMLAttributes<HTMLParagraphElement>) => {
+export const CustomParagraph = ({
+  children,
+  node: _node,
+  ...props
+}: { children?: React.ReactNode; node?: unknown } & React.HTMLAttributes<HTMLParagraphElement>) => {
   // Children.toArray 一般不建議（會遮蔽 key、鼓勵去操作 children），但這裡是
   // markdown 渲染器：要判斷「這個段落是不是只有一個裸連結」才能決定換成 LinkCard，
   // 除了檢查 children 結構沒有別的辦法——react-markdown 就是這樣把節點交給我們的。
@@ -265,7 +344,7 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
   // 從 children 中找出所有 <a> 元素
   const findLinks = (arr: React.ReactNode[]): React.ReactElement[] => {
     const links: React.ReactElement[] = [];
-    arr.forEach(child => {
+    arr.forEach((child) => {
       if (React.isValidElement(child) && (child.props as { href?: string }).href) links.push(child);
     });
     return links;
@@ -276,11 +355,17 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
     try {
       const u = new URL(href);
       const host = u.hostname.replace('www.', '');
-      return host.includes('youtube.com') || host.includes('youtu.be') ||
-        host.includes('bilibili.com') || host.includes('b23.tv') ||
+      return (
+        host.includes('youtube.com') ||
+        host.includes('youtu.be') ||
+        host.includes('bilibili.com') ||
+        host.includes('b23.tv') ||
         host.includes('spotify.com') ||
-        host.includes('koimsurai.com');
-    } catch { return false; }
+        host.includes('koimsurai.com')
+      );
+    } catch {
+      return false;
+    }
   };
 
   // 單一子元素 — 可能是純文字 URL 或 <a> 連結
@@ -320,13 +405,13 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
   // 多子元素 — 檢查是否包含可嵌入的連結（如「【標題】 url」格式）
   if (childArray.length >= 2) {
     const links = findLinks(childArray);
-    const embeddableLink = links.find(link => isEmbeddableLink((link.props as { href?: string }).href ?? ''));
+    const embeddableLink = links.find((link) => isEmbeddableLink((link.props as { href?: string }).href ?? ''));
 
     if (embeddableLink) {
       const href = (embeddableLink.props as { href: string }).href;
       // 取得非連結部分的文字
-      const textParts = childArray.filter(c => c !== embeddableLink);
-      const hasText = textParts.some(c => {
+      const textParts = childArray.filter((c) => c !== embeddableLink);
+      const hasText = textParts.some((c) => {
         const t = typeof c === 'string' ? c.trim() : getText(c).trim();
         return t.length > 0;
       });
@@ -351,7 +436,23 @@ export const CustomParagraph = ({ children, node: _node, ...props }: { children?
 /* ══════════════════════════
    CategoryTooltipTrigger — hover 顯示分類 tooltip (Portal 到 body)
    ══════════════════════════ */
-const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnter, onLeave, linkClassName, compact = false }: { postCategory: string; categoryInfo: CategoryInfo | null; showTooltip: boolean; onEnter: () => void; onLeave: () => void; linkClassName?: string; compact?: boolean }) => {
+const CategoryTooltipTrigger = ({
+  postCategory,
+  categoryInfo,
+  showTooltip,
+  onEnter,
+  onLeave,
+  linkClassName,
+  compact = false,
+}: {
+  postCategory: string;
+  categoryInfo: CategoryInfo | null;
+  showTooltip: boolean;
+  onEnter: () => void;
+  onLeave: () => void;
+  linkClassName?: string;
+  compact?: boolean;
+}) => {
   const categoryLabel = useCategoryLabel();
   // tooltip 的簡述/描述也依語系取譯文（沒填就退回原文）
   const { t, i18n } = useTranslation();
@@ -371,42 +472,38 @@ const CategoryTooltipTrigger = ({ postCategory, categoryInfo, showTooltip, onEnt
   }, [showTooltip]);
 
   return (
-    <span
-      ref={triggerRef}
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      style={{ display: 'inline-block' }}
-    >
+    <span ref={triggerRef} onMouseEnter={onEnter} onMouseLeave={onLeave} style={{ display: 'inline-block' }}>
       <LocaleLink
         to={'/blog?category=' + encodeURIComponent(postCategory)}
         className={linkClassName ?? 'text-sm text-white hover:text-purple-400 transition-colors font-semibold'}
       >
         {categoryLabel(postCategory)}
       </LocaleLink>
-      {showTooltip && info && ReactDOM.createPortal(
-        <div
-          className={compact ? 'category-tooltip category-tooltip-compact' : 'category-tooltip'}
-          style={{ position: 'absolute', top: pos.top, left: pos.left }}
-          onMouseEnter={onEnter}
-          onMouseLeave={onLeave}
-        >
-          {info.short_description && (
-            <p className="category-tooltip-short">{info.short_description}</p>
-          )}
-          {!compact && info.description && (
-            <p className="category-tooltip-desc">{info.description}</p>
-          )}
-          {!compact && (
-            <div className="category-tooltip-meta">
-              <span>{t('blog.postCount', { count: info.post_count })}</span>
-              {info.updated_at && (
-                <span>{t('blog.lastUpdated')} {new Date(info.updated_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language)}</span>
-              )}
-            </div>
-          )}
-        </div>,
-        document.body
-      )}
+      {showTooltip &&
+        info &&
+        ReactDOM.createPortal(
+          <div
+            className={compact ? 'category-tooltip category-tooltip-compact' : 'category-tooltip'}
+            style={{ position: 'absolute', top: pos.top, left: pos.left }}
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
+          >
+            {info.short_description && <p className="category-tooltip-short">{info.short_description}</p>}
+            {!compact && info.description && <p className="category-tooltip-desc">{info.description}</p>}
+            {!compact && (
+              <div className="category-tooltip-meta">
+                <span>{t('blog.postCount', { count: info.post_count })}</span>
+                {info.updated_at && (
+                  <span>
+                    {t('blog.lastUpdated')}{' '}
+                    {new Date(info.updated_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>,
+          document.body,
+        )}
     </span>
   );
 };
@@ -440,51 +537,72 @@ function useReactions(postId: string | number) {
   const { data: reactions = [] } = useQuery(postReactionsQueryOptions(postId));
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
-    reactions.forEach(r => { map[r.emoji] = r.count; });
+    reactions.forEach((r) => {
+      map[r.emoji] = r.count;
+    });
     return map;
   }, [reactions]);
   // SSR-safe：初始空 Set（server 無 localStorage），掛載後才讀本地已按過的 reactions → 不 mismatch。
   const [mine, setMine] = useState<Set<string>>(() => new Set<string>());
   useEffect(() => {
     // localStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
-    // eslint-disable-next-line @eslint-react/set-state-in-effect
-    try { setMine(new Set<string>(JSON.parse(localStorage.getItem(`reactions:${postId}`) ?? '[]') as string[])); }
-    catch { /* localStorage 不可用就維持空 */ }
+    try {
+      // eslint-disable-next-line @eslint-react/set-state-in-effect
+      setMine(new Set<string>(JSON.parse(localStorage.getItem(`reactions:${postId}`) ?? '[]') as string[]));
+    } catch {
+      /* localStorage 不可用就維持空 */
+    }
   }, [postId]);
 
-  const patchCount = useCallback((emoji: string, resolve: (prev: number) => number) => {
-    queryClient.setQueryData<ReactionRow[]>(reactionsKey, (old) => {
-      const list = old ?? [];
-      const idx = list.findIndex(r => r.emoji === emoji);
-      if (idx >= 0) {
-        const next = list.slice();
-        next[idx] = { ...next[idx], count: Math.max(0, resolve(next[idx].count)) };
-        return next;
-      }
-      return [...list, { emoji, count: Math.max(0, resolve(0)) }];
-    });
-  }, [queryClient, reactionsKey]);
+  const patchCount = useCallback(
+    (emoji: string, resolve: (prev: number) => number) => {
+      queryClient.setQueryData<ReactionRow[]>(reactionsKey, (old) => {
+        const list = old ?? [];
+        const idx = list.findIndex((r) => r.emoji === emoji);
+        if (idx >= 0) {
+          const next = list.slice();
+          next[idx] = { ...next[idx], count: Math.max(0, resolve(next[idx].count)) };
+          return next;
+        }
+        return [...list, { emoji, count: Math.max(0, resolve(0)) }];
+      });
+    },
+    [queryClient, reactionsKey],
+  );
 
-  const toggle = useCallback((emoji: string) => {
-    const has = mine.has(emoji);
-    const delta = has ? -1 : 1;
-    // optimistic
-    patchCount(emoji, (c) => c + delta);
-    setMine(prev => {
-      const next = new Set(prev);
-      if (has) next.delete(emoji); else next.add(emoji);
-      try { localStorage.setItem(`reactions:${postId}`, JSON.stringify([...next])); } catch { /* localStorage 不可用就略過 */ }
-      return next;
-    });
-    fetch(`/api/posts/${postId}/reactions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emoji, delta }),
-    }).then(r => r.json() as Promise<{ count?: number }>).then(data => {
-      const count = data.count;
-      if (typeof count === 'number') patchCount(emoji, () => count);
-    }).catch(() => { /* 失敗就保持 optimistic 結果 */ });
-  }, [mine, postId, patchCount]);
+  const toggle = useCallback(
+    (emoji: string) => {
+      const has = mine.has(emoji);
+      const delta = has ? -1 : 1;
+      // optimistic
+      patchCount(emoji, (c) => c + delta);
+      setMine((prev) => {
+        const next = new Set(prev);
+        if (has) next.delete(emoji);
+        else next.add(emoji);
+        try {
+          localStorage.setItem(`reactions:${postId}`, JSON.stringify([...next]));
+        } catch {
+          /* localStorage 不可用就略過 */
+        }
+        return next;
+      });
+      fetch(`/api/posts/${postId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji, delta }),
+      })
+        .then((r) => r.json() as Promise<{ count?: number }>)
+        .then((data) => {
+          const count = data.count;
+          if (typeof count === 'number') patchCount(emoji, () => count);
+        })
+        .catch(() => {
+          /* 失敗就保持 optimistic 結果 */
+        });
+    },
+    [mine, postId, patchCount],
+  );
 
   return { counts, mine, toggle };
 }
@@ -502,7 +620,7 @@ const Reactions = React.memo(({ counts, mine, toggle }: ReturnType<typeof useRea
     // 都帶有表單語意，用在這裡反而錯
     // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
     <div className="reaction-bar" role="group" aria-label="Emoji 反應">
-      {REACTIONS.map(e => {
+      {REACTIONS.map((e) => {
         const n = counts[e] || 0;
         const active = mine.has(e);
         return (
@@ -531,7 +649,7 @@ const SeriesNav = React.memo(({ seriesName, currentId }: { seriesName: string; c
   const { t } = useTranslation();
   const { data: posts = [] } = useQuery({ ...seriesQueryOptions(seriesName), enabled: !!seriesName });
   if (!seriesName || posts.length === 0) return null;
-  const currentIdx = posts.findIndex(p => String(p.id) === String(currentId));
+  const currentIdx = posts.findIndex((p) => String(p.id) === String(currentId));
   return (
     <aside className="series-nav" aria-label={`系列文：${seriesName}`}>
       <header className="series-nav-header">
@@ -551,7 +669,9 @@ const SeriesNav = React.memo(({ seriesName, currentId }: { seriesName: string; c
               {isCurrent ? (
                 <span className="series-nav-title">{p.title}</span>
               ) : (
-                <PreviewablePostLink post={p} className="series-nav-title" viewTransition>{p.title}</PreviewablePostLink>
+                <PreviewablePostLink post={p} className="series-nav-title" viewTransition>
+                  {p.title}
+                </PreviewablePostLink>
               )}
             </li>
           );
@@ -570,9 +690,9 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
   const navLocale = useLocale();
   const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(200, navLocale));
   const { prev, next } = useMemo<{ prev: PostListItem | null; next: PostListItem | null }>(() => {
-    const published = allPosts.filter(p => p.status === 'published' || !p.status);
+    const published = allPosts.filter((p) => p.status === 'published' || !p.status);
     const sorted = [...published].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    const idx = sorted.findIndex(p => String(p.id) === String(currentId));
+    const idx = sorted.findIndex((p) => String(p.id) === String(currentId));
     if (idx === -1) return { prev: null, next: null };
     return {
       prev: idx > 0 ? sorted[idx - 1] : null,
@@ -589,13 +709,17 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
           <span className="prev-next-label">← {t('blog.prevPost')}</span>
           <span className="prev-next-title">{prev.title}</span>
         </LocaleLink>
-      ) : <span className="prev-next-placeholder" />}
+      ) : (
+        <span className="prev-next-placeholder" />
+      )}
       {next ? (
         <LocaleLink to={postPath(next)} className="prev-next-card prev-next-next" viewTransition>
           <span className="prev-next-label">{t('blog.nextPost')} →</span>
           <span className="prev-next-title">{next.title}</span>
         </LocaleLink>
-      ) : <span className="prev-next-placeholder" />}
+      ) : (
+        <span className="prev-next-placeholder" />
+      )}
     </nav>
   );
 });
@@ -603,189 +727,242 @@ const PrevNextNav = React.memo(({ currentId }: { currentId: string | number }) =
 /* ══════════════════════════
    PostsNav — Left sidebar showing OTHER article titles
    ══════════════════════════ */
-const PostsNav = React.memo(({ currentId, postCategory }: { currentId: string | number; postTitle?: string; postCategory?: string }) => {
-  const { t } = useTranslation();
-  const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
-  const navLocale = useLocale();
+const PostsNav = React.memo(
+  ({ currentId, postCategory }: { currentId: string | number; postTitle?: string; postCategory?: string }) => {
+    const { t } = useTranslation();
+    const [showCategoryTooltip, setShowCategoryTooltip] = useState(false);
+    const navLocale = useLocale();
 
-  // 分類詳情改由 Query 讀（有 postCategory 才抓）。
-  const { data: allCategories = [] } = useQuery({ ...blogCategoriesDetailQueryOptions(navLocale), enabled: !!postCategory });
-  const categoryInfo = useMemo<CategoryInfo | null>(
-    () => (postCategory ? (allCategories.find(c => c.name === postCategory) ?? null) : null),
-    [allCategories, postCategory],
-  );
+    // 分類詳情改由 Query 讀（有 postCategory 才抓）。
+    const { data: allCategories = [] } = useQuery({
+      ...blogCategoriesDetailQueryOptions(navLocale),
+      enabled: !!postCategory,
+    });
+    const categoryInfo = useMemo<CategoryInfo | null>(
+      () => (postCategory ? (allCategories.find((c) => c.name === postCategory) ?? null) : null),
+      [allCategories, postCategory],
+    );
 
-  // 附近文章 + 同專欄文章：從 posts(limit 100) 依時間排序後開視窗，改由 Query + useMemo derive。
-  const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(100, navLocale));
-  const { nearbyPosts, categoryPosts } = useMemo<{ nearbyPosts: PostListItem[]; categoryPosts: PostListItem[] }>(() => {
-    if (!allPosts.length) return { nearbyPosts: [], categoryPosts: [] };
-    // 按時間排序（最新在前）
-    const sorted = [...allPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    const currentIndex = sorted.findIndex(p => String(p.id) === String(currentId));
-    if (currentIndex === -1) return { nearbyPosts: [], categoryPosts: [] };
+    // 附近文章 + 同專欄文章：從 posts(limit 100) 依時間排序後開視窗，改由 Query + useMemo derive。
+    const { data: allPosts = [] } = useQuery(recentPostsQueryOptions(100, navLocale));
+    const { nearbyPosts, categoryPosts } = useMemo<{
+      nearbyPosts: PostListItem[];
+      categoryPosts: PostListItem[];
+    }>(() => {
+      if (!allPosts.length) return { nearbyPosts: [], categoryPosts: [] };
+      // 按時間排序（最新在前）
+      const sorted = [...allPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const currentIndex = sorted.findIndex((p) => String(p.id) === String(currentId));
+      if (currentIndex === -1) return { nearbyPosts: [], categoryPosts: [] };
 
-    // 顯示範圍：最新→往前6、第2新→7、其後→以當前為中心前後各4（不滿則另一側補）
-    let start, end;
-    if (currentIndex === 0) { start = 0; end = Math.min(sorted.length, 6); }
-    else if (currentIndex === 1) { start = 0; end = Math.min(sorted.length, 7); }
-    else {
-      const half = 4;
-      start = Math.max(0, currentIndex - half);
-      end = Math.min(sorted.length, currentIndex + half + 1);
-      if (currentIndex - start < half) end = Math.min(sorted.length, end + (half - (currentIndex - start)));
-      if (end - currentIndex - 1 < half) start = Math.max(0, start - (half - (end - currentIndex - 1)));
-    }
-    const nearby = sorted.slice(start, end);
-    const cat = postCategory
-      ? sorted.filter(p => p.category === postCategory && String(p.id) !== String(currentId)).slice(0, 5)
-      : [];
-    return { nearbyPosts: nearby, categoryPosts: cat };
-  }, [allPosts, currentId, postCategory]);
+      // 顯示範圍：最新→往前6、第2新→7、其後→以當前為中心前後各4（不滿則另一側補）
+      let start, end;
+      if (currentIndex === 0) {
+        start = 0;
+        end = Math.min(sorted.length, 6);
+      } else if (currentIndex === 1) {
+        start = 0;
+        end = Math.min(sorted.length, 7);
+      } else {
+        const half = 4;
+        start = Math.max(0, currentIndex - half);
+        end = Math.min(sorted.length, currentIndex + half + 1);
+        if (currentIndex - start < half) end = Math.min(sorted.length, end + (half - (currentIndex - start)));
+        if (end - currentIndex - 1 < half) start = Math.max(0, start - (half - (end - currentIndex - 1)));
+      }
+      const nearby = sorted.slice(start, end);
+      const cat = postCategory
+        ? sorted.filter((p) => p.category === postCategory && String(p.id) !== String(currentId)).slice(0, 5)
+        : [];
+      return { nearbyPosts: nearby, categoryPosts: cat };
+    }, [allPosts, currentId, postCategory]);
 
-  // 逐行進場的瀑布索引：附近清單 0..n-1，分類標頭 / 專欄其他文章接續往下 → 整條側欄
-  // 一路 cascade。key 綁 post id（穩定）→ 換文章時只有「新露出的列」是新 DOM 節點，
-  // 只有它們會重播 side-item-in（逐行塞入）；還在窗內的列不動。
-  const catBase = nearbyPosts.length;
-  return (
-    <nav className="posts-nav" aria-label={t('blog.nearbyNav')}>
-      {/* 附近文章列表（清單未到時先出骨架佔位，不是空白 → 不 raw pop）*/}
-      {nearbyPosts.length > 0 ? (
-        <div className="posts-nav-nearby">
-          {/* 進場＝CSS（第一幀就跑、不等 JS）；退場＝framer AnimatePresence（CSS 動不了
+    // 逐行進場的瀑布索引：附近清單 0..n-1，分類標頭 / 專欄其他文章接續往下 → 整條側欄
+    // 一路 cascade。key 綁 post id（穩定）→ 換文章時只有「新露出的列」是新 DOM 節點，
+    // 只有它們會重播 side-item-in（逐行塞入）；還在窗內的列不動。
+    const catBase = nearbyPosts.length;
+    return (
+      <nav className="posts-nav" aria-label={t('blog.nearbyNav')}>
+        {/* 附近文章列表（清單未到時先出骨架佔位，不是空白 → 不 raw pop）*/}
+        {nearbyPosts.length > 0 ? (
+          <div className="posts-nav-nearby">
+            {/* 進場＝CSS（第一幀就跑、不等 JS）；退場＝framer AnimatePresence（CSS 動不了
               「正在被移除的節點」）。initial={false} → framer 不插手進場，避免跟 CSS 搶。
               layout → 有列收合時，其餘列平順上移而不是瞬間跳。 */}
-          <AnimatePresence initial={false}>
-            {nearbyPosts.map((p, i) => {
-              const isCurrent = String(p.id) === String(currentId);
-              return (
-                <motion.div
-                  key={p.id}
-                  layout
-                  initial={false}
-                  exit={{ opacity: 0, x: -14, height: 0, marginTop: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <PreviewablePostLink
-                    post={p}
-                    current={isCurrent}
-                    className={
-                      'posts-nav-item side-item-in text-sm py-1 block transition-colors truncate '
-                      + (isCurrent ? 'text-white font-semibold posts-nav-current-item' : 'text-gray-500 hover:text-gray-300')
-                    }
-                    style={{ '--i': i } as React.CSSProperties}
-                  >
-                    {p.title}
-                  </PreviewablePostLink>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      ) : allPosts.length === 0 ? (
-        <div className="posts-nav-nearby" aria-hidden="true">
-          {[88, 72, 94, 63, 80].map((w, i) => (
-            // 骨架屏佔位，載入完就整批換掉，不存在重排問題
-            // eslint-disable-next-line @eslint-react/no-array-index-key
-            <div key={`skel-${w}-${i}`} className="bp-skel" style={{ height: 13, width: `${w}%`, margin: '0 0 12px' }} />
-          ))}
-        </div>
-      ) : null}
-
-      {/* 此文章收錄於分類（接續瀑布索引） */}
-      {postCategory && (
-        <div className="posts-nav-category side-item-in mt-6 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', '--i': catBase } as React.CSSProperties}>
-          <span className="text-xs text-gray-600 block mb-1">{t('blog.inColumn')}</span>
-          <CategoryTooltipTrigger
-            postCategory={postCategory}
-            categoryInfo={categoryInfo}
-            showTooltip={showCategoryTooltip}
-            onEnter={() => setShowCategoryTooltip(true)}
-            onLeave={() => setShowCategoryTooltip(false)}
-          />
-        </div>
-      )}
-
-      {/* 此專欄其他文章（逐行，索引接在分類區塊後；同樣有退場動畫） */}
-      {categoryPosts.length > 0 && (
-        <div className="posts-nav-list mt-4">
-          <span className="text-xs text-gray-600 block mb-2 side-item-in" style={{ '--i': catBase + 1 } as React.CSSProperties}>{t('blog.otherInColumn')}</span>
-          <div className="flex flex-col gap-1">
             <AnimatePresence initial={false}>
-              {categoryPosts.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  layout
-                  initial={false}
-                  exit={{ opacity: 0, x: -14, height: 0, marginTop: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <PreviewablePostLink
-                    post={p}
-                    className="posts-nav-item side-item-in text-sm text-gray-500 hover:text-gray-300 transition-colors py-0.5 block truncate"
-                    style={{ '--i': catBase + 2 + i } as React.CSSProperties}
+              {nearbyPosts.map((p, i) => {
+                const isCurrent = String(p.id) === String(currentId);
+                return (
+                  <motion.div
+                    key={p.id}
+                    layout
+                    initial={false}
+                    exit={{ opacity: 0, x: -14, height: 0, marginTop: 0, marginBottom: 0 }}
+                    transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ overflow: 'hidden' }}
                   >
-                    {p.title}
-                  </PreviewablePostLink>
-                </motion.div>
-              ))}
+                    <PreviewablePostLink
+                      post={p}
+                      current={isCurrent}
+                      className={
+                        'posts-nav-item side-item-in text-sm py-1 block transition-colors truncate ' +
+                        (isCurrent
+                          ? 'text-white font-semibold posts-nav-current-item'
+                          : 'text-gray-500 hover:text-gray-300')
+                      }
+                      style={{ '--i': i } as React.CSSProperties}
+                    >
+                      {p.title}
+                    </PreviewablePostLink>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
-        </div>
-      )}
-    </nav>
-  );
-});
+        ) : allPosts.length === 0 ? (
+          <div className="posts-nav-nearby" aria-hidden="true">
+            {[88, 72, 94, 63, 80].map((w, i) => (
+              // 骨架屏佔位，載入完就整批換掉，不存在重排問題
+              <div
+                // eslint-disable-next-line @eslint-react/no-array-index-key
+                key={`skel-${w}-${i}`}
+                className="bp-skel"
+                style={{ height: 13, width: `${w}%`, margin: '0 0 12px' }}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {/* 此文章收錄於分類（接續瀑布索引） */}
+        {postCategory && (
+          <div
+            className="posts-nav-category side-item-in mt-6 pt-4"
+            style={
+              {
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                position: 'relative',
+                '--i': catBase,
+              } as React.CSSProperties
+            }
+          >
+            <span className="text-xs text-gray-600 block mb-1">{t('blog.inColumn')}</span>
+            <CategoryTooltipTrigger
+              postCategory={postCategory}
+              categoryInfo={categoryInfo}
+              showTooltip={showCategoryTooltip}
+              onEnter={() => setShowCategoryTooltip(true)}
+              onLeave={() => setShowCategoryTooltip(false)}
+            />
+          </div>
+        )}
+
+        {/* 此專欄其他文章（逐行，索引接在分類區塊後；同樣有退場動畫） */}
+        {categoryPosts.length > 0 && (
+          <div className="posts-nav-list mt-4">
+            <span
+              className="text-xs text-gray-600 block mb-2 side-item-in"
+              style={{ '--i': catBase + 1 } as React.CSSProperties}
+            >
+              {t('blog.otherInColumn')}
+            </span>
+            <div className="flex flex-col gap-1">
+              <AnimatePresence initial={false}>
+                {categoryPosts.map((p, i) => (
+                  <motion.div
+                    key={p.id}
+                    layout
+                    initial={false}
+                    exit={{ opacity: 0, x: -14, height: 0, marginTop: 0, marginBottom: 0 }}
+                    transition={{ duration: 0.24, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <PreviewablePostLink
+                      post={p}
+                      className="posts-nav-item side-item-in text-sm text-gray-500 hover:text-gray-300 transition-colors py-0.5 block truncate"
+                      style={{ '--i': catBase + 2 + i } as React.CSSProperties}
+                    >
+                      {p.title}
+                    </PreviewablePostLink>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+      </nav>
+    );
+  },
+);
 
 /* ══════════════════════════
    TableOfContents — Right sidebar (TOC with reading progress)
    ══════════════════════════ */
-const TableOfContents = React.memo(({ headings, activeHeading, readingProgress, tocRef }: { headings: Heading[]; activeHeading: string; readingProgress: number; tocRef: React.RefObject<HTMLElement | null> }) => {
-  const { t } = useTranslation();
-  const scrollToHeading = useCallback((headingId: string) => {
-    setTimeout(() => {
-      const el =
-        document.getElementById(headingId) ??
-        document.querySelector('[id="' + headingId + '"]');
-      if (!el) return;
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
-    }, 50);
-  }, []);
+const TableOfContents = React.memo(
+  ({
+    headings,
+    activeHeading,
+    readingProgress,
+    tocRef,
+  }: {
+    headings: Heading[];
+    activeHeading: string;
+    readingProgress: number;
+    tocRef: React.RefObject<HTMLElement | null>;
+  }) => {
+    const { t } = useTranslation();
+    const scrollToHeading = useCallback((headingId: string) => {
+      setTimeout(() => {
+        const el = document.getElementById(headingId) ?? document.querySelector('[id="' + headingId + '"]');
+        if (!el) return;
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
+      }, 50);
+    }, []);
 
-  return (
-    <div className="table-of-contents">
-      <div className="toc-header">
-        <h3>{t('blog.toc')}</h3>
-        <div className="reading-progress-circle">
-          <svg viewBox="0 0 36 36">
-            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--post-accent)" strokeWidth="3" strokeDasharray={readingProgress + ', 100'} />
-          </svg>
-          <span className="progress-text">{Math.round(readingProgress)}%</span>
+    return (
+      <div className="table-of-contents">
+        <div className="toc-header">
+          <h3>{t('blog.toc')}</h3>
+          <div className="reading-progress-circle">
+            <svg viewBox="0 0 36 36">
+              <path
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="rgba(255,255,255,0.08)"
+                strokeWidth="3"
+              />
+              <path
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="var(--post-accent)"
+                strokeWidth="3"
+                strokeDasharray={readingProgress + ', 100'}
+              />
+            </svg>
+            <span className="progress-text">{Math.round(readingProgress)}%</span>
+          </div>
         </div>
+        <nav className="toc-nav" aria-label={t('blog.toc')} ref={tocRef}>
+          {headings.map((h, i) => (
+            <button
+              key={h.id}
+              data-heading-id={h.id}
+              className={'toc-item level-' + h.level + (activeHeading === h.id ? ' active' : '')}
+              style={{ '--i': i } as React.CSSProperties}
+              onClick={() => scrollToHeading(h.id)}
+              title={h.text}
+            >
+              <span className="toc-bullet" />
+              <span className="toc-text">{h.text}</span>
+            </button>
+          ))}
+        </nav>
+        <button className="toc-bottom-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <FaArrowUp /> {t('blog.backToArticleTop')}
+        </button>
       </div>
-      <nav className="toc-nav" aria-label={t('blog.toc')} ref={tocRef}>
-        {headings.map((h, i) => (
-          <button
-            key={h.id}
-            data-heading-id={h.id}
-            className={'toc-item level-' + h.level + (activeHeading === h.id ? ' active' : '')}
-            style={{ '--i': i } as React.CSSProperties}
-            onClick={() => scrollToHeading(h.id)}
-            title={h.text}
-          >
-            <span className="toc-bullet" />
-            <span className="toc-text">{h.text}</span>
-          </button>
-        ))}
-      </nav>
-      <button className="toc-bottom-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <FaArrowUp /> {t('blog.backToArticleTop')}
-      </button>
-    </div>
-  );
-});
+    );
+  },
+);
 
 /* ══════════════════════════
    SubscribeModal
@@ -799,13 +976,23 @@ function readSubscriberLS() {
   try {
     const raw = localStorage.getItem(NEWSLETTER_LS_KEY);
     return raw ? (JSON.parse(raw) as { email?: string; name?: string }) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 function writeSubscriberLS(value: unknown) {
-  try { localStorage.setItem(NEWSLETTER_LS_KEY, JSON.stringify(value)); } catch { /* localStorage blocked */ }
+  try {
+    localStorage.setItem(NEWSLETTER_LS_KEY, JSON.stringify(value));
+  } catch {
+    /* localStorage blocked */
+  }
 }
 function clearSubscriberLS() {
-  try { localStorage.removeItem(NEWSLETTER_LS_KEY); } catch { /* localStorage blocked */ }
+  try {
+    localStorage.removeItem(NEWSLETTER_LS_KEY);
+  } catch {
+    /* localStorage blocked */
+  }
 }
 
 const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
@@ -825,7 +1012,7 @@ const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name }),
       });
-      const data = await res.json() as { error?: string };
+      const data = (await res.json()) as { error?: string };
       if (res.ok) {
         setStatus('success');
         setMessage(t('newsletter.successWithEmoji'));
@@ -856,7 +1043,7 @@ const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
         body: JSON.stringify({ email: subscribed.email }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? t('newsletter.unsubFailed'));
       }
       clearSubscriberLS();
@@ -886,7 +1073,9 @@ const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ duration: 0.25 }}
       >
-        <button type="button" className="subscribe-close" onClick={onClose} aria-label="關閉"><FaTimes /></button>
+        <button type="button" className="subscribe-close" onClick={onClose} aria-label="關閉">
+          <FaTimes />
+        </button>
 
         {subscribed ? (
           /* ── 已訂閱狀態 ── */
@@ -911,7 +1100,9 @@ const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
               <button
                 type="button"
                 className="subscribe-secondary"
-                onClick={() => { void handleUnsubscribe(); }}
+                onClick={() => {
+                  void handleUnsubscribe();
+                }}
                 disabled={status === 'loading'}
               >
                 {status === 'loading' ? t('newsletter.unsubProcessing') : t('newsletter.unsubBtn')}
@@ -928,13 +1119,32 @@ const SubscribeModal = ({ onClose }: { onClose: () => void }) => {
               <p>{t('newsletter.subscribeIntro')}</p>
             </div>
             <form
-              onSubmit={(e) => { void handleSubmit(e); }}
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
               className="subscribe-form"
               toolname="subscribe_newsletter"
               tooldescription="訂閱 koimsurai 電子報，有新文章時以 email 通知"
             >
-              <input type="text" name="name" toolparamdescription="訂閱者暱稱（選填）" placeholder={t('newsletter.namePlaceholderShort')} value={name} onChange={(e) => setName(e.target.value)} disabled={status === 'loading'} />
-              <input type="email" name="email" toolparamdescription="訂閱用的 email 地址" placeholder={t('newsletter.emailPlaceholderShort')} value={email} onChange={(e) => setEmail(e.target.value)} required disabled={status === 'loading'} />
+              <input
+                type="text"
+                name="name"
+                toolparamdescription="訂閱者暱稱（選填）"
+                placeholder={t('newsletter.namePlaceholderShort')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={status === 'loading'}
+              />
+              <input
+                type="email"
+                name="email"
+                toolparamdescription="訂閱用的 email 地址"
+                placeholder={t('newsletter.emailPlaceholderShort')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={status === 'loading'}
+              />
               <button type="submit" disabled={status === 'loading'}>
                 {status === 'loading' ? t('newsletter.processing') : t('newsletter.subscribe')}
               </button>
@@ -973,7 +1183,10 @@ const FontSwitcher = ({ currentFont, onFontChange }: { currentFont: string; onFo
               <button
                 key={f.id}
                 className={'font-option' + (currentFont === f.id ? ' active' : '')}
-                onClick={() => { onFontChange(f.id); setIsOpen(false); }}
+                onClick={() => {
+                  onFontChange(f.id);
+                  setIsOpen(false);
+                }}
                 // 每個選項用自己的字體預覽 → 直接指向 index.css 的那份定義，不另存一份字體棧
                 style={{ fontFamily: `var(--blog-font-${f.id})` }}
               >
@@ -1013,12 +1226,28 @@ const Toast = ({ message, onDone }: { message: React.ReactNode; onDone: () => vo
 const LANG_OPTIONS = [
   { code: 'zh-TW', label: '繁體中文' },
   { code: 'zh-CN', label: '简体中文' },
-  { code: 'en',    label: 'English' },
-  { code: 'ja',    label: '日本語' },
-  { code: 'ko',    label: '한국어' },
+  { code: 'en', label: 'English' },
+  { code: 'ja', label: '日本語' },
+  { code: 'ko', label: '한국어' },
 ];
 
-const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect, onUnavailable }: { open: boolean; setOpen: (v: boolean) => void; current: string; source: string; available: string[]; onSelect: (code: string) => void; onUnavailable: (label: string) => void }) => {
+const LanguageSwitcher = ({
+  open,
+  setOpen,
+  current,
+  source,
+  available,
+  onSelect,
+  onUnavailable,
+}: {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  current: string;
+  source: string;
+  available: string[];
+  onSelect: (code: string) => void;
+  onUnavailable: (label: string) => void;
+}) => {
   const wrapRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0, minWidth: 160 });
@@ -1032,7 +1261,9 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
       if (menu && e.target instanceof Node && menu.contains(e.target)) return;
       setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -1064,7 +1295,7 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
     };
   }, [open]);
 
-  const currentLabel = LANG_OPTIONS.find(o => o.code === current)?.label ?? current;
+  const currentLabel = LANG_OPTIONS.find((o) => o.code === current)?.label ?? current;
 
   return (
     <span className="meta-lang-switcher" ref={wrapRef}>
@@ -1080,46 +1311,56 @@ const LanguageSwitcher = ({ open, setOpen, current, source, available, onSelect,
         <span className="lang-code">{currentLabel}</span>
         <span className={`lang-caret ${open ? 'open' : ''}`}>▾</span>
       </button>
-      {open && ReactDOM.createPortal(
-        <div
-          id="blog-lang-menu"
-          className="lang-menu"
-          // 同 LanguagePicker：不掛 role="listbox"/"option"。那組 role 承諾完整的 listbox
-          // 鍵盤語意（方向鍵 + aria-activedescendant），這裡沒實作；role="option" 蓋在
-          // button 上還會覆寫按鈕語意。一組按鈕本身就可存取，目前語言用 aria-current 標。
-          style={{ position: 'absolute', top: menuPos.top, left: menuPos.left, minWidth: menuPos.minWidth }}
-        >
-          {LANG_OPTIONS.map(opt => {
-            const isSource = opt.code === source;
-            const isAvailable = available.includes(opt.code);
-            return (
-              <button
-                key={opt.code}
-                type="button"
-                aria-current={opt.code === current ? 'true' : undefined}
-                className={`lang-item ${isAvailable ? '' : 'disabled'} ${opt.code === current ? 'active' : ''}`}
-                onClick={() => {
-                  setOpen(false);
-                  if (!isAvailable) { onUnavailable(opt.label); return; }
-                  if (opt.code === current) return;
-                  onSelect(opt.code);
-                }}
-              >
-                <span>{opt.label}</span>
-                {isSource && <span className="lang-badge">原文</span>}
-              </button>
-            );
-          })}
-        </div>,
-        document.body,
-      )}
+      {open &&
+        ReactDOM.createPortal(
+          <div
+            id="blog-lang-menu"
+            className="lang-menu"
+            // 同 LanguagePicker：不掛 role="listbox"/"option"。那組 role 承諾完整的 listbox
+            // 鍵盤語意（方向鍵 + aria-activedescendant），這裡沒實作；role="option" 蓋在
+            // button 上還會覆寫按鈕語意。一組按鈕本身就可存取，目前語言用 aria-current 標。
+            style={{ position: 'absolute', top: menuPos.top, left: menuPos.left, minWidth: menuPos.minWidth }}
+          >
+            {LANG_OPTIONS.map((opt) => {
+              const isSource = opt.code === source;
+              const isAvailable = available.includes(opt.code);
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  aria-current={opt.code === current ? 'true' : undefined}
+                  className={`lang-item ${isAvailable ? '' : 'disabled'} ${opt.code === current ? 'active' : ''}`}
+                  onClick={() => {
+                    setOpen(false);
+                    if (!isAvailable) {
+                      onUnavailable(opt.label);
+                      return;
+                    }
+                    if (opt.code === current) return;
+                    onSelect(opt.code);
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSource && <span className="lang-badge">原文</span>}
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
     </span>
   );
 };
 
 /* URL prefix mapping — 必須與後端 LOCALE_URL_PREFIX 一致 */
-const LOCALE_URL_PREFIX: Record<string, string> = { 'zh-TW': '', 'zh-CN': '/zh-cn', 'en': '/en', 'ja': '/ja', 'ko': '/ko' };
-const LOCALE_TO_DATE_LOCALE: Record<string, string> = { 'zh-TW': 'zh-TW', 'zh-CN': 'zh-CN', 'en': 'en-US', 'ja': 'ja-JP', 'ko': 'ko-KR' };
+const LOCALE_URL_PREFIX: Record<string, string> = { 'zh-TW': '', 'zh-CN': '/zh-cn', en: '/en', ja: '/ja', ko: '/ko' };
+const LOCALE_TO_DATE_LOCALE: Record<string, string> = {
+  'zh-TW': 'zh-TW',
+  'zh-CN': 'zh-CN',
+  en: 'en-US',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+};
 
 function parseLocaleFromPath(pathname: string) {
   if (pathname.startsWith('/en/blog/')) return 'en';
@@ -1163,7 +1404,11 @@ function BlogPost() {
   // 主文改由 TanStack Query 讀：route loader 已 ensureQueryData 預取 → SSR baked、
   // hydrate 讀同一份快取，不再重打 API。placeholderData 保留上一篇資料做平滑過渡（不閃白）。
   // date 是 client 依語系格式化的衍生欄位（API 不回傳）。
-  const { data: postData, isPending, error: queryError } = useQuery({
+  const {
+    data: postData,
+    isPending,
+    error: queryError,
+  } = useQuery({
     ...postDetailQueryOptions(id, pathLocale),
     placeholderData: keepPreviousData,
   });
@@ -1173,16 +1418,25 @@ function BlogPost() {
     return {
       ...postData,
       // timeZone 固定 Asia/Taipei → server(UTC) 與 client 同一天、同 weekday，不 hydration mismatch。
-      date: new Date(postData.created_at).toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Taipei' }),
+      date: new Date(postData.created_at).toLocaleDateString(dateLocale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+        timeZone: 'Asia/Taipei',
+      }),
     };
   }, [postData]);
   const loading = isPending;
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Post not found') : null;
 
   // 專欄 tooltip 的分類詳情：與 PostsNav 共用同一份 categories detail 快取（單抓）。
-  const { data: metaCats = [] } = useQuery({ ...blogCategoriesDetailQueryOptions(pathLocale), enabled: !!postData?.category });
+  const { data: metaCats = [] } = useQuery({
+    ...blogCategoriesDetailQueryOptions(pathLocale),
+    enabled: !!postData?.category,
+  });
   const metaCategoryInfo = useMemo<CategoryInfo | null>(
-    () => (postData?.category ? (metaCats.find(c => c.name === postData.category) ?? null) : null),
+    () => (postData?.category ? (metaCats.find((c) => c.name === postData.category) ?? null) : null),
     [metaCats, postData?.category],
   );
 
@@ -1205,7 +1459,15 @@ function BlogPost() {
 
   /* heading components */
   const createHeading = useCallback((level: number) => {
-    return ({ children, node: _node, ...props }: { children?: React.ReactNode; node?: unknown; [key: string]: unknown }) => {
+    return ({
+      children,
+      node: _node,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      node?: unknown;
+      [key: string]: unknown;
+    }) => {
       const Tag = 'h' + level;
       const text = nodeText(children);
       const hid = slugify(text);
@@ -1239,8 +1501,17 @@ function BlogPost() {
       img: ({ src, alt, ...rest }: { src?: string; alt?: string }) => <BlogImage src={src} alt={alt} {...rest} />,
       a: ({ href, children, ...rest }: { href?: string; children?: React.ReactNode }) => {
         const h = typeof href === 'string' ? href : '';
-        if (!h || h.startsWith('#')) return <a href={h} {...rest}>{children}</a>;
-        return <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>{children}</LinkHoverPreview>;
+        if (!h || h.startsWith('#'))
+          return (
+            <a href={h} {...rest}>
+              {children}
+            </a>
+          );
+        return (
+          <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>
+            {children}
+          </LinkHoverPreview>
+        );
       },
       ...headingComponents,
     }),
@@ -1277,15 +1548,18 @@ function BlogPost() {
        最後決定拔掉 — 預覽是「快速瀏覽」，commit 進文章就從頂端讀，介面比較誠實。
        sessionStorage 順手清掉避免舊資料殘留。 */
   useEffect(() => {
-    try { sessionStorage.removeItem('__koim_anchor'); } catch { /* ignore */ }
+    try {
+      sessionStorage.removeItem('__koim_anchor');
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   /* ── Like state ──
      愛心 = 反應列裡的 ❤️。以前這裡另外維護 liked/likeCount 兩個 state（來源是
      `posts.likes`），跟下方反應列的 ❤️ 是兩個獨立的數字，同一篇文章會顯示不一致的
      值。現在共用 useReactions，三處是同一份狀態，不需要同步。 */
-  const { counts: reactionCounts, mine: myReactions, toggle: toggleReaction } =
-    useReactions(post?.id ?? id);
+  const { counts: reactionCounts, mine: myReactions, toggle: toggleReaction } = useReactions(post?.id ?? id);
   const likeCount = reactionCounts[HEART] ?? 0;
   const liked = myReactions.has(HEART);
 
@@ -1301,7 +1575,9 @@ function BlogPost() {
           if (el.closest('pre') || el.closest('code')) return;
           (pangu as unknown as { spacingElementByNode: (node: Node) => void }).spacingElementByNode(el);
         });
-      } catch { /* pangu 失敗不影響閱讀 */ }
+      } catch {
+        /* pangu 失敗不影響閱讀 */
+      }
 
       // 2) 腳註 hover 浮窗：把腳註內容寫到 ref 連結的 data-fn-content
       try {
@@ -1309,8 +1585,10 @@ function BlogPost() {
         root.querySelectorAll('.footnotes li[id^="user-content-fn-"], .footnotes li[id^="fn-"]').forEach((li) => {
           const id = li.id;
           const clone = li.cloneNode(true) as Element;
-          clone.querySelectorAll('a.data-footnote-backref, a[href^="#user-content-fnref"], a[href^="#fnref"]').forEach((a) => a.remove());
-          const text = (clone.textContent).trim().replace(/\s+/g, ' ').slice(0, 320);
+          clone
+            .querySelectorAll('a.data-footnote-backref, a[href^="#user-content-fnref"], a[href^="#fnref"]')
+            .forEach((a) => a.remove());
+          const text = clone.textContent.trim().replace(/\s+/g, ' ').slice(0, 320);
           fnMap.set(id, text);
         });
         root.querySelectorAll('sup a[data-footnote-ref], sup a.footnote-ref').forEach((a) => {
@@ -1319,7 +1597,9 @@ function BlogPost() {
           const text = fnMap.get(targetId);
           if (text) a.setAttribute('data-fn-content', text);
         });
-      } catch { /* 腳註處理失敗就忽略 */ }
+      } catch {
+        /* 腳註處理失敗就忽略 */
+      }
     });
   }, [post?.content]);
 
@@ -1335,11 +1615,15 @@ function BlogPost() {
       e.clipboardData?.setData('text/plain', '此內容受版權保護，禁止複製。\n原文連結：' + window.location.href);
     };
     document.addEventListener('copy', preventCopy);
-    return () => { document.removeEventListener('copy', preventCopy); };
+    return () => {
+      document.removeEventListener('copy', preventCopy);
+    };
   }, []);
 
   /* ── Like handler ── 就是切換 ❤️ 反應；optimistic 與校正都在 useReactions 裡 */
-  const handleLike = () => { toggleReaction(HEART); };
+  const handleLike = () => {
+    toggleReaction(HEART);
+  };
 
   const [showShareMenu, setShowShareMenu] = useState(false);
 
@@ -1357,12 +1641,20 @@ function BlogPost() {
   };
 
   const handleShareTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`, '_blank', 'noopener,noreferrer,width=550,height=420');
+    window.open(
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
+      '_blank',
+      'noopener,noreferrer,width=550,height=420',
+    );
     setShowShareMenu(false);
   };
 
   const handleShareFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer,width=550,height=420');
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      '_blank',
+      'noopener,noreferrer,width=550,height=420',
+    );
     setShowShareMenu(false);
   };
 
@@ -1370,7 +1662,9 @@ function BlogPost() {
     // 同 Blog.tsx：lib.dom 宣告 share 必存在，桌面 Firefox 沒有 → 用可選型別讓守衛誠實。
     const nav: Partial<Navigator> = navigator;
     if (nav.share) {
-      void nav.share({ title: shareTitle, url: shareUrl }).catch(() => { /* ignore */ });
+      void nav.share({ title: shareTitle, url: shareUrl }).catch(() => {
+        /* ignore */
+      });
     } else {
       handleCopyLink();
     }
@@ -1418,11 +1712,21 @@ function BlogPost() {
 
     let ticking = false;
     const listener = () => {
-      if (!ticking) { window.requestAnimationFrame(() => { handleScroll(); ticking = false; }); ticking = true; }
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener('scroll', listener, { passive: true });
     const init = setTimeout(handleScroll, 500);
-    return () => { window.removeEventListener('scroll', listener); if (timer) clearTimeout(timer); clearTimeout(init); };
+    return () => {
+      window.removeEventListener('scroll', listener);
+      if (timer) clearTimeout(timer);
+      clearTimeout(init);
+    };
   }, [post, headings]);
 
   /* ════════ Loading ════════ */
@@ -1444,11 +1748,19 @@ function BlogPost() {
         <div className="error-content">
           <div className="error-icon">🌐</div>
           <h1>{isLocaleMissing ? '此語言版本尚未提供' : '文章航線丟失'}</h1>
-          <p>{isLocaleMissing ? '您請求的語言目前還沒有翻譯版本，可以前往原文頁面閱讀。' : '抱歉，我們在宇宙中找不到您要找的文章。'}</p>
+          <p>
+            {isLocaleMissing
+              ? '您請求的語言目前還沒有翻譯版本，可以前往原文頁面閱讀。'
+              : '抱歉，我們在宇宙中找不到您要找的文章。'}
+          </p>
           {isLocaleMissing ? (
-            <LocaleLink to={`/blog/${id}`} className="back-to-blog-link">前往原文 →</LocaleLink>
+            <LocaleLink to={`/blog/${id}`} className="back-to-blog-link">
+              前往原文 →
+            </LocaleLink>
           ) : (
-            <LocaleLink to="/blog" className="back-to-blog-link">‹ 返回手記</LocaleLink>
+            <LocaleLink to="/blog" className="back-to-blog-link">
+              ‹ 返回手記
+            </LocaleLink>
           )}
         </div>
       </div>
@@ -1479,9 +1791,7 @@ function BlogPost() {
       </div>
 
       {/* Toast */}
-      {toastMsg && (
-        <Toast key={toastMsg} message={toastMsg} onDone={() => setToastMsg('')} />
-      )}
+      {toastMsg && <Toast key={toastMsg} message={toastMsg} onDone={() => setToastMsg('')} />}
 
       {/* ── Header ── */}
       <AnimatePresence mode="wait">
@@ -1502,17 +1812,27 @@ function BlogPost() {
           <div className="post-meta-row">
             {post.layout_type !== 'column' && (
               <>
-                <span className="meta-tip" data-tooltip="發布日期">⏱ {post.date}</span>
+                <span className="meta-tip" data-tooltip="發布日期">
+                  ⏱ {post.date}
+                </span>
                 <span className="meta-sep">·</span>
               </>
             )}
-            <span className="meta-tip meta-author" data-tooltip="作者">✦ {post.author}</span>
+            <span className="meta-tip meta-author" data-tooltip="作者">
+              ✦ {post.author}
+            </span>
             <span className="meta-sep">·</span>
-            <span className="meta-tip" data-tooltip="累計閱讀次數">📖 {post.view_count}</span>
+            <span className="meta-tip" data-tooltip="累計閱讀次數">
+              📖 {post.view_count}
+            </span>
             <span className="meta-sep">·</span>
-            <span className="meta-tip" data-tooltip="讀者喜歡數">❤️ {likeCount}</span>
+            <span className="meta-tip" data-tooltip="讀者喜歡數">
+              ❤️ {likeCount}
+            </span>
             <span className="meta-sep">·</span>
-            <span className="meta-tip" data-tooltip="預估閱讀時間">☕ 約 {readTime} 分鐘</span>
+            <span className="meta-tip" data-tooltip="預估閱讀時間">
+              ☕ 約 {readTime} 分鐘
+            </span>
             {post.category && (
               <>
                 <span className="meta-sep">·</span>
@@ -1551,7 +1871,9 @@ function BlogPost() {
           {postTags.length > 0 && (
             <div className="post-tags">
               {postTags.map((name) => (
-                <span key={name} className="tag">#{tagLabel(name)}</span>
+                <span key={name} className="tag">
+                  #{tagLabel(name)}
+                </span>
               ))}
             </div>
           )}
@@ -1581,9 +1903,13 @@ function BlogPost() {
                 貼齊卡片頂邊、圓角只在上方，必須是卡片第一個子元素，banner 插進去會壓壞它。 */}
             {currentLocale !== sourceLang && translationNotice && (
               <div className="ai-translation-notice">
-                <span className="ai-translation-icon" aria-hidden>🌐</span>
+                <span className="ai-translation-icon" aria-hidden>
+                  🌐
+                </span>
                 <span className="ai-translation-text">{translationNotice.text}</span>
-                <a className="ai-translation-original" href={`/blog/${id}`}>{translationNotice.original} →</a>
+                <a className="ai-translation-original" href={`/blog/${id}`}>
+                  {translationNotice.original} →
+                </a>
               </div>
             )}
             <div className="post-content-wrapper">
@@ -1606,33 +1932,44 @@ function BlogPost() {
                 {/* 伺服器預渲染的 mermaid SVG 對照表。CodeBlock 是頂層 export（後台預覽也重用），
                     中間又隔著 ReactMarkdown 的內部結構，所以只能走 context。 */}
                 <MermaidSvgContext value={postData?.mermaidSvgs ?? {}}>
-                {postData?.compiledMdx ? (
-                  // format='mdx'：server 端已編譯，這裡 runSync 執行成 React 元件（自訂 block +
-                  // 與 markdown 共用的 code/link/img/heading override）。
-                  <MdxContent compiled={postData.compiledMdx} baseComponents={mdxBaseComponents} />
-                ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkAlert]}
-                    rehypePlugins={[rehypeRaw]}
-                    components={{
-                      code: CodeBlock,
-                      p: CustomParagraph,
-                      img: ({ src, alt, ...rest }) => <BlogImage src={src} alt={alt} {...rest} />,
-                      // 行內連結 → hover 預覽卡（資料來自自家 /api/link-preview，不外送給第三方）。
-                      // 「整段只有一個連結」那種會先被 CustomParagraph 攔去做 LinkCard 區塊卡，
-                      // 所以這裡拿到的都是真正的行內連結。錨點（#foo）不預覽。
-                      a: ({ href, children, ...rest }) => {
-                        const h = typeof href === 'string' ? href : '';
-                        if (!h || h.startsWith('#')) return <a href={h} {...rest}>{children}</a>;
-                        return <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>{children}</LinkHoverPreview>;
-                      },
-                      ...headingComponents,
-                    } as Components}
-                  >
-                    {post.content}
-                  </ReactMarkdown>
-                )}
-              </MermaidSvgContext>
+                  {postData?.compiledMdx ? (
+                    // format='mdx'：server 端已編譯，這裡 runSync 執行成 React 元件（自訂 block +
+                    // 與 markdown 共用的 code/link/img/heading override）。
+                    <MdxContent compiled={postData.compiledMdx} baseComponents={mdxBaseComponents} />
+                  ) : (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkAlert]}
+                      rehypePlugins={[rehypeRaw]}
+                      components={
+                        {
+                          code: CodeBlock,
+                          p: CustomParagraph,
+                          img: ({ src, alt, ...rest }) => <BlogImage src={src} alt={alt} {...rest} />,
+                          // 行內連結 → hover 預覽卡（資料來自自家 /api/link-preview，不外送給第三方）。
+                          // 「整段只有一個連結」那種會先被 CustomParagraph 攔去做 LinkCard 區塊卡，
+                          // 所以這裡拿到的都是真正的行內連結。錨點（#foo）不預覽。
+                          a: ({ href, children, ...rest }) => {
+                            const h = typeof href === 'string' ? href : '';
+                            if (!h || h.startsWith('#'))
+                              return (
+                                <a href={h} {...rest}>
+                                  {children}
+                                </a>
+                              );
+                            return (
+                              <LinkHoverPreview href={h} className={(rest as { className?: string }).className}>
+                                {children}
+                              </LinkHoverPreview>
+                            );
+                          },
+                          ...headingComponents,
+                        } as Components
+                      }
+                    >
+                      {post.content}
+                    </ReactMarkdown>
+                  )}
+                </MermaidSvgContext>
               </article>
               <SignatureSVG className="blog-signature" />
             </div>
@@ -1660,14 +1997,25 @@ function BlogPost() {
             key 綁文章 id → 換文章時整個 aside 重掛、逐行動畫重新演一次。 */}
         {headings.length > 0 && (
           <aside key={'toc-' + id} className="post-sidebar-right">
-            <TableOfContents headings={headings} activeHeading={activeHeading} readingProgress={readingProgress} tocRef={tocRef} />
+            <TableOfContents
+              headings={headings}
+              activeHeading={activeHeading}
+              readingProgress={readingProgress}
+              tocRef={tocRef}
+            />
           </aside>
         )}
       </div>
 
       {/* ── Floating side actions (right) ── */}
       <div className="floating-actions">
-        <button className={'float-btn' + (liked ? ' active' : '')} onClick={() => { void handleLike(); }} title={t('blog.like') || 'Like'}>
+        <button
+          className={'float-btn' + (liked ? ' active' : '')}
+          onClick={() => {
+            void handleLike();
+          }}
+          title={t('blog.like') || 'Like'}
+        >
           {liked ? <FaHeart /> : <FaRegHeart />}
           {likeCount > 0 && <span>{likeCount}</span>}
         </button>
@@ -1688,11 +2036,19 @@ function BlogPost() {
                 exit={{ opacity: 0, x: 10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
               >
-                <button onClick={handleShareTwitter}><FaTwitter /> Twitter</button>
-                <button onClick={handleShareFacebook}><FaFacebook /> Facebook</button>
-                <button onClick={handleCopyLink}><FaLink /> {copied ? t('blog.codeCopied') : t('blog.shareCopyLink')}</button>
+                <button onClick={handleShareTwitter}>
+                  <FaTwitter /> Twitter
+                </button>
+                <button onClick={handleShareFacebook}>
+                  <FaFacebook /> Facebook
+                </button>
+                <button onClick={handleCopyLink}>
+                  <FaLink /> {copied ? t('blog.codeCopied') : t('blog.shareCopyLink')}
+                </button>
                 {typeof navigator.share === 'function' && (
-                  <button onClick={handleNativeShare}><FaShareAlt /> {t('blog.shareMore')}</button>
+                  <button onClick={handleNativeShare}>
+                    <FaShareAlt /> {t('blog.shareMore')}
+                  </button>
                 )}
               </motion.div>
             )}
@@ -1713,9 +2069,7 @@ function BlogPost() {
       <FontSwitcher currentFont={currentFont} onFontChange={handleFontChange} />
 
       {/* ── Subscribe Modal ── */}
-      <AnimatePresence>
-        {showSubscribe && <SubscribeModal onClose={() => setShowSubscribe(false)} />}
-      </AnimatePresence>
+      <AnimatePresence>{showSubscribe && <SubscribeModal onClose={() => setShowSubscribe(false)} />}</AnimatePresence>
     </div>
   );
 }

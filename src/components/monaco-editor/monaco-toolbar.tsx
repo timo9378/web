@@ -65,17 +65,35 @@ export function MonacoToolbar({
           <Link className="size-3.5" />
         </button>
         {onLinkPost && (
-          <button type="button" onClick={onLinkPost} disabled={disabled} title="插入舊文章連結 (Cmd/Ctrl+Shift+K)" className={btnClass}>
+          <button
+            type="button"
+            onClick={onLinkPost}
+            disabled={disabled}
+            title="插入舊文章連結 (Cmd/Ctrl+Shift+K)"
+            className={btnClass}
+          >
             <FileText className="size-3.5" />
           </button>
         )}
-        <button type="button" onClick={onImage} disabled={disabled} title="插入圖片 (Ctrl+Shift+G)" className={btnClass}>
+        <button
+          type="button"
+          onClick={onImage}
+          disabled={disabled}
+          title="插入圖片 (Ctrl+Shift+G)"
+          className={btnClass}
+        >
           <Image className="size-3.5" />
         </button>
         <button type="button" onClick={onNAS} disabled={disabled} title="從 NAS 插入圖片" className={btnClass}>
           <HardDrive className="size-3.5" />
         </button>
-        <button type="button" onClick={onUpload} disabled={disabled || uploading} title="上傳圖片檔案" className={btnClass}>
+        <button
+          type="button"
+          onClick={onUpload}
+          disabled={disabled || uploading}
+          title="上傳圖片檔案"
+          className={btnClass}
+        >
           {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
         </button>
       </div>

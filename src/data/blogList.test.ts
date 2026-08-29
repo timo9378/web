@@ -46,8 +46,7 @@ const mockFetch = (body: unknown, init: { status?: number; ok?: boolean } = {}) 
 };
 
 /** queryFn 的型別在 options 裡帶了一堆 context，測試只需要呼叫它 */
-const run = async (opts: { queryFn?: unknown }): Promise<unknown> =>
-  (opts.queryFn as () => Promise<unknown>)();
+const run = async (opts: { queryFn?: unknown }): Promise<unknown> => (opts.queryFn as () => Promise<unknown>)();
 
 beforeEach(() => {
   lastUrl = '';
@@ -172,24 +171,22 @@ describe('queryKey：漏掉一個維度就會拿到別的語系的快取', () =>
 
   it('列表的 key 同時帶 locale 與 sortBy', () => {
     expect(postsListQueryOptions('en', 'latest').queryKey).toEqual(['posts', 'list', 'en', 'latest']);
-    expect(postsListQueryOptions('en', 'latest').queryKey)
-      .not.toEqual(postsListQueryOptions('ja', 'latest').queryKey);
-    expect(postsListQueryOptions('en', 'latest').queryKey)
-      .not.toEqual(postsListQueryOptions('en', 'popular').queryKey);
+    expect(postsListQueryOptions('en', 'latest').queryKey).not.toEqual(postsListQueryOptions('ja', 'latest').queryKey);
+    expect(postsListQueryOptions('en', 'latest').queryKey).not.toEqual(postsListQueryOptions('en', 'popular').queryKey);
   });
 
   it('標籤／分類的 key 帶 locale', () => {
     expect(blogTagsQueryOptions('en').queryKey).not.toEqual(blogTagsQueryOptions('ja').queryKey);
     expect(blogCategoriesQueryOptions('en').queryKey).not.toEqual(blogCategoriesQueryOptions('ja').queryKey);
-    expect(blogCategoriesDetailQueryOptions('en').queryKey)
-      .not.toEqual(blogCategoriesDetailQueryOptions('ja').queryKey);
+    expect(blogCategoriesDetailQueryOptions('en').queryKey).not.toEqual(
+      blogCategoriesDetailQueryOptions('ja').queryKey,
+    );
   });
 
   // 這兩個打同一個端點但用途不同（側欄計數 vs 文章頁 tooltip），key 必須分得開，
   // 否則其中一邊的 select/轉換會污染另一邊
   it('分類的「清單」與「詳情」是兩把不同的 key', () => {
-    expect(blogCategoriesQueryOptions('en').queryKey)
-      .not.toEqual(blogCategoriesDetailQueryOptions('en').queryKey);
+    expect(blogCategoriesQueryOptions('en').queryKey).not.toEqual(blogCategoriesDetailQueryOptions('en').queryKey);
   });
 
   it('最新文章的 key 帶 limit 與 locale，locale 未給時用空字串佔位', () => {

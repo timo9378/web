@@ -41,10 +41,16 @@ for (const url of [...urls].sort()) {
   if (/[#&]w=\d+/.test(url) && /[#&]h=\d+/.test(url)) continue; // 已經有了
   const rel = url.slice('/uploads/'.length).split('#')[0];
   const file = path.join(UPLOAD_ROOT, decodeURIComponent(rel));
-  if (!fs.existsSync(file)) { skipped.push(`${rel}（檔案不存在）`); continue; }
+  if (!fs.existsSync(file)) {
+    skipped.push(`${rel}（檔案不存在）`);
+    continue;
+  }
   try {
     const { width, height } = await sharp(file).metadata();
-    if (!width || !height) { skipped.push(`${rel}（讀不到尺寸）`); continue; }
+    if (!width || !height) {
+      skipped.push(`${rel}（讀不到尺寸）`);
+      continue;
+    }
     rows.push({ url, width, height });
   } catch (e) {
     skipped.push(`${rel}（${e instanceof Error ? e.message : e}）`);
@@ -70,7 +76,7 @@ for (const { url, width, height } of rows) {
   for (const col of COLS) {
     out.push(
       `UPDATE posts SET ${col} = REPLACE(${col}, '${esc(from)}', '${esc(to)}')\n` +
-      `  WHERE ${col} LIKE '%${esc(from)}%' AND ${col} NOT LIKE '%${esc(from)}&w=%';`,
+        `  WHERE ${col} LIKE '%${esc(from)}%' AND ${col} NOT LIKE '%${esc(from)}&w=%';`,
     );
   }
   out.push('');

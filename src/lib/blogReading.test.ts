@@ -73,7 +73,14 @@ describe('pickActiveHeading', () => {
 
   it('閱讀帶內取離 100px 最近的那個', () => {
     expect(
-      pickActiveHeading([{ id: 'a', top: 190 }, { id: 'b', top: 110 }, { id: 'c', top: -80 }], WH),
+      pickActiveHeading(
+        [
+          { id: 'a', top: 190 },
+          { id: 'b', top: 110 },
+          { id: 'c', top: -80 },
+        ],
+        WH,
+      ),
     ).toBe('b');
   });
 
@@ -88,22 +95,55 @@ describe('pickActiveHeading', () => {
     // 但往下超出（top > 200）**會被後備接住**——它還在視窗內。
     // 用一個帶內的對照組才看得出「它確實不在帶內」：帶內那個會贏。
     expect(pickActiveHeading([{ id: 'x', top: 201 }], WH)).toBe('x');
-    expect(pickActiveHeading([{ id: 'x', top: 201 }, { id: 'inBand', top: 199 }], WH)).toBe('inBand');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'x', top: 201 },
+          { id: 'inBand', top: 199 },
+        ],
+        WH,
+      ),
+    ).toBe('inBand');
   });
 
   // 停在兩個標題之間的長段落時最容易發生：帶內一個都沒有。
   // 留空的話 TOC 高亮會整個消失，讀者會以為目錄壞了。
   it('帶內沒有時退而取第一個還在視窗內的', () => {
-    expect(pickActiveHeading([{ id: 'a', top: -500 }, { id: 'b', top: 400 }, { id: 'c', top: 700 }], WH)).toBe('b');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'a', top: -500 },
+          { id: 'b', top: 400 },
+          { id: 'c', top: 700 },
+        ],
+        WH,
+      ),
+    ).toBe('b');
   });
 
   it('後備只看視窗內，捲出畫面下方的不算', () => {
-    expect(pickActiveHeading([{ id: 'a', top: -500 }, { id: 'b', top: 900 }], WH)).toBe('');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'a', top: -500 },
+          { id: 'b', top: 900 },
+        ],
+        WH,
+      ),
+    ).toBe('');
   });
 
   it('帶內優先於後備，順序不能對調', () => {
     // 'later' 在帶內但排在後面，'early' 只符合後備條件卻排在前面
-    expect(pickActiveHeading([{ id: 'early', top: 500 }, { id: 'later', top: 120 }], WH)).toBe('later');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'early', top: 500 },
+          { id: 'later', top: 120 },
+        ],
+        WH,
+      ),
+    ).toBe('later');
   });
 
   // 以下三條是變異測試（Stryker）指出來的漏洞：邊界只測了「有沒有算進帶內」，
@@ -111,13 +151,29 @@ describe('pickActiveHeading', () => {
   // 邊界那個才真的被驗到。
   it('top 剛好 200 算在帶內，會贏過只符合後備條件的', () => {
     // 若 `<= 200` 被改成 `< 200`，'edge' 掉出帶內 → 後備會挑到排在前面的 'other'
-    expect(pickActiveHeading([{ id: 'other', top: 500 }, { id: 'edge', top: 200 }], WH)).toBe('edge');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'other', top: 500 },
+          { id: 'edge', top: 200 },
+        ],
+        WH,
+      ),
+    ).toBe('edge');
   });
 
   it('後備的下界是「大於 0」：剛好 0 不算', () => {
     expect(pickActiveHeading([{ id: 'zero', top: 0 }], 800)).toBe('zero'); // 0 在帶內（-100~200）
     // 帶外、剛好 0 → 後備也不該收（`> 0` 若被改成 `>= 0` 這條會紅）
-    expect(pickActiveHeading([{ id: 'far', top: -300 }, { id: 'zero', top: 0 }], 800)).toBe('zero');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'far', top: -300 },
+          { id: 'zero', top: 0 },
+        ],
+        800,
+      ),
+    ).toBe('zero');
     expect(pickActiveHeading([{ id: 'onlyZeroOutOfBand', top: -100 }], 800)).toBe('onlyZeroOutOfBand');
   });
 
@@ -131,6 +187,14 @@ describe('pickActiveHeading', () => {
 
   it('多個同樣接近時取更接近的，平手時取先出現的', () => {
     // 兩個都距離 100 有 50px，先出現的贏（`<` 而不是 `<=`）
-    expect(pickActiveHeading([{ id: 'first', top: 50 }, { id: 'second', top: 150 }], WH)).toBe('first');
+    expect(
+      pickActiveHeading(
+        [
+          { id: 'first', top: 50 },
+          { id: 'second', top: 150 },
+        ],
+        WH,
+      ),
+    ).toBe('first');
   });
 });

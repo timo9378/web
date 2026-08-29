@@ -9,21 +9,8 @@ import { postSchema, type PostFormInput } from '@/schemas/post';
 import { MonacoEditor } from '@/components/monaco-editor';
 import { PostPreview } from './PostPreview';
 import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
   FileText,
@@ -42,7 +29,10 @@ import {
 import { toast } from 'sonner';
 import { useNavigate, useParams } from '@tanstack/react-router';
 
-interface TagOption { label: string; value: string }
+interface TagOption {
+  label: string;
+  value: string;
+}
 interface N8NData {
   title?: string;
   content?: string;
@@ -57,20 +47,38 @@ interface N8NData {
   allow_comments?: boolean;
 }
 type LocalizedField =
-  | 'title' | 'content' | 'summary'
-  | 'title_en' | 'content_en' | 'summary_en'
-  | 'title_zh_cn' | 'content_zh_cn' | 'summary_zh_cn'
-  | 'title_ja' | 'content_ja' | 'summary_ja'
-  | 'title_ko' | 'content_ko' | 'summary_ko';
+  | 'title'
+  | 'content'
+  | 'summary'
+  | 'title_en'
+  | 'content_en'
+  | 'summary_en'
+  | 'title_zh_cn'
+  | 'content_zh_cn'
+  | 'summary_zh_cn'
+  | 'title_ja'
+  | 'content_ja'
+  | 'summary_ja'
+  | 'title_ko'
+  | 'content_ko'
+  | 'summary_ko';
 
 /**
  * v0 風格標籤搜尋選擇器
  */
-function TagSearchInput({ tags, selectedTags, onChange }: { tags: TagOption[]; selectedTags: TagOption[]; onChange: (tags: TagOption[]) => void }) {
+function TagSearchInput({
+  tags,
+  selectedTags,
+  onChange,
+}: {
+  tags: TagOption[];
+  selectedTags: TagOption[];
+  onChange: (tags: TagOption[]) => void;
+}) {
   const [tagSearch, setTagSearch] = useState('');
-  const selectedValues = new Set(selectedTags.map(t => t.value));
+  const selectedValues = new Set(selectedTags.map((t) => t.value));
   const filteredTags = tags.filter(
-    t => !selectedValues.has(t.value) && t.label.toLowerCase().includes(tagSearch.toLowerCase())
+    (t) => !selectedValues.has(t.value) && t.label.toLowerCase().includes(tagSearch.toLowerCase()),
   );
 
   const addTag = (tag: TagOption) => {
@@ -111,11 +119,11 @@ function TagSearchInput({ tags, selectedTags, onChange }: { tags: TagOption[]; s
 
 // ─── i18n 編輯常數 ──────────────────────────────
 const LOCALE_TABS = [
-  { code: 'zh-TW', label: '繁體', column: null },      // source 候選
-  { code: 'en',    label: 'English', column: 'en' },
-  { code: 'zh-CN', label: '简体',    column: 'zh_cn' },
-  { code: 'ja',    label: '日本語',  column: 'ja' },
-  { code: 'ko',    label: '한국어',  column: 'ko' },
+  { code: 'zh-TW', label: '繁體', column: null }, // source 候選
+  { code: 'en', label: 'English', column: 'en' },
+  { code: 'zh-CN', label: '简体', column: 'zh_cn' },
+  { code: 'ja', label: '日本語', column: 'ja' },
+  { code: 'ko', label: '한국어', column: 'ko' },
 ];
 /**
  * API 回來的值 → 表單要的字串。
@@ -146,9 +154,13 @@ function firstErrorText(errors: Record<string, unknown>): string {
 }
 
 // 依 activeLocale + sourceLanguage 取得表單 field 名稱
-function fieldNameFor(base: 'title' | 'content' | 'summary', activeLocale: string, sourceLanguage: string): LocalizedField {
+function fieldNameFor(
+  base: 'title' | 'content' | 'summary',
+  activeLocale: string,
+  sourceLanguage: string,
+): LocalizedField {
   if (activeLocale === sourceLanguage) return base;
-  const tab = LOCALE_TABS.find(t => t.code === activeLocale);
+  const tab = LOCALE_TABS.find((t) => t.code === activeLocale);
   if (!tab?.column) return base; // fallback：未知 locale 用原文
   return `${base}_${tab.column}` as LocalizedField;
 }
@@ -166,8 +178,14 @@ export default function PostEditor() {
   // 分類/標籤/文章明細改由 TanStack Query 讀（生成型別）；儲存等 mutation 各自處理。
   const { data: categories = [] } = useQuery(adminCategoriesQueryOptions);
   const { data: tagsData = [] } = useQuery(adminTagsQueryOptions);
-  const tags = useMemo<TagOption[]>(() => tagsData.map((tag) => ({ label: tag.name, value: tag.id.toString() })), [tagsData]);
-  const { data: postData, isPending: postPending } = useQuery({ ...adminPostDetailQueryOptions(id ?? ''), enabled: !!id });
+  const tags = useMemo<TagOption[]>(
+    () => tagsData.map((tag) => ({ label: tag.name, value: tag.id.toString() })),
+    [tagsData],
+  );
+  const { data: postData, isPending: postPending } = useQuery({
+    ...adminPostDetailQueryOptions(id ?? ''),
+    enabled: !!id,
+  });
   const isLoading = !!id && postPending; // 編輯模式載入文章時的骨架 gate
   const [activeLocale, setActiveLocale] = useState('zh-TW');
   const [zenMode, setZenMode] = useState(false);
@@ -186,7 +204,9 @@ export default function PostEditor() {
   const flashStatus = useCallback((s: string) => {
     setAutosaveStatus(s);
     if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
-    statusTimerRef.current = setTimeout(() => { setAutosaveStatus(''); }, 1800);
+    statusTimerRef.current = setTimeout(() => {
+      setAutosaveStatus('');
+    }, 1800);
   }, []);
   const autosaveKey = `postEditor:autosave:${id ?? 'new'}`;
 
@@ -206,10 +226,18 @@ export default function PostEditor() {
       send_newsletter: false,
       // i18n
       source_language: 'zh-TW',
-      title_en: '', content_en: '', summary_en: '',
-      title_zh_cn: '', content_zh_cn: '', summary_zh_cn: '',
-      title_ja: '', content_ja: '', summary_ja: '',
-      title_ko: '', content_ko: '', summary_ko: '',
+      title_en: '',
+      content_en: '',
+      summary_en: '',
+      title_zh_cn: '',
+      content_zh_cn: '',
+      summary_zh_cn: '',
+      title_ja: '',
+      content_ja: '',
+      summary_ja: '',
+      title_ko: '',
+      content_ko: '',
+      summary_ko: '',
       // 系列文
       series_name: '',
       series_order: '',
@@ -237,7 +265,7 @@ export default function PostEditor() {
     // 修正失效的 tab 選擇：LOCALE_TABS 由 sourceLanguage 推導，改動時舊的 activeLocale
     // 可能已不在清單裡。這是「校正外部變動造成的無效選擇」，不是可推導的衍生值。
     // eslint-disable-next-line @eslint-react/set-state-in-effect
-    if (!LOCALE_TABS.find(t => t.code === activeLocale)) setActiveLocale(sourceLanguage);
+    if (!LOCALE_TABS.find((t) => t.code === activeLocale)) setActiveLocale(sourceLanguage);
   }, [activeLocale, sourceLanguage]);
 
   // ── localStorage 自動備份草稿（debounce 1.2s）──
@@ -250,7 +278,9 @@ export default function PostEditor() {
           if (!hasContent) return;
           localStorage.setItem(autosaveKey, JSON.stringify({ values, savedAt: Date.now() }));
           flashStatus('saved');
-        } catch { /* quota exceeded 等 — 忽略 */ }
+        } catch {
+          /* quota exceeded 等 — 忽略 */
+        }
       }, 1200);
     });
     // 除了退訂，兩個計時器也要收：debounce 中途 unmount 會留下 1.2s 的排程，
@@ -276,7 +306,7 @@ export default function PostEditor() {
         return;
       }
       const current = form.getValues();
-      if (((current.title) || (current.content)).trim()) return;
+      if ((current.title || current.content).trim()) return;
       const ago = Math.round((Date.now() - savedAt) / 60000);
       toast(`偵測到 ${ago} 分鐘前的未儲存草稿`, {
         action: {
@@ -288,14 +318,18 @@ export default function PostEditor() {
         },
         duration: 8000,
       });
-    } catch { /* 損毀的 JSON 等 — 忽略 */ }
+    } catch {
+      /* 損毀的 JSON 等 — 忽略 */
+    }
   }, [autosaveKey, form, id, flashStatus]);
 
   // ── Zen 模式：F11 / Esc 切換 ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'F11') { e.preventDefault(); setZenMode(z => !z); }
-      else if (e.key === 'Escape' && zenMode) setZenMode(false);
+      if (e.key === 'F11') {
+        e.preventDefault();
+        setZenMode((z) => !z);
+      } else if (e.key === 'Escape' && zenMode) setZenMode(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -331,10 +365,18 @@ export default function PostEditor() {
       category: asText(postData.category),
       slug: asText(postData.slug),
       source_language: postData.source_language ?? 'zh-TW',
-      title_en: asText(postData.title_en), content_en: asText(postData.content_en), summary_en: asText(postData.excerpt_en),
-      title_zh_cn: asText(postData.title_zh_cn), content_zh_cn: asText(postData.content_zh_cn), summary_zh_cn: asText(postData.excerpt_zh_cn),
-      title_ja: asText(postData.title_ja), content_ja: asText(postData.content_ja), summary_ja: asText(postData.excerpt_ja),
-      title_ko: asText(postData.title_ko), content_ko: asText(postData.content_ko), summary_ko: asText(postData.excerpt_ko),
+      title_en: asText(postData.title_en),
+      content_en: asText(postData.content_en),
+      summary_en: asText(postData.excerpt_en),
+      title_zh_cn: asText(postData.title_zh_cn),
+      content_zh_cn: asText(postData.content_zh_cn),
+      summary_zh_cn: asText(postData.excerpt_zh_cn),
+      title_ja: asText(postData.title_ja),
+      content_ja: asText(postData.content_ja),
+      summary_ja: asText(postData.excerpt_ja),
+      title_ko: asText(postData.title_ko),
+      content_ko: asText(postData.content_ko),
+      summary_ko: asText(postData.excerpt_ko),
       allow_comments: postData.allow_comments,
       series_name: asText(postData.series_name),
       series_order: asText(postData.series_order),
@@ -356,7 +398,7 @@ export default function PostEditor() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const n8nData = urlParams.get('n8n_data');
-    
+
     if (n8nData && !id) {
       try {
         const parsedData = JSON.parse(decodeURIComponent(n8nData)) as N8NData;
@@ -455,7 +497,7 @@ export default function PostEditor() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json() as { error?: string; sent?: number; failed?: number };
+      const data = (await res.json()) as { error?: string; sent?: number; failed?: number };
       if (!res.ok) {
         toast.error(data.error ?? '推送失敗');
         return;
@@ -468,7 +510,7 @@ export default function PostEditor() {
 
   const generateSlugFromTitle = (title: string) => {
     if (!title) return '';
-    
+
     return title
       .toLowerCase()
       .trim()
@@ -482,7 +524,7 @@ export default function PostEditor() {
    */
   const extractSummary = (content: string, maxLength = 150) => {
     if (!content) return '';
-    
+
     const plainText = content
       .replace(/#{1,6}\s/g, '')
       .replace(/\*\*|\*|__|_/g, '')
@@ -494,20 +536,15 @@ export default function PostEditor() {
       .replace(/\n+/g, ' ')
       .trim();
 
-    return plainText.length > maxLength 
-      ? plainText.substring(0, maxLength) + '...'
-      : plainText;
+    return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
   };
 
   // 將表單 data 轉成送往 API 的 payload（包含 i18n 欄位，並把 summary* 對應到 excerpt*）
   const buildPayload = (data: PostFormInput, overrides: Record<string, unknown> = {}) => {
     const tagsArray = Array.isArray(data.tags)
-      ? data.tags.map(tag => typeof tag === 'string' ? tag : tag.label)
+      ? data.tags.map((tag) => (typeof tag === 'string' ? tag : tag.label))
       : [];
-    const {
-      summary, summary_en, summary_zh_cn, summary_ja, summary_ko,
-      ...rest
-    } = data;
+    const { summary, summary_en, summary_zh_cn, summary_ja, summary_ko, ...rest } = data;
     return {
       ...rest,
       excerpt: summary,
@@ -544,8 +581,12 @@ export default function PostEditor() {
 
       if (response.ok) {
         toast.success('草稿已儲存');
-        try { localStorage.removeItem(autosaveKey); } catch { /* ignore */ }
-        const result = await response.json() as { data?: { id?: string | number }; id?: string | number };
+        try {
+          localStorage.removeItem(autosaveKey);
+        } catch {
+          /* ignore */
+        }
+        const result = (await response.json()) as { data?: { id?: string | number }; id?: string | number };
         // 後端 create 回 { data: { id } }；沒抓到就會每次都 POST → 重複建立草稿
         const newId = result.data?.id ?? result.id;
         if (opts.exit) {
@@ -592,14 +633,20 @@ export default function PostEditor() {
         toast.success('文章已發佈');
         // 若有勾「發佈時推送 Newsletter」，後端會在 data.newsletter 回寄送結果
         try {
-          const body = await response.json() as {
+          const body = (await response.json()) as {
             data?: { newsletter?: { sent?: number; failed?: number; error?: string } };
           };
           const nl = body.data?.newsletter;
           if (nl?.error) toast.error(`電子報寄送失敗：${nl.error}`);
           else if (nl) toast.success(`電子報已寄出 ${nl.sent ?? 0} 封，失敗 ${nl.failed ?? 0}`);
-        } catch { /* 回應非 JSON 不影響發佈成功 */ }
-        try { localStorage.removeItem(autosaveKey); } catch { /* ignore */ }
+        } catch {
+          /* 回應非 JSON 不影響發佈成功 */
+        }
+        try {
+          localStorage.removeItem(autosaveKey);
+        } catch {
+          /* ignore */
+        }
         void navigate({ to: '/admin/posts' });
       } else {
         toast.error('發佈失敗');
@@ -641,10 +688,10 @@ export default function PostEditor() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(err.error ?? `API 錯誤 (${res.status})`);
       }
-      const data = await res.json() as { title_zh_cn?: string; content_zh_cn?: string; excerpt_zh_cn?: string };
+      const data = (await res.json()) as { title_zh_cn?: string; content_zh_cn?: string; excerpt_zh_cn?: string };
       form.setValue('title_zh_cn', data.title_zh_cn ?? '');
       form.setValue('content_zh_cn', data.content_zh_cn ?? '');
       form.setValue('summary_zh_cn', data.excerpt_zh_cn ?? '');
@@ -703,7 +750,7 @@ export default function PostEditor() {
 
       if (!response.ok) throw new Error(`API 錯誤 (${response.status})`);
 
-      const data = await response.json() as { choices?: { message?: { content?: string } }[] };
+      const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       const resultText = data.choices?.[0]?.message?.content ?? '';
 
       let parsed: { summary?: string; tags?: string[] } | undefined;
@@ -712,7 +759,11 @@ export default function PostEditor() {
       } catch {
         const match = /(\{[\s\S]*\})/.exec(resultText);
         if (match) {
-          try { parsed = JSON.parse(match[1]) as { summary?: string; tags?: string[] }; } catch { /* fallback */ }
+          try {
+            parsed = JSON.parse(match[1]) as { summary?: string; tags?: string[] };
+          } catch {
+            /* fallback */
+          }
         }
       }
 
@@ -724,7 +775,7 @@ export default function PostEditor() {
         if ((parsed.tags?.length ?? 0) > 0) {
           const currentTags = form.getValues('tags') ?? [];
           if (currentTags.length === 0) {
-            const formattedTags = (parsed.tags ?? []).map(t => ({
+            const formattedTags = (parsed.tags ?? []).map((t) => ({
               label: t,
               value: t.toLowerCase().replace(/\s+/g, '-'),
             }));
@@ -763,150 +814,177 @@ export default function PostEditor() {
             {/* Hidden buttons for AdminLayout header to trigger */}
             <button
               id="save-draft-btn"
-              aria-hidden tabIndex={-1}
+              aria-hidden
+              tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d), (errs) => toast.error(firstErrorText(errs)))(e); }}
+              onClick={(e) => {
+                void form.handleSubmit(
+                  (d) => onSaveDraft(d),
+                  (errs) => toast.error(firstErrorText(errs)),
+                )(e);
+              }}
             />
             <button
               id="save-exit-btn"
-              aria-hidden tabIndex={-1}
+              aria-hidden
+              tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit((d) => onSaveDraft(d, { exit: true }), (errs) => toast.error(firstErrorText(errs)))(e); }}
+              onClick={(e) => {
+                void form.handleSubmit(
+                  (d) => onSaveDraft(d, { exit: true }),
+                  (errs) => toast.error(firstErrorText(errs)),
+                )(e);
+              }}
             />
             <button
               id="publish-btn"
-              aria-hidden tabIndex={-1}
+              aria-hidden
+              tabIndex={-1}
               type="button"
               className="hidden"
               disabled={isSavingDraft || isPublishing}
-              onClick={(e) => { void form.handleSubmit(onPublish, (errs) => toast.error(firstErrorText(errs)))(e); }}
+              onClick={(e) => {
+                void form.handleSubmit(onPublish, (errs) => toast.error(firstErrorText(errs)))(e);
+              }}
             />
             {/* Left Column - Editor */}
             <main className="flex-1 overflow-y-auto p-6 min-w-0 space-y-0">
-                {/* Locale tabs */}
-                <div className="mb-4 flex items-center gap-1 rounded-lg border border-border/40 bg-accent/10 p-1">
-                  <Languages className="mx-2 h-3.5 w-3.5 text-muted-foreground/70" />
-                  {LOCALE_TABS.map(t => {
-                    const isSource = t.code === sourceLanguage;
-                    const titleVal = form.watch(fieldNameFor('title', t.code, sourceLanguage));
-                    const hasContent = !!titleVal?.trim();
-                    return (
-                      <button
-                        key={t.code}
-                        type="button"
-                        onClick={() => setActiveLocale(t.code)}
-                        className={`relative rounded px-2.5 py-1 text-xs transition-colors ${
-                          activeLocale === t.code
-                            ? 'bg-accent/70 text-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'
-                        }`}
-                      >
-                        {t.label}
-                        {isSource && (
-                          <span className="ml-1 rounded bg-violet-500/20 px-1 py-px text-[9px] text-violet-300">原文</span>
-                        )}
-                        {!isSource && hasContent && (
-                          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        )}
-                      </button>
-                    );
-                  })}
-                  {sourceLanguage === 'zh-TW' && (
+              {/* Locale tabs */}
+              <div className="mb-4 flex items-center gap-1 rounded-lg border border-border/40 bg-accent/10 p-1">
+                <Languages className="mx-2 h-3.5 w-3.5 text-muted-foreground/70" />
+                {LOCALE_TABS.map((t) => {
+                  const isSource = t.code === sourceLanguage;
+                  const titleVal = form.watch(fieldNameFor('title', t.code, sourceLanguage));
+                  const hasContent = !!titleVal?.trim();
+                  return (
                     <button
+                      key={t.code}
                       type="button"
-                      onClick={() => { void handleGenerateZhCN(); }}
-                      disabled={isGeneratingZhCN}
-                      className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-300 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      title="OpenCC 繁→簡，純字詞轉換不丟 LLM"
+                      onClick={() => setActiveLocale(t.code)}
+                      className={`relative rounded px-2.5 py-1 text-xs transition-colors ${
+                        activeLocale === t.code
+                          ? 'bg-accent/70 text-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'
+                      }`}
                     >
-                      {isGeneratingZhCN ? <Loader2 className="size-3 animate-spin" /> : <Wand2 className="size-3" />}
-                      自動產生简中
-                    </button>
-                  )}
-                </div>
-
-                {/* i18n 多語系提示 */}
-                <p className="mb-3 text-[11px] text-muted-foreground/70">
-                  目前編輯：<span className="text-violet-300">{LOCALE_TABS.find(t => t.code === activeLocale)?.label}</span>
-                  <span className="mx-1.5 opacity-40">·</span>
-                  所有已填語系會一起儲存／發佈，不需分別操作
-                </p>
-
-                {/* Title (per-locale) — 直接用 form.watch/setValue，避免 FormField 動態 name 的 bug */}
-                <input
-                  key={`title-${activeLocale}`}
-                  value={titleValue}
-                  onChange={(e) => form.setValue(titleName, e.target.value, { shouldDirty: true })}
-                  placeholder="輸入文章標題..."
-                  className="w-full bg-transparent text-foreground/90 text-lg font-medium mb-5 pb-3 border-b border-border/30 outline-hidden focus:border-border transition-colors"
-                />
-
-                {/* Content (per-locale) - 玻璃擬態編輯器 */}
-                <div className="glass rounded-xl overflow-hidden border border-border/50">
-                  <div className="flex items-center gap-1 border-b border-border/40 bg-accent/20 px-2 py-1.5">
-                    <button
-                      type="button"
-                      className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'edit' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                      onClick={() => setEditorView('edit')}
-                    >
-                      編輯
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'split' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                      onClick={() => setEditorView('split')}
-                    >
-                      分割
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'preview' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                      onClick={() => setEditorView('preview')}
-                    >
-                      預覽
-                    </button>
-                    <div className="ml-auto flex items-center gap-2">
-                      {autosaveStatus === 'saved' && (
-                        <span className="text-[10px] text-emerald-400/80 animate-in fade-in">已自動備份</span>
+                      {t.label}
+                      {isSource && (
+                        <span className="ml-1 rounded bg-violet-500/20 px-1 py-px text-[9px] text-violet-300">
+                          原文
+                        </span>
                       )}
-                      {autosaveStatus === 'restoring' && (
-                        <span className="text-[10px] text-violet-300 animate-in fade-in">已還原草稿</span>
+                      {!isSource && hasContent && (
+                        <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
                       )}
-                      <button
-                        type="button"
-                        title={zenMode ? '退出 Zen（Esc）' : 'Zen 模式（F11）'}
-                        onClick={() => setZenMode(z => !z)}
-                        className="rounded px-1.5 py-1 text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
-                      >
-                        {zenMode ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-                      </button>
-                    </div>
+                    </button>
+                  );
+                })}
+                {sourceLanguage === 'zh-TW' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleGenerateZhCN();
+                    }}
+                    disabled={isGeneratingZhCN}
+                    className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[11px] text-violet-300 hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    title="OpenCC 繁→簡，純字詞轉換不丟 LLM"
+                  >
+                    {isGeneratingZhCN ? <Loader2 className="size-3 animate-spin" /> : <Wand2 className="size-3" />}
+                    自動產生简中
+                  </button>
+                )}
+              </div>
+
+              {/* i18n 多語系提示 */}
+              <p className="mb-3 text-[11px] text-muted-foreground/70">
+                目前編輯：
+                <span className="text-violet-300">{LOCALE_TABS.find((t) => t.code === activeLocale)?.label}</span>
+                <span className="mx-1.5 opacity-40">·</span>
+                所有已填語系會一起儲存／發佈，不需分別操作
+              </p>
+
+              {/* Title (per-locale) — 直接用 form.watch/setValue，避免 FormField 動態 name 的 bug */}
+              <input
+                key={`title-${activeLocale}`}
+                value={titleValue}
+                onChange={(e) => form.setValue(titleName, e.target.value, { shouldDirty: true })}
+                placeholder="輸入文章標題..."
+                className="w-full bg-transparent text-foreground/90 text-lg font-medium mb-5 pb-3 border-b border-border/30 outline-hidden focus:border-border transition-colors"
+              />
+
+              {/* Content (per-locale) - 玻璃擬態編輯器 */}
+              <div className="glass rounded-xl overflow-hidden border border-border/50">
+                <div className="flex items-center gap-1 border-b border-border/40 bg-accent/20 px-2 py-1.5">
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'edit' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                    onClick={() => setEditorView('edit')}
+                  >
+                    編輯
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'split' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                    onClick={() => setEditorView('split')}
+                  >
+                    分割
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1 text-xs transition-colors ${editorView === 'preview' ? 'bg-accent/70 text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                    onClick={() => setEditorView('preview')}
+                  >
+                    預覽
+                  </button>
+                  <div className="ml-auto flex items-center gap-2">
+                    {autosaveStatus === 'saved' && (
+                      <span className="text-[10px] text-emerald-400/80 animate-in fade-in">已自動備份</span>
+                    )}
+                    {autosaveStatus === 'restoring' && (
+                      <span className="text-[10px] text-violet-300 animate-in fade-in">已還原草稿</span>
+                    )}
+                    <button
+                      type="button"
+                      title={zenMode ? '退出 Zen（Esc）' : 'Zen 模式（F11）'}
+                      onClick={() => setZenMode((z) => !z)}
+                      className="rounded px-1.5 py-1 text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
+                    >
+                      {zenMode ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+                    </button>
                   </div>
-
-                  {editorView !== 'preview' && (
-                    <MonacoEditor
-                      key={`monaco-${activeLocale}`}
-                      path={`post.${activeLocale}.md`}
-                      value={contentValue}
-                      onChange={(v) => form.setValue(contentName, v ?? '', { shouldDirty: true })}
-                      language="markdown"
-                      height={editorView === 'split' ? '360px' : '700px'}
-                      theme="vs-dark"
-                      onSave={() => { void form.handleSubmit((d) => onSaveDraft(d), (errs) => toast.error(firstErrorText(errs)))(); }}
-                    />
-                  )}
-
-                  {editorView !== 'edit' && (
-                    <div className={`${editorView === 'split' ? 'max-h-[340px]' : 'max-h-[700px]'} overflow-y-auto border-t border-border/40 bg-background/70 p-4`}>
-                      {/* 跟前台同一套渲染（MDX blocks / shiki / alert / 連結卡）→ 所見即所得 */}
-                      <PostPreview content={contentValue} format={format} />
-                    </div>
-                  )}
                 </div>
+
+                {editorView !== 'preview' && (
+                  <MonacoEditor
+                    key={`monaco-${activeLocale}`}
+                    path={`post.${activeLocale}.md`}
+                    value={contentValue}
+                    onChange={(v) => form.setValue(contentName, v ?? '', { shouldDirty: true })}
+                    language="markdown"
+                    height={editorView === 'split' ? '360px' : '700px'}
+                    theme="vs-dark"
+                    onSave={() => {
+                      void form.handleSubmit(
+                        (d) => onSaveDraft(d),
+                        (errs) => toast.error(firstErrorText(errs)),
+                      )();
+                    }}
+                  />
+                )}
+
+                {editorView !== 'edit' && (
+                  <div
+                    className={`${editorView === 'split' ? 'max-h-[340px]' : 'max-h-[700px]'} overflow-y-auto border-t border-border/40 bg-background/70 p-4`}
+                  >
+                    {/* 跟前台同一套渲染（MDX blocks / shiki / alert / 連結卡）→ 所見即所得 */}
+                    <PostPreview content={contentValue} format={format} />
+                  </div>
+                )}
+              </div>
             </main>
 
             {/* Right Column - Settings */}
@@ -924,9 +1002,7 @@ export default function PostEditor() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">
-                            分類
-                          </FormLabel>
+                          <FormLabel className="text-xs text-muted-foreground">分類</FormLabel>
                           <Select
                             // hydrated + categories.length 進 key：載入完成或選項到齊時重新 mount，
                             // 讓觸發器顯示已載入的分類（Radix Select 不反映 mount 後才變的受控值）。
@@ -975,7 +1051,7 @@ export default function PostEditor() {
                                   {tag.label}
                                   <button
                                     type="button"
-                                    onClick={() => field.onChange(selectedTags.filter(t => t.value !== tag.value))}
+                                    onClick={() => field.onChange(selectedTags.filter((t) => t.value !== tag.value))}
                                     className="hover:text-foreground transition-colors ml-0.5"
                                   >
                                     <X className="size-3" />
@@ -984,11 +1060,7 @@ export default function PostEditor() {
                               ))}
                             </div>
                             <FormControl>
-                              <TagSearchInput
-                                tags={tags}
-                                selectedTags={selectedTags}
-                                onChange={field.onChange}
-                              />
+                              <TagSearchInput tags={tags} selectedTags={selectedTags} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1055,9 +1127,7 @@ export default function PostEditor() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">
-                            狀態
-                          </FormLabel>
+                          <FormLabel className="text-xs text-muted-foreground">狀態</FormLabel>
                           <Select
                             key={`status-${hydrated ? 'r' : 'i'}`}
                             onValueChange={field.onChange}
@@ -1118,14 +1188,13 @@ export default function PostEditor() {
                       name="slug"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">
-                            網址 slug
-                          </FormLabel>
+                          <FormLabel className="text-xs text-muted-foreground">網址 slug</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="blog-post-rendering-strategy" className="h-8 bg-accent/30" />
                           </FormControl>
                           <p className="text-[10px] text-muted-foreground/60">
-                            文章網址是 /blog/&lt;slug&gt;。留空會自動從英文標題產生；改了也不會斷——舊網址會自動 301 到新的。
+                            文章網址是 /blog/&lt;slug&gt;。留空會自動從英文標題產生；改了也不會斷——舊網址會自動 301
+                            到新的。
                           </p>
                           <FormMessage />
                         </FormItem>
@@ -1166,14 +1235,9 @@ export default function PostEditor() {
                       name="allow_comments"
                       render={({ field }) => (
                         <FormItem className="flex items-center justify-between">
-                          <FormLabel className="text-xs text-muted-foreground">
-                            允許留言
-                          </FormLabel>
+                          <FormLabel className="text-xs text-muted-foreground">允許留言</FormLabel>
                           <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1186,18 +1250,11 @@ export default function PostEditor() {
                       render={({ field }) => (
                         <FormItem className="flex items-center justify-between">
                           <div className="flex flex-col gap-0.5">
-                            <FormLabel className="text-xs text-muted-foreground">
-                              發佈時推送 Newsletter
-                            </FormLabel>
-                            <span className="text-[10px] text-muted-foreground/60">
-                              文章狀態為「已發佈」時才會觸發
-                            </span>
+                            <FormLabel className="text-xs text-muted-foreground">發佈時推送 Newsletter</FormLabel>
+                            <span className="text-[10px] text-muted-foreground/60">文章狀態為「已發佈」時才會觸發</span>
                           </div>
                           <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1209,7 +1266,9 @@ export default function PostEditor() {
                         type="button"
                         className="w-full mt-1 px-3 py-2 text-xs rounded-md border border-violet-500/30 bg-violet-500/8 text-violet-200 hover:bg-violet-500/15 hover:border-violet-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isSavingDraft || isPublishing}
-                        onClick={() => { void handleSendNewsletter(); }}
+                        onClick={() => {
+                          void handleSendNewsletter();
+                        }}
                       >
                         立即推送 Newsletter
                       </button>
@@ -1229,9 +1288,7 @@ export default function PostEditor() {
                       name="cover"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">
-                            圖片網址
-                          </FormLabel>
+                          <FormLabel className="text-xs text-muted-foreground">圖片網址</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
@@ -1241,11 +1298,7 @@ export default function PostEditor() {
                           </FormControl>
                           {field.value && (
                             <div className="mt-2 rounded-lg overflow-hidden border">
-                              <img
-                                src={field.value}
-                                alt="封面預覽"
-                                className="w-full h-auto"
-                              />
+                              <img src={field.value} alt="封面預覽" className="w-full h-auto" />
                             </div>
                           )}
                           <FormMessage />
@@ -1260,14 +1313,22 @@ export default function PostEditor() {
                         </label>
                         <button
                           type="button"
-                          onClick={() => { void handleGenerateSummary(); }}
+                          onClick={() => {
+                            void handleGenerateSummary();
+                          }}
                           disabled={isGeneratingSummary}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isGeneratingSummary ? (
-                            <><Loader2 className="size-3 animate-spin" />生成中...</>
+                            <>
+                              <Loader2 className="size-3 animate-spin" />
+                              生成中...
+                            </>
                           ) : (
-                            <><Sparkles className="size-3" />AI 生成</>
+                            <>
+                              <Sparkles className="size-3" />
+                              AI 生成
+                            </>
                           )}
                         </button>
                       </div>

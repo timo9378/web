@@ -43,7 +43,12 @@ function JourneyTimeline() {
 
       <div className="jt-timeline">
         {milestones.map((m, i) => (
-          <motion.div className={`jt-entry ${m.isFuture ? 'jt-entry--future' : ''}`} key={m.id} {...reveal} transition={{ ...reveal.transition, delay: Math.min(i * 0.05, 0.3) }}>
+          <motion.div
+            className={`jt-entry ${m.isFuture ? 'jt-entry--future' : ''}`}
+            key={m.id}
+            {...reveal}
+            transition={{ ...reveal.transition, delay: Math.min(i * 0.05, 0.3) }}
+          >
             <aside className="jt-rail">
               <span className="jt-rail-dot" style={{ '--dot': m.color } as CSSProperties} />
               <span className="jt-year">{m.year}</span>
@@ -54,7 +59,11 @@ function JourneyTimeline() {
               <p className="jt-desc">{m.description}</p>
               {m.allTags.length > 0 && (
                 <div className="jt-tags">
-                  {m.allTags.map((t) => <span className="jt-tag" key={t}>{t}</span>)}
+                  {m.allTags.map((t) => (
+                    <span className="jt-tag" key={t}>
+                      {t}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>

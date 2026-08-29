@@ -158,10 +158,9 @@ test.describe('首頁的語言自動導向', () => {
     });
     test('不導向，停在預設語系的首頁', async ({ page }) => {
       await page.goto('/');
-      await expect(
-        page,
-        '爬蟲被 302 走的話，首頁的正規版本就會變成別的語系，hreflang 整組錯掉',
-      ).toHaveURL(/\/$/, { timeout: 15_000 });
+      await expect(page, '爬蟲被 302 走的話，首頁的正規版本就會變成別的語系，hreflang 整組錯掉').toHaveURL(/\/$/, {
+        timeout: 15_000,
+      });
       await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
     });
   });

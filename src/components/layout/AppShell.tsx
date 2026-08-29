@@ -35,9 +35,14 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
   // 才換成完整版。暖過後 Suspense 立即解析、fallback 不再出現。import 路徑與路由的 lazy
   // 同一支 → Vite dedupe 同 chunk。requestIdleCallback 不搶首屏；Safari 無此 API 退 setTimeout。
   useEffect(() => {
-    const warm = () => { void import('@/components/blog/BlogPost'); };
+    const warm = () => {
+      void import('@/components/blog/BlogPost');
+    };
     const ric = (window as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
-    if (ric) { ric(warm); return; }
+    if (ric) {
+      ric(warm);
+      return;
+    }
     const warmTimer = setTimeout(warm, 1500);
     return () => clearTimeout(warmTimer);
   }, []);
@@ -54,7 +59,9 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
       {/* CSS 星空底:手機唯一背景;桌面是 3D 載入前的秒出 placeholder。SSR 即出。 */}
       <CSSStarfield />
       <ClientOnly fallback={null}>
-        <Suspense fallback={null}><SpaceBackdropShell /></Suspense>
+        <Suspense fallback={null}>
+          <SpaceBackdropShell />
+        </Suspense>
       </ClientOnly>
 
       <div
@@ -66,14 +73,18 @@ export default function AppShell({ children }: Readonly<{ children: ReactNode }>
         {!isAdminPage && !isPhotoPage && <Footer />}
         {!isAdminPage && (
           <ClientOnly fallback={null}>
-            <Suspense fallback={null}><CommandPalette /></Suspense>
+            <Suspense fallback={null}>
+              <CommandPalette />
+            </Suspense>
           </ClientOnly>
         )}
       </div>
 
       {!isAdminPage && (
         <ClientOnly fallback={null}>
-          <Suspense fallback={null}><ContextMenu /></Suspense>
+          <Suspense fallback={null}>
+            <ContextMenu />
+          </Suspense>
         </ClientOnly>
       )}
 

@@ -118,7 +118,9 @@ export const recentPostsQueryOptions = (limit: number, locale?: string) =>
   queryOptions({
     queryKey: ['posts', 'recent', limit, locale ?? ''],
     queryFn: async (): Promise<PostListItem[]> => {
-      const res = await fetch(apiUrl(`/api/posts?limit=${limit}${locale ? `&lang=${encodeURIComponent(locale)}` : ''}`));
+      const res = await fetch(
+        apiUrl(`/api/posts?limit=${limit}${locale ? `&lang=${encodeURIComponent(locale)}` : ''}`),
+      );
       if (!res.ok) throw new Error(`GET /api/posts ${res.status}`);
       const data = (await res.json()) as PostsListResponse;
       return data.posts;

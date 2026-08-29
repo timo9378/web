@@ -63,16 +63,32 @@ const NotFound = () => {
             </defs>
 
             {/* 環的後半（先畫，被星球蓋住上緣） */}
-            <ellipse cx="100" cy="100" rx="92" ry="26" stroke="url(#nf-ring)" strokeWidth="6"
-              transform="rotate(-18 100 100)" opacity=".75" />
+            <ellipse
+              cx="100"
+              cy="100"
+              rx="92"
+              ry="26"
+              stroke="url(#nf-ring)"
+              strokeWidth="6"
+              transform="rotate(-18 100 100)"
+              opacity=".75"
+            />
             {/* 星球 */}
             <circle cx="100" cy="100" r="52" fill="url(#nf-planet)" />
             {/* 表面的帶狀紋理，讓它不是一顆純色球 */}
             <path d="M52 88 q48 -14 96 0" stroke="rgba(255,255,255,.16)" strokeWidth="5" strokeLinecap="round" />
             <path d="M56 114 q44 12 88 -2" stroke="rgba(0,0,0,.18)" strokeWidth="7" strokeLinecap="round" />
             {/* 環的前半（畫在星球之上，只留下半段） */}
-            <ellipse cx="100" cy="100" rx="92" ry="26" stroke="url(#nf-ring)" strokeWidth="6"
-              transform="rotate(-18 100 100)" mask="url(#nf-ring-back)" />
+            <ellipse
+              cx="100"
+              cy="100"
+              rx="92"
+              ry="26"
+              stroke="url(#nf-ring)"
+              strokeWidth="6"
+              transform="rotate(-18 100 100)"
+              mask="url(#nf-ring-back)"
+            />
           </svg>
 
           <span className="nf-digit">4</span>
@@ -94,8 +110,14 @@ const NotFound = () => {
           </defs>
 
           {/* 軌跡：從左下甩上來，帶一個迴圈——照參考圖那種「飄走」的感覺 */}
-          <path className="nf-trail" d="M4 190 q70 -6 96 -52 t-30 -46 q-14 24 22 30 t70 -30"
-            stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeLinecap="round" strokeDasharray="1 9" />
+          <path
+            className="nf-trail"
+            d="M4 190 q70 -6 96 -52 t-30 -46 q-14 24 22 30 t70 -30"
+            stroke="rgba(255,255,255,.45)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray="1 9"
+          />
 
           <g className="nf-astro-body" transform="translate(178 46) rotate(14)">
             {/* 背包 */}
@@ -137,11 +159,15 @@ const NotFound = () => {
           {/* 次要動作用文字連結而不是第二、第三顆按鈕——三顆一樣的矩形沒有主次 */}
           <LocaleLink to="/" className="nf-link">
             {t('notFound.backHome')}
-            <span className="nf-arrow" aria-hidden="true">→</span>
+            <span className="nf-arrow" aria-hidden="true">
+              →
+            </span>
           </LocaleLink>
           <LocaleLink to="/blog" className="nf-link">
             {t('nav.notes')}
-            <span className="nf-arrow" aria-hidden="true">→</span>
+            <span className="nf-arrow" aria-hidden="true">
+              →
+            </span>
           </LocaleLink>
         </div>
       </div>

@@ -22,8 +22,11 @@ export default function SpaceBackdropShell() {
   // 純裝飾背景、無內容 → 不算 cloaking；手機版本來就跳過故對 Google 一致；真人 UA 不含這些關鍵字，
   // 體驗不變。好處：桌機爬蟲/Rich Results/社群卡片抓取器不再卡在重的 WebGL render。
   const isBot = useMemo(
-    () => typeof navigator !== 'undefined'
-      && /bot|crawl|spider|lighthouse|headless|slurp|bingbot|googlebot|duckduckbot|baiduspider|yandex/i.test(navigator.userAgent),
+    () =>
+      typeof navigator !== 'undefined' &&
+      /bot|crawl|spider|lighthouse|headless|slurp|bingbot|googlebot|duckduckbot|baiduspider|yandex/i.test(
+        navigator.userAgent,
+      ),
     [],
   );
   // 3D pre-flight：WebGPU（renderer 首選）或 WebGL（自動 fallback backend）任一可用才掛 3D；
@@ -78,7 +81,11 @@ export default function SpaceBackdropShell() {
   }, []);
 
   const introCompleted = (() => {
-    try { return sessionStorage.getItem('introCompleted') === 'true'; } catch { return false; }
+    try {
+      return sessionStorage.getItem('introCompleted') === 'true';
+    } catch {
+      return false;
+    }
   })();
   // intro 只在「首次造訪 + 桌面 + 首頁」播
   const shouldSkipIntro = introCompleted || !isOnHomePage || isMobile;
@@ -91,7 +98,9 @@ export default function SpaceBackdropShell() {
 
   const handleExplosionStart = () => {
     setSaturnZIndex(10000);
-    setTimeout(() => { setAnimateSaturn(true); }, 200);
+    setTimeout(() => {
+      setAnimateSaturn(true);
+    }, 200);
   };
   // intro 加速期已過 → 現在才掛 3D 背景(土星在 explosion 前約 1.1s 就緒)
   const handlePreReveal = useCallback(() => {
@@ -99,7 +108,11 @@ export default function SpaceBackdropShell() {
     document.documentElement.classList.remove('intro-pending'); // 內容在 intro bloom 下淡入(配合 __root pre-paint gate)
   }, []);
   const handleAnimationComplete = () => {
-    try { sessionStorage.setItem('introCompleted', 'true'); } catch { /* sessionStorage 不可用就略過 */ }
+    try {
+      sessionStorage.setItem('introCompleted', 'true');
+    } catch {
+      /* sessionStorage 不可用就略過 */
+    }
     clearTimeout(introCompleteTimeoutRef.current ?? undefined);
     introCompleteTimeoutRef.current = setTimeout(() => {
       setIntroVisible(false);
@@ -107,7 +120,12 @@ export default function SpaceBackdropShell() {
     }, 300);
   };
 
-  useEffect(() => () => { clearTimeout(introCompleteTimeoutRef.current ?? undefined); }, []);
+  useEffect(
+    () => () => {
+      clearTimeout(introCompleteTimeoutRef.current ?? undefined);
+    },
+    [],
+  );
 
   // intro 不會播(重訪/非首頁/手機 → introVisible 一開始就 false)→ 立即放行內容,別讓 pre-paint gate 卡住。
   useEffect(() => {
@@ -130,11 +148,7 @@ export default function SpaceBackdropShell() {
       {backdropReady && gpu3dOk && (
         <BackdropErrorBoundary fallback={null}>
           <Suspense fallback={null}>
-            <LazyStarfieldGpu
-              isOnHomePage={isOnHomePage}
-              animateSaturn={animateSaturn}
-              zIndex={saturnZIndex}
-            />
+            <LazyStarfieldGpu isOnHomePage={isOnHomePage} animateSaturn={animateSaturn} zIndex={saturnZIndex} />
           </Suspense>
         </BackdropErrorBoundary>
       )}

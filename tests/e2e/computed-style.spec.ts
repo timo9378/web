@@ -56,8 +56,17 @@ const fileFor = (route: string) => path.join(BASELINE_DIR, `${route.replace(/\//
 const UPDATE = process.env.UPDATE_STYLE_BASELINE === '1';
 
 const ROUTES = [
-  '/', '/about', '/blog', '/photos', '/setup',
-  '/history', '/friends', '/bookshelf', '/watch', '/messages', '/about-site',
+  '/',
+  '/about',
+  '/blog',
+  '/photos',
+  '/setup',
+  '/history',
+  '/friends',
+  '/bookshelf',
+  '/watch',
+  '/messages',
+  '/about-site',
   // ⚠ `/blog/5` 是**文章內頁**，跟上面的 `/blog`（清單頁）是兩套完全不同的 CSS。
   //
   // 加它是因為守備範圍差太多：`BlogPost.css` 有 **3317 行**，是全專案最大的一支，
@@ -109,14 +118,37 @@ const ADMIN_ROUTES: { route: string; heading: string | RegExp }[] = [
  * margin-top / -bottom 留著：一般流裡 `margin: auto` 的垂直方向解析成 0，不受影響。
  */
 const PROPS = [
-  'background-color', 'background-image', 'color',
-  'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
-  'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
-  'border-radius', 'outline-color', 'outline-width', 'outline-style',
-  'display', 'visibility', 'font-family', 'font-size', 'font-weight',
-  'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-  'margin-top', 'margin-bottom',
-  'text-decoration-line', 'text-align', 'flex-direction', 'justify-content', 'align-items',
+  'background-color',
+  'background-image',
+  'color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'border-top-width',
+  'border-right-width',
+  'border-bottom-width',
+  'border-left-width',
+  'border-radius',
+  'outline-color',
+  'outline-width',
+  'outline-style',
+  'display',
+  'visibility',
+  'font-family',
+  'font-size',
+  'font-weight',
+  'padding-top',
+  'padding-right',
+  'padding-bottom',
+  'padding-left',
+  'margin-top',
+  'margin-bottom',
+  'text-decoration-line',
+  'text-align',
+  'flex-direction',
+  'justify-content',
+  'align-items',
 ];
 
 /**
@@ -127,9 +159,17 @@ const PROPS = [
  * 這份清單跟 index.css 裡 `html.fs-active` 那條隱藏規則的對象一致。
  */
 const DECORATIVE = [
-  '.css-starfield', '.nebula-bg', '.nebula-dust', '.nebula-dim-overlay',
-  '.foreground-stars-container', '.comet', '.shooting-star', '.ufo',
-  '.cursor-trail-canvas', '.intro-overlay', '.starfield-gpu',
+  '.css-starfield',
+  '.nebula-bg',
+  '.nebula-dust',
+  '.nebula-dim-overlay',
+  '.foreground-stars-container',
+  '.comet',
+  '.shooting-star',
+  '.ufo',
+  '.cursor-trail-canvas',
+  '.intro-overlay',
+  '.starfield-gpu',
   // ⚠ 熱力圖是**跟著日曆走**的，不是樣式。格線錨在 `new Date()`（見 Blog.tsx 的 `cells`
   //   與 Activity 的 gridFromEvents），所以每過一天就有一格從「未來」翻成「過去」
   //   （`heatmap-level--1` → `heatmap-level-0`），背景色跟著變。
@@ -140,7 +180,8 @@ const DECORATIVE = [
   //
   //   排除它不會漏掉真回歸：格子的配色規則若真的改了，會是**整排**一起變，
   //   而 CSS 檔的改動本來就會反映在別的元素上。
-  '.heatmap-cell', '.heatmap-day',
+  '.heatmap-cell',
+  '.heatmap-day',
 ];
 
 /**
@@ -158,7 +199,9 @@ async function waitForDomStable(page: Page, { stableFor = 3, interval = 250, tim
   let last = '';
   let stable = 0;
   while (Date.now() - started < timeout) {
-    const now = await page.evaluate(() => `${document.body.innerHTML.length}:${document.querySelectorAll('body *').length}`);
+    const now = await page.evaluate(
+      () => `${document.body.innerHTML.length}:${document.querySelectorAll('body *').length}`,
+    );
     stable = now === last ? stable + 1 : 0;
     last = now;
     if (stable >= stableFor) return;
@@ -184,35 +227,38 @@ async function waitForDomStable(page: Page, { stableFor = 3, interval = 250, tim
  *   `evaluate` 裡跟著算出來，那時手上還有元素本身。
  */
 async function collect(page: Page): Promise<{ values: Record<string, string>; ids: Record<string, string> }> {
-  return page.evaluate(({ props, skip }) => {
-    const values: Record<string, string> = {};
-    const ids: Record<string, string> = {};
-    const pathOf = (el: Element) => {
-      const parts: string[] = [];
-      for (let e: Element | null = el; e && parts.length < 12; e = e.parentElement) {
-        const i = e.parentElement ? [...e.parentElement.children].indexOf(e) : 0;
-        parts.unshift(`${e.tagName}:${i}`);
+  return page.evaluate(
+    ({ props, skip }) => {
+      const values: Record<string, string> = {};
+      const ids: Record<string, string> = {};
+      const pathOf = (el: Element) => {
+        const parts: string[] = [];
+        for (let e: Element | null = el; e && parts.length < 12; e = e.parentElement) {
+          const i = e.parentElement ? [...e.parentElement.children].indexOf(e) : 0;
+          parts.unshift(`${e.tagName}:${i}`);
+        }
+        return parts.join('>');
+      };
+      // `className` 在 SVG 元素上是 SVGAnimatedString 而不是字串——直接 split 會炸，
+      // 而炸在 evaluate 裡的訊息很難讀。用 classList 就沒有這個分岔。
+      const idOf = (el: Element) => {
+        const cls = [...el.classList].join('.');
+        const tag = el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '') + (cls ? `.${cls}` : '');
+        const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
+        return text ? `${tag} 「${text}」` : tag;
+      };
+      const skipSel = skip.join(',');
+      for (const el of document.querySelectorAll('body *')) {
+        if (el.closest(skipSel)) continue;
+        const cs = getComputedStyle(el);
+        const p = pathOf(el);
+        values[p] = props.map((x) => cs.getPropertyValue(x)).join('|');
+        ids[p] = idOf(el);
       }
-      return parts.join('>');
-    };
-    // `className` 在 SVG 元素上是 SVGAnimatedString 而不是字串——直接 split 會炸，
-    // 而炸在 evaluate 裡的訊息很難讀。用 classList 就沒有這個分岔。
-    const idOf = (el: Element) => {
-      const cls = [...el.classList].join('.');
-      const tag = el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '') + (cls ? `.${cls}` : '');
-      const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
-      return text ? `${tag} 「${text}」` : tag;
-    };
-    const skipSel = skip.join(',');
-    for (const el of document.querySelectorAll('body *')) {
-      if (el.closest(skipSel)) continue;
-      const cs = getComputedStyle(el);
-      const p = pathOf(el);
-      values[p] = props.map((x) => cs.getPropertyValue(x)).join('|');
-      ids[p] = idOf(el);
-    }
-    return { values, ids };
-  }, { props: PROPS, skip: DECORATIVE });
+      return { values, ids };
+    },
+    { props: PROPS, skip: DECORATIVE },
+  );
 }
 
 /**
@@ -292,7 +338,10 @@ async function compareWithBaseline(page: Page, route: string) {
   const onlyOneSide: string[] = [];
   const changed: string[] = [];
   for (const k of new Set([...Object.keys(want), ...Object.keys(hashed)])) {
-    if (want[k] === undefined || hashed[k] === undefined) { onlyOneSide.push(k); continue; }
+    if (want[k] === undefined || hashed[k] === undefined) {
+      onlyOneSide.push(k);
+      continue;
+    }
     if (hashOf(want[k]) !== hashOf(hashed[k])) changed.push(k);
   }
   if (onlyOneSide.length) {
@@ -310,19 +359,24 @@ async function compareWithBaseline(page: Page, route: string) {
   // 「之前是什麼值」仍然講不出來（基準只存 hash，要講前後差異就得存原值，
   // 那是好幾 MB 與每次改樣式都爆炸的 diff，見檔頭的取捨）。但實務上
   // 「哪個元素 + 哪個屬性 + 現在是什麼」已經夠判斷了，因為看的人剛改過 CSS。
-  const detail = changed.slice(0, 8).map((k) => {
-    const vals = raw[k].split('|');
-    const oldFp = fpOf(want[k]);
-    const newFp = fpOf(hashed[k]);
-    const moved = PROPS
-      .map((p, i) => ({ p, v: vals[i], i }))
-      .filter(({ i }) => oldFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS)
-        !== newFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS));
-    // 指紋碰撞（1/100）時 moved 可能是空的——那就退回列出全部，總比什麼都不講好
-    const shown = moved.length ? moved : PROPS.map((p, i) => ({ p, v: vals[i], i }));
-    return `  · ${ids[k] ?? '(?)'}\n      ${k}\n      ${moved.length ? '變了的屬性' : '（指紋碰撞，列出全部）'}：` +
-      shown.map(({ p, v }) => `${p} = ${v}`).join('、');
-  }).join('\n');
+  const detail = changed
+    .slice(0, 8)
+    .map((k) => {
+      const vals = raw[k].split('|');
+      const oldFp = fpOf(want[k]);
+      const newFp = fpOf(hashed[k]);
+      const moved = PROPS.map((p, i) => ({ p, v: vals[i], i })).filter(
+        ({ i }) =>
+          oldFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS) !== newFp.slice(i * PROP_DIGITS, (i + 1) * PROP_DIGITS),
+      );
+      // 指紋碰撞（1/100）時 moved 可能是空的——那就退回列出全部，總比什麼都不講好
+      const shown = moved.length ? moved : PROPS.map((p, i) => ({ p, v: vals[i], i }));
+      return (
+        `  · ${ids[k] ?? '(?)'}\n      ${k}\n      ${moved.length ? '變了的屬性' : '（指紋碰撞，列出全部）'}：` +
+        shown.map(({ p, v }) => `${p} = ${v}`).join('、')
+      );
+    })
+    .join('\n');
 
   expect(
     changed.slice(0, 20),

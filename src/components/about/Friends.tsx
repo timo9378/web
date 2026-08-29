@@ -6,10 +6,28 @@ import { useTranslation } from 'react-i18next';
 import InfoPage from './InfoPage';
 import { lookupOr } from '@/lib/tableLookup';
 
-interface Friend { name: string; url: string; avatar?: string; tagline?: string }
-interface FailedSite { name: string; url: string }
-interface BlacklistSite { name: string; reason?: string }
-interface FriendForm { name: string; site: string; url: string; avatar: string; email: string; tagline: string }
+interface Friend {
+  name: string;
+  url: string;
+  avatar?: string;
+  tagline?: string;
+}
+interface FailedSite {
+  name: string;
+  url: string;
+}
+interface BlacklistSite {
+  name: string;
+  reason?: string;
+}
+interface FriendForm {
+  name: string;
+  site: string;
+  url: string;
+  avatar: string;
+  email: string;
+  tagline: string;
+}
 
 /**
  * 友鏈列表 — 之後手動加，格式：{ name, url, avatar, tagline }
@@ -17,8 +35,8 @@ interface FriendForm { name: string; site: string; url: string; avatar: string; 
  */
 const FRIENDS: Friend[] = [];
 
-const FAILED: FailedSite[] = [];        // 失聯的（網站掛了/換域名等）
-const BLACKLIST: BlacklistSite[] = [];     // 黑名單（違規/變廣告農場）
+const FAILED: FailedSite[] = []; // 失聯的（網站掛了/換域名等）
+const BLACKLIST: BlacklistSite[] = []; // 黑名單（違規/變廣告農場）
 
 // 本站訊息卡 — 給對方寫進他們的友鏈頁
 const SITE_INFO = {
@@ -26,7 +44,7 @@ const SITE_INFO = {
   url: 'https://koimsurai.com',
   desc_zhTW: '一個工程師的個人空間',
   desc_zhCN: '一个工程师的个人空间',
-  desc_en: 'A developer\'s personal corner',
+  desc_en: "A developer's personal corner",
   desc_ja: 'あるエンジニアの個人スペース',
   desc_ko: '한 엔지니어의 개인 공간',
   // 永久分享連結（自製 NAS）— 如果 NAS 掛了/重開後失效，把這個換掉
@@ -35,7 +53,8 @@ const SITE_INFO = {
 
 const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
   'zh-TW': {
-    intro: '友鏈的中文圈起源像是古早 SEO 時代「我貼你、你貼我」的互助文化。對我來說更像「我在這片網海裡看見了你，幫你掛個牌子」。',
+    intro:
+      '友鏈的中文圈起源像是古早 SEO 時代「我貼你、你貼我」的互助文化。對我來說更像「我在這片網海裡看見了你，幫你掛個牌子」。',
     listHeading: '目前的朋友',
     emptyList: '── 還沒有人，這裡空著。歡迎成為第一個。 ──',
     failedHeading: '以下站點無法訪問，已失聯',
@@ -60,7 +79,8 @@ const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
     desc: SITE_INFO.desc_zhTW,
   },
   'zh-CN': {
-    intro: '友链的中文圈起源像是古早 SEO 时代「我贴你、你贴我」的互助文化。对我来说更像「我在这片网海里看见了你，帮你挂个牌子」。',
+    intro:
+      '友链的中文圈起源像是古早 SEO 时代「我贴你、你贴我」的互助文化。对我来说更像「我在这片网海里看见了你，帮你挂个牌子」。',
     listHeading: '目前的朋友',
     emptyList: '── 还没有人，这里空着。欢迎成为第一个。 ──',
     failedHeading: '以下站点无法访问，已失联',
@@ -85,7 +105,8 @@ const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
     desc: SITE_INFO.desc_zhCN,
   },
   en: {
-    intro: 'The Chinese-web tradition of "friend links" comes from the old SEO days — "I link you, you link me". To me it feels more like "I saw you in this big sea, here\'s a little name plate".',
+    intro:
+      'The Chinese-web tradition of "friend links" comes from the old SEO days — "I link you, you link me". To me it feels more like "I saw you in this big sea, here\'s a little name plate".',
     listHeading: 'Current friends',
     emptyList: '── No one yet — this space is empty. Be the first. ──',
     failedHeading: 'Sites below are no longer reachable',
@@ -95,8 +116,8 @@ const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
     rule1: 'The site is reachable right now (not expired or dead).',
     rule2: 'It has original content (no scrapers, pure ads, or SEO farms).',
     rule3: 'HTTPS and your own domain (any TLD is fine, free subdomains too).',
-    rule4: 'If you\'re willing to put my link on your site first, I\'ll reply faster.',
-    siteCardLabel: 'This site\'s info card:',
+    rule4: "If you're willing to put my link on your site first, I'll reply faster.",
+    siteCardLabel: "This site's info card:",
     cardName: 'Site name: ',
     cardUrl: 'Site URL: ',
     cardDesc: 'Description: ',
@@ -106,11 +127,12 @@ const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
     contactLink: 'the messages page',
     contactPost1: ', or just email ',
     contactPost2: '.',
-    applyBtn: 'Let\'s be friends',
+    applyBtn: "Let's be friends",
     desc: SITE_INFO.desc_en,
   },
   ja: {
-    intro: '中国語圏のフレンドリンクは、SEO 黎明期の「お互いリンクし合う」文化から来ています。私にとっては「このネットの海で君を見かけたから、看板を一枚立てておくよ」という感覚に近いです。',
+    intro:
+      '中国語圏のフレンドリンクは、SEO 黎明期の「お互いリンクし合う」文化から来ています。私にとっては「このネットの海で君を見かけたから、看板を一枚立てておくよ」という感覚に近いです。',
     listHeading: '現在のともだち',
     emptyList: '── まだ誰もいません。最初のひとりになりませんか。 ──',
     failedHeading: '以下のサイトはアクセスできず、リンク切れになっています',
@@ -135,7 +157,8 @@ const FRIENDS_BY_LANG: Record<string, Record<string, string>> = {
     desc: SITE_INFO.desc_ja,
   },
   ko: {
-    intro: '중화권의 「프렌드 링크」 문화는 옛 SEO 시대의 「내가 너 걸고, 너도 나 걸어주기」에서 왔어요. 저에겐 「이 네트의 바다에서 당신을 봤어요, 작은 명패 하나 걸어둘게요」에 가깝습니다.',
+    intro:
+      '중화권의 「프렌드 링크」 문화는 옛 SEO 시대의 「내가 너 걸고, 너도 나 걸어주기」에서 왔어요. 저에겐 「이 네트의 바다에서 당신을 봤어요, 작은 명패 하나 걸어둘게요」에 가깝습니다.',
     listHeading: '현재의 친구들',
     emptyList: '── 아직 아무도 없어요. 비어 있는 이 자리, 첫 번째가 되어 주세요. ──',
     failedHeading: '아래 사이트들은 접속할 수 없어 연결이 끊겼습니다',
@@ -196,7 +219,7 @@ const FORM_BY_LANG: Record<string, Record<string, string>> = {
     modalTitle: 'A hi from the sea of net',
     close: 'Close',
     success1: 'Your message is ready — opening your mail client…',
-    success2_pre: 'If it doesn\'t open automatically, just email',
+    success2_pre: "If it doesn't open automatically, just email",
     successBtn: 'Close',
     name: 'Your name',
     site: 'Site name',
@@ -244,11 +267,17 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
   const lang = i18n.resolvedLanguage ?? 'zh-TW';
   const f = lookupOr(FORM_BY_LANG, lang, FORM_BY_LANG['zh-TW']);
   const [form, setForm] = useState<FriendForm>({
-    name: '', site: '', url: '', avatar: '', email: '', tagline: '',
+    name: '',
+    site: '',
+    url: '',
+    avatar: '',
+    email: '',
+    tagline: '',
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const update = (key: keyof FriendForm) => (e: ChangeEvent<HTMLInputElement>) => setForm((s) => ({ ...s, [key]: e.target.value }));
+  const update = (key: keyof FriendForm) => (e: ChangeEvent<HTMLInputElement>) =>
+    setForm((s) => ({ ...s, [key]: e.target.value }));
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -306,44 +335,50 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
           <form onSubmit={handleSubmit} className="friends-modal-form">
             <div className="friends-modal-grid">
               <label className="friends-modal-field">
-                <span>{f.name} <span className="req">*</span></span>
-                <input
-                  type="text" required value={form.name} onChange={update('name')}
-                  placeholder="Koimsurai"
-                />
+                <span>
+                  {f.name} <span className="req">*</span>
+                </span>
+                <input type="text" required value={form.name} onChange={update('name')} placeholder="Koimsurai" />
               </label>
               <label className="friends-modal-field">
-                <span>{f.site} <span className="req">*</span></span>
-                <input
-                  type="text" required value={form.site} onChange={update('site')}
-                  placeholder="宙と木"
-                />
+                <span>
+                  {f.site} <span className="req">*</span>
+                </span>
+                <input type="text" required value={form.site} onChange={update('site')} placeholder="宙と木" />
               </label>
               <label className="friends-modal-field">
-                <span>{f.url} <span className="req">*</span></span>
-                <input
-                  type="url" required value={form.url} onChange={update('url')}
-                  placeholder="https://"
-                />
+                <span>
+                  {f.url} <span className="req">*</span>
+                </span>
+                <input type="url" required value={form.url} onChange={update('url')} placeholder="https://" />
               </label>
               <label className="friends-modal-field">
-                <span>{f.avatar} <span className="req">*</span></span>
-                <input
-                  type="url" required value={form.avatar} onChange={update('avatar')}
-                  placeholder="https://"
-                />
+                <span>
+                  {f.avatar} <span className="req">*</span>
+                </span>
+                <input type="url" required value={form.avatar} onChange={update('avatar')} placeholder="https://" />
               </label>
               <label className="friends-modal-field friends-modal-field--full">
-                <span>{f.email} <span className="req">*</span></span>
+                <span>
+                  {f.email} <span className="req">*</span>
+                </span>
                 <input
-                  type="email" required value={form.email} onChange={update('email')}
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={update('email')}
                   placeholder="me@example.com"
                 />
               </label>
               <label className="friends-modal-field friends-modal-field--full">
-                <span>{f.tagline} <span className="req">*</span></span>
+                <span>
+                  {f.tagline} <span className="req">*</span>
+                </span>
                 <input
-                  type="text" required value={form.tagline} onChange={update('tagline')}
+                  type="text"
+                  required
+                  value={form.tagline}
+                  onChange={update('tagline')}
                   placeholder={f.taglinePlaceholder}
                   maxLength={50}
                 />
@@ -351,7 +386,9 @@ function ApplicationForm({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="friends-modal-actions">
-              <button type="submit" className="friends-modal-submit">{f.submit}</button>
+              <button type="submit" className="friends-modal-submit">
+                {f.submit}
+              </button>
             </div>
           </form>
         )}
@@ -379,9 +416,7 @@ function Friends() {
       <h2 id="list">{c.listHeading}</h2>
 
       {FRIENDS.length === 0 ? (
-        <p style={{ color: 'rgba(229,229,245,0.5)', fontStyle: 'italic' }}>
-          {c.emptyList}
-        </p>
+        <p style={{ color: 'rgba(229,229,245,0.5)', fontStyle: 'italic' }}>{c.emptyList}</p>
       ) : (
         <div className="friends-grid">
           {FRIENDS.map((fr) => (
@@ -409,7 +444,11 @@ function Friends() {
         <>
           <h3 id="failed">{c.failedHeading}</h3>
           <ul>
-            {FAILED.map((fr) => <li key={fr.name}>{fr.name} — {fr.url}</li>)}
+            {FAILED.map((fr) => (
+              <li key={fr.name}>
+                {fr.name} — {fr.url}
+              </li>
+            ))}
           </ul>
         </>
       )}
@@ -418,7 +457,11 @@ function Friends() {
         <>
           <h3 id="blacklist">{c.blacklistHeading}</h3>
           <ul>
-            {BLACKLIST.map((fr) => <li key={fr.name}>{fr.name} — {fr.reason}</li>)}
+            {BLACKLIST.map((fr) => (
+              <li key={fr.name}>
+                {fr.name} — {fr.reason}
+              </li>
+            ))}
           </ul>
         </>
       )}
@@ -434,10 +477,24 @@ function Friends() {
 
       <p>{c.siteCardLabel}</p>
       <ul>
-        <li>{c.cardName}<code>{SITE_INFO.name}</code></li>
-        <li>{c.cardUrl}<code>{SITE_INFO.url}</code></li>
-        <li>{c.cardDesc}{c.desc}</li>
-        <li>{c.cardAvatar}<a href={SITE_INFO.avatar} target="_blank" rel="noopener noreferrer"><code>{c.cardAvatarLink}</code></a></li>
+        <li>
+          {c.cardName}
+          <code>{SITE_INFO.name}</code>
+        </li>
+        <li>
+          {c.cardUrl}
+          <code>{SITE_INFO.url}</code>
+        </li>
+        <li>
+          {c.cardDesc}
+          {c.desc}
+        </li>
+        <li>
+          {c.cardAvatar}
+          <a href={SITE_INFO.avatar} target="_blank" rel="noopener noreferrer">
+            <code>{c.cardAvatarLink}</code>
+          </a>
+        </li>
       </ul>
 
       <p>
@@ -449,18 +506,12 @@ function Friends() {
       </p>
 
       <div style={{ marginTop: '1.5rem' }}>
-        <button
-          type="button"
-          className="friends-apply-btn"
-          onClick={() => setShowForm(true)}
-        >
+        <button type="button" className="friends-apply-btn" onClick={() => setShowForm(true)}>
           {c.applyBtn}
         </button>
       </div>
 
-      <AnimatePresence>
-        {showForm && <ApplicationForm onClose={() => setShowForm(false)} />}
-      </AnimatePresence>
+      <AnimatePresence>{showForm && <ApplicationForm onClose={() => setShowForm(false)} />}</AnimatePresence>
     </InfoPage>
   );
 }

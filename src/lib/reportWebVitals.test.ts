@@ -22,13 +22,23 @@ let cbs: Cbs = {};
 let isBot = false;
 
 vi.mock('web-vitals', () => ({
-  onINP: (f: (m: unknown) => void) => { cbs.inp = f; },
-  onLCP: (f: (m: unknown) => void) => { cbs.lcp = f; },
-  onFCP: (f: (m: unknown) => void) => { cbs.fcp = f; },
-  onTTFB: (f: (m: unknown) => void) => { cbs.ttfb = f; },
+  onINP: (f: (m: unknown) => void) => {
+    cbs.inp = f;
+  },
+  onLCP: (f: (m: unknown) => void) => {
+    cbs.lcp = f;
+  },
+  onFCP: (f: (m: unknown) => void) => {
+    cbs.fcp = f;
+  },
+  onTTFB: (f: (m: unknown) => void) => {
+    cbs.ttfb = f;
+  },
 }));
 vi.mock('web-vitals/attribution', () => ({
-  onCLS: (f: (m: unknown) => void) => { cbs.cls = f; },
+  onCLS: (f: (m: unknown) => void) => {
+    cbs.cls = f;
+  },
 }));
 vi.mock('./bot', () => ({ isBotUserAgent: () => isBot }));
 
@@ -46,10 +56,17 @@ async function load() {
   fetchCalls = [];
   shiftObserver = null;
 
-  vi.stubGlobal('PerformanceObserver', class {
-    constructor(f: (list: { getEntries: () => unknown[] }) => void) { shiftObserver = f; }
-    observe() { /* 測試自己叫 shiftObserver */ }
-  });
+  vi.stubGlobal(
+    'PerformanceObserver',
+    class {
+      constructor(f: (list: { getEntries: () => unknown[] }) => void) {
+        shiftObserver = f;
+      }
+      observe() {
+        /* 測試自己叫 shiftObserver */
+      }
+    },
+  );
   Object.defineProperty(navigator, 'sendBeacon', {
     configurable: true,
     value: (url: string, blob: Blob) => {
@@ -60,17 +77,23 @@ async function load() {
   });
   // 記下原始字串，省得為了讀 Blob 讓每個測試都變 async
   const RealBlob = globalThis.Blob;
-  vi.stubGlobal('Blob', class extends RealBlob {
-    __body: string;
-    constructor(parts: string[], opts?: BlobPropertyBag) {
-      super(parts, opts);
-      this.__body = parts.join('');
-    }
-  });
-  vi.stubGlobal('fetch', vi.fn((url: string, init: RequestInit) => {
-    fetchCalls.push({ url, init });
-    return Promise.resolve({ ok: true });
-  }));
+  vi.stubGlobal(
+    'Blob',
+    class extends RealBlob {
+      __body: string;
+      constructor(parts: string[], opts?: BlobPropertyBag) {
+        super(parts, opts);
+        this.__body = parts.join('');
+      }
+    },
+  );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init: RequestInit) => {
+      fetchCalls.push({ url, init });
+      return Promise.resolve({ ok: true });
+    }),
+  );
 
   const mod = await import('./reportWebVitals');
   return mod.initWebVitals;
@@ -84,7 +107,9 @@ const metric = (over: Record<string, unknown> = {}) => ({
 });
 
 const lastBody = () => JSON.parse(beacons.at(-1)?.body ?? '{}') as Record<string, unknown>;
-const goTo = (path: string) => { window.history.replaceState({}, '', path); };
+const goTo = (path: string) => {
+  window.history.replaceState({}, '', path);
+};
 
 beforeEach(() => {
   isBot = false;
@@ -171,7 +196,10 @@ describe('送出去的內容', () => {
     const init = await load();
     init();
     cbs.lcp?.(metric());
-    cbs.cls?.({ ...metric({ name: 'CLS', value: 0.1 }), attribution: { largestShiftTarget: '#a', loadState: 'complete' } });
+    cbs.cls?.({
+      ...metric({ name: 'CLS', value: 0.1 }),
+      attribution: { largestShiftTarget: '#a', loadState: 'complete' },
+    });
 
     for (const b of beacons) {
       for (const k of Object.keys(JSON.parse(b.body) as Record<string, unknown>)) {
@@ -187,8 +215,12 @@ describe('送出去的內容', () => {
     cbs.lcp?.(metric({ name: 'LCP' }));
     cbs.fcp?.(metric({ name: 'FCP' }));
     cbs.ttfb?.(metric({ name: 'TTFB' }));
-    expect(beacons.map((b) => (JSON.parse(b.body) as { metric: string }).metric))
-      .toEqual(['INP', 'LCP', 'FCP', 'TTFB']);
+    expect(beacons.map((b) => (JSON.parse(b.body) as { metric: string }).metric)).toEqual([
+      'INP',
+      'LCP',
+      'FCP',
+      'TTFB',
+    ]);
   });
 });
 
@@ -227,7 +259,7 @@ describe('CLS 的診斷欄位', () => {
     init();
     shiftObserver?.({ getEntries: () => [{ value: 0.01, hadRecentInput: false }] });
     goTo('/b');
-    shiftObserver?.({ getEntries: () => [{ value: 0.30, hadRecentInput: false }] });
+    shiftObserver?.({ getEntries: () => [{ value: 0.3, hadRecentInput: false }] });
     goTo('/c');
     shiftObserver?.({ getEntries: () => [{ value: 0.02, hadRecentInput: false }] });
     cbs.cls?.({ ...metric({ name: 'CLS' }), attribution: {} });
@@ -268,8 +300,7 @@ describe('送不出去時的退路', () => {
     expect(fetchCalls[0].init.method).toBe('POST');
     // keepalive：頁面正在卸載時沒有它請求會被取消，而 LCP/CLS 正是在 pagehide 才定稿
     expect(fetchCalls[0].init.keepalive).toBe(true);
-    expect((fetchCalls[0].init.headers as Record<string, string>)['Content-Type'])
-      .toBe('application/json');
+    expect((fetchCalls[0].init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
     expect(JSON.parse(fetchCalls[0].init.body as string)).toMatchObject({ metric: 'LCP' });
   });
 

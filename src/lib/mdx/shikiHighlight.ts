@@ -6,7 +6,9 @@
 import type { HighlighterCore, LanguageRegistration } from 'shiki/core';
 import { lookup } from '@/lib/tableLookup';
 
-interface LangModule { default: LanguageRegistration[] }
+interface LangModule {
+  default: LanguageRegistration[];
+}
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 const loadedLangs = new Set<string>(['text']);

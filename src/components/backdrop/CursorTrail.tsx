@@ -46,8 +46,9 @@ const CursorTrail = () => {
   // 更新滑鼠位置
   const handleMouseMove = useCallback((event: MouseEvent) => {
     mousePosRef.current = { x: event.clientX, y: event.clientY };
-    if (Math.random() > 0.5) { // 50% 機率添加
-       particlesRef.current.push(new Particle(mousePosRef.current.x, mousePosRef.current.y));
+    if (Math.random() > 0.5) {
+      // 50% 機率添加
+      particlesRef.current.push(new Particle(mousePosRef.current.x, mousePosRef.current.y));
     }
   }, []);
 
@@ -62,17 +63,16 @@ const CursorTrail = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 更新和繪製粒子
-    particlesRef.current = particlesRef.current.filter(p => p.opacity > 0 && p.size > 0.1); // 移除消失的粒子
-    particlesRef.current.forEach(p => {
+    particlesRef.current = particlesRef.current.filter((p) => p.opacity > 0 && p.size > 0.1); // 移除消失的粒子
+    particlesRef.current.forEach((p) => {
       p.update();
       p.draw(ctx);
     });
 
     // 限制粒子數量，避免效能問題
     if (particlesRef.current.length > 100) {
-        particlesRef.current = particlesRef.current.slice(particlesRef.current.length - 100);
+      particlesRef.current = particlesRef.current.slice(particlesRef.current.length - 100);
     }
-
 
     animationFrameIdRef.current = requestAnimationFrame(animateParticles);
   }, []);

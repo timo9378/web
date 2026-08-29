@@ -47,8 +47,7 @@ const getSpeedMult = (elapsed: number) => {
     return 1;
   }
   if (elapsed < TIMINGS.decelEnd) {
-    const t =
-      (elapsed - TIMINGS.peakEnd) / (TIMINGS.decelEnd - TIMINGS.peakEnd);
+    const t = (elapsed - TIMINGS.peakEnd) / (TIMINGS.decelEnd - TIMINGS.peakEnd);
     return 1 - easeOutCubic(t);
   }
   return 0;
@@ -76,11 +75,7 @@ interface IntroAnimationProps {
   onPreReveal?: () => void;
 }
 
-const IntroAnimation = ({
-  onAnimationComplete,
-  onExplosionStart,
-  onPreReveal,
-}: IntroAnimationProps) => {
+const IntroAnimation = ({ onAnimationComplete, onExplosionStart, onPreReveal }: IntroAnimationProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ending, setEnding] = useState(false);
   const [done, setDone] = useState(false);
@@ -99,7 +94,9 @@ const IntroAnimation = ({
 
   useEffect(() => {
     document.body.classList.add('intro-animation-active');
-    return () => { document.body.classList.remove('intro-animation-active'); };
+    return () => {
+      document.body.classList.remove('intro-animation-active');
+    };
   }, []);
 
   // Remove the body class the moment the container starts fading out so
@@ -117,9 +114,7 @@ const IntroAnimation = ({
     // prefer-optional-chain 要求改成 window?.matchMedia(…)，但 SSR 下 window 這個識別字
     // 根本沒宣告，optional chain 一樣 ReferenceError（同 src/lib/api.ts 對 process 的註記）。
     const prefersReducedMotion =
-      typeof window === 'undefined'
-        ? false
-        : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      typeof window === 'undefined' ? false : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     // 統一走 later()：排程與登記綁在一起，不會有漏 push 的路徑
@@ -128,7 +123,11 @@ const IntroAnimation = ({
       const id = setTimeout(fn, ms);
       timers.push(id);
     };
-    const clearTimers = () => { timers.forEach((id) => { clearTimeout(id); }); };
+    const clearTimers = () => {
+      timers.forEach((id) => {
+        clearTimeout(id);
+      });
+    };
     let raf = 0;
     let explosionFired = false;
     let completeFired = false;
@@ -289,8 +288,7 @@ const IntroAnimation = ({
         // Wide depth contrast so slow stars read as "distant background"
         // rather than blending with the foreground streaks.
         const depthContrast = 0.12 + speedRatio * 0.93;
-        const intensity =
-          radialAlpha * s.baseAlpha * depthContrast * (0.3 + speedMult * 0.7);
+        const intensity = radialAlpha * s.baseAlpha * depthContrast * (0.3 + speedMult * 0.7);
         if (intensity < 0.02) continue;
 
         const hueDrift = (s.seed - 0.5) * 36;
@@ -318,7 +316,7 @@ const IntroAnimation = ({
         const coreSat = Math.max(20, sat - 15);
         const core = ctx.createLinearGradient(tx, ty, sx, sy);
         core.addColorStop(0, `hsla(${hue + 8}, ${coreSat}%, 92%, 0)`);
-        core.addColorStop(0.55, `hsla(${hue + 8}, ${coreSat}%, 92%, ${intensity * 0.10})`);
+        core.addColorStop(0.55, `hsla(${hue + 8}, ${coreSat}%, 92%, ${intensity * 0.1})`);
         core.addColorStop(0.85, `hsla(${hue + 8}, ${coreSat}%, 95%, ${intensity * 0.45})`);
         core.addColorStop(0.97, `hsla(${hue + 12}, ${Math.max(15, coreSat - 10)}%, 98%, ${intensity})`);
         core.addColorStop(1, `hsla(${hue + 12}, ${Math.max(15, coreSat - 15)}%, 99%, ${intensity * 0.85})`);
@@ -358,7 +356,9 @@ const IntroAnimation = ({
     >
       <canvas ref={canvasRef} className="intro-canvas" />
       <div className="intro-flash" aria-hidden />
-      <div className="intro-skip-hint" aria-hidden>click anywhere to skip</div>
+      <div className="intro-skip-hint" aria-hidden>
+        click anywhere to skip
+      </div>
     </button>
   );
 };

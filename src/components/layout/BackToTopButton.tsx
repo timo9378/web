@@ -11,7 +11,11 @@ interface BackToTopButtonProps {
 function BackToTopButton({ isHomePage = false }: BackToTopButtonProps) {
   const { t } = useTranslation();
   // 兩個快照各自回傳純量（不是物件）—— getSnapshot 每次新建物件會被判定為變更 → 無限重繪。
-  const isVisible = useSyncExternalStore(subscribeScroll, () => window.pageYOffset > 300, () => false);
+  const isVisible = useSyncExternalStore(
+    subscribeScroll,
+    () => window.pageYOffset > 300,
+    () => false,
+  );
   const progress = useSyncExternalStore(subscribeScroll, scrollRatio, () => 0);
   const [hover, setHover] = useState(false);
   const rocketRef = useRef<RocketIconHandle>(null);
@@ -44,15 +48,14 @@ function BackToTopButton({ isHomePage = false }: BackToTopButtonProps) {
       aria-label={t('backToTop.label')}
     >
       <svg className="back-to-top-ring" viewBox="0 0 48 48" aria-hidden>
-        <circle
-          className="back-to-top-ring-track"
-          cx="24" cy="24" r={RADIUS}
-          fill="none" strokeWidth="1.5"
-        />
+        <circle className="back-to-top-ring-track" cx="24" cy="24" r={RADIUS} fill="none" strokeWidth="1.5" />
         <circle
           className="back-to-top-ring-progress"
-          cx="24" cy="24" r={RADIUS}
-          fill="none" strokeWidth="1.5"
+          cx="24"
+          cy="24"
+          r={RADIUS}
+          fill="none"
+          strokeWidth="1.5"
           strokeDasharray={CIRC}
           strokeDashoffset={dashOffset}
           strokeLinecap="round"

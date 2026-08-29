@@ -25,15 +25,30 @@ const AdminDashboard = () => {
   const recentPosts: AdminPostFull[] = postsData?.posts ?? [];
   // 預設 → posts.total → statsData 覆寫（對齊舊的兩次 setStats 合併順序）
   const stats: DashboardStats = {
-    totalPosts: 0, publishedPosts: 0, draftPosts: 0, visitors: 0, comments: 0, growth: 0,
+    totalPosts: 0,
+    publishedPosts: 0,
+    draftPosts: 0,
+    visitors: 0,
+    comments: 0,
+    growth: 0,
     ...(postsData ? { totalPosts: postsData.total } : {}),
     ...statsData,
   };
 
   const statItems = [
-    { label: '文章總數', value: stats.totalPosts, icon: FileText, change: `+${stats.postsThisMonth ?? Math.floor(stats.totalPosts * 0.1)}` },
+    {
+      label: '文章總數',
+      value: stats.totalPosts,
+      icon: FileText,
+      change: `+${stats.postsThisMonth ?? Math.floor(stats.totalPosts * 0.1)}`,
+    },
     { label: '本月瀏覽', value: stats.visitors || 1665, icon: Eye, change: '+12%' },
-    { label: '留言數', value: stats.comments || 56, icon: MessageSquare, change: `+${stats.commentsThisWeek ?? Math.floor((stats.comments || 56) * 0.05)}` },
+    {
+      label: '留言數',
+      value: stats.comments || 56,
+      icon: MessageSquare,
+      change: `+${stats.commentsThisWeek ?? Math.floor((stats.comments || 56) * 0.05)}`,
+    },
     { label: '成長率', value: `+${stats.growth || 23}%`, icon: TrendingUp, change: '較上月' },
   ];
 
@@ -56,7 +71,12 @@ const AdminDashboard = () => {
           <h1 className="text-lg font-medium text-foreground/90">儀表板</h1>
           <p className="text-sm text-muted-foreground mt-1">歡迎回來，這是你的部落格概覽。</p>
         </div>
-        <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40"
+          asChild
+        >
           <Link to="/admin/posts/create">
             <Plus className="size-3.5" />
             新增文章
@@ -87,7 +107,12 @@ const AdminDashboard = () => {
         <div className="lg:col-span-3 glass rounded-xl">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
             <h2 className="text-[13px] font-medium text-foreground/80">最近文章</h2>
-            <Link to="/admin/posts" className="text-[11px] text-muted-foreground hover:text-foreground/70 transition-colors">查看全部</Link>
+            <Link
+              to="/admin/posts"
+              className="text-[11px] text-muted-foreground hover:text-foreground/70 transition-colors"
+            >
+              查看全部
+            </Link>
           </div>
           {recentPosts.length > 0 ? (
             <div className="divide-y divide-border/20">
@@ -98,15 +123,20 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[11px] text-muted-foreground/60">{post.category ?? '未分類'}</span>
                       <span className="text-border/50">/</span>
-                      <span className="text-[11px] text-muted-foreground/60">{post.created_at ? format(new Date(post.created_at), 'yyyy-MM-dd') : ''}</span>
+                      <span className="text-[11px] text-muted-foreground/60">
+                        {post.created_at ? format(new Date(post.created_at), 'yyyy-MM-dd') : ''}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${post.status === 'published' ? 'text-foreground/60 bg-accent/40' : 'text-muted-foreground bg-accent/20'}`}>
+                    <span
+                      className={`text-[11px] px-1.5 py-0.5 rounded ${post.status === 'published' ? 'text-foreground/60 bg-accent/40' : 'text-muted-foreground bg-accent/20'}`}
+                    >
                       {post.status === 'published' ? '已發佈' : '草稿'}
                     </span>
                     <Link
-                      to="/admin/posts/edit/$id" params={{ id: String(post.id) }}
+                      to="/admin/posts/edit/$id"
+                      params={{ id: String(post.id) }}
                       className="size-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground/60 hover:bg-accent/40 transition-colors"
                     >
                       <Edit className="size-3" />

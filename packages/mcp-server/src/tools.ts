@@ -29,10 +29,18 @@ function pick(args: Record<string, unknown>, keys: string[]): Record<string, unk
 
 // i18n 欄位（4 語 × 3 欄）。zh-TW 是來源（存在 title/content/excerpt），這裡是譯文欄。
 const I18N_FIELDS = [
-  'title_en', 'content_en', 'excerpt_en',
-  'title_ja', 'content_ja', 'excerpt_ja',
-  'title_ko', 'content_ko', 'excerpt_ko',
-  'title_zh_cn', 'content_zh_cn', 'excerpt_zh_cn',
+  'title_en',
+  'content_en',
+  'excerpt_en',
+  'title_ja',
+  'content_ja',
+  'excerpt_ja',
+  'title_ko',
+  'content_ko',
+  'excerpt_ko',
+  'title_zh_cn',
+  'content_zh_cn',
+  'excerpt_zh_cn',
 ] as const;
 
 const POST_WRITE_FIELDS = [
@@ -345,7 +353,8 @@ export function makeTools(api: ApiClient): Tool[] {
           category: {
             type: 'string',
             enum: ['prose', 'code', 'data', 'media', 'layout', 'interactive'],
-            description: '只列某一類（省略=全部）。prose 文字表達｜code 程式碼｜data 數據視覺化｜media 圖與影片｜layout 結構編排｜interactive 讀者互動',
+            description:
+              '只列某一類（省略=全部）。prose 文字表達｜code 程式碼｜data 數據視覺化｜media 圖與影片｜layout 結構編排｜interactive 讀者互動',
           },
         },
         additionalProperties: false,
@@ -381,7 +390,7 @@ export function makeTools(api: ApiClient): Tool[] {
         '⭐ 寫「完整文章」前先呼叫 koimsurai_authoring_guide（副標/關鍵洞察/彩色 alert/自訂 block/MDX 坑/檢查清單）。' +
         '⭐ format=mdx 時，送出前先用 koimsurai_validate_mdx 驗過（編譯失敗會靜默退回 markdown，這裡仍會回 success）。' +
         'title 用「主標：副標」冒號分隔會自動出副標；excerpt 會變成開頭的「關鍵洞察」框。' +
-        '用到 <Note>/<Annot>/<Spoiler>/<BarChart> 或行內 JS → format=\'mdx\'。' +
+        "用到 <Note>/<Annot>/<Spoiler>/<BarChart> 或行內 JS → format='mdx'。" +
         '多語系：zh-CN 用 generate_post_zh_cn 自動轉；en/ja/ko 填 title_en/content_en…等譯文欄（見指南第 6 點）。' +
         '注意 send_newsletter=true 且 published 會寄電子報。',
       inputSchema: {
@@ -394,7 +403,8 @@ export function makeTools(api: ApiClient): Tool[] {
     },
     {
       name: 'koimsurai_update_post',
-      description: '更新文章。只送想改的欄位（其餘不動）。id 必填。改到 mdx 內文時，送出前先用 koimsurai_validate_mdx 驗過。',
+      description:
+        '更新文章。只送想改的欄位（其餘不動）。id 必填。改到 mdx 內文時，送出前先用 koimsurai_validate_mdx 驗過。',
       inputSchema: {
         type: 'object',
         properties: { id: { type: 'number', description: '文章 id' }, ...postWriteProps },
@@ -405,7 +415,7 @@ export function makeTools(api: ApiClient): Tool[] {
     },
     {
       name: 'koimsurai_set_post_status',
-      description: "只改文章狀態（draft ⇄ published），不動內容。發布請優先用這個。",
+      description: '只改文章狀態（draft ⇄ published），不動內容。發布請優先用這個。',
       inputSchema: {
         type: 'object',
         properties: {
@@ -499,7 +509,24 @@ export function makeTools(api: ApiClient): Tool[] {
       },
       handler: (a) =>
         api.request('POST', '/api/admin/categories', {
-          body: pick(a, ['name', 'description', 'slug', 'short_description', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn', 'short_description_en', 'short_description_ja', 'short_description_ko', 'short_description_zh_cn', 'description_en', 'description_ja', 'description_ko', 'description_zh_cn']),
+          body: pick(a, [
+            'name',
+            'description',
+            'slug',
+            'short_description',
+            'name_en',
+            'name_ja',
+            'name_ko',
+            'name_zh_cn',
+            'short_description_en',
+            'short_description_ja',
+            'short_description_ko',
+            'short_description_zh_cn',
+            'description_en',
+            'description_ja',
+            'description_ko',
+            'description_zh_cn',
+          ]),
         }),
     },
     {
@@ -531,7 +558,24 @@ export function makeTools(api: ApiClient): Tool[] {
       },
       handler: (a) =>
         api.request('PUT', `/api/admin/categories/${a.id}`, {
-          body: pick(a, ['name', 'description', 'slug', 'short_description', 'name_en', 'name_ja', 'name_ko', 'name_zh_cn', 'short_description_en', 'short_description_ja', 'short_description_ko', 'short_description_zh_cn', 'description_en', 'description_ja', 'description_ko', 'description_zh_cn']),
+          body: pick(a, [
+            'name',
+            'description',
+            'slug',
+            'short_description',
+            'name_en',
+            'name_ja',
+            'name_ko',
+            'name_zh_cn',
+            'short_description_en',
+            'short_description_ja',
+            'short_description_ko',
+            'short_description_zh_cn',
+            'description_en',
+            'description_ja',
+            'description_ko',
+            'description_zh_cn',
+          ]),
         }),
     },
     {

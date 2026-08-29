@@ -5,13 +5,7 @@ import { adminPostsQueryOptions } from '@/data/adminData';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Plus,
-  Trash2,
-  Search,
-  Pencil,
-  ExternalLink
-} from 'lucide-react';
+import { Plus, Trash2, Search, Pencil, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { postPath } from '../../lib/postPath';
@@ -45,7 +39,7 @@ export default function PostsList() {
       const token = localStorage.getItem('koimsurai_user_token');
       const response = await fetch(`/api/admin/posts/${deleteId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token ?? ''}` },
+        headers: { Authorization: `Bearer ${token ?? ''}` },
       });
 
       if (response.ok) {
@@ -98,11 +92,14 @@ export default function PostsList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-medium text-foreground/90">文章管理</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            共 {posts.length} 篇文章
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">共 {posts.length} 篇文章</p>
         </div>
-        <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5 h-8 border-border/50 text-foreground/70 hover:bg-accent/40"
+          asChild
+        >
           <Link to="/admin/posts/create">
             <Plus className="size-3.5" />
             新增文章
@@ -164,7 +161,9 @@ export default function PostsList() {
                   </td>
                   <td className="px-4 py-2.5">
                     <div>
-                      <span className="text-[13px] text-foreground/80 group-hover:text-foreground/90 transition-colors">{post.title}</span>
+                      <span className="text-[13px] text-foreground/80 group-hover:text-foreground/90 transition-colors">
+                        {post.title}
+                      </span>
                       {post.tags.length > 0 && (
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {post.tags.slice(0, 3).map((tag) => (
@@ -180,17 +179,22 @@ export default function PostsList() {
                     <span className="text-[11px] text-muted-foreground/60">{post.category ?? '未分類'}</span>
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusStyle[post.status] || 'text-muted-foreground bg-accent/20'}`}>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded ${statusStyle[post.status] || 'text-muted-foreground bg-accent/20'}`}
+                    >
                       {statusLabels[post.status] || post.status}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className="text-[11px] text-muted-foreground/40">{post.created_at ? format(new Date(post.created_at), 'yyyy-MM-dd') : ''}</span>
+                    <span className="text-[11px] text-muted-foreground/40">
+                      {post.created_at ? format(new Date(post.created_at), 'yyyy-MM-dd') : ''}
+                    </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link
-                        to="/admin/posts/edit/$id" params={{ id: String(post.id) }}
+                        to="/admin/posts/edit/$id"
+                        params={{ id: String(post.id) }}
                         className="size-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground/60 hover:bg-accent/40 transition-colors"
                       >
                         <Pencil className="size-3" />
@@ -220,7 +224,12 @@ export default function PostsList() {
         <div className="glass rounded-xl flex flex-col items-center justify-center py-16 text-muted-foreground/50">
           <Search className="size-12 opacity-20" />
           <p className="mt-4 text-sm">還沒有文章</p>
-          <Button variant="outline" className="mt-4 border-border/50 text-foreground/70 hover:bg-accent/40" size="sm" asChild>
+          <Button
+            variant="outline"
+            className="mt-4 border-border/50 text-foreground/70 hover:bg-accent/40"
+            size="sm"
+            asChild
+          >
             <Link to="/admin/posts/create">
               <Plus className="mr-2 size-3.5" />
               創建第一篇文章
@@ -241,13 +250,16 @@ export default function PostsList() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確定要刪除這篇文章嗎？</AlertDialogTitle>
-            <AlertDialogDescription>
-              此操作無法復原。文章將被永久刪除。
-            </AlertDialogDescription>
+            <AlertDialogDescription>此操作無法復原。文章將被永久刪除。</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { void handleDelete(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => {
+                void handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               刪除
             </AlertDialogAction>
           </AlertDialogFooter>

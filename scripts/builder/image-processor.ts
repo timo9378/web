@@ -27,7 +27,7 @@ export interface ProcessedImage {
 export async function processImage(
   inputPath: string,
   outputDir = '/mnt/hdd16tb_01/nas-storage/gallery', // Default to NAS path
-  config: BuilderConfig
+  config: BuilderConfig,
 ): Promise<ProcessedImage> {
   const fileName = path.basename(inputPath, path.extname(inputPath));
 
@@ -126,16 +126,7 @@ export async function processImage(
 /**
  * 支援的圖片格式
  */
-export const SUPPORTED_FORMATS = [
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.webp',
-  '.tiff',
-  '.tif',
-  '.heic',
-  '.heif',
-];
+export const SUPPORTED_FORMATS = ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.tif', '.heic', '.heif'];
 
 /**
  * 檢查檔案是否為支援的圖片格式

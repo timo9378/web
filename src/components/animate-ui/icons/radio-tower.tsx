@@ -1,7 +1,15 @@
-'use client';;
+'use client';
 import { motion } from 'framer-motion';
 
-import { getVariants, useAnimateIconContext, IconWrapper, type AnimateIconAnimation, type AnimateIconAnimations, type IconComponentProps, type IconProps } from '@/components/animate-ui/icons/icon';
+import {
+  getVariants,
+  useAnimateIconContext,
+  IconWrapper,
+  type AnimateIconAnimation,
+  type AnimateIconAnimations,
+  type IconComponentProps,
+  type IconProps,
+} from '@/components/animate-ui/icons/icon';
 
 const animations: AnimateIconAnimations = {
   default: (() => {
@@ -36,13 +44,10 @@ const animations: AnimateIconAnimations = {
     }
 
     return animation;
-  })()
+  })(),
 };
 
-function IconComponent({
-  size,
-  ...props
-}: IconComponentProps) {
+function IconComponent({ size, ...props }: IconComponentProps) {
   const { controls } = useAnimateIconContext();
   const variants = getVariants(animations);
 
@@ -57,44 +62,20 @@ function IconComponent({
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      {...props}>
-      <motion.path
-        d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5"
-        variants={variants.path1}
-        initial="initial"
-        animate={controls} />
-      <motion.path
-        d="M4.9 1.9 C1 5.8 1 12.2 4.9 16.1"
-        variants={variants.path2}
-        initial="initial"
-        animate={controls} />
-      <motion.circle
-        cx="12"
-        cy="9"
-        r="2"
-        variants={variants.circle}
-        initial="initial"
-        animate={controls} />
-      <motion.path
-        d="M16.2 4.8c2 2 2.26 5.11.8 7.47"
-        variants={variants.path1}
-        initial="initial"
-        animate={controls} />
+      {...props}
+    >
+      <motion.path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5" variants={variants.path1} initial="initial" animate={controls} />
+      <motion.path d="M4.9 1.9 C1 5.8 1 12.2 4.9 16.1" variants={variants.path2} initial="initial" animate={controls} />
+      <motion.circle cx="12" cy="9" r="2" variants={variants.circle} initial="initial" animate={controls} />
+      <motion.path d="M16.2 4.8c2 2 2.26 5.11.8 7.47" variants={variants.path1} initial="initial" animate={controls} />
       <motion.path
         d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1"
         variants={variants.path2}
         initial="initial"
-        animate={controls} />
-      <motion.path
-        d="M9.5 18h5"
-        variants={variants.path3}
-        initial="initial"
-        animate={controls} />
-      <motion.path
-        d="m8 22 4-11 4 11"
-        variants={variants.path4}
-        initial="initial"
-        animate={controls} />
+        animate={controls}
+      />
+      <motion.path d="M9.5 18h5" variants={variants.path3} initial="initial" animate={controls} />
+      <motion.path d="m8 22 4-11 4 11" variants={variants.path4} initial="initial" animate={controls} />
     </motion.svg>
   );
 }

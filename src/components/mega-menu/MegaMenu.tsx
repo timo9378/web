@@ -62,8 +62,14 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearAll = useCallback(() => {
-    if (enterTimerRef.current) { clearTimeout(enterTimerRef.current); enterTimerRef.current = null; }
-    if (leaveTimerRef.current) { clearTimeout(leaveTimerRef.current); leaveTimerRef.current = null; }
+    if (enterTimerRef.current) {
+      clearTimeout(enterTimerRef.current);
+      enterTimerRef.current = null;
+    }
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
   }, []);
 
   const handleMouseEnter = useCallback(() => {
@@ -79,7 +85,9 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
     }, CLOSE_DELAY_MS);
   }, [id, clearAll, setOpenId]);
 
-  const handlePanelMouseEnter = useCallback(() => { clearAll(); }, [clearAll]);
+  const handlePanelMouseEnter = useCallback(() => {
+    clearAll();
+  }, [clearAll]);
   const handlePanelMouseLeave = useCallback(() => {
     clearAll();
     leaveTimerRef.current = setTimeout(() => {
@@ -90,26 +98,25 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
   // 點擊行為：
   //  - 有 `to` → 是個 Link，正常 navigate，順手關 panel；onClick 仍可呼叫
   //  - 沒 `to` → 純 trigger，點擊切換 panel 開關
-  const handleTriggerClick = useCallback((e: React.MouseEvent) => {
-    if (to) {
-      setOpenId(null);
-    } else if (isOpen) {
-      setOpenId(null);
-    } else if (children) {
-      setOpenId(id);
-    }
-    if (onClick) onClick(e);
-  }, [to, isOpen, children, id, onClick, setOpenId]);
+  const handleTriggerClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (to) {
+        setOpenId(null);
+      } else if (isOpen) {
+        setOpenId(null);
+      } else if (children) {
+        setOpenId(id);
+      }
+      if (onClick) onClick(e);
+    },
+    [to, isOpen, children, id, onClick, setOpenId],
+  );
 
   const triggerClass = `mega-menu-trigger ${active ? 'mega-menu-trigger--active' : ''} ${isOpen ? 'mega-menu-trigger--open' : ''}`;
 
   const triggerInner = (
     <>
-      {icon && (
-        <span className="mega-menu-trigger-icon">
-          {icon(hovering || isOpen)}
-        </span>
-      )}
+      {icon && <span className="mega-menu-trigger-icon">{icon(hovering || isOpen)}</span>}
       <span className="mega-menu-trigger-label">{label}</span>
       {children && <FaChevronDown className={`mega-menu-trigger-chev ${isOpen ? 'is-open' : ''}`} />}
     </>
@@ -121,8 +128,14 @@ export function MegaMenu({ id, label, icon, active = false, to = null, children,
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <li
       className="mega-menu-item"
-      onMouseEnter={() => { setHovering(true); handleMouseEnter(); }}
-      onMouseLeave={() => { setHovering(false); handleMouseLeave(); }}
+      onMouseEnter={() => {
+        setHovering(true);
+        handleMouseEnter();
+      }}
+      onMouseLeave={() => {
+        setHovering(false);
+        handleMouseLeave();
+      }}
     >
       {to ? (
         <LocaleLink to={to} className={triggerClass} onClick={handleTriggerClick}>
@@ -170,7 +183,10 @@ interface MegaMenuColumnProps {
 
 export function MegaMenuColumn({ title, accent = false, children, className = '', span = 1 }: MegaMenuColumnProps) {
   return (
-    <div className={`mega-menu-column ${accent ? 'mega-menu-column--accent' : ''} ${className}`} style={{ '--span': span } as CSSProperties}>
+    <div
+      className={`mega-menu-column ${accent ? 'mega-menu-column--accent' : ''} ${className}`}
+      style={{ '--span': span } as CSSProperties}
+    >
       {title && <div className="mega-menu-column-title">{title}</div>}
       <div className="mega-menu-column-body">{children}</div>
     </div>

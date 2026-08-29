@@ -73,6 +73,14 @@ jobs:
       #  照樣會贏，行為是對的。細節見 CLAUDE.md。）
       - name: biome（CSS 格式與 lint）
         run: pnpm lint:css
+      # JS/TS 的格式。⚠️ oxfmt 不是只認 js/ts——它同時會排 css / json / md，所以
+      # .oxfmtrc.json 把這三類都明確排除掉，每一條都是實際撞到的：
+      #   css  → biome 的地盤，兩邊 quoteStyle 相反（biome 雙引號、oxfmt 單引號），
+      #          讓 oxfmt 碰它 lint:css 會一次冒出 32 個 error。
+      #   json → 會重排 tests/e2e/computed-style.baseline/ 那 15 個機器產生的基準檔。
+      #   md   → 會把中文表格用字元數撐開對齊，CJK 寬度對不上，純粹是雜訊。
+      - name: oxfmt（JS/TS 格式）
+        run: pnpm check:format
       # 未使用的檔案／匯出／相依。設定見 .config/knip.json。
       #
       # 原本只 gate files + dependencies，因為 exports 類還有 27 個未使用匯出 +

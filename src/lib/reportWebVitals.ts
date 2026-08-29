@@ -66,7 +66,9 @@ function send(m: Metric, attr?: { target?: string; loadState?: string; shiftPath
       body,
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,
-    }).catch(() => { /* 量測丟失無妨，不干擾使用者 */ });
+    }).catch(() => {
+      /* 量測丟失無妨，不干擾使用者 */
+    });
   }
 }
 

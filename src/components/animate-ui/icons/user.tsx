@@ -1,7 +1,14 @@
-'use client';;
+'use client';
 import { motion } from 'framer-motion';
 
-import { getVariants, useAnimateIconContext, IconWrapper, type AnimateIconAnimations, type IconComponentProps, type IconProps } from '@/components/animate-ui/icons/icon';
+import {
+  getVariants,
+  useAnimateIconContext,
+  IconWrapper,
+  type AnimateIconAnimations,
+  type IconComponentProps,
+  type IconProps,
+} from '@/components/animate-ui/icons/icon';
 
 const animations: AnimateIconAnimations = {
   default: {
@@ -29,14 +36,11 @@ const animations: AnimateIconAnimations = {
           ease: 'easeInOut',
         },
       },
-    }
-  }
+    },
+  },
 };
 
-function IconComponent({
-  size,
-  ...props
-}: IconComponentProps) {
+function IconComponent({ size, ...props }: IconComponentProps) {
   const { controls } = useAnimateIconContext();
   const variants = getVariants(animations);
 
@@ -51,19 +55,15 @@ function IconComponent({
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      {...props}>
+      {...props}
+    >
       <motion.path
         d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
         variants={variants.path}
         initial="initial"
-        animate={controls} />
-      <motion.circle
-        cx={12}
-        cy={7}
-        r={4}
-        variants={variants.circle}
-        initial="initial"
-        animate={controls} />
+        animate={controls}
+      />
+      <motion.circle cx={12} cy={7} r={4} variants={variants.circle} initial="initial" animate={controls} />
     </motion.svg>
   );
 }

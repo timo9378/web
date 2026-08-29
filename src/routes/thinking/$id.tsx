@@ -16,7 +16,9 @@ export const Route = createFileRoute('/thinking/$id')({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const { thought } = loaderData;
-    return { meta: pageMeta(thoughtTitle(thought.content), thought.content, `/thinking/${thought.id}`, DEFAULT_LOCALE) };
+    return {
+      meta: pageMeta(thoughtTitle(thought.content), thought.content, `/thinking/${thought.id}`, DEFAULT_LOCALE),
+    };
   },
   component: localeWrap(ThinkingDetail),
 });

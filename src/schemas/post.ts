@@ -6,10 +6,14 @@ export const postSchema = z.object({
   slug: z.string().optional(),
   summary: z.string().optional(),
   category: z.string().optional(),
-  tags: z.array(z.object({
-    label: z.string(),
-    value: z.string(),
-  })).optional(),
+  tags: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+      }),
+    )
+    .optional(),
   cover: z.string().optional(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   layout_type: z.enum(['record', 'column']).default('record'),

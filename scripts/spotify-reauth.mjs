@@ -18,7 +18,12 @@ import { randomBytes } from 'node:crypto';
 const REDIRECT_URI = 'http://127.0.0.1:8888/callback';
 const PORT = 8888;
 // 對齊後端實際會用到的資料：最近播放、Top、正在播放。
-const SCOPES = ['user-read-recently-played', 'user-top-read', 'user-read-currently-playing', 'user-read-playback-state'].join(' ');
+const SCOPES = [
+  'user-read-recently-played',
+  'user-top-read',
+  'user-read-currently-playing',
+  'user-read-playback-state',
+].join(' ');
 
 /** 從 .env.backend 讀 client id/secret（沒有就從環境變數拿）。 */
 function loadCreds() {
@@ -33,7 +38,9 @@ function loadCreds() {
       if (m[1] === 'SPOTIFY_CLIENT_ID') id ??= val;
       else secret ??= val;
     }
-  } catch { /* 沒有 .env.backend 就只靠環境變數 */ }
+  } catch {
+    /* 沒有 .env.backend 就只靠環境變數 */
+  }
   if (!id || !secret) {
     console.error('✗ 找不到 SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET');
     console.error('  請確認 .env.backend 裡有這兩個值，或用環境變數傳進來。');
@@ -93,9 +100,9 @@ const server = createServer((req, res) => {
       server.close();
       process.exit(1);
     }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(
-      '<meta charset="utf-8"><h2>✅ 授權完成</h2><p>refresh token 已印在終端機，可以關掉這頁了。</p>',
-    );
+    res
+      .writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+      .end('<meta charset="utf-8"><h2>✅ 授權完成</h2><p>refresh token 已印在終端機，可以關掉這頁了。</p>');
     console.log('\n✅ 拿到新的 refresh token：\n');
     console.log(`SPOTIFY_REFRESH_TOKEN=${data.refresh_token}\n`);
     console.log('接著：');

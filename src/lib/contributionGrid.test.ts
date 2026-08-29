@@ -13,7 +13,13 @@ describe('gridFromContributions', () => {
     const grid = gridFromContributions(days);
     expect(grid).toHaveLength(2);
     expect(grid[0].map((c) => c.date)).toEqual([
-      '2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05', '2026-01-06', '2026-01-07',
+      '2026-01-01',
+      '2026-01-02',
+      '2026-01-03',
+      '2026-01-04',
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07',
     ]);
     expect(grid[1][0].date).toBe('2026-01-08');
   });
@@ -27,7 +33,12 @@ describe('gridFromContributions', () => {
   it('深淺分級：0 / 1-3 / 4-6 / 7-9 / 10+', () => {
     const counts = [0, 1, 3, 4, 6, 7, 9, 10, 999];
     const grid = gridFromContributions(counts.map((c, i) => day(`d${i}`, c)));
-    expect(grid[0].concat(grid[1]).slice(0, 9).map((c) => c.level)).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4]);
+    expect(
+      grid[0]
+        .concat(grid[1])
+        .slice(0, 9)
+        .map((c) => c.level),
+    ).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4]);
   });
 
   it('count 是 null 或缺席時當 0', () => {
@@ -125,8 +136,10 @@ describe('gridFromEvents', () => {
 
 describe('uptimeSince', () => {
   it('算出天數與剩餘小時', () => {
-    expect(uptimeSince(new Date('2026-01-01T00:00:00Z'), new Date('2026-01-03T05:30:00Z')))
-      .toEqual({ days: 2, hours: 5 });
+    expect(uptimeSince(new Date('2026-01-01T00:00:00Z'), new Date('2026-01-03T05:30:00Z'))).toEqual({
+      days: 2,
+      hours: 5,
+    });
   });
 
   it('同一時刻是 0 天 0 小時', () => {

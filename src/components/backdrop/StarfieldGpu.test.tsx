@@ -84,8 +84,12 @@ describe('主執行緒路徑的 device lost 重建', () => {
     const { default: StarfieldGpu } = await import('./StarfieldGpu');
     const view = render(<StarfieldGpu />);
     // 動態 import + createStarfieldRunner 的 promise
-    await act(async () => { await Promise.resolve(); });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
     return view;
   }
 
@@ -128,8 +132,13 @@ describe('主執行緒路徑的 device lost 重建', () => {
     expect(canvases()[0]).toBe(before);
 
     hidden.mockReturnValue(false);
-    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); await Promise.resolve(); });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(runners).toHaveLength(2);
     expect(canvases()[0]).not.toBe(before);
@@ -137,7 +146,9 @@ describe('主執行緒路徑的 device lost 重建', () => {
 });
 
 describe('掛載當下就同步一次執行狀態', () => {
-  beforeEach(() => { vi.resetModules(); });
+  beforeEach(() => {
+    vi.resetModules();
+  });
 
   it('主執行緒路徑：全螢幕中掛載 → runner 一建好就被停下來', async () => {
     // 這條守的是「事件只反應變化」的坑：這支元件是 lazy 的（intro 播完 + three chunk
@@ -146,8 +157,12 @@ describe('掛載當下就同步一次執行狀態', () => {
     enterFullscreen();
     const { default: StarfieldGpu } = await import('./StarfieldGpu');
     render(<StarfieldGpu />);
-    await act(async () => { await Promise.resolve(); });
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(runners[0].setRunning).toHaveBeenCalledWith(false);
   });
@@ -160,12 +175,24 @@ describe('worker 路徑（正式環境的預設）', () => {
     posted: { type: string; value?: boolean }[] = [];
     terminated = false;
     listeners: ((e: { data: unknown }) => void)[] = [];
-    constructor() { workers.push(this); }
-    postMessage(m: { type: string; value?: boolean }) { this.posted.push(m); }
-    addEventListener(t: string, fn: (e: { data: unknown }) => void) { if (t === 'message') this.listeners.push(fn); }
-    removeEventListener() { /* 測試不需要 */ }
-    terminate() { this.terminated = true; }
-    emit(data: unknown) { for (const fn of this.listeners) fn({ data }); }
+    constructor() {
+      workers.push(this);
+    }
+    postMessage(m: { type: string; value?: boolean }) {
+      this.posted.push(m);
+    }
+    addEventListener(t: string, fn: (e: { data: unknown }) => void) {
+      if (t === 'message') this.listeners.push(fn);
+    }
+    removeEventListener() {
+      /* 測試不需要 */
+    }
+    terminate() {
+      this.terminated = true;
+    }
+    emit(data: unknown) {
+      for (const fn of this.listeners) fn({ data });
+    }
   }
 
   beforeEach(() => {
@@ -185,7 +212,9 @@ describe('worker 路徑（正式環境的預設）', () => {
   async function mount() {
     const { default: StarfieldGpu } = await import('./StarfieldGpu');
     render(<StarfieldGpu />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
   }
 
   it('init 之後立刻送一次當下的執行狀態（不能只靠事件）', async () => {
@@ -200,8 +229,13 @@ describe('worker 路徑（正式環境的預設）', () => {
     await mount();
     const before = canvases()[0];
 
-    await act(async () => { workers[0].emit({ type: 'lost', message: 'device lost' }); await Promise.resolve(); });
-    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    await act(async () => {
+      workers[0].emit({ type: 'lost', message: 'device lost' });
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600);
+    });
 
     expect(workers[0].terminated).toBe(true);
     expect(workers).toHaveLength(2);

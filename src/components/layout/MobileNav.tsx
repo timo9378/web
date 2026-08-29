@@ -26,30 +26,46 @@ interface NavGroup {
 export default function MobileNav({ open, onClose }: MobileNavProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string | null>(null);
-  const toggle = (key: string) => { setExpanded((cur) => (cur === key ? null : key)); };
+  const toggle = (key: string) => {
+    setExpanded((cur) => (cur === key ? null : key));
+  };
 
   // 主結構：可展開的列帶 children；純連結的列直接走 Link
   const groups: NavGroup[] = [
-    { key: 'home', label: t('nav.home'), to: '/', children: [
-      { to: '/about', label: t('megaMenu.items.about') },
-      { to: '/about#journey', label: t('megaMenu.items.journey') },
-      { to: '/portfolio', label: t('megaMenu.items.portfolio') },
-    ] },
-    { key: 'notes', label: t('nav.notes'), to: '/blog', children: [
-      { to: '/bookshelf', label: t('megaMenu.items.bookshelf') },
-      { to: '/music', label: t('megaMenu.items.music') },
-    ] },
+    {
+      key: 'home',
+      label: t('nav.home'),
+      to: '/',
+      children: [
+        { to: '/about', label: t('megaMenu.items.about') },
+        { to: '/about#journey', label: t('megaMenu.items.journey') },
+        { to: '/portfolio', label: t('megaMenu.items.portfolio') },
+      ],
+    },
+    {
+      key: 'notes',
+      label: t('nav.notes'),
+      to: '/blog',
+      children: [
+        { to: '/bookshelf', label: t('megaMenu.items.bookshelf') },
+        { to: '/music', label: t('megaMenu.items.music') },
+      ],
+    },
     { key: 'watch', label: t('megaMenu.items.watch'), to: '/watch' },
     { key: 'thinking', label: t('megaMenu.items.thinking'), to: '/thinking' },
-    { key: 'more', label: t('nav.more'), children: [
-      { to: '/photos', label: t('megaMenu.items.photos') },
-      { to: '/activity', label: t('megaMenu.items.activity') },
-      { to: '/setup', label: t('megaMenu.items.setup') },
-      { to: '/about-site', label: t('megaMenu.items.aboutSite') },
-      { to: '/history', label: t('megaMenu.items.history') },
-      { to: '/messages', label: t('megaMenu.items.messages') },
-      { to: '/friends', label: t('megaMenu.items.friends') },
-    ] },
+    {
+      key: 'more',
+      label: t('nav.more'),
+      children: [
+        { to: '/photos', label: t('megaMenu.items.photos') },
+        { to: '/activity', label: t('megaMenu.items.activity') },
+        { to: '/setup', label: t('megaMenu.items.setup') },
+        { to: '/about-site', label: t('megaMenu.items.aboutSite') },
+        { to: '/history', label: t('megaMenu.items.history') },
+        { to: '/messages', label: t('megaMenu.items.messages') },
+        { to: '/friends', label: t('megaMenu.items.friends') },
+      ],
+    },
   ];
 
   return (
@@ -65,7 +81,9 @@ export default function MobileNav({ open, onClose }: MobileNavProps) {
     >
       <div className="mnav-head">
         <span className="mnav-brand">宙と木</span>
-        <button className="mnav-close" onClick={onClose} aria-label={t('common.close')}><FaTimes /></button>
+        <button className="mnav-close" onClick={onClose} aria-label={t('common.close')}>
+          <FaTimes />
+        </button>
       </div>
 
       <nav className="mnav-list">
@@ -75,9 +93,13 @@ export default function MobileNav({ open, onClose }: MobileNavProps) {
             <div className={`mnav-group ${isOpen ? 'is-open' : ''}`} key={g.key}>
               <div className="mnav-row">
                 {g.to ? (
-                  <LocaleLink to={g.to} className="mnav-row-label" onClick={onClose}>{g.label}</LocaleLink>
+                  <LocaleLink to={g.to} className="mnav-row-label" onClick={onClose}>
+                    {g.label}
+                  </LocaleLink>
                 ) : (
-                  <button className="mnav-row-label" onClick={() => toggle(g.key)}>{g.label}</button>
+                  <button className="mnav-row-label" onClick={() => toggle(g.key)}>
+                    {g.label}
+                  </button>
                 )}
                 {g.children && (
                   <button
@@ -94,7 +116,9 @@ export default function MobileNav({ open, onClose }: MobileNavProps) {
                 <div className="mnav-sub-wrap">
                   <div className="mnav-sub">
                     {g.children.map((c) => (
-                      <LocaleLink key={c.to} to={c.to} className="mnav-sub-link" onClick={onClose}>{c.label}</LocaleLink>
+                      <LocaleLink key={c.to} to={c.to} className="mnav-sub-link" onClick={onClose}>
+                        {c.label}
+                      </LocaleLink>
                     ))}
                   </div>
                 </div>
@@ -105,7 +129,9 @@ export default function MobileNav({ open, onClose }: MobileNavProps) {
       </nav>
 
       <div className="mnav-foot">
-        <LocaleLink to="/#contact" className="mnav-subscribe" onClick={onClose}>{t('footer.links.subscribe')}</LocaleLink>
+        <LocaleLink to="/#contact" className="mnav-subscribe" onClick={onClose}>
+          {t('footer.links.subscribe')}
+        </LocaleLink>
       </div>
     </div>
   );

@@ -13,7 +13,10 @@ import './Thinking.css';
 
 const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
 
-interface Prefill { kind?: string; title?: string }
+interface Prefill {
+  kind?: string;
+  title?: string;
+}
 
 const listV: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } } };
 const cardV: Variants = {
@@ -41,9 +44,14 @@ function Thinking() {
     try {
       const raw = sessionStorage.getItem('thinking_prefill');
       // sessionStorage 在 server 上不存在 → 只能在 effect 讀（同 Comments 的說明）
-      // eslint-disable-next-line @eslint-react/set-state-in-effect
-      if (raw) { setPrefill(JSON.parse(raw) as Prefill); sessionStorage.removeItem('thinking_prefill'); }
-    } catch { /* ignore */ }
+      if (raw) {
+        // eslint-disable-next-line @eslint-react/set-state-in-effect
+        setPrefill(JSON.parse(raw) as Prefill);
+        sessionStorage.removeItem('thinking_prefill');
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const refreshThoughts = () => queryClient.invalidateQueries({ queryKey: thoughtsListQueryOptions.queryKey });
@@ -61,7 +69,12 @@ function Thinking() {
       });
       if (!r.ok) throw new Error(`POST /admin/thoughts ${r.status}`);
     },
-    onSuccess: () => { setDraft(''); setDraftUrl(''); setPrefill(null); void refreshThoughts(); },
+    onSuccess: () => {
+      setDraft('');
+      setDraftUrl('');
+      setPrefill(null);
+      void refreshThoughts();
+    },
   });
   const posting = createMutation.isPending;
 
@@ -106,7 +119,13 @@ function Thinking() {
         <motion.header className="tk-header" {...headReveal}>
           <div className="tk-title-row">
             <h1 className="tk-title">{t('thinking.title')}</h1>
-            <a className="tk-rss" href={`${API}/thoughts/rss`} target="_blank" rel="noopener noreferrer" aria-label="RSS">
+            <a
+              className="tk-rss"
+              href={`${API}/thoughts/rss`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="RSS"
+            >
               <Rss size={18} />
             </a>
           </div>
@@ -131,12 +150,22 @@ function Thinking() {
             />
             {prefill && (
               <div className="tk-compose-chip">
-                <span>🎬 {prefill.kind} · {prefill.title}</span>
-                <button onClick={() => setPrefill(null)} aria-label="移除附加">✕</button>
+                <span>
+                  🎬 {prefill.kind} · {prefill.title}
+                </span>
+                <button onClick={() => setPrefill(null)} aria-label="移除附加">
+                  ✕
+                </button>
               </div>
             )}
             <div className="tk-compose-row">
-              <button className="tk-compose-send" onClick={() => { void submit(); }} disabled={posting || !draft.trim()}>
+              <button
+                className="tk-compose-send"
+                onClick={() => {
+                  void submit();
+                }}
+                disabled={posting || !draft.trim()}
+              >
                 {posting ? '發送中…' : '發送'}
               </button>
             </div>
@@ -148,22 +177,28 @@ function Thinking() {
         {/* animate（非 whileInView+once）：whileInView 只觸發一次，發文後 load() 新掛載的
             卡片會卡在 hidden（opacity:0）變空白佔位；animate 讓新卡掛載即播進場 */}
         {!!thoughts?.length && (
-          <motion.ul
-            className="tk-feed"
-            variants={listV}
-            initial="hidden"
-            animate="show"
-          >
+          <motion.ul className="tk-feed" variants={listV} initial="hidden" animate="show">
             {thoughts.map((th) => (
               <motion.li className="tk-feed-item" key={th.id} variants={cardV}>
-                <ThoughtCard th={th} isAdmin={isAdmin} onDelete={(id) => { void del(id); }} onEdit={(id, content) => { void edit(id, content); }} />
+                <ThoughtCard
+                  th={th}
+                  isAdmin={isAdmin}
+                  onDelete={(id) => {
+                    void del(id);
+                  }}
+                  onEdit={(id, content) => {
+                    void edit(id, content);
+                  }}
+                />
               </motion.li>
             ))}
           </motion.ul>
         )}
 
         {!!thoughts?.length && (
-          <motion.p className="tk-ending" {...headReveal}>{t('thinking.ending')}</motion.p>
+          <motion.p className="tk-ending" {...headReveal}>
+            {t('thinking.ending')}
+          </motion.p>
         )}
       </div>
     </div>
