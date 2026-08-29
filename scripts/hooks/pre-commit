@@ -23,6 +23,11 @@ if echo "$staged" | grep -qE '\.(ts|tsx)$'; then
   # 實測 3.16s / 1.2GB，而同一個 hook 裡的 tsc 本來就要 7.9s / 1.1GB，不差這 1.4s。
   # --quiet 只影響印不印，不影響 --max-warnings 計數（免得每次 commit 噴兩百行）。
   pnpm exec oxlint --type-aware --tsconfig=tsconfig.json src --quiet --max-warnings 0 || fail=1
+  # 格式。⚠️ 這道要排在 oxlint **之後**：oxfmt 會把單行的 `if (x) { a; return; }`
+  # 展開成多行，而 `// eslint-disable-next-line` 只蓋下一行——展開之後違規就跑到
+  # 抑制範圍外了。導入 oxfmt 那次一次撞到 6 處，全靠 oxlint 的 --max-warnings 0 才發現。
+  echo "▶ oxfmt --check"
+  pnpm exec oxfmt --check src scripts server packages tests || fail=1
 fi
 
 if echo "$staged" | grep -qE '\.css$'; then
