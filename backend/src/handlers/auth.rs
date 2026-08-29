@@ -48,19 +48,16 @@ pub async fn login(
     }
 
     // 查使用者。DB 錯 → 500 {"message":"伺服器錯誤"}（對齊 Express，非 AppError 的 error key）
-    let user = match sqlx::query_as::<_, (i64, String, String, Option<String>)>(
+    let Ok(user) = sqlx::query_as::<_, (i64, String, String, Option<String>)>(
         "SELECT id, username, password_hash, role FROM users WHERE username = ?",
     )
     .bind(&username)
     .fetch_optional(&state.pool)
     .await
-    {
-        Ok(u) => u,
-        Err(_) => {
-            return Ok(
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "伺服器錯誤" }))).into_response()
-            );
-        }
+    else {
+        return Ok(
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "伺服器錯誤" }))).into_response()
+        );
     };
 
     let invalid =
@@ -80,7 +77,7 @@ pub async fn login(
     }
 
     // 簽 JWT：payload {id, username, role} + iat/exp（7 天），對齊 Express jwt.sign(expiresIn:'7d')。
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
     let exp = now + 7 * 24 * 60 * 60;
     let claims = json!({ "id": id, "username": uname, "role": role, "iat": now, "exp": exp });
     let token = encode(
@@ -171,21 +168,20 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> Result<Res
         return Ok(unauth("Invalid token"));
     };
 
-    let user_id = claims.get("userId").and_then(|v| v.as_i64()).filter(|&u| u != 0);
+    let user_id = claims.get("userId").and_then(serde_json::Value::as_i64).filter(|&u| u != 0);
     let provider_truthy = claims.get("provider").and_then(|v| v.as_str()).is_some_and(|s| !s.is_empty());
 
     // OAuth token（userId && provider）
     if let (Some(uid), true) = (user_id, provider_truthy) {
         // Express：DB 錯 或 查無 → 401 {"error":"User not found"}
-        let user = match sqlx::query_as::<_, OauthRow>(
+        let Ok(user) = sqlx::query_as::<_, OauthRow>(
             "SELECT id, display_name, email, avatar_url, provider, role, linked_to FROM oauth_users WHERE id = ?",
         )
         .bind(uid)
         .fetch_optional(&state.pool)
         .await
-        {
-            Ok(u) => u,
-            Err(_) => return Ok(unauth("User not found")),
+        else {
+            return Ok(unauth("User not found"));
         };
         let Some(user) = user else {
             return Ok(unauth("User not found"));
@@ -243,11 +239,12 @@ pub async fn reset_admin(
     if std::env::var("ENABLE_RESET_ADMIN").as_deref() != Ok("1") {
         return Ok((StatusCode::NOT_FOUND, Json(json!({ "message": "Not found" }))).into_response());
     }
-    let b = body.map(|Json(x)| x).unwrap_or(ResetAdminBody { username: None, password: None });
+    let b = body.map_or(ResetAdminBody { username: None, password: None }, |Json(x)| x);
     let env_user = std::env::var("ADMIN_USERNAME").ok().filter(|s| !s.is_empty());
     let env_pass = std::env::var("ADMIN_PASSWORD").ok().filter(|s| !s.is_empty());
-    let username = env_user.or(b.username.filter(|s| !s.is_empty())).unwrap_or_else(|| "admin".to_string());
-    let Some(password) = env_pass.or(b.password.filter(|s| !s.is_empty())) else {
+    let username =
+        env_user.or_else(|| b.username.filter(|s| !s.is_empty())).unwrap_or_else(|| "admin".to_string());
+    let Some(password) = env_pass.or_else(|| b.password.filter(|s| !s.is_empty())) else {
         return Ok((
             StatusCode::BAD_REQUEST,
             Json(json!({ "message": "ADMIN_PASSWORD is not configured. Set ADMIN_PASSWORD in env or pass password in request body for dev reset." })),
@@ -257,12 +254,10 @@ pub async fn reset_admin(
 
     // bcrypt cost-10 hash ≈ 數十 ms 純 CPU → spawn_blocking
     let pw = password.clone();
-    let hash = match tokio::task::spawn_blocking(move || bcrypt::hash(&pw, 10)).await {
-        Ok(Ok(h)) => h,
-        _ => {
-            return Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "密碼處理失敗" })))
-                .into_response());
-        }
+    let Ok(Ok(hash)) = tokio::task::spawn_blocking(move || bcrypt::hash(&pw, 10)).await else {
+        return Ok(
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "message": "密碼處理失敗" }))).into_response()
+        );
     };
 
     let updated = match sqlx::query("UPDATE users SET password_hash = ? WHERE username = ?")

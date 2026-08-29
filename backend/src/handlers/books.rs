@@ -44,6 +44,9 @@ pub struct BookRow {
 
 /// rating（REAL）序列化：整值 float → 整數（`4.0`→`4`），非整值維持 float，None → null。
 /// 對齊舊 `row_to_json` 對 REAL 欄位走 `js_num_value` 的行為。
+// clippy 的 ref_option 建議改成 `Option<&f64>`，但這支的簽名是 serde `serialize_with`
+// 的契約——serde 展開後就是拿 `&self.欄位` 呼叫它，改了編不過。
+#[allow(clippy::ref_option, reason = "serde serialize_with 的簽名固定為 &T")]
 fn serialize_rating<S: serde::Serializer>(v: &Option<f64>, s: S) -> Result<S::Ok, S::Error> {
     match v {
         None => s.serialize_none(),

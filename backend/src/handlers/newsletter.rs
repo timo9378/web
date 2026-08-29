@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use axum::{
     Json,
     extract::{Path, Query, State},
@@ -48,7 +50,10 @@ fn gen_unsub_token() -> String {
     let mut b = [0u8; 16];
     // rand 0.9 起 thread_rng() 改名 rng()（舊名在 0.10 已移除）
     rand::rng().fill_bytes(&mut b);
-    b.iter().map(|x| format!("{x:02x}")).collect()
+    b.iter().fold(String::new(), |mut acc, x| {
+        let _ = write!(acc, "{x:02x}");
+        acc
+    })
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]

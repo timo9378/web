@@ -60,7 +60,9 @@ fn temp_upload_dir(tag: &str) -> std::path::PathBuf {
 }
 
 fn png(w: u32, h: u32) -> Vec<u8> {
-    let img = image::RgbImage::from_fn(w, h, |x, y| image::Rgb([(x % 256) as u8, (y % 256) as u8, 64]));
+    let img = image::RgbImage::from_fn(w, h, |x, y| {
+        image::Rgb([u8::try_from(x % 256).unwrap_or(0), u8::try_from(y % 256).unwrap_or(0), 64])
+    });
     let mut buf = std::io::Cursor::new(Vec::new());
     image::DynamicImage::ImageRgb8(img).write_to(&mut buf, image::ImageFormat::Png).unwrap();
     buf.into_inner()
@@ -175,7 +177,12 @@ async fn image_upload_lands_on_disk_unmodified_and_gets_a_thumbhash() {
     // 舊格式的 `#th=` 解析（前端那條 regex 到 `&` 為止）必須照樣命中
     assert!(url.contains(&format!("#th={th}&")), "#th= 後面要接 & 才不會把尺寸吃進 hash：{url}");
     // 副檔名沿用 client 給的（含大小寫），檔名主體則是伺服器生的 {毫秒}-{亂數}
-    assert!(filename.ends_with(".PNG"), "副檔名應該保留原樣：{filename}");
+    // 這裡刻意用 ends_with 而不是比對副檔名：要驗的就是「大小寫原樣保留」，
+    // 而 clippy 建議的 Path::extension().eq_ignore_ascii_case 正好會蓋掉這件事。
+    #[allow(clippy::case_sensitive_file_extension_comparisons, reason = "驗的就是大小寫本身")]
+    {
+        assert!(filename.ends_with(".PNG"), "副檔名應該保留原樣：{filename}");
+    }
     let stem = filename.trim_end_matches(".PNG");
     let (ms, rand) = stem.split_once('-').expect("檔名應該是 {毫秒}-{亂數} 的形狀");
     assert!(ms.parse::<i64>().is_ok(), "前半應該是毫秒時間戳：{ms}");
@@ -371,7 +378,7 @@ fn stub_ffmpeg(dir: &std::path::Path, rotation: &str, ffmpeg_ok: bool) -> std::p
              printf 'NORMALISED' > \"$last\"\n\
              exit {}\n",
             argv_log.display(),
-            if ffmpeg_ok { 0 } else { 1 }
+            i32::from(!ffmpeg_ok)
         ),
     );
     unsafe {

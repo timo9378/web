@@ -127,18 +127,18 @@ impl IntoResponse for AppError {
         // Database/Upstream/Anyhow 的原文只進 log——SQLite/reqwest 錯誤字串可能含
         // 資料表、欄位、內部 URL 等細節，不外洩給客戶端（刻意偏離 Express 的舊行為）。
         let (status, body, detail): (StatusCode, Value, Option<String>) = match self {
-            AppError::Database(e) => (
+            Self::Database(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 json!({ "error": "Internal server error" }),
                 Some(e.to_string()),
             ),
-            AppError::Upstream(e) => {
+            Self::Upstream(e) => {
                 (StatusCode::BAD_GATEWAY, json!({ "error": "Upstream error" }), Some(e.to_string()))
             }
-            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, json!({ "error": msg }), None),
-            AppError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, json!({ "message": msg }), None),
-            AppError::Forbidden(msg) => (StatusCode::FORBIDDEN, json!({ "message": msg }), None),
-            AppError::Anyhow(e) => (
+            Self::NotFound(msg) => (StatusCode::NOT_FOUND, json!({ "error": msg }), None),
+            Self::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, json!({ "message": msg }), None),
+            Self::Forbidden(msg) => (StatusCode::FORBIDDEN, json!({ "message": msg }), None),
+            Self::Anyhow(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 json!({ "error": "Internal server error" }),
                 Some(format!("{e:#}")),

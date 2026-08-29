@@ -71,7 +71,7 @@ async fn create_comment(
 
     // 登入（OAuth）用戶：Bearer token 驗章成功且帶 userId + provider
     let is_oauth = bearer_token(headers).and_then(|t| verify_jwt(t, &state.jwt_secret)).is_some_and(|c| {
-        c.get("userId").and_then(|v| v.as_i64()).is_some()
+        c.get("userId").and_then(serde_json::Value::as_i64).is_some()
             && c.get("provider").and_then(|v| v.as_str()).is_some()
     });
 

@@ -22,17 +22,10 @@ fn manifest_path() -> std::path::PathBuf {
     std::path::PathBuf::from("/usr/src/app/storage/gallery/manifest.json")
 }
 
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
-
 // ── manifest 型別：這份 manifest 我們自己寫、自己讀，所以型別放在寫的那一端 ──
 
 // manifest 是會被反覆讀寫的檔案，數字欄位一律走 util 的 ser_js_number（整值輸出整數）。
-use crate::util::{ser_js_number, ser_js_number_opt};
+use crate::util::{now_ms, ser_js_number, ser_js_number_opt};
 
 /// 同一張照片的四個尺寸；sync 產出時 full/regular 同檔、small/thumb 同檔。
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type, utoipa::ToSchema)]
@@ -100,7 +93,7 @@ pub struct PhotoExif {
 }
 
 impl PhotoExif {
-    fn is_empty(&self) -> bool {
+    const fn is_empty(&self) -> bool {
         self.make.is_none()
             && self.model.is_none()
             && self.lens_model.is_none()
@@ -206,7 +199,7 @@ fn manifest_from_value(v: &Value) -> PhotosManifest {
         generated_at: v.get("generatedAt").and_then(|x| x.as_str()).unwrap_or_default().to_string(),
         // 取實際回傳的張數而不是檔案裡寫的：兩者本來就該一致，
         // 真不一致時（有照片被跳過）也不該回一個和 photos 對不上的數字。
-        total_photos: photos.len() as u32,
+        total_photos: u32::try_from(photos.len()).unwrap_or(u32::MAX),
         photos,
     }
 }
@@ -325,13 +318,10 @@ use serde_json::Map;
 
 fn gallery_source_path() -> std::path::PathBuf {
     std::env::var("GALLERY_SOURCE_PATH")
-        .map(Into::into)
-        .unwrap_or_else(|_| "/usr/src/app/storage/Blog_Source".into())
+        .map_or_else(|_| "/usr/src/app/storage/Blog_Source".into(), Into::into)
 }
 fn gallery_output_dir() -> std::path::PathBuf {
-    std::env::var("GALLERY_OUTPUT_DIR")
-        .map(Into::into)
-        .unwrap_or_else(|_| "/usr/src/app/storage/gallery".into())
+    std::env::var("GALLERY_OUTPUT_DIR").map_or_else(|_| "/usr/src/app/storage/gallery".into(), Into::into)
 }
 fn photo_tagger_url() -> String {
     std::env::var("PHOTO_TAGGER_URL")
@@ -347,9 +337,9 @@ fn is_excluded_dir(name: &str) -> bool {
 }
 
 fn is_supported_image(p: &std::path::Path) -> bool {
-    p.extension()
-        .map(|e| matches!(e.to_string_lossy().to_lowercase().as_str(), "jpg" | "jpeg" | "png" | "webp"))
-        .unwrap_or(false)
+    p.extension().is_some_and(|e| {
+        matches!(e.to_string_lossy().to_lowercase().as_str(), "jpg" | "jpeg" | "png" | "webp")
+    })
 }
 
 /// 遞迴掃描（同 Express：readdir 序、不排序）。
@@ -387,9 +377,8 @@ fn apply_orientation(img: image::DynamicImage, orientation: u32) -> image::Dynam
 /// exifr `pick` 等價：抽 9 欄映射成 `PhotoExif`。全空 → None。
 fn extract_exif(bytes: &[u8]) -> (Option<PhotoExif>, u32) {
     let mut orientation = 1u32;
-    let exif = match exif::Reader::new().read_from_container(&mut std::io::Cursor::new(bytes)) {
-        Ok(e) => e,
-        Err(_) => return (None, orientation),
+    let Ok(exif) = exif::Reader::new().read_from_container(&mut std::io::Cursor::new(bytes)) else {
+        return (None, orientation);
     };
     if let Some(f) = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY)
         && let Some(v) = f.value.get_uint(0)
@@ -409,10 +398,10 @@ fn extract_exif(bytes: &[u8]) -> (Option<PhotoExif>, u32) {
     let num = |tag: exif::Tag| -> Option<ExifValue> {
         exif.get_field(tag, exif::In::PRIMARY)
             .and_then(|f| match &f.value {
-                exif::Value::Rational(v) => v.first().map(|r| r.to_f64()),
-                exif::Value::SRational(v) => v.first().map(|r| r.to_f64()),
-                exif::Value::Short(v) => v.first().map(|&x| x as f64),
-                exif::Value::Long(v) => v.first().map(|&x| x as f64),
+                exif::Value::Rational(v) => v.first().map(exif::Rational::to_f64),
+                exif::Value::SRational(v) => v.first().map(exif::SRational::to_f64),
+                exif::Value::Short(v) => v.first().map(|&x| f64::from(x)),
+                exif::Value::Long(v) => v.first().map(|&x| f64::from(x)),
                 _ => None,
             })
             .map(ExifValue::Num)
@@ -447,7 +436,7 @@ fn extract_exif(bytes: &[u8]) -> (Option<PhotoExif>, u32) {
 
 /// EXIF 的 `OffsetTime*` 是 `"+08:00"` / `"-05:00"`。格式不對就當沒有——
 /// 接一個壞掉的 offset 上去會讓整串時間變成解不開的字串，比沒有還糟。
-fn is_utc_offset(s: &str) -> bool {
+const fn is_utc_offset(s: &str) -> bool {
     let b = s.as_bytes();
     b.len() == 6
         && (b[0] == b'+' || b[0] == b'-')
@@ -463,8 +452,10 @@ fn fit_width(w: u32, h: u32, max_w: u32) -> (u32, u32) {
     if w <= max_w {
         return (w, h);
     }
-    let ratio = max_w as f64 / w as f64;
-    (max_w, ((h as f64 * ratio).round().max(1.0)) as u32)
+    let ratio = f64::from(max_w) / f64::from(w);
+    // ratio < 1（上面已擋 w <= max_w），所以 h * ratio < h ≤ u32::MAX；max(1.0) 保證非負
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "只縮不放且已 max(1.0)")]
+    (max_w, ((f64::from(h) * ratio).round().max(1.0)) as u32)
 }
 
 struct Processed {
@@ -485,13 +476,12 @@ fn process_single_image(
     let (exif_map, orientation) = extract_exif(&bytes);
     let img = image::load_from_memory(&bytes)?; // failOn:'none' ≈ 盡量解
     let format = image::guess_format(&bytes)
-        .map(|f| match f {
+        .map_or("jpg", |f| match f {
             image::ImageFormat::Jpeg => "jpeg",
             image::ImageFormat::Png => "png",
             image::ImageFormat::WebP => "webp",
             _ => "jpg",
         })
-        .unwrap_or("jpg")
         .to_string();
     let rotated = apply_orientation(img, orientation);
     // 尺寸取「旋轉後」的實際值——EXIF orientation 5~8 會交換寬高，
@@ -597,7 +587,7 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         let root = source_root.clone();
         tokio::task::spawn_blocking(move || {
             let mut v = Vec::new();
-            scan_source_files(&root, &mut v).map(|_| v)
+            scan_source_files(&root, &mut v).map(|()| v)
         })
         .await??
     };
@@ -627,20 +617,16 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         let sp = source_path.clone();
         let (full, thumb) = (full_out.clone(), thumb_out.clone());
         let result = tokio::task::spawn_blocking(move || process_single_image(&sp, &full, &thumb)).await;
-        let p = match result {
-            Ok(Ok(p)) => p,
-            _ => {
-                failed += 1;
-                continue;
-            }
+        let Ok(Ok(p)) = result else {
+            failed += 1;
+            continue;
         };
         let mtime_ms = tokio::fs::metadata(source_path)
             .await
             .ok()
             .and_then(|m| m.modified().ok())
             .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-            .map(|d| d.as_secs_f64() * 1000.0)
-            .unwrap_or(0.0);
+            .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
 
         // nextPhoto = {...existing, id, title, description, urls, originalUrl, thumbnailUrl,
         //              width, height, aspectRatio, size, format, shootTime, exif, tags, tagsEn}
@@ -648,7 +634,7 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
         // 的欄位（thumbHash / gps / tags…），其餘一律由這次處理的結果覆值。
         let full_url = format!("/nas-images/{id}.webp");
         let thumb_url = format!("/nas-images/{id}-thumb.webp");
-        let ar = if p.height != 0 { p.width as f64 / p.height as f64 } else { 1.0 };
+        let ar = if p.height != 0 { f64::from(p.width) / f64::from(p.height) } else { 1.0 };
         next_photos.push(GalleryPhoto {
             id: id.clone(),
             title: file_name.clone(),
@@ -688,7 +674,7 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     // RAM++ 標籤：缺 tagsEn 的照片
     let tagger_prefix = std::env::var("PHOTO_TAGGER_GALLERY_PREFIX").unwrap_or_else(|_| "/gallery".into());
     let mut tagged = 0i64;
-    for p in next_photos.iter_mut() {
+    for p in &mut next_photos {
         if !p.tags_en.is_empty() {
             continue;
         }
@@ -707,7 +693,7 @@ async fn sync_gallery_manifest(state: &AppState) -> anyhow::Result<Vec<(String, 
     let manifest = PhotosManifest {
         version,
         generated_at: generated_at.clone(),
-        total_photos: total_photos as u32,
+        total_photos: u32::try_from(total_photos).unwrap_or(u32::MAX),
         photos: next_photos,
     };
     tokio::fs::write(&manifest_file, serde_json::to_string_pretty(&manifest)?).await?;
@@ -901,7 +887,7 @@ mod pure_tests {
 
         // 3000×1000 的橫幅（沒有 EXIF → orientation 1）
         let img = image::DynamicImage::ImageRgb8(image::RgbImage::from_fn(3000, 1000, |x, _| {
-            image::Rgb([(x % 256) as u8, 128, 64])
+            image::Rgb([u8::try_from(x % 256).unwrap_or(0), 128, 64])
         }));
         img.save(&src).unwrap();
 

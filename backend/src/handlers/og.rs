@@ -75,7 +75,7 @@ fn esc_html(s: &str) -> String {
 fn build_html(title: &str, category: Option<&str>, date: &str) -> String {
     let cat = category.filter(|c| !c.is_empty()).unwrap_or("手記");
     format!(
-        r##"<div style="
+        r#"<div style="
   width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between;
   padding:80px; box-sizing:border-box; font-family:'Noto Sans CJK TC';
   background-color:#11102a;
@@ -98,7 +98,7 @@ fn build_html(title: &str, category: Option<&str>, date: &str) -> String {
       background-image:linear-gradient(90deg, #e0c3fc, #7f5af0, #dc3278);
       background-clip:text; color:transparent;">Koimsurai</div>
   </div>
-</div>"##,
+</div>"#,
         cat = esc_html(&cat.to_uppercase()),
         title = esc_html(title.trim()),
         date = esc_html(date),
@@ -197,7 +197,7 @@ fn render_png(html: &str, fonts: &Fonts) -> anyhow::Result<Vec<u8>> {
 fn fnv1a(s: &str) -> u64 {
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
     for b in s.as_bytes() {
-        h ^= *b as u64;
+        h ^= u64::from(*b);
         h = h.wrapping_mul(0x1000_0000_01b3);
     }
     h
@@ -224,14 +224,13 @@ pub async fn og_png(State(state): State<AppState>, Path(file): Path<String>, req
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
-    let (post_id, title, category, created_at, updated_at) = match row {
-        Ok(Some(r)) => r,
-        // err || !row → 404 'not found'
-        _ => return text_resp(StatusCode::NOT_FOUND, "not found"),
+    // err || !row → 404 'not found'
+    let Ok(Some((post_id, title, category, created_at, updated_at))) = row else {
+        return text_resp(StatusCode::NOT_FOUND, "not found");
     };
     let title = title.unwrap_or_default();
     // cacheKey = `${id}::${updated_at || created_at}::${title}`（js truthy：空字串也 fallback）
-    let stamp = updated_at.filter(|s| !s.is_empty()).or(created_at.clone()).unwrap_or_default();
+    let stamp = updated_at.filter(|s| !s.is_empty()).or_else(|| created_at.clone()).unwrap_or_default();
     let cache_key = format!("{post_id}::{stamp}::{title}");
 
     let og = og_state();

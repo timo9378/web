@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use axum::{
     Json,
     extract::{Path, Query, State},
@@ -121,7 +123,7 @@ impl From<ThoughtRow> for ThoughtOut {
                 None
             }
         });
-        ThoughtOut {
+        Self {
             id: r.id,
             content: r.content,
             ref_type: r.ref_type,
@@ -140,11 +142,11 @@ impl From<ThoughtRow> for ThoughtOut {
 
 /// 顯式列出 `t.*` 的欄位（依 live 表實際順序），加上 comment_count 子查詢。
 /// 用顯式欄位而非 `t.*`，讓 FromRow 穩定、也不依賴實體欄位順序變動。
-const THOUGHT_SELECT: &str = r#"
+const THOUGHT_SELECT: &str = r"
     t.id, t.content, t.ref_type, t.ref_url, t.ref_json, t.likes,
     t.created_at, t.updated_at, t.edited, t.dislikes,
     (SELECT COUNT(*) FROM comments c WHERE c.thought_id = t.id AND c.status = 'approved') AS comment_count
-"#;
+";
 
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
@@ -189,8 +191,8 @@ pub async fn list_thoughts(
     Query(q): Query<ListQuery>,
 ) -> Result<Json<ThoughtsListResponse>, AppError> {
     // Express: min(parseInt(limit||'30'),100) / max(parseInt(offset||'0'),0)
-    let limit = q.limit.as_deref().map(|s| js_parse_int(s, 30)).unwrap_or(30).min(100);
-    let offset = q.offset.as_deref().map(|s| js_parse_int(s, 0)).unwrap_or(0).max(0);
+    let limit = q.limit.as_deref().map_or(30, |s| js_parse_int(s, 30)).min(100);
+    let offset = q.offset.as_deref().map_or(0, |s| js_parse_int(s, 0)).max(0);
 
     let sql = format!(
         "SELECT {THOUGHT_SELECT} FROM thoughts t ORDER BY t.created_at DESC, t.id DESC LIMIT ? OFFSET ?"
@@ -260,8 +262,8 @@ pub struct ReactBody {
 }
 
 /// 反應值是否合法：like / dislike / '' / null。
-fn react_ok(v: &Option<String>) -> bool {
-    matches!(v.as_deref(), Some("like") | Some("dislike") | Some("") | None)
+fn react_ok(v: Option<&str>) -> bool {
+    matches!(v, Some("like" | "dislike" | "") | None)
 }
 
 /// `POST /api/thoughts/:id/react` 的回應。
@@ -284,13 +286,13 @@ pub async fn thought_react(
     Path(id): Path<String>,
     crate::error::JsonBody(body): crate::error::JsonBody<ReactBody>,
 ) -> Response {
-    if !react_ok(&body.prev) || !react_ok(&body.next) {
+    if !react_ok(body.prev.as_deref()) || !react_ok(body.next.as_deref()) {
         return (StatusCode::BAD_REQUEST, Json(json!({ "error": "bad reaction" }))).into_response();
     }
     let d_like =
-        (body.next.as_deref() == Some("like")) as i64 - (body.prev.as_deref() == Some("like")) as i64;
-    let d_dislike =
-        (body.next.as_deref() == Some("dislike")) as i64 - (body.prev.as_deref() == Some("dislike")) as i64;
+        i64::from(body.next.as_deref() == Some("like")) - i64::from(body.prev.as_deref() == Some("like"));
+    let d_dislike = i64::from(body.next.as_deref() == Some("dislike"))
+        - i64::from(body.prev.as_deref() == Some("dislike"));
 
     if let Err(e) = sqlx::query(
         "UPDATE thoughts SET likes = MAX(0, likes + ?), dislikes = MAX(0, dislikes + ?) WHERE id = ?",
@@ -440,10 +442,10 @@ async fn enrich_media_ref(http: &reqwest::Client, json: &Map<String, Value>) -> 
                 out.insert("overview".into(), Value::from(pick(d.get("overview")).unwrap_or_default()));
                 let rating = d
                     .get("vote_average")
-                    .and_then(|v| v.as_f64())
+                    .and_then(serde_json::Value::as_f64)
                     .filter(|&v| v != 0.0)
                     .map(|v| format!("{v:.1}"));
-                out.insert("rating".into(), rating.map(Value::from).unwrap_or(Value::Null));
+                out.insert("rating".into(), rating.map_or(Value::Null, Value::from));
                 let genres = d
                     .get("genres")
                     .and_then(|g| g.as_array())
@@ -454,7 +456,7 @@ async fn enrich_media_ref(http: &reqwest::Client, json: &Map<String, Value>) -> 
                             .join(", ")
                     })
                     .filter(|s| !s.is_empty());
-                out.insert("genres".into(), genres.map(Value::from).unwrap_or(Value::Null));
+                out.insert("genres".into(), genres.map_or(Value::Null, Value::from));
                 // (release_date || first_air_date || '').slice(0,4) || json.year || null
                 let date =
                     pick(d.get("release_date")).or_else(|| pick(d.get("first_air_date"))).unwrap_or_default();
@@ -646,17 +648,14 @@ pub async fn thoughts_rss(State(state): State<AppState>) -> Response {
     )
     .fetch_all(&state.pool)
     .await;
-    let rows = match rows {
-        Ok(r) => r,
-        // Express：res.status(500).send('error')（text/html）
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
-                "error",
-            )
-                .into_response();
-        }
+    // Express：res.status(500).send('error')（text/html）
+    let Ok(rows) = rows else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            "error",
+        )
+            .into_response();
     };
     let mut items = String::new();
     for (id, content, ref_type, ref_url, ref_json, created_at) in &rows {
@@ -677,19 +676,22 @@ pub async fn thoughts_rss(State(state): State<AppState>) -> Response {
                 Some("link") => {
                     // r.ref_url || ''
                     let u = ref_url.as_deref().filter(|s| !s.is_empty()).unwrap_or("");
-                    desc.push_str(&format!("\n\n🔗 {t} {u}"));
+                    let _ = write!(desc, "\n\n🔗 {t} {u}");
                 }
-                Some("media") => desc.push_str(&format!("\n\n🎬 {t}")),
+                Some("media") => {
+                    let _ = write!(desc, "\n\n🎬 {t}");
+                }
                 _ => {}
             }
         }
         // title = esc((content||'').slice(0,60))
         let title_esc = xml_esc(&js_substring_prefix(&content_str, 60));
         let pub_date = js_date_to_utc_string(created_at.as_deref());
-        items.push_str(&format!(
+        let _ = write!(
+            items,
             "<item><title>{title_esc}</title><link>{link}</link><guid>{link}</guid><pubDate>{pub_date}</pubDate><description>{}</description></item>",
             xml_esc(&desc)
-        ));
+        );
     }
     let xml = format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\"><channel><title>碎念 · Koimsurai</title><link>https://koimsurai.com/thinking</link><description>想到什麼寫什麼</description>{items}</channel></rss>"
@@ -751,7 +753,7 @@ mod tests {
         let d = r#"<META PROPERTY="OG:TITLE" CONTENT="大寫">"#;
         assert_eq!(og(d, "og:title").as_deref(), Some("大寫"));
         // 單引號
-        let e = r#"<meta property='og:image' content='https://x/i.png'>"#;
+        let e = r"<meta property='og:image' content='https://x/i.png'>";
         assert_eq!(og(e, "og:image").as_deref(), Some("https://x/i.png"));
         // 找不到就是 None（不要回空字串，呼叫端靠 None 決定要不要 fallback）
         assert_eq!(og("<html></html>", "og:title"), None);
@@ -760,10 +762,10 @@ mod tests {
     #[test]
     fn react_ok_只收四種值() {
         for ok in [Some("like"), Some("dislike"), Some(""), None] {
-            assert!(react_ok(&ok.map(str::to_owned)), "{ok:?} 應該放行");
+            assert!(react_ok(ok), "{ok:?} 應該放行");
         }
         for bad in ["love", "LIKE", "1", "null"] {
-            assert!(!react_ok(&Some(bad.to_string())), "{bad} 應該被擋");
+            assert!(!react_ok(Some(bad)), "{bad} 應該被擋");
         }
     }
 

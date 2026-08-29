@@ -20,7 +20,9 @@ use sqlx::FromRow;
 
 use crate::handlers::admin::bind_num;
 use crate::state::AppState;
-use crate::util::{bind_val, js_interp, js_normalize_numbers, js_substring_prefix, js_truthy, row_to_json};
+use crate::util::{
+    bind_val, js_interp, js_normalize_numbers, js_substring_prefix, js_truthy, now_ms, row_to_json,
+};
 
 // ── 公開讀端點的 typed 回應（欄位序 = SELECT 序，對齊舊 row_to_json）─────────────
 
@@ -193,13 +195,6 @@ pub struct WatchFavoritesResponse {
     pub favorites: Vec<WatchFavoriteRow>,
 }
 
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
-
 // ── 公開讀 ────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -254,7 +249,7 @@ pub async fn films_recent(State(state): State<AppState>, Query(q): Query<LimitQu
         Ok(mut films) => {
             // Trakt 同步進來的 film 沒存 poster_url（sync 只寫 title/date/tmdb_id）→ 用 tmdb_id
             // 從 TMDb 補海報（w342 小卡夠；tmdb_detail 有快取，只有缺圖的才打）。
-            for f in films.iter_mut() {
+            for f in &mut films {
                 if f.poster_url.as_deref().unwrap_or("").is_empty()
                     && let Some(id) = f.tmdb_id
                     && let Some(dd) = tmdb_detail(&state, "movie", &Value::from(id), "zh-TW").await
@@ -358,15 +353,13 @@ async fn tmdb_detail(state: &AppState, kind: &str, id: &Value, locale: &str) -> 
         .get("poster_path")
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
-        .map(|p| Value::from(format!("https://image.tmdb.org/t/p/w342{p}")))
-        .unwrap_or(Value::Null);
+        .map_or(Value::Null, |p| Value::from(format!("https://image.tmdb.org/t/p/w342{p}")));
     // backdrop = 橫式劇照（給「正在看」橫幅 hero 用；poster 是直式、放橫幅會被切到剩中間）。
     let backdrop = j
         .get("backdrop_path")
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
-        .map(|p| Value::from(format!("https://image.tmdb.org/t/p/original{p}")))
-        .unwrap_or(Value::Null);
+        .map_or(Value::Null, |p| Value::from(format!("https://image.tmdb.org/t/p/original{p}")));
     let date = j
         .get("release_date")
         .and_then(|v| v.as_str())
@@ -375,8 +368,7 @@ async fn tmdb_detail(state: &AppState, kind: &str, id: &Value, locale: &str) -> 
         .unwrap_or("");
     let year = crate::util::js_parse_int_opt(&date.chars().take(4).collect::<String>())
         .filter(|&y| y != 0)
-        .map(Value::from)
-        .unwrap_or(Value::Null);
+        .map_or(Value::Null, Value::from);
     // runtime（分鐘）曾經算在這裡，唯一的讀者是 Trakt 那條「用 duration 推 endsAt」的路徑。
     // Trakt 移除後就沒有人讀它了——`cargo mutants` 是這樣抓到的：把 `r > 0` 改成 `r >= 0`、
     // `r < 0`、`r == 0` 測試全綠，因為那個值根本不會被任何斷言看到。一併刪掉。
@@ -436,10 +428,10 @@ pub async fn favorites(State(state): State<AppState>, Query(q): Query<FavQuery>)
             js_interp(&tmdb_id)
         );
         out.push(WatchFavoriteRow {
-            id: f.get("id").and_then(|v| v.as_i64()).unwrap_or(0),
+            id: f.get("id").and_then(serde_json::Value::as_i64).unwrap_or(0),
             kind,
             tmdb_id: tmdb_id.as_i64(),
-            rating: f.get("rating").and_then(|v| v.as_i64()),
+            rating: f.get("rating").and_then(serde_json::Value::as_i64),
             quote: f.get("quote").and_then(|v| v.as_str()).map(str::to_owned),
             title: js_interp(&title),
             poster: poster.as_str().map(str::to_owned),
@@ -557,7 +549,7 @@ pub async fn tmdb_search(
                                 .filter(|s| !s.is_empty())
                                 .map(|p| format!("https://image.tmdb.org/t/p/w185{p}"));
                             TmdbSearchResult {
-                                tmdb_id: it.get("id").and_then(|v| v.as_i64()),
+                                tmdb_id: it.get("id").and_then(serde_json::Value::as_i64),
                                 kind,
                                 title,
                                 year,
@@ -576,7 +568,13 @@ pub async fn tmdb_search(
 fn clamp_rating(v: &Value) -> Option<f64> {
     let n = match v {
         Value::Null => 0.0,
-        Value::Bool(b) => *b as i64 as f64,
+        Value::Bool(b) => {
+            if *b {
+                1.0
+            } else {
+                0.0
+            }
+        }
         Value::Number(x) => x.as_f64().unwrap_or(f64::NAN),
         Value::String(s) => {
             let t = s.trim();
@@ -725,7 +723,7 @@ async fn bahamut_push_auth(headers: &HeaderMap, state: &AppState) -> Result<(), 
 /// TTL 的邊界判定，抽出來只為了讓它可測：夾在 `now_ms()` 裡面的話，`<` 與 `<=` 的差別
 /// 是「剛好那一毫秒」，任何測試都碰不到，於是這個比較符號可以隨便改而沒有人會知道。
 /// 語意是半開區間 `[started, expires)`——`expires_at` 當下那一刻已經算過期。
-fn is_live(now: i64, expires_at: i64) -> bool {
+const fn is_live(now: i64, expires_at: i64) -> bool {
     now < expires_at
 }
 
@@ -802,9 +800,12 @@ pub async fn heartbeat(
     let now = now_ms();
     let progress = b
         .get("progressPct")
-        .and_then(|v| v.as_f64())
-        .map(|p| Value::from(p.clamp(0.0, 100.0).round() as i64))
-        .unwrap_or(Value::Null);
+        .and_then(serde_json::Value::as_f64)
+        // clamp 到 0..=100 之後再 round，值域是 0..=100，i64 裝得下
+        .map_or(Value::Null, |p| {
+            #[allow(clippy::cast_possible_truncation, reason = "前面已 clamp 到 0..=100")]
+            Value::from(p.clamp(0.0, 100.0).round() as i64)
+        });
     let external = if tmdb_url_for("tv", &tmdb_id) != Value::Null {
         tmdb_url_for("tv", &tmdb_id)
     } else if let Some(sn) = &video_sn {

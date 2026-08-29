@@ -43,6 +43,9 @@ pub struct BasicAuth;
 impl<S: Send + Sync> axum::extract::FromRequestParts<S> for BasicAuth {
     type Rejection = axum::response::Response;
 
+    // 這支沒有 await，但 trait 宣告成 async fn；拿掉 async 就得手寫回傳
+    // `impl Future` 並包 `ready(...)`，只為消一個 lint 不值得。
+    #[allow(clippy::unused_async_trait_impl, reason = "簽名由 axum 的 trait 決定")]
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
         _state: &S,

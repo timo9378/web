@@ -2,6 +2,7 @@
 //! Express 對拍 oracle 退役後的接棒安全網——覆蓋核心公開端點、admin 守衛、JWT exp
 //! 與 image-proxy 的 SSRF 防護。每個測試自建獨立 DB（互不干擾、可平行）。
 
+use std::fmt::Write as _;
 use std::sync::LazyLock;
 
 use axum::http::StatusCode;
@@ -253,7 +254,7 @@ async fn jwt_without_exp_is_rejected() {
 #[tokio::test]
 async fn jwt_wrong_secret_is_rejected() {
     let (app, _pool) = test_app().await;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     let token = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &json!({ "username": "admin", "iat": now, "exp": now + 3600 }),
@@ -724,7 +725,9 @@ fn urlencode(s: &str) -> String {
     for b in s.bytes() {
         match b {
             b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(b as char),
-            _ => out.push_str(&format!("%{b:02X}")),
+            _ => {
+                let _ = write!(out, "%{b:02X}");
+            }
         }
     }
     out

@@ -63,7 +63,7 @@ pub async fn list_categories(
         .map(|loc| format!(" AND {}", crate::handlers::posts::locale_available_sql(loc, "p")))
         .unwrap_or_default();
     let sql = format!(
-        r#"
+        r"
         SELECT
           c.id,
           c.name,
@@ -80,7 +80,7 @@ pub async fn list_categories(
                  c.name_en, c.name_ja, c.name_ko, c.name_zh_cn,
                  c.description_en, c.description_ja, c.description_ko, c.description_zh_cn, c.short_description_en, c.short_description_ja, c.short_description_ko, c.short_description_zh_cn
         ORDER BY post_count DESC, c.name ASC
-        "#
+        "
     );
     let categories =
         sqlx::query_as::<_, CategoryRow>(sqlx::AssertSqlSafe(sql.as_str())).fetch_all(&state.pool).await?;

@@ -113,7 +113,10 @@ async fn limit_給非數字時是_200_全撈_而不是_500() {
     for p in ["/api/anime/history", "/api/films/recent", "/api/tv/recent"] {
         let (st, body) = get(&app, &format!("{p}?limit=abc")).await;
         assert_eq!(st, StatusCode::OK, "{p} 應該還是 200");
-        let n = body["history"].as_array().or(body["films"].as_array()).or(body["series"].as_array());
+        let n = body["history"]
+            .as_array()
+            .or_else(|| body["films"].as_array())
+            .or_else(|| body["series"].as_array());
         assert!(n.unwrap().len() >= 2, "{p} 解不出 limit 時等同無上限，不是回 0 筆");
     }
 }
@@ -867,9 +870,7 @@ async fn heartbeat_設定的存活時間是九十秒() {
     );
 }
 
-fn now_ms() -> i64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64
-}
+use koimsurai_web_backend::util::now_ms;
 
 #[tokio::test]
 async fn watch_now_在沒有心跳時回_null_而不是_404() {
@@ -883,7 +884,7 @@ async fn watch_now_在沒有心跳時回_null_而不是_404() {
 async fn watch_now_過了_ttl_就當作沒在看() {
     use koimsurai_web_backend::handlers::watch::NowWatching;
     let (app, _pool, state) = test_app_with_state().await;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64;
+    let now = now_ms();
     let entry = NowWatching {
         kind: "anime".into(),
         title: "早就看完了".into(),
@@ -929,7 +930,7 @@ async fn 過期的_jwt_不能推送心跳() {
         std::env::remove_var("BAHAMUT_PUSH_TOKEN");
     }
     let (app, _pool) = test_app().await;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     let expired = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now - 7200, "exp": now - 3600 }),

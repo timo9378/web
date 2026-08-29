@@ -2,3 +2,39 @@
 [workspace]
 resolver = "2"
 members = ["backend"]
+
+# ─── Lint ────────────────────────────────────────────────────────────
+# 寫在 workspace，各 crate 用 `[lints] workspace = true` 繼承——所以只有一份。
+#
+# ⚠️ 在這之前這個 repo **一條 clippy 設定都沒有**，跑的就是預設那五組
+# （correctness / style / complexity / perf / suspicious）。2026-07-11 遷移時的
+# 那次 audit 是人工照 20 條反模式表掃出來的，清完 7 個 warning 就沒把規則固化，
+# 於是後來新寫的程式完全沒有把關。這個檔案的存在就是為了不再發生一次。
+#
+# 邊界：`-D warnings` 是 CI 的跑法（ci.yml 與 pre-commit 都是），所以這裡的
+# **warn 在合流時等同 deny**。不要因為「它只是 warn」就放著不管。
+[workspace.lints.clippy]
+# priority = -1 讓下面個別的 allow 蓋得過整組
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+# nursery 整組不開（56 個 option_if_let_else 這種公認會讓程式更難讀的都在裡面），
+# 只個別挑有實質價值的進來。
+or_fun_call = "warn"                   # `unwrap_or(expensive())` 無條件求值
+significant_drop_in_scrutinee = "warn" # match/if-let 的 scrutinee 裡持有鎖 guard
+significant_drop_tightening = "warn"   # 鎖 guard 活得比臨界區久
+redundant_clone = "warn"
+missing_const_for_fn = "warn"
+use_self = "warn"
+
+# ─── allow：實際量過是噪音的 ──────────────────────────────────────────
+# 每條後面是導入當下的數量。要拿掉某條之前先想「這些真的每個都該改嗎」。
+doc_markdown = "allow"           # 468；要求中文註解裡的 Express / SQLite 加反引號
+missing_errors_doc = "allow"     # 60；Err variant 自己 thiserror 描述就夠
+missing_panics_doc = "allow"     # 同上取向
+must_use_candidate = "allow"     # 44；幾乎每個 fn 都會被建議加 #[must_use]
+too_many_lines = "allow"         # 18；handler 本來就長，拆不拆看語意不看行數
+items_after_statements = "allow" # 21；區域 fn 就近定義比搬到頂端好讀
+similar_names = "allow"          # 3
+many_single_char_names = "allow" # 3
+unreadable_literal = "allow"     # 4；port 與短常數加底線反而難讀

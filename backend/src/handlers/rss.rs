@@ -2,6 +2,8 @@
 //! 行為清理註記：Express 的 `new Date(created_at)`（無 'Z'）在 TZ=Asia/Taipei 下把 DB 的
 //! UTC 時間誤當本地時間（pubDate 偏 8h）；此處採正確版（當 UTC 解析），退役後無對拍對象。
 
+use std::fmt::Write as _;
+
 use axum::{
     extract::{Query, State},
     http::header,
@@ -78,23 +80,20 @@ pub async fn site_rss(State(state): State<AppState>, Query(q): Query<RssQuery>) 
          GROUP BY p.id ORDER BY p.created_at DESC LIMIT 30"
     );
     let rows = sqlx::query_as::<_, Row>(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await;
-    let rows = match rows {
-        Ok(r) => r,
-        Err(_) => {
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
-                "Internal Server Error",
-            )
-                .into_response();
-        }
+    let Ok(rows) = rows else {
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            "Internal Server Error",
+        )
+            .into_response();
     };
 
     let now_str = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    let last_build = rows
-        .first()
-        .map(|r| js_date_to_utc_string(r.6.as_deref().or(r.5.as_deref())))
-        .unwrap_or_else(|| js_date_to_utc_string(Some(&now_str)));
+    let last_build = rows.first().map_or_else(
+        || js_date_to_utc_string(Some(&now_str)),
+        |r| js_date_to_utc_string(r.6.as_deref().or(r.5.as_deref())),
+    );
 
     static TAG_RE: std::sync::LazyLock<regex::Regex> =
         std::sync::LazyLock::new(|| regex::Regex::new(r"<[^>]+>").unwrap());
@@ -105,22 +104,21 @@ pub async fn site_rss(State(state): State<AppState>, Query(q): Query<RssQuery>) 
         .iter()
         .map(|(id, slug, title, excerpt, content, created_at, _updated_at, author, category, tags)| {
             // desc = excerpt || content 去 HTML/markdown、trim、slice(0,300)
-            let desc = match excerpt.as_deref().filter(|s| !s.is_empty()) {
-                Some(e) => e.to_string(),
-                None => {
-                    let c = content.as_deref().unwrap_or("");
-                    let no_tag = TAG_RE.replace_all(c, "");
-                    let no_md = MD_RE.replace_all(&no_tag, " ");
-                    js_substring_prefix(no_md.trim(), 300)
-                }
+            let desc = if let Some(e) = excerpt.as_deref().filter(|s| !s.is_empty()) { e.to_string() } else {
+                let c = content.as_deref().unwrap_or("");
+                let no_tag = TAG_RE.replace_all(c, "");
+                let no_md = MD_RE.replace_all(&no_tag, " ");
+                js_substring_prefix(no_md.trim(), 300)
             };
             let cats: String = tags
                 .as_deref()
                 .unwrap_or("")
                 .split(',')
                 .filter(|t| !t.trim().is_empty())
-                .map(|t| format!("<category>{}</category>", esc_xml(t.trim())))
-                .collect();
+                .fold(String::new(), |mut acc, t| {
+                    let _ = write!(acc, "<category>{}</category>", esc_xml(t.trim()));
+                    acc
+                });
             let cat_line = category
                 .as_deref()
                 .filter(|c| !c.is_empty())

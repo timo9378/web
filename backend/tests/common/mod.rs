@@ -153,7 +153,7 @@ pub async fn post_json(app: &Router, path: &str, body: Value) -> (StatusCode, Va
 
 /// OWNER 角色的 JWT。`with_exp=false` 用來驗「沒有 exp 的 token 要被拒」。
 pub fn owner_token(with_exp: bool) -> String {
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     let mut claims = json!({ "id": 1, "username": "admin", "role": "OWNER", "iat": now });
     if with_exp {
         claims["exp"] = json!(now + 3600);

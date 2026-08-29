@@ -61,7 +61,7 @@ pub async fn list_tags(
         .map(|loc| format!(" AND {}", crate::handlers::posts::locale_available_sql(loc, "p")))
         .unwrap_or_default();
     let sql = format!(
-        r#"
+        r"
         SELECT t.id, t.name, t.created_at,
           COUNT(CASE WHEN p.status = 'published'{locale_cond} THEN 1 END) as post_count,
           t.name_en, t.name_ja, t.name_ko, t.name_zh_cn
@@ -71,7 +71,7 @@ pub async fn list_tags(
         GROUP BY t.id
         HAVING post_count > 0
         ORDER BY post_count DESC, t.name ASC
-        "#
+        "
     );
     let tags = sqlx::query_as::<_, TagRow>(sqlx::AssertSqlSafe(sql.as_str())).fetch_all(&state.pool).await?;
 

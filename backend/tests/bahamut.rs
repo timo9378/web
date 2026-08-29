@@ -38,7 +38,7 @@ const ALL_REQUIRED: &str = "BAHAID=1; BAHAHASHID=h; BAHANICK=n; BAHALV=1; \
 ///   一條會在忙碌的 runner 上隨機紅的測試，而且看起來像是程式壞了。
 fn jwt_expiring_in_days(days: i64) -> String {
     use base64::Engine as _;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let now = koimsurai_web_backend::util::now_secs();
     let payload = json!({ "exp": now + days * 86_400 + 43_200 }).to_string();
     let b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload);
     format!("eyJhbGciOiJIUzI1NiJ9.{b64}.sig")

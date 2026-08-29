@@ -129,20 +129,23 @@ pub async fn quote_daily(State(state): State<AppState>, Query(q): Query<QuoteQue
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
     let key = format!("{today}|{locale}");
 
-    if let Some(cached) = QUOTE_CACHE.lock().get(&key).cloned() {
+    // 先 clone 出來讓 guard 在這一行結束就釋放：寫成 `if let Some(x) = LOCK.lock()…`
+    // 的話 guard 會活到整個 if-let 結束（含 body），臨界區平白變長。
+    let cached = QUOTE_CACHE.lock().get(&key).cloned();
+    if let Some(cached) = cached {
         return quote_resp(cached);
     }
 
-    let quote = match fetch_quote(&state, &locale).await.filter(|(t, _)| !t.is_empty()) {
-        Some((text, from)) => DailyQuote { text, from },
-        None => {
-            tracing::warn!("[quote] {locale} 來源失敗，用 fallback");
-            // getDate() % pool.len＝本地時區「日」（TZ=Asia/Taipei）
-            let day: usize = chrono::Local::now().format("%d").to_string().parse().unwrap_or(1);
-            let pool = fallback_pool(&locale);
-            let (t, f) = pool[day % pool.len()];
-            DailyQuote { text: t.to_owned(), from: f.to_owned() }
-        }
+    let quote = if let Some((text, from)) = fetch_quote(&state, &locale).await.filter(|(t, _)| !t.is_empty())
+    {
+        DailyQuote { text, from }
+    } else {
+        tracing::warn!("[quote] {locale} 來源失敗，用 fallback");
+        // getDate() % pool.len＝本地時區「日」（TZ=Asia/Taipei）
+        let day: usize = chrono::Local::now().format("%d").to_string().parse().unwrap_or(1);
+        let pool = fallback_pool(&locale);
+        let (t, f) = pool[day % pool.len()];
+        DailyQuote { text: t.to_owned(), from: f.to_owned() }
     };
     {
         let mut cache = QUOTE_CACHE.lock();

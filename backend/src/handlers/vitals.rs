@@ -99,7 +99,7 @@ pub async fn report_vital(
         .bind(b.value)
         .bind(&b.rating)
         .bind(path)
-        .bind(if b.is_mobile { 1i64 } else { 0 })
+        .bind(i64::from(b.is_mobile))
         .bind(clamp_attr(b.target))
         .bind(clamp_attr(b.load_state))
         // shift_path 也去掉 query（同 path 的理由：避免存到 token 類參數）

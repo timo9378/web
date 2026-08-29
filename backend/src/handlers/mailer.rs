@@ -102,12 +102,12 @@ fn render_email(site: &str, post: &Post, sub: &Sub) -> String {
         _ => "",
     };
     // excerpt 區塊：excerpt(escaped+sliced 非空) ? <p>…</p> : ''
-    let excerpt_block = if !excerpt.is_empty() {
+    let excerpt_block = if excerpt.is_empty() {
+        String::new()
+    } else {
         format!(
             "<p style=\"margin:0 0 24px 0;font-size:15px;line-height:1.75;color:rgba(231,227,247,0.75);\">\n          {excerpt}{ellipsis}\n        </p>"
         )
-    } else {
-        String::new()
     };
     let site_bare = site.strip_prefix("https://").or_else(|| site.strip_prefix("http://")).unwrap_or(site);
 
@@ -210,6 +210,8 @@ async fn send_newsletter(state: &AppState, post: &Post, subs: &[Sub]) -> (i64, i
     let mut errors: Vec<String> = Vec::new();
 
     for chunk in subs.chunks(BATCH_SIZE) {
+        // 這一批的人數（BATCH_SIZE 是 100，永遠遠小於 i64::MAX）
+        let n = i64::try_from(chunk.len()).unwrap_or(i64::MAX);
         let payload: Vec<Value> =
             chunk.iter().map(|s| build_email_object(&site, &from, &subject, post, s)).collect();
         let resp = state
@@ -222,9 +224,9 @@ async fn send_newsletter(state: &AppState, post: &Post, subs: &[Sub]) -> (i64, i
             .send()
             .await;
         match resp {
-            Ok(r) if r.status().is_success() => sent += chunk.len() as i64,
+            Ok(r) if r.status().is_success() => sent += n,
             Ok(r) => {
-                failed += chunk.len() as i64;
+                failed += n;
                 // error.message || JSON.stringify(error)：取上游 body 的 .message
                 let body = r.text().await.unwrap_or_default();
                 let msg = serde_json::from_str::<Value>(&body)
@@ -234,7 +236,7 @@ async fn send_newsletter(state: &AppState, post: &Post, subs: &[Sub]) -> (i64, i
                 errors.push(msg);
             }
             Err(e) => {
-                failed += chunk.len() as i64;
+                failed += n;
                 errors.push(e.to_string());
             }
         }
@@ -285,7 +287,7 @@ pub async fn send_newsletter_route(
         return e.into_response();
     }
     // isMailerConfigured()
-    if std::env::var("RESEND_API_KEY").ok().filter(|s| !s.is_empty()).is_none() {
+    if std::env::var("RESEND_API_KEY").ok().as_ref().is_none_or(String::is_empty) {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({ "error": "RESEND_API_KEY not configured on server" })),

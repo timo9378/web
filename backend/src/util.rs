@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use serde_json::{Map, Value};
 use sqlx::{Column, Row, TypeInfo, ValueRef, sqlite::SqliteRow};
 
@@ -12,6 +14,31 @@ pub fn tmdb_api() -> String {
         .unwrap_or_else(|| "https://api.themoviedb.org".into())
 }
 
+/// Unix epoch 至今的毫秒數。
+///
+/// 這裡刻意做成共用：`fn now_ms()` 原本在 gallery / spotify / bahamut / watch /
+/// thirdparty 各抄了一份一模一樣的，tests 裡還有第六份。
+///
+/// 用 `try_from` 而不是 `as`：`Duration::as_millis()` 回 `u128`，`as i64` 會靜靜截斷。
+/// 真的溢位是 2.9 億年後的事，但寫成 `try_from` 就不必在 50 個呼叫點各自解釋一次
+/// 「為什麼這個截斷是安全的」——理由集中在這裡一處。
+pub fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .and_then(|d| i64::try_from(d.as_millis()).ok())
+        .unwrap_or(0)
+}
+
+/// Unix epoch 至今的秒數。理由同 [`now_ms`]。
+pub fn now_secs() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .and_then(|d| i64::try_from(d.as_secs()).ok())
+        .unwrap_or(0)
+}
+
 /// 把一列 sqlite row 動態轉成 JSON object，**保留 DB 欄位順序**（serde_json preserve_order）。
 /// 用於 Express 端 `SELECT *`/`p.*` 直接 spread 整列的端點（/admin/posts、/admin/comments），
 /// 免枚舉欄位、不依賴記住的實體欄位順序。
@@ -24,25 +51,23 @@ pub fn row_to_json(row: &SqliteRow) -> Map<String, Value> {
 }
 
 fn column_to_value(row: &SqliteRow, idx: usize) -> Value {
-    let raw = match row.try_get_raw(idx) {
-        Ok(r) => r,
-        Err(_) => return Value::Null,
-    };
+    let Ok(raw) = row.try_get_raw(idx) else { return Value::Null };
     if raw.is_null() {
         return Value::Null;
     }
     // 依 value 的儲存類別取值。sqlite 只有 INTEGER/REAL/TEXT/BLOB/NULL。
     match raw.type_info().name() {
-        "INTEGER" | "BOOLEAN" => row.try_get::<i64, _>(idx).map(Value::from).unwrap_or(Value::Null),
+        "INTEGER" | "BOOLEAN" => row.try_get::<i64, _>(idx).map_or(Value::Null, Value::from),
         // REAL：整值輸出成整數（JS JSON.stringify(4.0)="4"，serde 對 f64 會印 "4.0"）
-        "REAL" => row.try_get::<f64, _>(idx).map(js_num_value).unwrap_or(Value::Null),
+        "REAL" => row.try_get::<f64, _>(idx).map_or(Value::Null, js_num_value),
         // TEXT / 其它一律當字串（posts/comments 無 BLOB）
-        _ => row.try_get::<String, _>(idx).map(Value::from).unwrap_or(Value::Null),
+        _ => row.try_get::<String, _>(idx).map_or(Value::Null, Value::from),
     }
 }
 
 /// f64 → JSON Value，整值輸出整數（對齊 JS number 序列化）。
 pub fn js_num_value(f: f64) -> Value {
+    #[allow(clippy::cast_possible_truncation, reason = "同一行的 guard 已保證整值且 |f| < 9e15")]
     if f.fract() == 0.0 && f.abs() < 9.0e15 { Value::from(f as i64) } else { Value::from(f) }
 }
 
@@ -105,7 +130,7 @@ pub fn bind_val<'q>(
                 q.bind(n.as_f64().unwrap_or(0.0))
             }
         }
-        Some(Value::Bool(b)) => q.bind(*b as i64),
+        Some(Value::Bool(b)) => q.bind(i64::from(*b)),
         Some(other) => q.bind(other.to_string()),
     }
 }
@@ -128,7 +153,7 @@ pub fn js_truthy(v: Option<&Value>) -> bool {
         Some(Value::Bool(b)) => *b,
         Some(Value::Number(n)) => n.as_f64().is_some_and(|f| f != 0.0 && !f.is_nan()),
         Some(Value::String(s)) => !s.is_empty(),
-        Some(Value::Array(_)) | Some(Value::Object(_)) => true,
+        Some(Value::Array(_) | Value::Object(_)) => true,
     }
 }
 
@@ -183,7 +208,7 @@ pub fn gen_slug(name: &str) -> String {
 /// `GROUP_CONCAT(t.name)` 字串切成標籤陣列；null/空 → 空陣列（對齊 `row.tags ? split : []`）。
 pub fn split_tags(tags: Option<&str>) -> Vec<String> {
     match tags {
-        Some(s) if !s.is_empty() => s.split(',').map(|x| x.to_string()).collect(),
+        Some(s) if !s.is_empty() => s.split(',').map(std::string::ToString::to_string).collect(),
         _ => vec![],
     }
 }
@@ -205,7 +230,9 @@ pub fn encode_uri_component(s: &str) -> String {
             | b'\''
             | b'('
             | b')' => out.push(*b as char),
-            _ => out.push_str(&format!("%{b:02X}")),
+            _ => {
+                let _ = write!(out, "%{b:02X}");
+            }
         }
     }
     out
@@ -222,7 +249,10 @@ pub fn js_normalize_numbers(v: &mut Value) {
                 && f.fract() == 0.0
                 && f.abs() < 9.0e15
             {
-                *v = Value::from(f as i64);
+                #[allow(clippy::cast_possible_truncation, reason = "上面的 guard 已保證整值且 |f| < 9e15")]
+                {
+                    *v = Value::from(f as i64);
+                }
             }
         }
         Value::Array(a) => a.iter_mut().for_each(js_normalize_numbers),
@@ -237,7 +267,7 @@ pub fn js_normalize_numbers(v: &mut Value) {
 /// 手刻的曆法算式最怕的就是這個：兩份會慢慢長得不一樣，而且錯了不會爆——
 /// 只會讓某個日期差一天。合併成一份之後，`date_tests` 那條「逐日對照 chrono
 /// 走完 1900–2200」同時罩得到兩邊的呼叫者。
-pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
+pub const fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let z = z + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);
@@ -245,7 +275,11 @@ pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let y = yoe + era * 400;
     let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
     let mp = (5 * doy + 2) / 153;
+    // Howard Hinnant 的 civil_from_days：doy ∈ 0..=365、mp ∈ 0..=11，所以 d ∈ 1..=31、
+    // m ∈ 1..=12——兩者都是演算法本身保證的值域，不是「應該不會超過」。
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "值域由演算法保證")]
     let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "值域由演算法保證")]
     let m = (if mp < 10 { mp + 3 } else { mp - 9 }) as u32;
     (if m <= 2 { y + 1 } else { y }, m, d)
 }
@@ -295,8 +329,8 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
     let yy = if mo <= 2 { y - 1 } else { y };
     let era = if yy >= 0 { yy } else { yy - 399 } / 400;
     let yoe = yy - era * 400;
-    let mp = if mo > 2 { mo as i64 - 3 } else { mo as i64 + 9 };
-    let doy = (153 * mp + 2) / 5 + d as i64 - 1;
+    let mp = if mo > 2 { i64::from(mo) - 3 } else { i64::from(mo) + 9 };
+    let doy = (153 * mp + 2) / 5 + i64::from(d) - 1;
     let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
     let days = era * 146_097 + doe - 719_468;
     // 1970-01-01 = Thu(4)；Sunday=0。
@@ -307,20 +341,13 @@ pub fn js_date_to_utc_string(created_at: Option<&str>) -> String {
     //     對 dow 的貢獻恆為 0 mod 7；而 `days` 只被 dow 用到。
     //   - `(days % 7 + 4) % 7` 與 `(days + 11) % 7` 同餘且正規化區間相同。
     // 不必為了讓分數好看而去寫測試——寫不出能分辨的輸入。
-    let dow = ((days % 7 + 4) % 7 + 7) % 7;
+    // 三重取模後值域是 0..=6，索引 DOW 不會越界也不會是負的
+    #[allow(clippy::cast_sign_loss, reason = "((x%7+4)%7+7)%7 的值域是 0..=6")]
+    let dow = (((days % 7 + 4) % 7 + 7) % 7) as usize;
     const DOW: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const MON: [&str; 12] =
         ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    format!(
-        "{}, {:02} {} {:04} {:02}:{:02}:{:02} GMT",
-        DOW[dow as usize],
-        d,
-        MON[(mo - 1) as usize],
-        y,
-        h,
-        mi,
-        se
-    )
+    format!("{}, {:02} {} {:04} {:02}:{:02}:{:02} GMT", DOW[dow], d, MON[(mo - 1) as usize], y, h, mi, se)
 }
 
 #[cfg(test)]
@@ -590,7 +617,7 @@ mod props {
         #[test]
         fn js_substring_prefix_idempotent(s in ".{0,200}", n in 0usize..80) {
             let once = js_substring_prefix(&s, n);
-            proptest::prop_assert_eq!(js_substring_prefix(&once, n), once.clone());
+            proptest::prop_assert_eq!(js_substring_prefix(&once, n), once);
         }
 
         /// slug 只會留下 ASCII 英數、`_`、`-`、以及 CJK 區段（對齊 JS 的 `[^\w\-一-龥]` 過濾）。
@@ -607,7 +634,7 @@ mod props {
         #[test]
         fn gen_slug_is_lowercase(name in ".{0,120}") {
             let s = gen_slug(&name);
-            proptest::prop_assert_eq!(s.to_lowercase(), s.clone());
+            proptest::prop_assert_eq!(s.to_lowercase(), s);
         }
     }
 }
