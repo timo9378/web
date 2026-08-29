@@ -1,14 +1,32 @@
 # clippy 的「參數」——lint 的**開關**在 Cargo.toml 的 [workspace.lints]，這裡放的是
 # 那些 lint 的設定值。兩個檔案要一起看。
 #
-# ⚠️ 這幾行是 `unwrap_used = "deny"` 能成立的前提。
+# ── 測試裡的放行 ──────────────────────────────────────────────────────
 #
-# 常見的誤解是「unwrap 在測試裡合理，所以只設 warn 就好」——那在這個 repo 不成立：
-# CI 與 pre-commit 都是 `cargo clippy -- -D warnings`，warn 在合流那一刻等同 deny，
-# 測試裡的 577 個 .unwrap() 一樣會擋人。真正該用的機制是下面這幾個開關：它們只放行
-# `#[cfg(test)]` 與 tests/ 裡的用法，正式碼照擋。
+# 常見的誤解是「unwrap 在測試裡合理，所以那條只設 warn 就好」——在這個 repo 不成立：
+# CI 與 pre-commit 都是 `cargo clippy -- -D warnings`，**warn 在合流那一刻等同 deny**，
+# 測試裡的 577 個 `.unwrap()` 一樣會擋人。下面這幾個開關才是對的機制。
+#
+# ⚠️ 但它們涵蓋的範圍比名字看起來小：認的是 `#[cfg(test)]` 與 `#[test]`，
+# **`tests/` 底下非 `#[test]` 的 setup helper 兩者都不是**（`tests/common/mod.rs`
+# 那種）。所以 `unwrap_used` 不寫在 `[workspace.lints]`，而是寫在三個 crate root 的
+# `#![deny(...)]` —— 實測放進 `[lints]` 會剩 20 個擋在 5 個測試檔裡。
 allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 allow-panic-in-tests = true
 allow-dbg-in-tests = true
 allow-print-in-tests = true
+
+# ── 禁用的型別（`disallowed_types` 屬於 style 組，已含在 all，不用另外開 lint）──
+#
+# 「同步鎖一律 parking_lot、跨 await 才用 tokio」原本只寫在 `state.rs` 的註解裡，
+# 而註解擋不住任何人。加這幾行是把約定變成編譯期規則。加的當下現存 0 違規
+# （parking_lot::Mutex 11 處、tokio::sync::Mutex 18 處、std 0 處）。
+#
+# 為什麼是 parking_lot：沒有 poison ceremony（不必每次 `.lock().unwrap()`）、
+# guard 更小、無 poisoning 語意。要跨 await 持有就不能用它——那種情況用
+# tokio::sync::Mutex，這條規則不擋。
+disallowed-types = [
+  { path = "std::sync::Mutex", reason = "同步鎖用 parking_lot::Mutex；跨 await 用 tokio::sync::Mutex" },
+  { path = "std::sync::RwLock", reason = "同步鎖用 parking_lot::RwLock；跨 await 用 tokio::sync::RwLock" },
+]

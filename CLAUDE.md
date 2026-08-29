@@ -445,8 +445,20 @@ cargo llvm-cov nextest --locked --fail-under-regions 78   # 門檻以 ci.yml 為
 `LazyLock` 裡的 `Regex::new(字面值)`，已換成帶訊息的 expect。
 
 ⚠️ `clippy.toml`（repo 根目錄）放的是 lint 的**設定值**，開關在 `Cargo.toml`。兩個檔案
-要一起看。它現在只有那五個 `allow-*-in-tests`，而那正是 `unwrap_used` 能開起來的前提：
-CI 是 `-D warnings`，**warn 在合流那一刻等同 deny**，所以「只設 warn 讓測試能用」是行不通的。
+要一起看。裡面有兩區：五個 `allow-*-in-tests`（`unwrap_used` 能開起來的前提——CI 是
+`-D warnings`，**warn 在合流那一刻等同 deny**，所以「只設 warn 讓測試能用」行不通），
+以及 `disallowed-types`。
+
+### 鎖的選擇是編譯期規則，不是約定
+
+`clippy.toml` 的 `disallowed-types` 擋掉 `std::sync::Mutex` / `RwLock`。**同步鎖一律
+`parking_lot`，要跨 `await` 持有才用 `tokio::sync`**（後者不擋）。
+
+現況：`parking_lot::Mutex` 11 處、`tokio::sync::Mutex` 18 處、`std::sync` 0 處、
+`.lock().unwrap()` 0 次。`state.rs` 開頭那句「短臨界區、不跨 await 持有」的不變條件現在
+有東西守著了——在這之前它只是一行註解。
+
+（`disallowed_types` 屬於 `style` 組、已含在 `all` 裡，所以只要寫設定值、不用另外開 lint。）
 
 ⚠️ 那九條 `allow` 每一條都標了導入當下的數量與理由，**要拿掉之前先讀理由**。最大宗是
 `doc_markdown`（468 個），它要求中文註解裡的 Express / SQLite 這些字加反引號。
