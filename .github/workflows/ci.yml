@@ -182,7 +182,7 @@ jobs:
           # 把 repo 推到 10.46 / 10 GB → LRU 開始淘汰 → pnpm store 被清掉 →
           # e2e 的 `pnpm install` 從 7s 變 1m41s。省的不是空間，是別人的命中率。
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - uses: taiki-e/install-action@7f4eb899022d8fe70b20c4f3de697aa85c309026 # v2
+      - uses: taiki-e/install-action@b6ff580856c41316412a0b9b60540fbc6f8c82cc # v2
         with:
           tool: cargo-nextest,cargo-audit,cargo-llvm-cov,cargo-shear,typos-cli
       # 未使用／放錯區段的相依，以及沒被連進模組樹的 .rs 檔。
@@ -830,7 +830,7 @@ jobs:
           persist-credentials: false
       # actionlint 不在 taiki-e/install-action 的清單裡，用維護中的 wrapper action。
       - uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
-      - uses: taiki-e/install-action@7f4eb899022d8fe70b20c4f3de697aa85c309026 # v2
+      - uses: taiki-e/install-action@b6ff580856c41316412a0b9b60540fbc6f8c82cc # v2
         with:
           tool: zizmor
       - name: zizmor
