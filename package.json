@@ -79,7 +79,7 @@
     "i18next": "^26.4.0",
     "jotai": "^2.20.3",
     "katex": "^0.18.4",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.33.0",
     "masonic": "^4.1.0",
     "monaco-editor": "0.55.1",
     "monaco-vim": "^0.4.4",
