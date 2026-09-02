@@ -507,7 +507,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       # 明確裝一份 Chrome 而不是賭 runner 映像自帶。ubuntu-latest 目前確實有，
       # 但那是映像的實作細節，哪天拿掉就會變成「lighthouse 突然找不到瀏覽器」。
-      - uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2.1.2
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         id: chrome
         with:
           chrome-version: stable
