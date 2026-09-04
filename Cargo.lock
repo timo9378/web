@@ -1228,7 +1228,7 @@ dependencies = [
  "linebender_resource_handle",
  "memmap2",
  "parlance",
- "read-fonts 0.41.0",
+ "read-fonts",
  "smallvec",
 ]
 
@@ -1479,7 +1479,7 @@ checksum = "c03d949a14aa089bbb282f7dd76a498a7f684428e4257202efc119ec010376f9"
 dependencies = [
  "bitflags",
  "bytemuck",
- "read-fonts 0.41.0",
+ "read-fonts",
  "smallvec",
 ]
 
@@ -2128,7 +2128,7 @@ dependencies = [
  "tikv-jemallocator",
  "tokio",
  "tower",
- "tower-http 0.7.0",
+ "tower-http 0.7.1",
  "tracing",
  "tracing-subscriber",
  "utoipa",
@@ -2843,7 +2843,7 @@ dependencies = [
  "linebender_resource_handle",
  "parlance",
  "parley_data",
- "skrifa 0.44.0",
+ "skrifa",
 ]
 
 [[package]]
@@ -3494,17 +3494,6 @@ checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
-]
-
-[[package]]
-name = "read-fonts"
-version = "0.40.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "487889119a5f19ff7c0a20637196bdc76b9f54ebec17e3588b5d75e4999f8773"
-dependencies = [
- "bytemuck",
- "font-types",
- "once_cell",
 ]
 
 [[package]]
@@ -4305,22 +4294,12 @@ checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
 
 [[package]]
 name = "skrifa"
-version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cbe997d0f2480442d727488fbe2150779114cbe480ecdbadef58b33e0318ffb"
-dependencies = [
- "bytemuck",
- "read-fonts 0.40.2",
-]
-
-[[package]]
-name = "skrifa"
 version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "819ab7d62b1d3e72d9d9dea5650bac30424f9111364bb94928dbf5ecad1baa68"
 dependencies = [
  "bytemuck",
- "read-fonts 0.41.0",
+ "read-fonts",
 ]
 
 [[package]]
@@ -4711,20 +4690,20 @@ dependencies = [
 
 [[package]]
 name = "takumi"
-version = "2.12.0"
+version = "2.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "828c2ea25e68fa666e4adc9f388fd0202234ddf0b711349d0c51cd76947315f2"
+checksum = "412cbcb2117328497675b25b755cb731f19ee42c945aad11a83217e78e86990b"
 dependencies = [
- "takumi-core",
+ "takumi-core 0.23.1",
  "takumi-html",
  "takumi-raster",
 ]
 
 [[package]]
 name = "takumi-core"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20b14f8de11e2149a54ca37c771e6a4029339575245c9fa7f24cddff725e80ba"
+checksum = "4fe809d3e520f92f59f16203f44d18d35d5feab23caf83339620596b2fe2f247"
 dependencies = [
  "bitflags",
  "bytemuck",
@@ -4732,6 +4711,8 @@ dependencies = [
  "cssparser",
  "data-url",
  "gif",
+ "harfrust",
+ "icu_properties",
  "image",
  "image-webp",
  "imagesize",
@@ -4750,7 +4731,7 @@ dependencies = [
  "serde_bytes",
  "simplecss",
  "siphasher",
- "skrifa 0.43.2",
+ "skrifa",
  "smallvec",
  "strict-num",
  "svgtypes",
@@ -4759,28 +4740,75 @@ dependencies = [
  "tiny-skia",
  "tiny-skia-path",
  "typed-builder",
+ "unicode-bidi",
+ "wuff",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "takumi-core"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "766e308c98fe882c1ad04766563d5a819c718cea84dff9666632aba773a1ffd8"
+dependencies = [
+ "bitflags",
+ "bytemuck",
+ "color",
+ "cssparser",
+ "data-url",
+ "gif",
+ "harfrust",
+ "icu_properties",
+ "image",
+ "image-webp",
+ "imagesize",
+ "kurbo",
+ "libwebp-sys 0.14.4",
+ "log",
+ "parley",
+ "pastey 0.2.3",
+ "phf",
+ "png",
+ "precomputed-hash",
+ "quick_cache",
+ "roxmltree",
+ "selectors",
+ "serde",
+ "serde_bytes",
+ "simplecss",
+ "siphasher",
+ "skrifa",
+ "smallvec",
+ "strict-num",
+ "svgtypes",
+ "taffy",
+ "thiserror 2.0.20",
+ "tiny-skia",
+ "tiny-skia-path",
+ "typed-builder",
+ "unicode-bidi",
  "wuff",
  "xxhash-rust",
 ]
 
 [[package]]
 name = "takumi-html"
-version = "0.3.1"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db96ba1673160c1f8f61d3d418361e388cfb3c93a997da107a4d602e6a98c6d7"
+checksum = "25115ad2a9e2a8f05f058a7b4e4b49b19667d461646660f70d483269504d7fd7"
 dependencies = [
  "html5ever",
  "markup5ever_rcdom",
- "takumi-core",
+ "takumi-core 0.25.0",
  "thiserror 2.0.20",
  "typed-builder",
 ]
 
 [[package]]
 name = "takumi-raster"
-version = "0.4.21"
+version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00f4f67ee5b12e9c3cc3710c7be51931dcba336dd79775f818f2f9789f68dd9b"
+checksum = "c6c76016c8f1d8016524f4813ec55e79485b5cbbdccb719601a531cfbabea08d"
 dependencies = [
  "bytemuck",
  "color",
@@ -4791,9 +4819,9 @@ dependencies = [
  "png",
  "rayon",
  "serde",
- "skrifa 0.43.2",
+ "skrifa",
  "smallvec",
- "takumi-core",
+ "takumi-core 0.23.1",
  "tiny-skia",
  "typed-builder",
  "xxhash-rust",
@@ -5090,9 +5118,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b11f75e912b0c2be01b63d8cf8057b8c3f97cf34abb3d431a3a4c8675498e233"
+checksum = "08a05a66a4fdd61cbbe0a1d755ffe0ca6aba159dd4820936a0ff8a8278245b9c"
 dependencies = [
  "bitflags",
  "bytes",
