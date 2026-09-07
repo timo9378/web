@@ -6,7 +6,7 @@
 .mega-menu-bar {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -21,8 +21,8 @@
 .mega-menu-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
+  gap: var(--space-1-5);
+  padding: 7px var(--space-3-5);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -126,8 +126,8 @@
 .mega-menu-panel {
   display: grid;
   grid-template-columns: 180px 280px;
-  gap: 16px;
-  padding: 14px 18px;
+  gap: var(--space-4);
+  padding: var(--space-3-5) var(--space-4-5);
   /* 文章頁面背景大字會穿透 panel — 加重底色 + 推 blur 到 64px 把後面的內容
      完全模糊掉，但保留一點透明感讓 panel 不會像浮一塊純黑卡片 */
   background: rgba(15, 15, 22, 0.82);
@@ -144,7 +144,7 @@
 /* 說明文字拔掉後欄寬收緊，三欄等高對齊 */
 .mega-menu-panel--compact {
   grid-template-columns: 200px 150px 150px;
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
 }
 /* 更多 menu：2 欄等寬連結 */
 .mega-menu-panel--balanced {
@@ -157,7 +157,7 @@
 .mega-menu-column {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
   grid-column: span var(--span, 1);
   min-width: 0; /* 允許收縮以套用 grid 欄寬，不被內容撐開 */
   overflow: hidden; /* 內容超出 grid 欄寬時 clip，避免溢出 panel */
@@ -165,7 +165,7 @@
 .mega-menu-column--accent {
   background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.08), rgba(var(--brand-rgb), 0.02));
   border-radius: 12px;
-  padding: 16px;
+  padding: var(--space-4);
   margin: -4px;
 }
 
@@ -175,21 +175,21 @@
   text-transform: uppercase;
   color: rgba(161, 161, 170, 0.7);
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .mega-menu-column-body {
   display: flex;
   flex-direction: column;
   flex: 1; /* 撐滿欄高，讓 profile 欄能上下分佈對齊其他欄 */
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 /* ───── Link item (commonly used inside columns) ───── */
 .mega-menu-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 12px;
+  gap: var(--space-3);
+  padding: 9px var(--space-3);
   border-radius: 10px;
   text-decoration: none;
   color: rgba(228, 228, 231, 0.85);
@@ -202,7 +202,7 @@
 
 /* compact 變體：只有圖示 + 標題，無描述行 */
 .mega-menu-link--compact {
-  padding: 7px 10px;
+  padding: 7px var(--space-2-5);
 }
 .mega-menu-link-icon {
   display: inline-flex;
@@ -309,12 +309,12 @@
 .mega-menu-profile {
   display: flex;
   flex-direction: column;
-  padding: 2px;
+  padding: var(--space-0-5);
   min-width: 200px;
   /* 上段（頭像+統計）聚在頂部，社群推到底部對齊右欄
      （space-between 會讓統計懸在垂直正中間，看起來卡卡的） */
   height: 100%;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 /* 統計單行版 — 緊貼在頭像列下方的安靜 meta */
@@ -328,8 +328,8 @@
 
 .mega-menu-socials {
   display: flex;
-  gap: 6px;
-  margin-top: 4px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1);
 }
 
 .mega-menu-profile .mega-menu-socials {
@@ -337,7 +337,7 @@
 }
 
 .mega-menu-stats-dot {
-  margin: 0 6px;
+  margin: 0 var(--space-1-5);
   color: var(--white-22);
 }
 
@@ -350,13 +350,13 @@
 .mega-menu-profile-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 .mega-menu-profile-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .mega-menu-profile-avatar {
@@ -387,7 +387,7 @@
 .mega-menu-profile-status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   font-size: 0.7rem;
   color: rgba(74, 222, 128, 0.85);
 }
@@ -402,9 +402,9 @@
 
 .mega-menu-stats {
   display: flex;
-  gap: 10px;
-  margin: 4px 0 10px;
-  padding: 8px 0;
+  gap: var(--space-2-5);
+  margin: var(--space-1) 0 var(--space-2-5);
+  padding: var(--space-2) 0;
   border-top: 1px solid var(--white-05);
   border-bottom: 1px solid var(--white-05);
 }
@@ -440,8 +440,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   text-decoration: none;
   color: rgba(212, 212, 216, 0.82);
@@ -466,14 +466,14 @@
 .mega-menu-posts {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   /* 寬度交給 grid track 控制（200px / 320px），這裡只 100% 跟隨 */
   width: 100%;
   min-width: 0;
 }
 .mega-menu-post {
   display: block;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   border-radius: 8px;
   text-decoration: none;
   color: inherit;
@@ -487,7 +487,7 @@
   color: rgba(244, 244, 245, 0.95);
   font-weight: 500;
   line-height: 1.4;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -500,14 +500,14 @@
   color: rgba(161, 161, 170, 0.55);
 }
 .mega-menu-post-meta-dot {
-  margin: 0 6px;
+  margin: 0 var(--space-1-5);
 }
 .mega-menu-view-all {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-  padding: 4px 0;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-1) 0;
   font-size: 0.78rem;
   color: rgba(161, 161, 170, 0.7);
   text-decoration: none;
@@ -527,7 +527,7 @@
     min-width: 0;
     grid-auto-flow: row;
     grid-auto-columns: auto;
-    padding: 14px;
+    padding: var(--space-3-5);
   }
 }
 

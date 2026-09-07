@@ -6,7 +6,7 @@
 
 @utility container {
   margin-inline: auto;
-  padding-inline: 2rem;
+  padding-inline: var(--space-8);
   @media (width >= --theme(--breakpoint-sm)) {
     max-width: none;
   }
@@ -53,6 +53,49 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* ── 間距尺 ────────────────────────────────────────────────────────────
+     在這之前**這個專案沒有間距尺**：margin/padding/gap 全站用了 87 種不同的
+     長度值、1594 次，沒有任何一次走 token。沒有尺的後果不是「值很多」，是
+     「需要一個間距時沒有標準答案」，於是每次都現編一個——實測有 0.15rem /
+     0.35rem / 0.45rem / 0.55rem 這種不屬於任何體系的即興值。
+
+     命名對齊 Tailwind（space-N = N × 0.25rem），數字取自實際用量：資料呈現的
+     是一把 **2px 格線**（4/6/8/10/12/14/16/18/20/22/24 都是熱門值），24px 之後
+     才轉成 4px、8px 步進。
+
+     ⚠️ 用 `--space-*` 而不是 `--spacing-*`：後者是 Tailwind v4 會拿去生 utility
+     的 namespace，佔用它會改變 `p-4` / `m-4` 這些 class 產出什麼，而後台與
+     shadcn 那層正在用。`--space-*` 不是 v4 的 namespace，只會變成單純的
+     CSS 自訂屬性，不影響任何 utility。
+
+     ⚠️ 除了 `--space-px`（髮絲線，刻意不隨字級縮放）之外一律用 rem，跟
+     Tailwind 的尺同單位。原本 px 與 rem 兩種寫法**混在同一批尺寸上**
+     （4/8/12/16/20/24/28/32/40/48/56/64/80/88/96 這 15 個尺寸兩種都有人寫），
+     統一成 rem 的副作用是那些原本寫 px 的地方現在會跟著使用者的基準字級縮放
+     ——那是修正不是退步。預設字級下計算值完全相同，所以 computed-style 全綠。 */
+  --space-px: 1px;
+  --space-0-5: 0.125rem; /* 2px */
+  --space-1: 0.25rem; /* 4px */
+  --space-1-5: 0.375rem; /* 6px */
+  --space-2: 0.5rem; /* 8px */
+  --space-2-5: 0.625rem; /* 10px */
+  --space-3: 0.75rem; /* 12px */
+  --space-3-5: 0.875rem; /* 14px */
+  --space-4: 1rem; /* 16px */
+  --space-4-5: 1.125rem; /* 18px */
+  --space-5: 1.25rem; /* 20px */
+  --space-5-5: 1.375rem; /* 22px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 1.75rem; /* 28px */
+  --space-8: 2rem; /* 32px */
+  --space-9: 2.25rem; /* 36px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-14: 3.5rem; /* 56px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
 
   /* 把 text-* 的 line-height 從 v4 的「無單位比例」改回 v3 的絕對值。
      v4 預設是 `calc(1 / 0.75)` 這種比例，乘上元素自己的 font-size；只要字級沒被別的
@@ -501,15 +544,15 @@ body::after {
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 96px 32px;
+  padding: var(--space-24) var(--space-8);
   color: var(--white-85);
 }
 
 .home-section-eyebrow {
   display: flex;
   align-items: baseline;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-10);
 }
 
 /* eyebrow 前的紫色 accent 短線 — 增加 wayfinding 與精緻度 */
@@ -541,7 +584,7 @@ body::after {
   font-size: clamp(1.85rem, 3.4vw, 2.8rem);
   font-weight: 700;
   line-height: 1.18;
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--space-6);
   background: linear-gradient(135deg, #fff 0%, #c7b8ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -562,10 +605,10 @@ body::after {
 
 @media (max-width: 640px) {
   .home-section {
-    padding: 64px 20px;
+    padding: var(--space-16) var(--space-5);
   }
   .home-section-eyebrow {
-    margin-bottom: 1.75rem;
+    margin-bottom: var(--space-7);
   }
 }
 

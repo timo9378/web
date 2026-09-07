@@ -11,7 +11,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.42rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem var(--space-3);
   border: 1px solid var(--white-10);
   border-radius: 9999px;
   background: var(--white-02);

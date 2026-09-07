@@ -39,7 +39,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 2rem;
+  padding: var(--space-5) var(--space-8);
 }
 
 .zg-brand {
@@ -68,8 +68,8 @@
 .zg-close-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 8px 18px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4-5);
   background: var(--white-04);
   border: 1px solid var(--white-10);
   border-radius: 10px;
@@ -94,8 +94,8 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 8px 20px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
   background: rgba(6, 5, 14, 0.6);
   backdrop-filter: blur(12px);
   border: 1px solid var(--white-06);
@@ -125,7 +125,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid var(--white-08);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: var(--space-6);
   overflow-y: auto;
   animation: zg-slide-in 0.35s ease-out;
 }
@@ -177,7 +177,7 @@
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid var(--white-06);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .zg-detail-title {
@@ -192,7 +192,7 @@
   font-size: 0.85rem;
   color: var(--brand-light);
   font-weight: 500;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .zg-detail-desc {
@@ -201,13 +201,13 @@
   line-height: 1.7;
   max-height: 160px;
   overflow-y: auto;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .zg-detail-meta {
   display: flex;
-  gap: 1rem;
-  padding-top: 0.75rem;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--white-06);
   font-size: 0.75rem;
   color: var(--white-30);
@@ -215,7 +215,7 @@
 
 /* ── Book hover label (inside 3D scene) ── */
 .book-label {
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   background: rgba(6, 5, 14, 0.9);
   border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 8px;
@@ -232,7 +232,7 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .zg-top-bar {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .zg-brand-title {
@@ -240,8 +240,8 @@
   }
 
   .zg-hints {
-    gap: 0.5rem;
-    padding: 6px 14px;
+    gap: var(--space-2);
+    padding: var(--space-1-5) var(--space-3-5);
     font-size: 0.65rem;
     bottom: 1rem;
   }

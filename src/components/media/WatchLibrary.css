@@ -7,7 +7,7 @@
   z-index: 2;
   min-height: 100vh;
   background: transparent;
-  padding: 120px 24px 120px;
+  padding: 120px var(--space-6) 120px;
 }
 
 .wl-scrim {
@@ -27,7 +27,7 @@
 
 /* ── header ── */
 .wl-header {
-  margin-bottom: 2.5rem;
+  margin-bottom: var(--space-10);
 }
 
 .wl-back {
@@ -36,7 +36,7 @@
   color: rgba(216, 180, 254, 0.7);
   text-decoration: none;
   border-bottom: 1px dashed transparent;
-  margin-bottom: 18px;
+  margin-bottom: var(--space-4-5);
   transition:
     color 0.2s ease,
     border-color 0.2s ease;
@@ -51,7 +51,7 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   color: rgba(244, 244, 245, 0.98);
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2-5);
 }
 
 .wl-subtitle {
@@ -63,8 +63,8 @@
 /* ── tabs ── */
 .wl-tabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-4-5);
   border-bottom: 1px solid var(--white-08);
 }
 
@@ -72,7 +72,7 @@
   position: relative;
   background: transparent;
   border: none;
-  padding: 12px 4px 14px;
+  padding: var(--space-3) var(--space-1) var(--space-3-5);
   cursor: pointer;
   color: rgba(229, 229, 245, 0.5);
   font-size: 0.96rem;
@@ -80,12 +80,12 @@
   letter-spacing: 0.04em;
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-2);
   transition: color 0.2s ease;
 }
 
 .wl-tab + .wl-tab {
-  margin-left: 22px;
+  margin-left: var(--space-5-5);
 }
 
 .wl-tab:hover {
@@ -120,8 +120,8 @@
 /* ── controls ── */
 .wl-controls {
   display: flex;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-7);
   flex-wrap: wrap;
 }
 
@@ -130,8 +130,8 @@
   min-width: 240px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
+  gap: var(--space-2-5);
+  padding: 0 var(--space-3-5);
   background: var(--white-04);
   border: 1px solid var(--white-08);
   border-radius: 10px;
@@ -151,7 +151,7 @@
   flex: 1;
   background: transparent;
   border: none;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   color: rgba(244, 244, 245, 0.95);
   font-size: 0.95rem;
   outline: none;
@@ -169,8 +169,8 @@
 .wl-sort-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: var(--space-2-5);
+  padding: var(--space-2-5) var(--space-3-5);
   background: var(--white-04);
   border: 1px solid var(--white-08);
   border-radius: 10px;
@@ -209,7 +209,7 @@
   z-index: 50;
   list-style: none;
   margin: 0;
-  padding: 6px;
+  padding: var(--space-1-5);
   min-width: 160px;
   background: rgba(26, 22, 38, 0.96);
   backdrop-filter: blur(12px);
@@ -226,7 +226,7 @@
 .wl-sort-item {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
   text-align: left;
@@ -253,7 +253,7 @@
 .wl-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .wl-card {
@@ -274,7 +274,7 @@
   overflow: hidden;
   background: var(--white-04);
   box-shadow: 0 12px 28px var(--black-45);
-  margin-bottom: 10px;
+  margin-bottom: var(--space-2-5);
   transition: box-shadow 0.3s ease;
 }
 
@@ -299,14 +299,14 @@
 }
 
 .wl-card-meta {
-  padding: 0 2px;
+  padding: 0 var(--space-0-5);
 }
 
 .wl-card-title {
   font-size: 0.88rem;
   font-weight: 500;
   color: rgba(244, 244, 245, 0.95);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -316,7 +316,7 @@
 
 .wl-card-sub {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   font-size: 0.76rem;
   color: rgba(229, 229, 245, 0.45);
@@ -334,7 +334,7 @@
   text-align: center;
   font-size: 0.95rem;
   color: rgba(229, 229, 245, 0.5);
-  padding: 4rem 0;
+  padding: var(--space-16) 0;
 }
 
 .wl-info--err {
@@ -344,11 +344,11 @@
 /* ── RWD ── */
 @media (max-width: 720px) {
   .wl-page {
-    padding: 100px 16px 90px;
+    padding: 100px var(--space-4) 90px;
   }
   .wl-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 16px;
+    gap: var(--space-4);
   }
   .wl-card-title {
     font-size: 0.82rem;
@@ -357,7 +357,7 @@
     font-size: 0.72rem;
   }
   .wl-tab {
-    padding: 10px 12px;
+    padding: var(--space-2-5) var(--space-3);
     font-size: 0.9rem;
   }
 }

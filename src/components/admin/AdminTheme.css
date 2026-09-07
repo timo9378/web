@@ -360,5 +360,5 @@ body.zen-mode-active .admin-layout > div > main form > aside {
 body.zen-mode-active .admin-layout > div > main form > main {
   max-width: 920px;
   margin: 0 auto;
-  padding: 2.5rem 2rem;
+  padding: var(--space-10) var(--space-8);
 }

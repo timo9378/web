@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   min-height: 84vh;
-  padding: 96px 1.5rem 64px; /* 上方留 fixed header 的位置 */
+  padding: var(--space-24) var(--space-6) var(--space-16); /* 上方留 fixed header 的位置 */
   overflow: hidden; /* 軌跡刻意溢出，不要讓它撐出橫向捲軸 */
 }
 
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.25rem, 1vw, 0.75rem);
+  gap: clamp(var(--space-1), 1vw, var(--space-3));
   line-height: 1;
 }
 
@@ -136,7 +136,7 @@
 
 /* ── 文字 ── */
 .nf-title {
-  margin: 1.5rem 0 0;
+  margin: var(--space-6) 0 0;
   font-size: clamp(1.35rem, 3vw, 1.9rem);
   font-weight: 700;
   line-height: 1.45;
@@ -164,7 +164,7 @@
   align-items: baseline;
   justify-content: center;
   gap: 0.15rem 0.6rem;
-  margin: 1.5rem 0 0;
+  margin: var(--space-6) 0 0;
   font-size: 0.82rem;
   line-height: 1.9;
 }
@@ -188,8 +188,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem 1.5rem;
-  margin-top: 2rem;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-8);
 }
 
 /* ⚠ 這是 <button>，而 index.css 的 `@layer base` 有一條全站的
@@ -202,7 +202,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.72rem 1.5rem;
+  padding: 0.72rem var(--space-6);
   border: 0;
   border-radius: 999px;
   /* ⚠ 比站上主色 `#7f5af0` 深一階，這是被 a11y 守門逼出來的：

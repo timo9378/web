@@ -44,7 +44,7 @@
 .link-card-body {
   flex: 1;
   min-width: 0;
-  padding: 1rem 1.2rem;
+  padding: var(--space-4) 1.2rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -54,7 +54,7 @@
 .link-card-site {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--white-70);
@@ -117,7 +117,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 1rem;
+  padding: 0.6rem var(--space-4);
   font-size: 0.82rem;
   color: var(--white-60);
   text-decoration: none;
@@ -141,7 +141,7 @@
   font-size: 0.85rem;
   color: var(--post-muted);
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .link-card-skeleton .link-card-body {
   width: 100%;

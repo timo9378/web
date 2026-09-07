@@ -38,13 +38,13 @@
   z-index: 2;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 90px 40px 60px;
+  padding: 90px var(--space-10) 60px;
 }
 
 /* ── Hero Header (與 Blog 一致風格) ── */
 .music-hero {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: var(--space-9);
 }
 
 .music-hero-title {
@@ -53,9 +53,9 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .music-title-gradient {
@@ -85,7 +85,7 @@
    ══════════════════════════════════════ */
 .now-playing-hero {
   position: relative;
-  margin-bottom: 36px;
+  margin-bottom: var(--space-9);
   border-radius: 20px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
@@ -115,8 +115,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 28px 32px;
+  gap: var(--space-7);
+  padding: var(--space-7) var(--space-8);
 }
 
 .np-cover-area {
@@ -208,11 +208,11 @@
 .np-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--brand-light);
-  margin-bottom: 10px;
+  margin-bottom: var(--space-2-5);
   letter-spacing: 0.04em;
 }
 
@@ -244,7 +244,7 @@
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
+  margin: 0 0 var(--space-1) 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -253,7 +253,7 @@
 .np-artist {
   font-size: 1rem;
   color: var(--text-secondary);
-  margin: 0 0 2px 0;
+  margin: 0 0 var(--space-0-5) 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -262,7 +262,7 @@
 .np-album {
   font-size: 0.85rem;
   color: var(--text-tertiary);
-  margin: 0 0 12px 0;
+  margin: 0 0 var(--space-3) 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -270,7 +270,7 @@
 
 /* Progress Bar */
 .np-progress-area {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .np-progress-bar {
@@ -279,7 +279,7 @@
   background: var(--white-10);
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .np-progress-fill {
@@ -307,9 +307,9 @@
 .np-spotify-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 7px 16px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-2);
+  padding: 7px var(--space-4);
   border-radius: 20px;
   border: 1px solid rgba(29, 185, 84, 0.3);
   background: rgba(29, 185, 84, 0.1);
@@ -331,14 +331,14 @@
    ══════════════════════════════════════ */
 .music-tabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 28px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-7);
   flex-wrap: wrap;
 }
 
 .music-tab-btn {
   position: relative;
-  padding: 7px 18px;
+  padding: 7px var(--space-4-5);
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -384,8 +384,8 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--white-70);
-  margin: 0 0 20px 0;
-  padding-bottom: 10px;
+  margin: 0 0 var(--space-5) 0;
+  padding-bottom: var(--space-2-5);
   border-bottom: 1px solid var(--white-06);
   letter-spacing: 0.02em;
 }
@@ -401,8 +401,8 @@
 .track-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
+  gap: var(--space-3-5);
+  padding: var(--space-2-5) var(--space-3);
   border-radius: 8px;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -420,8 +420,8 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   border-bottom: 1px solid var(--white-06);
-  padding-bottom: 8px;
-  margin-bottom: 4px;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .tr-num {
@@ -453,7 +453,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .tr-name {
@@ -478,7 +478,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .tr-no-feat {
@@ -524,7 +524,7 @@
 .feat-bar-wrapper {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .feat-label {
@@ -565,8 +565,8 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 24px;
-  padding: 40px 0;
+  gap: var(--space-6);
+  padding: var(--space-10) 0;
   min-height: 300px;
 }
 
@@ -613,7 +613,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--brand-light);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   letter-spacing: 0.05em;
 }
 
@@ -623,14 +623,14 @@
   color: var(--text-primary);
   text-align: center;
   text-transform: capitalize;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   line-height: 1.3;
 }
 
 .bubble-count {
   font-size: 0.7rem;
   color: var(--text-tertiary);
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 @keyframes float {
@@ -652,8 +652,8 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
 .yearly-header-row .section-heading {
@@ -664,11 +664,11 @@
 
 .time-range-pills {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .range-pill {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -698,18 +698,18 @@
 .analytics-subtitle {
   color: var(--text-tertiary);
   font-size: 0.85rem;
-  margin: -0.5rem 0 1.25rem;
+  margin: -0.5rem 0 var(--space-5);
 }
 
 .analytics-dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .decade-chart {
-  margin-top: 2rem;
-  padding: 1.5rem;
+  margin-top: var(--space-8);
+  padding: var(--space-6);
   border-radius: 16px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
@@ -721,7 +721,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--white-85);
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-4);
 }
 
 .decade-bars {
@@ -734,7 +734,7 @@
   display: grid;
   grid-template-columns: 60px 1fr 32px;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .decade-label {
@@ -768,7 +768,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 16px;
+  padding: var(--space-6) var(--space-4);
   border-radius: 16px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
@@ -789,7 +789,7 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--white-70);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-0-5);
 }
 
 .analytic-sublabel {
@@ -797,7 +797,7 @@
   color: var(--text-tertiary);
   font-family: "JetBrains Mono", "Courier New", monospace;
   letter-spacing: 0.05em;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 /* Gauge Ring */
@@ -841,18 +841,18 @@
 .gauge-percent {
   font-size: 0.7rem;
   color: var(--text-tertiary);
-  margin-left: 1px;
+  margin-left: var(--space-px);
 }
 
 /* Tempo Card */
 .analytic-tempo .analytic-sublabel {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .tempo-value {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .tempo-number {
@@ -875,7 +875,7 @@
    ══════════════════════════════════════ */
 .music-error-box {
   text-align: center;
-  padding: 2rem;
+  padding: var(--space-8);
   color: var(--text-secondary);
   font-size: 0.9rem;
   border: 1px solid rgba(239, 68, 68, 0.2);
@@ -885,34 +885,34 @@
 
 .music-no-data {
   text-align: center;
-  padding: 3rem;
+  padding: var(--space-12);
   color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
 .config-hint {
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
   text-align: left;
   background: var(--white-03);
-  padding: 1.5rem;
+  padding: var(--space-6);
   border-radius: 8px;
   border: 1px solid var(--glass-border);
 }
 
 .config-hint p {
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   color: var(--white-80);
 }
 
 .config-hint ol {
-  margin-left: 1.5rem;
+  margin-left: var(--space-6);
   line-height: 1.8;
 }
 
 .config-hint code {
   background: rgba(var(--brand-rgb), 0.15);
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   border-radius: 4px;
   font-family: "JetBrains Mono", "Courier New", monospace;
   color: var(--brand-light);
@@ -944,7 +944,7 @@
 
 @media (max-width: 768px) {
   .music-content-wrapper {
-    padding: 60px 16px 30px;
+    padding: 60px var(--space-4) 30px;
   }
 
   .music-hero-title {
@@ -956,8 +956,8 @@
   .np-content {
     flex-direction: column;
     align-items: flex-start;
-    padding: 20px;
-    gap: 16px;
+    padding: var(--space-5);
+    gap: var(--space-4);
   }
 
   .np-cover {
@@ -971,11 +971,11 @@
 
   .music-tabs {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .music-tab-btn {
-    padding: 6px 14px;
+    padding: var(--space-1-5) var(--space-3-5);
     font-size: 0.82rem;
   }
 
@@ -996,8 +996,8 @@
   }
 
   .galaxy-bubbles {
-    gap: 16px;
-    padding: 20px 0;
+    gap: var(--space-4);
+    padding: var(--space-5) 0;
   }
 
   /* ⚠ 這兩個 !important 不能拿掉。泡泡的大小是**元件用 inline style 依播放次數算出來的**
@@ -1012,7 +1012,7 @@
 
   .analytics-dashboard {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: var(--space-3);
   }
 }
 
@@ -1022,8 +1022,8 @@
   }
 
   .track-row {
-    gap: 8px;
-    padding: 8px;
+    gap: var(--space-2);
+    padding: var(--space-2);
   }
 
   .tr-cover {

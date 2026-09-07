@@ -1,7 +1,7 @@
 /* 作者註（MDX <Note>）：站長旁白，跟彩色 alert 明顯區隔——
    極簡左側線條風（無卡片底、無外框），引號圖標帶出標籤，不搶內文。 */
 .mdx-note {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   padding: 0.15rem 0 0.15rem 1.1rem;
   border-left: 2px solid rgba(196, 181, 253, 0.45);
 }
@@ -58,7 +58,7 @@
   position: relative;
   /* 持久的可發現提示：淡虛線底（讓讀者知道這裡有註） */
   border-bottom: 1px dashed rgba(252, 211, 77, 0.4);
-  padding-bottom: 1px;
+  padding-bottom: var(--space-px);
 }
 /* hover/focus：實線由左長出，蓋在虛線上 */
 .annot-text::after {
@@ -196,8 +196,8 @@
 
 /* ── <BarChart> 吃資料的長條圖容器 ── */
 .mdx-chart {
-  margin: 1.75rem 0;
-  padding: 1rem 0.6rem 0.5rem;
+  margin: var(--space-7) 0;
+  padding: var(--space-4) 0.6rem var(--space-2);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--white-07);
@@ -211,13 +211,13 @@
 }
 .mdx-chart-loading {
   height: 300px;
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   border-radius: 12px;
   background: var(--white-02);
   border: 1px solid var(--white-06);
 }
 .mdx-chart-empty {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   padding: 1.2rem;
   border-radius: 10px;
   border: 1px dashed rgba(252, 165, 165, 0.35);
@@ -272,8 +272,8 @@
 }
 /* ── 互動圖表：圖 + 滑桿 ── */
 .mdx-chart-interactive {
-  margin: 1.75rem 0;
-  padding: 1rem 0.6rem 1.1rem;
+  margin: var(--space-7) 0;
+  padding: var(--space-4) 0.6rem 1.1rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--white-07);
@@ -283,7 +283,7 @@
 }
 .mdx-chart-sliders {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0.8rem 0.6rem 0;
 }
 .mdx-chart-slider {
@@ -370,7 +370,7 @@
    active 用低調淺色 pill（非紫塊、非底線），程式碼區 shiki 呈現與一般 code block 一致，
    滾動條中性細緻。 ── */
 .mdx-codetabs {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   border-radius: 12px;
   overflow: hidden;
   background: var(--black-40);
@@ -449,7 +449,7 @@
 
 /* ── <Tabs>/<Tab> 內容分頁：藥丸切換，每頁放整段內容（prose+code） ── */
 .mdx-tabs {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   border: 1px solid var(--white-10);
   border-radius: 12px;
   overflow: hidden;
@@ -510,13 +510,13 @@
 
 /* ── <Math> KaTeX ── */
 .mdx-math-block {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   overflow-x: auto;
   text-align: center;
 }
 .mdx-math-loading {
   height: 2.4rem;
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   border-radius: 8px;
   background: var(--white-03);
 }
@@ -526,7 +526,7 @@
 
 /* ── <Sketch> mermaid→Excalidraw 手繪風 SVG ── */
 .mdx-sketch {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   text-align: center;
 }
 .mdx-sketch-canvas {
@@ -539,7 +539,7 @@
 }
 .mdx-sketch-loading {
   min-height: 220px;
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   border-radius: 12px;
   background: var(--white-02);
   border: 1px solid var(--white-05);
@@ -550,8 +550,8 @@
   color: var(--white-50);
 }
 .mdx-sketch-error {
-  margin: 1.5rem 0;
-  padding: 1rem 1.25rem;
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-5);
   border-radius: 10px;
   border: 1px dashed rgba(252, 165, 165, 0.35);
   background: rgba(252, 165, 165, 0.06);
@@ -567,8 +567,8 @@
 }
 
 .mdx-error {
-  margin: 1.5rem 0;
-  padding: 1rem 1.25rem;
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-5);
   border-radius: 10px;
   border: 1px solid rgba(252, 165, 165, 0.4);
   background: rgba(252, 165, 165, 0.06);
@@ -577,7 +577,7 @@
 }
 
 .mdx-error pre {
-  margin: 0.5rem 0 0;
+  margin: var(--space-2) 0 0;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 0.82rem;
@@ -604,7 +604,7 @@
 }
 .mdx-diff-stat {
   display: inline-flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
 }
@@ -617,12 +617,12 @@
 
 /* ── Install：外層留白（內部走 CodeTabs 樣式）── */
 .mdx-install {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
 }
 
 /* ── ImageCompare ── */
 .mdx-imgcompare {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
 }
 .mdx-imgcompare-frame {
   position: relative;
@@ -659,7 +659,7 @@
   background: var(--white-03);
 }
 .mdx-imgcompare figcaption {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
   text-align: center;
   font-size: 0.82rem;
   color: var(--white-50);
@@ -683,7 +683,7 @@
 
 /* ── Details（段落級收合）── */
 .mdx-details {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
@@ -691,7 +691,7 @@
 }
 .mdx-details-summary {
   cursor: pointer;
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   font-weight: 500;
   color: var(--white-80);
   list-style: none;
@@ -699,7 +699,7 @@
   -webkit-user-select: none;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .mdx-details-summary::-webkit-details-marker {
   display: none;
@@ -732,22 +732,22 @@
   background: var(--white-03);
 }
 .mdx-details-body {
-  padding: 0 1rem 0.75rem;
+  padding: 0 var(--space-4) var(--space-3);
 }
 .mdx-details-body > :first-child {
-  margin-top: 0.25rem;
+  margin-top: var(--space-1);
 }
 
 /* ── Steps（步驟號用 CSS counter）── */
 .mdx-steps {
   counter-reset: mdx-step;
-  margin: 1.75rem 0;
-  padding-left: 1rem;
+  margin: var(--space-7) 0;
+  padding-left: var(--space-4);
 }
 .mdx-step {
   position: relative;
   counter-increment: mdx-step;
-  padding: 0 0 1.25rem 2.2rem;
+  padding: 0 0 var(--space-5) 2.2rem;
   border-left: 2px solid var(--white-10);
 }
 .mdx-step:last-child {
@@ -781,8 +781,8 @@
 
 /* ── FileTree ── */
 .mdx-filetree {
-  margin: 1.5rem 0;
-  padding: 0.85rem 1rem;
+  margin: var(--space-6) 0;
+  padding: 0.85rem var(--space-4);
   border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
@@ -811,12 +811,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.85rem;
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
 }
 .mdx-stat {
   position: relative;
   flex: 1 1 130px;
-  padding: 1rem 1.1rem;
+  padding: var(--space-4) 1.1rem;
   border: 1px solid var(--white-10);
   border-radius: 12px;
   background: var(--white-02);
@@ -871,13 +871,13 @@
 
 /* ── Video ── */
 .mdx-video {
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
 }
 /* 影片播放器（控制列、進度條…）樣式全在 components/VideoPlayer.css。 */
 
 .mdx-youtube {
   position: relative;
-  margin: 1.75rem 0;
+  margin: var(--space-7) 0;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   overflow: hidden;
@@ -934,14 +934,14 @@
   background: rgba(230, 33, 23, 0.92);
   color: #fff;
   font-size: 1.3rem;
-  padding-left: 0.25rem;
+  padding-left: var(--space-1);
   box-shadow: 0 6px 24px var(--black-50);
 }
 
 /* ── Refs 參考連結區（文末，標籤 + 品牌 icon 連結，不觸發 hover 卡）── */
 .mdx-refs {
-  margin: 1.75rem 0;
-  padding: 1rem 1.2rem;
+  margin: var(--space-7) 0;
+  padding: var(--space-4) 1.2rem;
   border: 1px solid var(--white-10);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
@@ -978,7 +978,7 @@
 .mdx-refs-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem 1rem;
+  gap: 0.3rem var(--space-4);
 }
 .mdx-refs-link {
   display: inline-flex;
@@ -1006,8 +1006,8 @@
    刻意收斂：不做「盒中盒」（選項不再各自描邊，改用淡軌道），填色低飽和、無光暈，
    讓百分比與勾選點承載資訊，不跟站上其他卡片撞風格。 */
 .mdx-poll {
-  margin: 1.75rem 0;
-  padding: 1rem 1.15rem;
+  margin: var(--space-7) 0;
+  padding: var(--space-4) 1.15rem;
   border: 1px solid var(--white-07);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.015);
@@ -1016,7 +1016,7 @@
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--white-82);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 .mdx-poll-list {
   list-style: none;
@@ -1034,7 +1034,7 @@
   gap: 0.7rem;
   width: 100%;
   min-height: 2.5rem;
-  padding: 0.5rem 0.8rem;
+  padding: var(--space-2) 0.8rem;
   border: 0;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.035); /* 淡軌道取代描邊 */

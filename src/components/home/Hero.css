@@ -73,7 +73,7 @@
   justify-content: space-between;
   /* 均分左右 */
   min-height: calc(100vh - 80px);
-  padding: 40px 10%;
+  padding: var(--space-10) 10%;
   /* 修改為百分比，確保左右對稱 */
   color: var(--clr-headline);
   box-sizing: border-box;
@@ -99,7 +99,7 @@
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.015em;
-  margin: 0 0 14px;
+  margin: 0 0 var(--space-3-5);
   color: var(--white-95);
   animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -115,7 +115,7 @@
   font-size: clamp(1.2rem, 2.1vw, 1.7rem);
   font-weight: 500;
   line-height: 1.55;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
   color: var(--white-82);
   animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
 }
@@ -455,7 +455,7 @@
   font-style: italic;
   font-weight: 500;
   color: var(--brand-light);
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
   margin-bottom: 30px;
   white-space: pre-wrap;
 }
@@ -466,7 +466,7 @@
   line-height: 1.6;
   color: var(--white-60);
   max-width: 65ch;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-10);
 }
 
 /* Typing effect styles */
@@ -507,13 +507,13 @@
   align-items: center;
   gap: 30px;
   /* 連結和按鈕間距 */
-  margin-top: 20px;
+  margin-top: var(--space-5);
   /* 與上方描述間距 */
 }
 
 .social-links {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 /* 社群連結 — 玻璃化精簡：拿掉 chip 背景，只剩透明小圓 + hover ring */
@@ -742,7 +742,7 @@
     align-items: center;
     justify-content: center; /* 垂直置中，hero 進來時占據畫面中央 */
     text-align: center;
-    padding: 80px 22px 48px; /* 上方留給 fixed header */
+    padding: var(--space-20) var(--space-5-5) var(--space-12); /* 上方留給 fixed header */
     min-height: 100svh; /* 佔滿一屏（svh 避開行動瀏覽器網址列高度跳動） */
     gap: 0;
   }
@@ -771,16 +771,16 @@
 
   .hero-line1 {
     font-size: clamp(1.7rem, 7vw, 2.3rem);
-    margin-bottom: 10px;
+    margin-bottom: var(--space-2-5);
   }
   .hero-line2 {
     font-size: clamp(1rem, 4.4vw, 1.3rem);
-    margin-bottom: 14px;
+    margin-bottom: var(--space-3-5);
   }
   .hero-sub {
     font-size: 0.72rem;
     letter-spacing: 1.2px;
-    margin-bottom: 22px;
+    margin-bottom: var(--space-5-5);
   }
 
   .hero-actions {

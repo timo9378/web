@@ -6,7 +6,7 @@
   z-index: 2;
   min-height: 100vh;
   /* 跟 BlogPost 對齊：上面留導覽列空間、左右留邊 */
-  padding: 120px 24px 60px;
+  padding: 120px var(--space-6) 60px;
 }
 /* BlogPost.css 對 .post-content 加了 user-select:none 做防複製，info page 應該可以選文字 */
 .info-page .post-content {
@@ -23,11 +23,11 @@
 /* ── Header (頁面大標) ────────────────────── */
 .info-page-header {
   max-width: 760px;
-  margin: 0 auto 40px;
+  margin: 0 auto var(--space-10);
   text-align: left;
 }
 .info-page-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: clamp(2rem, 3.5vw, 2.6rem);
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -53,7 +53,7 @@
 }
 
 .info-page-content > h2 {
-  margin: 3rem 0 1.4rem;
+  margin: var(--space-12) 0 1.4rem;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -61,7 +61,7 @@
   scroll-margin-top: 100px;
 }
 .info-page-content > h3 {
-  margin: 2rem 0 0.8rem;
+  margin: var(--space-8) 0 0.8rem;
   font-size: 1.1rem;
   font-weight: 600;
   color: rgba(216, 180, 254, 0.92);
@@ -91,7 +91,7 @@
 }
 
 .info-page-content code {
-  padding: 2px 6px;
+  padding: var(--space-0-5) var(--space-1-5);
   background: rgba(var(--brand-rgb), 0.16);
   border-radius: 4px;
   font-family: "SF Mono", Menlo, Consolas, monospace;
@@ -103,7 +103,7 @@
 .info-page-timeline {
   list-style: none;
   padding: 0;
-  margin: 1.5rem 0 2rem;
+  margin: var(--space-6) 0 var(--space-8);
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -111,7 +111,7 @@
 .info-page-timeline-item {
   display: grid;
   grid-template-columns: 110px 1fr;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: baseline;
   font-size: 0.95rem;
   line-height: 1.7;
@@ -140,7 +140,7 @@
 /* signature — 跟 BlogPost 的 .blog-signature 一樣靠右浮、30% 寬度 */
 .info-page-signature {
   display: block;
-  margin: 3rem 0 1rem;
+  margin: var(--space-12) 0 var(--space-4);
   margin-left: auto;
   width: 30%;
   max-width: 220px;
@@ -149,7 +149,7 @@
 }
 
 .info-page-closing {
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--space-6);
   font-size: 0.85rem;
   color: rgba(229, 229, 245, 0.45);
 }
@@ -158,9 +158,9 @@
 .info-page-pager {
   display: flex;
   justify-content: space-between;
-  gap: 1.5rem;
-  margin: 3rem 0;
-  padding-top: 1.5rem;
+  gap: var(--space-6);
+  margin: var(--space-12) 0;
+  padding-top: var(--space-6);
   border-top: 1px solid var(--white-06);
 }
 .info-page-pager-side {
@@ -173,7 +173,7 @@
 .info-page-pager-link {
   display: inline-flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   text-decoration: none;
   transition:
     transform 0.2s ease,
@@ -203,21 +203,21 @@
 
 /* ── comments 區與 BlogPost 一致 ──────────── */
 .info-page-comments {
-  margin-top: 3rem;
+  margin-top: var(--space-12);
 }
 
 /* ── Friends 頁面 ──────────────────────────────── */
 .friends-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 1.5rem 0;
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
 }
 .friend-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3-5);
   background: var(--white-03);
   border: 1px solid var(--white-06);
   border-radius: 12px;
@@ -260,8 +260,8 @@
 .friends-apply-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 10px 22px;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-5-5);
   background: rgba(var(--brand-rgb), 0.14);
   color: rgba(244, 244, 245, 0.95);
   border: 1px solid rgba(var(--brand-rgb), 0.45);
@@ -290,7 +290,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-5);
   background: rgba(6, 5, 14, 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -311,7 +311,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px;
+  padding: var(--space-4-5) var(--space-5-5);
   border-bottom: 1px solid var(--white-06);
 }
 .friends-modal-header h3 {
@@ -342,17 +342,17 @@
 }
 
 .friends-modal-form {
-  padding: 18px 22px 22px;
+  padding: var(--space-4-5) var(--space-5-5) var(--space-5-5);
 }
 .friends-modal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 16px;
+  gap: var(--space-3-5) var(--space-4);
 }
 .friends-modal-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
   min-width: 0;
 }
 .friends-modal-field--full {
@@ -365,10 +365,10 @@
 }
 .friends-modal-field .req {
   color: rgba(216, 180, 254, 0.85);
-  margin-left: 2px;
+  margin-left: var(--space-0-5);
 }
 .friends-modal-field input {
-  padding: 9px 12px;
+  padding: 9px var(--space-3);
   background: var(--white-04);
   border: 1px solid var(--white-08);
   border-radius: 8px;
@@ -391,10 +391,10 @@
 .friends-modal-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: var(--space-4-5);
 }
 .friends-modal-submit {
-  padding: 9px 22px;
+  padding: 9px var(--space-5-5);
   background: linear-gradient(135deg, rgba(var(--brand-rgb), 0.85), rgba(var(--brand-rgb), 0.6));
   color: #fff;
   border: 1px solid rgba(var(--brand-rgb), 0.5);
@@ -414,17 +414,17 @@
 }
 
 .friends-modal-success {
-  padding: 28px 22px;
+  padding: var(--space-7) var(--space-5-5);
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
 }
 .friends-modal-success code {
   font-size: 0.85rem;
   background: rgba(var(--brand-rgb), 0.16);
-  padding: 2px 6px;
+  padding: var(--space-0-5) var(--space-1-5);
   border-radius: 4px;
   color: #d8b4fe;
 }
@@ -446,7 +446,7 @@
 }
 @media (max-width: 600px) {
   .info-page {
-    padding: 100px 16px 40px;
+    padding: 100px var(--space-4) var(--space-10);
   }
   .info-page-timeline-item {
     grid-template-columns: 96px 1fr;

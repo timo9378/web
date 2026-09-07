@@ -4,7 +4,7 @@
 .lately-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: 48px;
+  gap: var(--space-12);
   align-items: start;
 }
 
@@ -51,9 +51,9 @@
 
 .lately-post {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: baseline;
-  padding: 13px 12px;
+  padding: 13px var(--space-3);
   margin: 0 -12px;
   border-radius: 12px;
   text-decoration: none;
@@ -102,7 +102,7 @@
 .lately-side {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .lately-divider {
@@ -117,13 +117,13 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .lately-murmur,
 .lately-echo {
   display: block;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   margin: 0 -12px;
   border-radius: 12px;
   text-decoration: none;
@@ -137,7 +137,7 @@
 
 .lately-murmur-text,
 .lately-echo-text {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   font-size: 0.88rem;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.72);
@@ -163,7 +163,7 @@
   position: relative;
   --orbit-line-y: 20px;
   height: 64px;
-  margin: 8px 6px 0;
+  margin: var(--space-2) var(--space-1-5) 0;
 }
 
 .orbit-line {
@@ -329,7 +329,7 @@
   transform: translateX(-50%);
   min-width: 220px;
   max-width: min(340px, 80vw);
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 12px;
   background: rgba(18, 14, 30, 0.96);
   border: 1px solid var(--white-10);
@@ -354,7 +354,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--white-40);
-  padding: 2px 8px 6px;
+  padding: var(--space-0-5) var(--space-2) var(--space-1-5);
 }
 .orbit-month-pop-list {
   list-style: none;
@@ -363,7 +363,7 @@
 }
 .orbit-month-link {
   display: block;
-  padding: 7px 8px;
+  padding: 7px var(--space-2);
   border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.35;
@@ -389,7 +389,7 @@
   max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   border-radius: 9px;
   font-size: 0.74rem;
   color: var(--white-90);
@@ -436,7 +436,7 @@
   transform: translateX(-50%);
   min-width: 220px;
   max-width: min(340px, 80vw);
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 12px;
   background: rgba(18, 14, 30, 0.96);
   border: 1px solid var(--white-10);
@@ -461,7 +461,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--white-40);
-  padding: 2px 8px 6px;
+  padding: var(--space-0-5) var(--space-2) var(--space-1-5);
 }
 .orbit-month-pop-list {
   list-style: none;
@@ -470,7 +470,7 @@
 }
 .orbit-month-link {
   display: block;
-  padding: 7px 8px;
+  padding: 7px var(--space-2);
   border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.35;
@@ -501,14 +501,14 @@
 }
 
 .orbit-stat {
-  margin-top: 14px;
+  margin-top: var(--space-3-5);
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.42);
   text-align: center;
 }
 
 .orbit-stat-dot {
-  margin: 0 8px;
+  margin: 0 var(--space-2);
   color: var(--white-25);
 }
 
@@ -519,7 +519,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 14px;
+  gap: var(--space-3-5);
   scroll-margin-top: 120px;
 }
 
@@ -585,11 +585,11 @@
 @media (max-width: 860px) {
   .lately-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: var(--space-10);
   }
 
   .lately-orbit {
-    margin-top: 56px;
+    margin-top: var(--space-14);
   }
 
   /* 手機上 tooltip 沒 hover，仍保留 aria-label 給輔助技術 */
@@ -598,6 +598,6 @@
   }
 
   .lately-signal {
-    margin-top: 64px;
+    margin-top: var(--space-16);
   }
 }

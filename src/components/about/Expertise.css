@@ -1,7 +1,7 @@
 .expertise-v2 .expertise-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
-  gap: 56px;
+  gap: var(--space-14);
   align-items: start;
   position: relative;
 }
@@ -42,12 +42,12 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.42);
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-weight: 600;
 }
 
 .expertise-hero-blurb {
-  margin: 1.5rem 0 0;
+  margin: var(--space-6) 0 0;
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--white-55);
@@ -57,28 +57,28 @@
 .expertise-rows {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--space-5-5);
 }
 
 .expertise-row {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
-  gap: 24px;
+  gap: var(--space-6);
   align-items: center;
-  padding: 6px 0;
+  padding: var(--space-1-5) 0;
   border-bottom: 1px solid var(--white-05);
-  padding-bottom: 22px;
+  padding-bottom: var(--space-5-5);
 }
 
 .expertise-row:last-child {
   border-bottom: none;
-  padding-bottom: 6px;
+  padding-bottom: var(--space-1-5);
 }
 
 .expertise-row-label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .expertise-row-label .section-label {
@@ -101,13 +101,13 @@
   mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
   /* Give the chips room to lift on hover without bumping into the row above */
-  padding: 4px 0;
+  padding: var(--space-1) 0;
 }
 
 .expertise-marquee-track {
   display: flex;
   width: max-content;
-  gap: 10px;
+  gap: var(--space-2-5);
   animation: expertise-marquee 30s linear infinite;
   will-change: transform;
 }
@@ -159,7 +159,7 @@
 .expertise-static-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -171,14 +171,14 @@
 @media (max-width: 900px) {
   .expertise-v2 .expertise-grid {
     grid-template-columns: 1fr;
-    gap: 36px;
+    gap: var(--space-9);
   }
   .expertise-hero {
     position: static;
   }
   .expertise-row {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: var(--space-2-5);
     align-items: start;
   }
 }

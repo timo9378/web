@@ -4,7 +4,7 @@
 .comments-block {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 1rem 4rem;
+  padding: 0 var(--space-4) var(--space-16);
 }
 
 /* ── Section Divider ── */
@@ -15,18 +15,18 @@
   height: 2px;
   background: rgba(var(--brand-rgb), 0.2);
   border-radius: 2px;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto var(--space-10);
 }
 
 /* ── Comment Form Card ── */
 .comment-form-card {
   display: flex;
   gap: 0.9rem;
-  padding: 1.25rem 1.4rem 1.4rem;
+  padding: var(--space-5) 1.4rem 1.4rem;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(var(--brand-rgb), 0.06);
-  margin-bottom: 2.5rem;
+  margin-bottom: var(--space-10);
   transition: border-color 0.3s;
 }
 
@@ -37,7 +37,7 @@
 /* ── Form Avatar ── */
 .form-avatar {
   flex-shrink: 0;
-  padding-top: 1px;
+  padding-top: var(--space-px);
 }
 
 .avatar-circle {
@@ -58,21 +58,21 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* ── Mode Switch ── */
 .comment-mode-switch {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
+  gap: var(--space-1-5);
+  padding: 5px var(--space-3-5);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
@@ -110,15 +110,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   width: 100%;
-  padding: 12px 0 4px;
+  padding: var(--space-3) 0 var(--space-1);
 }
 
 /* ── 初始兩按鈕 ── */
 .comment-mode-buttons {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
   justify-content: center;
 }
@@ -127,7 +127,7 @@
 .mode-btn--anon {
   flex: 1;
   max-width: 160px;
-  padding: 10px 16px;
+  padding: var(--space-2-5) var(--space-4);
   border-radius: 10px;
   border: 1px solid var(--white-08);
   background: var(--white-03);
@@ -138,7 +138,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   box-shadow: none;
 }
 
@@ -157,7 +157,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .login-expand-header {
@@ -173,7 +173,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: var(--space-0-5) var(--space-1-5);
   transition: color 0.2s;
   box-shadow: none;
 }
@@ -192,15 +192,15 @@
 
 .login-providers {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .provider-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 24px;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-6);
   border-radius: 10px;
   border: 1px solid var(--white-12);
   background: transparent;
@@ -227,7 +227,7 @@
 .form-fields {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .field-input {
@@ -269,7 +269,7 @@
   color: var(--white-30);
   cursor: pointer;
   font-size: 0.72rem;
-  padding: 0 2px;
+  padding: 0 var(--space-0-5);
   margin-left: auto;
   line-height: 1;
 }
@@ -328,7 +328,7 @@
 
 .captcha-input {
   width: 48px;
-  padding: 0.35rem 0.5rem;
+  padding: 0.35rem var(--space-2);
   border-radius: 6px;
   border: 1px solid var(--white-08);
   background: transparent;
@@ -397,7 +397,7 @@
   margin: 0;
   font-size: 0.8rem;
   color: #ef4444;
-  padding: 0.25rem 0;
+  padding: var(--space-1) 0;
 }
 
 .form-success {
@@ -414,7 +414,7 @@
 .admin-badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: var(--space-px) var(--space-1-5);
   border-radius: 4px;
   font-size: 0.68rem;
   font-weight: 700;
@@ -445,7 +445,7 @@
 }
 
 .comment-card--reply {
-  margin-left: 2.5rem;
+  margin-left: var(--space-10);
 }
 
 .comment-reply-to {
@@ -471,7 +471,7 @@
   right: 0;
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+  padding: var(--space-6) 0;
   pointer-events: none;
   z-index: 1;
 }
@@ -490,7 +490,7 @@
 .comment-card {
   display: flex;
   gap: 0.85rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: var(--space-1);
 }
 
 .comment-left {
@@ -503,7 +503,7 @@
 .comment-line {
   width: 1.5px;
   flex: 1;
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   background: var(--white-05);
   border-radius: 999px;
 }
@@ -542,7 +542,7 @@
 /* ── Comment Actions ── */
 .comment-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -554,7 +554,7 @@
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
   padding: 0.15rem 0.4rem;
   border-radius: 5px;
   border: none;
@@ -584,7 +584,7 @@
 /* ── Empty State ── */
 .no-comments {
   text-align: center;
-  padding: 3.5rem 1rem;
+  padding: var(--space-14) var(--space-4);
 }
 
 .no-comments p {
@@ -595,13 +595,13 @@
 /* ── Mobile ── */
 @media (max-width: 640px) {
   .comments-block {
-    padding: 0 0.5rem 2.5rem;
+    padding: 0 var(--space-2) var(--space-10);
   }
 
   .comment-form-card {
     flex-direction: column;
     align-items: flex-start;
-    padding: 1rem 1.1rem 1.2rem;
+    padding: var(--space-4) 1.1rem 1.2rem;
   }
 
   .form-avatar {
@@ -614,7 +614,7 @@
 
   .form-actions {
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .submit-btn {
@@ -639,8 +639,8 @@
 
 /* 作者關閉留言時的提示 */
 .comment-closed-notice {
-  margin: 1.5rem 0 2rem;
-  padding: 14px 18px;
+  margin: var(--space-6) 0 var(--space-8);
+  padding: var(--space-3-5) var(--space-4-5);
   border-radius: 12px;
   background: var(--white-03);
   border: 1px solid var(--white-08);

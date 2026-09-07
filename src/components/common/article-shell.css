@@ -70,7 +70,7 @@
   z-index: 1;
   max-width: 838px;
   margin: 0 auto;
-  padding: 6rem 1.5rem 2rem;
+  padding: var(--space-24) var(--space-6) var(--space-8);
   text-align: center;
 }
 
@@ -90,10 +90,10 @@
   z-index: 1;
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: var(--space-8);
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 var(--space-6);
   align-items: flex-start;
 }
 
@@ -129,7 +129,7 @@
   isolation: isolate;
   border: 1px solid var(--post-card-border);
   border-radius: 16px;
-  padding: 2.5rem;
+  padding: var(--space-10);
 }
 /* 底色＋玻璃模糊移到 ::before：filter/backdrop-filter 會把子孫的絕對定位內容裁切到自身邊界，
    於是 <Annot> 站長註卡片一超出這張卡就被切掉（連 position:fixed 也逃不掉，filter 會變成它的
@@ -167,15 +167,15 @@
 
 /* Table of Contents */
 .table-of-contents {
-  padding: 0.5rem 0;
+  padding: var(--space-2) 0;
 }
 
 .toc-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--white-06);
 }
 
@@ -232,7 +232,7 @@
 .toc-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.3rem 0;
   background: none;
   border: none;
@@ -331,8 +331,8 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 1rem;
-  padding: 0.75rem 0 0;
+  margin-top: var(--space-4);
+  padding: var(--space-3) 0 0;
   /* ⚠ 這兩條的 !important 不能拿掉：這是個 <button>，而 index.css 的 @layer base 有
      全站 button 邊框規則。v4 的 cascade layer 讓「分層」輸給「未分層」——但那只對
      一般宣告成立，**!important 的優先序是反過來的**（低層的 !important 贏過未分層），
@@ -412,7 +412,7 @@
   transform: translateX(-50%) translateY(4px);
   min-width: 220px;
   max-width: min(420px, 80vw);
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   background: rgba(15, 14, 26, 0.96);
   border: 1px solid rgba(var(--brand-rgb), 0.35);
   border-radius: 10px;
@@ -444,23 +444,23 @@
 
 .post-content h2 {
   font-size: 1.5rem;
-  margin: 2.5rem 0 1rem;
+  margin: var(--space-10) 0 var(--space-4);
   color: #fff;
   font-weight: 700;
-  padding-bottom: 0.5rem;
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--white-06);
 }
 
 .post-content h3 {
   font-size: 1.25rem;
-  margin: 2rem 0 0.8rem;
+  margin: var(--space-8) 0 0.8rem;
   color: var(--white-95);
   font-weight: 600;
 }
 
 .post-content h4 {
   font-size: 1.1rem;
-  margin: 1.5rem 0 0.6rem;
+  margin: var(--space-6) 0 0.6rem;
   color: var(--white-90);
 }
 
@@ -488,8 +488,8 @@
 }
 
 .post-content blockquote {
-  margin: 1.5rem 0;
-  padding: 1rem 1.5rem;
+  margin: var(--space-6) 0;
+  padding: var(--space-4) var(--space-6);
   border-left: 3px solid var(--post-accent);
   background: rgba(var(--brand-rgb), 0.05);
   border-radius: 0 8px 8px 0;
@@ -498,8 +498,8 @@
 
 .post-content ul,
 .post-content ol {
-  padding-left: 1.5rem;
-  margin: 1rem 0;
+  padding-left: var(--space-6);
+  margin: var(--space-4) 0;
 }
 
 .post-content li {
@@ -524,18 +524,18 @@
 .post-content hr {
   border: none;
   border-top: 1px solid var(--white-06);
-  margin: 2rem 0;
+  margin: var(--space-8) 0;
 }
 
 .post-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
 }
 
 .post-content th,
 .post-content td {
-  padding: 0.6rem 1rem;
+  padding: 0.6rem var(--space-4);
   border: 1px solid var(--white-08);
   text-align: left;
   font-size: 0.92rem;
@@ -551,8 +551,8 @@
    Comments / Extras
    ═══════════════════════ */
 .post-extras {
-  margin-top: 2rem;
-  padding-top: 2rem;
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
   border-top: 1px solid var(--white-06);
 }
 
@@ -576,10 +576,10 @@
     min-width: 0;
   }
   .post-content-wrapper {
-    padding: 1.5rem;
+    padding: var(--space-6);
   }
   .post-header {
-    padding: 5rem 1rem 1.5rem;
+    padding: var(--space-20) var(--space-4) var(--space-6);
   }
   .post-title {
     font-size: 1.6rem;
@@ -619,8 +619,8 @@
 .blog-signature {
   display: flex;
   justify-content: flex-end;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
   opacity: 0.85;
   width: 100%;
   margin-left: auto;
