@@ -116,6 +116,11 @@ const ADMIN_ROUTES: { route: string; heading: string | RegExp }[] = [
  * 實測 /setup 的 `.setup-category-subtitle` 本機 margin-left 是 687.906px，CI 不是。
  *
  * margin-top / -bottom 留著：一般流裡 `margin: auto` 的垂直方向解析成 0，不受影響。
+ *
+ * row-gap / column-gap 是 2026-09-07 補的。原本沒收不是因為它有問題，是漏了——
+ * 全站有 370 條 `gap` 宣告、58 種寫死的長度值，完全沒人守。它不吃字體度量
+ * （`gap: 8px` 就是 8px），所以沒有上面那三類的問題。
+ * 補它的當下正要做間距 token 化，而那次改動的一大半就落在 gap 上。
  */
 const PROPS = [
   'background-color',
@@ -144,6 +149,8 @@ const PROPS = [
   'padding-left',
   'margin-top',
   'margin-bottom',
+  'row-gap',
+  'column-gap',
   'text-decoration-line',
   'text-align',
   'flex-direction',
