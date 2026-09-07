@@ -101,7 +101,7 @@
   bottom: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.4rem 0.6rem;
   border-radius: 10px;
   background: rgba(14, 12, 22, 0.72);
@@ -246,8 +246,8 @@ a.vp-btn:focus-visible {
 
 /* ?debug=video 的診斷輸出 */
 .vp-diag {
-  margin: 0.75rem 0 0;
-  padding: 0.75rem;
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
   max-height: 22rem;
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -263,7 +263,7 @@ a.vp-btn:focus-visible {
 }
 .vp-diag-btn {
   display: block;
-  margin: 0.75rem auto 0;
+  margin: var(--space-3) auto 0;
   padding: 0.4rem 0.9rem;
   border-radius: 8px;
   font-size: 0.75rem;

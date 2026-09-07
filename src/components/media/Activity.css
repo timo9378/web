@@ -116,10 +116,10 @@
   z-index: 2;
   max-width: 960px;
   margin: 0 auto;
-  padding: 80px 32px 80px;
+  padding: var(--space-20) var(--space-8) var(--space-20);
   display: flex;
   flex-direction: column;
-  gap: 64px;
+  gap: var(--space-16);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -129,13 +129,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: var(--space-2-5) var(--space-5);
   border: 1px solid var(--white-06);
   border-radius: 40px;
   background: var(--white-02);
   font-size: 0.78rem;
   color: var(--white-50);
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -191,9 +191,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: var(--space-10);
   flex-wrap: wrap;
-  padding: 20px 0;
+  padding: var(--space-5) 0;
 }
 
 .hero-number-item {
@@ -353,7 +353,7 @@
 .steam-profile-level {
   display: inline-flex;
   align-items: center;
-  padding: 2px 9px;
+  padding: var(--space-0-5) 9px;
   background: linear-gradient(135deg, #ff8a4c 0%, #d54a26 100%);
   color: #fff;
   border-radius: 5px;
@@ -394,7 +394,7 @@
 }
 .steam-profile-divider {
   color: var(--white-40);
-  margin: 0 2px;
+  margin: 0 var(--space-0-5);
 }
 
 .steam-profile-featured {
@@ -402,7 +402,7 @@
   align-items: center;
   gap: 0.45rem;
   margin-top: 0.2rem;
-  padding: 0.25rem 0.7rem 0.25rem 0.4rem;
+  padding: var(--space-1) 0.7rem var(--space-1) 0.4rem;
   background: var(--black-30);
   border: 1px solid var(--white-10);
   border-radius: 999px;
@@ -431,7 +431,7 @@
 @media (max-width: 640px) {
   .steam-profile-content {
     grid-template-columns: auto 1fr;
-    gap: 1rem;
+    gap: var(--space-4);
     padding: 1.2rem;
   }
   .steam-profile-cta {
@@ -479,11 +479,11 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(280px, 1fr);
-  gap: 1rem;
+  gap: var(--space-4);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-padding: 0.2rem;
-  padding: 4px 4px 12px;
+  padding: var(--space-1) var(--space-1) var(--space-3);
   margin: -4px -4px 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--brand-rgb), 0.4) transparent;
@@ -582,7 +582,7 @@
   font-size: 1rem;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-1);
   line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -635,9 +635,9 @@
    ═══════════════════════════════════════════════════ */
 .code-pulse-section {
   display: flex;
-  gap: 3rem;
+  gap: var(--space-12);
   align-items: flex-start;
-  padding: 2.5rem 0;
+  padding: var(--space-10) 0;
   border-top: 1px solid var(--white-04);
 }
 
@@ -677,7 +677,7 @@
 .lang-bar-row {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .lang-bar-meta {
@@ -713,21 +713,21 @@
    5. HEATMAP — 獨立區塊，微妙背景
    ═══════════════════════════════════════════════════ */
 .heatmap-section {
-  padding: 2rem 0;
+  padding: var(--space-8) 0;
 }
 
 .heatmap-section-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
   flex-wrap: wrap;
 }
 
 .heatmap-profile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   text-decoration: none;
   color: rgba(255, 255, 255, 0.65);
   font-size: 0.85rem;
@@ -769,14 +769,14 @@
 .heatmap-year-selector {
   display: flex;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .heatmap-grid-wrapper {
   position: relative;
   /* 不再 clip — 讓最左 cell 的 tooltip 能浮出；外層 .activity-page 會處理水平 overflow */
   overflow: visible;
-  padding: 2.5rem 1.2rem 0;
+  padding: var(--space-10) 1.2rem 0;
   margin: 0 -1.2rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--brand-rgb), 0.25) transparent;
@@ -881,7 +881,7 @@
   transform: translateX(-50%) scale(0);
   background: rgba(6, 5, 14, 0.95);
   color: #fff;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: 6px;
   font-size: 0.68rem;
   white-space: nowrap;
@@ -907,7 +907,7 @@
 .tooltip-date {
   font-size: 0.6rem;
   color: var(--white-40);
-  margin-top: 1px;
+  margin-top: var(--space-px);
 }
 
 .heatmap-legend {
@@ -915,13 +915,13 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.4rem;
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
   font-size: 0.7rem;
   color: var(--white-35);
 }
 .legend-squares {
   display: flex;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 .legend-square {
   width: 10px;
@@ -957,7 +957,7 @@
 }
 
 .commit-event {
-  padding: 0.75rem 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--white-04);
 }
 .commit-event:last-child {
@@ -997,13 +997,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding-left: 18px;
+  padding-left: var(--space-4-5);
 }
 
 .commit-msg-row {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: var(--space-2);
   text-decoration: none;
   color: inherit;
   padding: 3px 0;
@@ -1020,7 +1020,7 @@
   color: var(--brand);
   flex-shrink: 0;
   background: rgba(var(--brand-rgb), 0.08);
-  padding: 1px 6px;
+  padding: var(--space-px) var(--space-1-5);
   border-radius: 4px;
 }
 
@@ -1036,7 +1036,7 @@
 .commit-more {
   font-size: 0.7rem;
   color: var(--white-25);
-  padding-left: 0.25rem;
+  padding-left: var(--space-1);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1050,7 +1050,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 
 .project-row {
@@ -1105,7 +1105,7 @@
   color: var(--white-30);
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1118,8 +1118,8 @@
 .game-gallery-header {
   display: flex;
   align-items: baseline;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .game-gallery-header .section-label {
@@ -1184,7 +1184,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 0.5rem 0.6rem;
+  padding: var(--space-2) 0.6rem;
   opacity: 0;
   transition: opacity 0.25s;
   font-size: 0.75rem;
@@ -1216,8 +1216,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--white-04);
   text-decoration: none;
   color: inherit;
@@ -1253,7 +1253,7 @@
 .repo-row-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-shrink: 0;
   font-size: 0.78rem;
   color: var(--white-40);
@@ -1276,7 +1276,7 @@
    ═══════════════════════════════════════════════════ */
 .no-data-small {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
   color: var(--white-30);
   font-size: 0.85rem;
 }
@@ -1286,12 +1286,12 @@
    ═══════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .activity-content-wrapper {
-    padding: 70px 16px 60px;
-    gap: 48px;
+    padding: 70px var(--space-4) 60px;
+    gap: var(--space-12);
   }
 
   .hero-numbers {
-    gap: 1.25rem;
+    gap: var(--space-5);
   }
 
   .hero-divider {
@@ -1304,7 +1304,7 @@
 
   .code-pulse-section {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
   }
 
   .code-pulse-left {
@@ -1345,17 +1345,17 @@
 
 @media (max-width: 480px) {
   .activity-content-wrapper {
-    padding: 60px 12px 40px;
-    gap: 40px;
+    padding: 60px var(--space-3) var(--space-10);
+    gap: var(--space-10);
   }
 
   .status-bar {
     font-size: 0.72rem;
-    padding: 8px 14px;
+    padding: var(--space-2) var(--space-3-5);
   }
 
   .hero-numbers {
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .hero-divider {
@@ -1374,10 +1374,10 @@
     height: 10px;
   }
   .heatmap-week {
-    gap: 2px;
+    gap: var(--space-0-5);
   }
   .heatmap-grid {
-    gap: 2px;
+    gap: var(--space-0-5);
   }
 
   .game-gallery-item {

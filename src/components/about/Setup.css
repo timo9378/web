@@ -192,7 +192,7 @@
   z-index: 2;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 100px 40px 60px;
+  padding: 100px var(--space-10) 60px;
 }
 
 /* Header */
@@ -204,7 +204,7 @@
 .setup-title {
   font-size: clamp(2.2rem, 5vw, 3.5rem);
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,12 +235,12 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   margin-bottom: 50px;
 }
 
 .setup-category-tab {
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-4-5);
   border-radius: 50px;
   border: 1px solid var(--white-08);
   background: var(--white-03);
@@ -276,7 +276,7 @@
 .setup-category-tab .tab-count {
   font-size: 0.7rem;
   background: var(--white-08);
-  padding: 1px 7px;
+  padding: var(--space-px) 7px;
   border-radius: 10px;
   min-width: 20px;
   text-align: center;
@@ -294,9 +294,9 @@
 .setup-category-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  padding-bottom: 14px;
+  gap: var(--space-3-5);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-3-5);
   border-bottom: 1px solid var(--white-06);
 }
 
@@ -305,7 +305,7 @@
   font-weight: 700;
   color: var(--clr-button, var(--brand));
   background: rgba(var(--brand-rgb), 0.1);
-  padding: 4px 12px;
+  padding: var(--space-1) var(--space-3);
   border-radius: 20px;
   border: 1px solid rgba(var(--brand-rgb), 0.2);
   letter-spacing: 1px;
@@ -329,7 +329,7 @@
 .setup-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 /* === Equipment Card === */
@@ -338,7 +338,7 @@
   background: rgba(18, 18, 22, 0.85);
   border: 1px solid var(--white-06);
   border-radius: 14px;
-  padding: 20px;
+  padding: var(--space-5);
   cursor: default;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
@@ -356,8 +356,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
-  padding: 10px;
+  margin-bottom: var(--space-3-5);
+  padding: var(--space-2-5);
   background: var(--white-02);
   border-radius: 10px;
   transition: transform 0.3s ease;
@@ -385,8 +385,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
-  padding: 10px;
+  margin-bottom: var(--space-3-5);
+  padding: var(--space-2-5);
   background: rgba(var(--brand-rgb), 0.04);
   border-radius: 10px;
   font-size: 3.5rem;
@@ -397,7 +397,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   line-height: 1.3;
 }
 
@@ -424,7 +424,7 @@
   background: rgba(18, 18, 22, 0.7);
   border: 1px solid var(--white-06);
   border-radius: 16px;
-  padding: 40px 36px;
+  padding: var(--space-10) var(--space-9);
   overflow: hidden;
 }
 
@@ -443,7 +443,7 @@
   font-size: 1.05rem;
   font-style: italic;
   color: rgba(var(--brand-rgb), 0.7);
-  margin-bottom: 28px;
+  margin-bottom: var(--space-7);
   text-align: center;
   line-height: 1.6;
 }
@@ -451,14 +451,14 @@
 .setup-base-specs {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .setup-base-spec-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: var(--space-3);
+  padding: var(--space-2-5) var(--space-3-5);
   background: var(--white-02);
   border-radius: 8px;
   border: 1px solid var(--white-04);
@@ -486,15 +486,15 @@
 
 /* Retired Section */
 .setup-retired-section {
-  margin-top: 24px;
-  padding-top: 18px;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4-5);
   border-top: 1px dashed var(--white-06);
 }
 
 .setup-retired-title {
   font-size: 0.9rem;
   color: rgba(148, 161, 178, 0.5);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .setup-retired-text {
@@ -506,7 +506,7 @@
 /* === Responsive === */
 @media (max-width: 768px) {
   .setup-content {
-    padding: 80px 20px 40px;
+    padding: var(--space-20) var(--space-5) var(--space-10);
   }
 
   .setup-blackhole-bg {
@@ -522,16 +522,16 @@
 
   .setup-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .setup-card {
-    padding: 14px;
+    padding: var(--space-3-5);
   }
 
   .setup-card-image-wrapper {
     height: 110px;
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .setup-card-title {
@@ -543,7 +543,7 @@
   }
 
   .setup-base-card {
-    padding: 24px 18px;
+    padding: var(--space-6) var(--space-4-5);
   }
 
   .setup-base-specs {
@@ -553,7 +553,7 @@
   .setup-category-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .setup-category-subtitle {
@@ -564,7 +564,7 @@
 @media (max-width: 480px) {
   .setup-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: var(--space-2-5);
   }
 
   .setup-blackhole-bg {

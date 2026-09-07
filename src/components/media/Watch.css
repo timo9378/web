@@ -8,7 +8,7 @@
   z-index: 2;
   min-height: 100vh;
   background: transparent;
-  padding: 120px 24px 120px;
+  padding: 120px var(--space-6) 120px;
 }
 
 /* dim scrim：壓暗亮星雲（.nebula-bg z-1），跟首頁一致 */
@@ -29,7 +29,7 @@
 
 /* ── header ── */
 .w-header {
-  margin-bottom: 5rem;
+  margin-bottom: var(--space-20);
 }
 
 .w-title {
@@ -38,31 +38,31 @@
   letter-spacing: 0.01em;
   line-height: 1.2;
   color: rgba(244, 244, 245, 0.98);
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2-5);
 }
 
 .w-subtitle {
   font-size: 0.98rem;
   color: rgba(229, 229, 245, 0.5);
   letter-spacing: 0.04em;
-  margin: 0 0 18px;
+  margin: 0 0 var(--space-4-5);
 }
 
 /* ── stats chips（取代原本一行小字）── */
 .w-stats {
   display: flex;
   align-items: baseline;
-  gap: 24px;
+  gap: var(--space-6);
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .w-stat {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding-right: 18px;
+  gap: var(--space-0-5);
+  padding-right: var(--space-4-5);
   border-right: 1px solid var(--white-08);
 }
 .w-stat:last-of-type {
@@ -89,7 +89,7 @@
   font-size: 0.76rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 .w-eyebrow--live {
   color: #2cb67d;
@@ -131,7 +131,7 @@
 /* ── 正在看（風格 C：3:2 橫幅、收在 .w-wrap 880px 內、不破出）── */
 .w-now {
   position: relative;
-  margin-bottom: 5rem;
+  margin-bottom: var(--space-20);
 }
 
 .w-now-banner {
@@ -177,7 +177,7 @@
 .w-now-overlay {
   position: absolute;
   inset: auto 0 0 0;
-  padding: 56px 36px 30px;
+  padding: var(--space-14) var(--space-9) 30px;
   background: linear-gradient(180deg, rgba(6, 5, 14, 0) 0%, rgba(6, 5, 14, 0.55) 55%, rgba(6, 5, 14, 0.92) 100%);
 }
 
@@ -186,7 +186,7 @@
   font-weight: 700;
   line-height: 1.15;
   color: #f4f4f5;
-  margin: 10px 0 8px;
+  margin: var(--space-2-5) 0 var(--space-2);
   text-shadow: 0 2px 18px var(--black-55);
 }
 
@@ -202,7 +202,7 @@
   position: absolute;
   top: 18px;
   right: 18px;
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   font-size: 0.82rem;
   color: rgba(244, 244, 245, 0.95);
   background: var(--black-45);
@@ -230,21 +230,21 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   color: rgba(244, 244, 245, 0.96);
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-1-5);
 }
 
 .w-h2-sub {
   font-size: 0.86rem;
   color: rgba(229, 229, 245, 0.45);
-  margin: 0 0 28px;
+  margin: 0 0 var(--space-7);
 }
 
 .w-h2-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4-5);
 }
 .w-h2-row .w-h2 {
   margin-bottom: 0;
@@ -253,14 +253,14 @@
 .w-h2-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 /* 一鍵發碎念（ghost pill，蓋掉全域 button 實心樣式） */
 .w-share-btn {
   background: transparent;
   border: 1px solid rgba(216, 180, 254, 0.3);
   box-shadow: none;
-  padding: 4px 12px;
+  padding: var(--space-1) var(--space-3);
   border-radius: 9999px;
   font-size: 0.8rem;
   color: rgba(216, 180, 254, 0.85);
@@ -301,13 +301,13 @@
 .w-favs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 22px;
+  gap: var(--space-5-5);
 }
 
 /* 一生推 — 真的卡片：玻璃底 + 細邊 + 內距，海報坐在卡片裡而不是浮在空中 */
 .w-fav {
   margin: 0;
-  padding: 14px 14px 16px;
+  padding: var(--space-3-5) var(--space-3-5) var(--space-4);
   background: rgba(15, 12, 24, 0.55);
   border: 1px solid var(--white-06);
   border-radius: 16px;
@@ -358,7 +358,7 @@
   inset: 0;
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: var(--space-4);
   font-size: 0.82rem;
   line-height: 1.6;
   color: rgba(244, 244, 245, 0.96);
@@ -378,7 +378,7 @@
   font-size: 0.92rem;
   font-weight: 600;
   color: rgba(244, 244, 245, 0.95);
-  margin: 14px 0 4px;
+  margin: var(--space-3-5) 0 var(--space-1);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -389,7 +389,7 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .w-fav-year {
   font-size: 0.76rem;
@@ -403,7 +403,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(216, 180, 254, 0.7);
-  margin: 28px 0 8px;
+  margin: var(--space-7) 0 var(--space-2);
 }
 .w-recent-group:first-of-type {
   margin-top: 0;
@@ -430,9 +430,9 @@
 .w-recent-link {
   display: grid;
   grid-template-columns: 52px 40px 1fr auto;
-  gap: 14px;
+  gap: var(--space-3-5);
   align-items: center;
-  padding: 12px 4px;
+  padding: var(--space-3) var(--space-1);
   text-decoration: none;
   color: inherit;
   transition: transform 0.25s ease;
@@ -483,7 +483,7 @@
 .w-recent-tags {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   white-space: nowrap;
 }
 
@@ -516,11 +516,11 @@
 .w-recent-err {
   font-size: 0.86rem;
   color: rgba(255, 180, 180, 0.7);
-  margin: 0 0 14px;
+  margin: 0 0 var(--space-3-5);
 }
 /* ── 收尾句（與 Journey/History 收尾呼應）── */
 .w-ending {
-  margin: 1.5rem 0 0;
+  margin: var(--space-6) 0 0;
   font-size: 0.96rem;
   color: rgba(229, 229, 245, 0.55);
   text-align: center;
@@ -542,44 +542,44 @@
 /* ════════ RWD ════════ */
 @media (max-width: 720px) {
   .w-page {
-    padding: 100px 20px 90px;
+    padding: 100px var(--space-5) 90px;
   }
   .w-header {
-    margin-bottom: 3.5rem;
+    margin-bottom: var(--space-14);
   }
   .w-now,
   .w-section {
-    margin-bottom: 4rem;
+    margin-bottom: var(--space-16);
   }
   .w-now-banner {
     border-radius: 14px;
     aspect-ratio: 4 / 3;
   }
   .w-now-overlay {
-    padding: 48px 20px 22px;
+    padding: var(--space-12) var(--space-5) var(--space-5-5);
   }
   .w-now-cta {
     top: 12px;
     right: 12px;
-    padding: 8px 14px;
+    padding: var(--space-2) var(--space-3-5);
     font-size: 0.78rem;
   }
   .w-recent-link {
     grid-template-columns: 42px 36px 1fr auto;
-    gap: 12px;
+    gap: var(--space-3);
   }
   .w-recent-anchor {
     font-size: 0.76rem;
   }
   .w-favs {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 18px;
+    gap: var(--space-4-5);
   }
   .w-stats {
-    gap: 16px;
+    gap: var(--space-4);
   }
   .w-stat {
-    padding-right: 12px;
+    padding-right: var(--space-3);
   }
   .w-stat-num {
     font-size: 1.2rem;
@@ -589,7 +589,7 @@
     position: static;
     opacity: 1;
     transform: none;
-    padding: 8px 0 0;
+    padding: var(--space-2) 0 0;
     color: rgba(229, 229, 245, 0.55);
     font-size: 0.78rem;
   }

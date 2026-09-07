@@ -3,7 +3,7 @@
   width: 100%;
   height: 50px; /* 給動畫一些垂直空間，可以調整 */
   overflow: hidden; /* 隱藏超出容器的動畫元素 */
-  margin: 40px 0; /* 在區塊之間增加一些間距 */
+  margin: var(--space-10) 0; /* 在區塊之間增加一些間距 */
 }
 
 .shooting-star {

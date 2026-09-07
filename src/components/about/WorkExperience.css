@@ -26,8 +26,8 @@
 .work-entry {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
-  gap: 32px;
-  padding-bottom: 36px;
+  gap: var(--space-8);
+  padding-bottom: var(--space-9);
   position: relative;
 }
 
@@ -37,7 +37,7 @@
 
 .work-rail {
   position: relative;
-  padding-top: 18px;
+  padding-top: var(--space-4-5);
   text-align: right;
 }
 
@@ -63,14 +63,14 @@
 }
 
 .work-card {
-  padding: 24px 28px;
+  padding: var(--space-6) var(--space-7);
 }
 
 .work-card-head {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
 }
 
 .work-card-title {
@@ -90,8 +90,8 @@
 .work-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-4-5);
 }
 
 .work-tag {
@@ -108,12 +108,12 @@
 .work-groups {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-4-5);
 }
 
 .work-group-label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   color: rgba(199, 184, 255, 0.55);
   font-size: 0.68rem;
   letter-spacing: 2px;
@@ -125,12 +125,12 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .work-bullets li {
   position: relative;
-  padding-left: 16px;
+  padding-left: var(--space-4);
   font-size: 0.88rem;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.72);
@@ -157,8 +157,8 @@
   }
   .work-entry {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding-bottom: 28px;
+    gap: var(--space-3);
+    padding-bottom: var(--space-7);
   }
   .work-rail {
     padding-top: 0;
@@ -167,7 +167,7 @@
   .work-rail-dot {
     position: static;
     display: inline-block;
-    margin-right: 8px;
+    margin-right: var(--space-2);
     vertical-align: middle;
   }
 }

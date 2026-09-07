@@ -23,8 +23,8 @@
 .jt-entry {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
-  gap: 32px;
-  padding-bottom: 28px;
+  gap: var(--space-8);
+  padding-bottom: var(--space-7);
   position: relative;
 }
 
@@ -34,7 +34,7 @@
 
 .jt-rail {
   position: relative;
-  padding-top: 20px;
+  padding-top: var(--space-5);
   text-align: right;
 }
 
@@ -61,18 +61,18 @@
 }
 
 .jt-card {
-  padding: 22px 26px;
+  padding: var(--space-5-5) 26px;
 }
 
 .jt-title {
-  margin: 0 0 2px;
+  margin: 0 0 var(--space-0-5);
   font-size: 1.05rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.92);
 }
 
 .jt-subtitle {
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2-5);
   font-size: 0.82rem;
   color: rgba(199, 184, 255, 0.75);
 }
@@ -87,13 +87,13 @@
 .jt-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-3);
 }
 
 .jt-tag {
   font-size: 0.7rem;
-  padding: 3px 10px;
+  padding: 3px var(--space-2-5);
   border-radius: 999px;
   background: var(--white-04);
   border: 1px solid var(--white-08);
@@ -113,7 +113,7 @@
 }
 
 .jt-ending {
-  margin: 40px 0 0;
+  margin: var(--space-10) 0 0;
   text-align: center;
   font-size: 0.85rem;
   letter-spacing: 1px;
@@ -126,7 +126,7 @@
   }
   .jt-entry {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: var(--space-2);
   }
   .jt-rail {
     padding-top: 0;

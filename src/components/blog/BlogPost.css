@@ -78,7 +78,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.35rem 0.6rem;
-  margin-top: 1rem;
+  margin-top: var(--space-4);
   font-size: 0.82rem;
   color: var(--post-muted);
 }
@@ -106,7 +106,7 @@
   background-size: 100% 1px;
   background-position: 0 100%;
   background-repeat: no-repeat;
-  padding-bottom: 1px;
+  padding-bottom: var(--space-px);
   transition:
     color 0.2s ease,
     background-size 0.2s ease;
@@ -132,7 +132,7 @@
   color: #fff;
   font-size: 0.72rem;
   font-weight: 400;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: 6px;
   border: 1px solid rgba(var(--brand-rgb), 0.25);
   white-space: nowrap;
@@ -161,7 +161,7 @@
   gap: 5px;
   background: transparent;
   border: none;
-  padding: 2px 4px;
+  padding: var(--space-0-5) var(--space-1);
   color: rgba(255, 255, 255, 0.75);
   font-size: inherit;
   font-family: inherit;
@@ -191,7 +191,7 @@
     opacity 0.2s ease;
   font-size: 0.7rem;
   opacity: 0.55;
-  margin-left: 1px;
+  margin-left: var(--space-px);
 }
 .lang-trigger:hover .lang-caret {
   opacity: 0.9;
@@ -206,7 +206,7 @@
   background: rgba(20, 18, 34, 0.85);
   border: 1px solid var(--white-08);
   border-radius: 14px;
-  padding: 6px;
+  padding: var(--space-1-5);
   box-shadow:
     inset 0 1px 0 var(--white-06),
     0 18px 48px var(--black-55),
@@ -216,7 +216,7 @@
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-px);
   /* 浮現動畫 */
   animation: koimMenuPop 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: top left;
@@ -236,14 +236,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.86rem;
   font-family: inherit;
   text-align: left;
-  padding: 9px 12px;
+  padding: 9px var(--space-3);
   border-radius: 9px;
   cursor: pointer;
   transition:
@@ -284,7 +284,7 @@
   font-size: 0.66rem;
   font-family: "JetBrains Mono", "Courier New", var(--cjk-font), monospace;
   letter-spacing: 0.04em;
-  padding: 2px 7px;
+  padding: var(--space-0-5) 7px;
   border-radius: 9999px;
   background: var(--white-06);
   color: rgba(255, 255, 255, 0.65);
@@ -299,7 +299,7 @@
   transform: translateX(-50%);
   background: rgba(12, 10, 24, 0.96);
   color: #fff;
-  padding: 10px 18px;
+  padding: var(--space-2-5) var(--space-4-5);
   border-radius: 9999px;
   border: 1px solid rgba(var(--brand-rgb), 0.3);
   box-shadow: 0 12px 36px var(--black-50);
@@ -312,7 +312,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-top: 0.8rem;
 }
 
@@ -327,7 +327,7 @@
 
 /* Posts navigation (left sidebar) */
 .posts-nav {
-  padding: 2.5rem 0 0.5rem 0;
+  padding: var(--space-10) 0 var(--space-2) 0;
 }
 
 .posts-nav-category {
@@ -345,7 +345,7 @@
 
 .posts-nav-item {
   display: block;
-  padding: 0.25rem 0;
+  padding: var(--space-1) 0;
   font-size: 0.8rem;
   color: var(--white-50);
   text-decoration: none;
@@ -376,7 +376,7 @@
 .posts-nav-current-item {
   color: #fff;
   position: relative;
-  padding-left: 0.75rem;
+  padding-left: var(--space-3);
   cursor: default;
   pointer-events: none;
 }
@@ -414,14 +414,14 @@
 .prev-next-nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin: 3rem 0 1.5rem;
+  gap: var(--space-3-5);
+  margin: var(--space-12) 0 var(--space-6);
 }
 .prev-next-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 18px;
+  gap: var(--space-1-5);
+  padding: var(--space-3-5) var(--space-4-5);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--white-06);
@@ -529,7 +529,7 @@
 
 /* ── Series 系列文導覽（文末，文章區塊外） ── */
 .series-nav {
-  margin: 2.5rem 0 1.5rem;
+  margin: var(--space-10) 0 var(--space-6);
   padding: 1.4rem 1.6rem;
   background: rgba(var(--brand-rgb), 0.05);
   border: 1px solid rgba(var(--brand-rgb), 0.2);
@@ -539,7 +539,7 @@
 .series-nav-header {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   margin-bottom: 0.9rem;
   padding-bottom: 0.9rem;
   border-bottom: 1px dashed var(--white-08);
@@ -622,13 +622,13 @@ a.series-nav-title:hover {
 .category-tooltip.category-tooltip-compact {
   width: auto;
   max-width: 280px;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
 }
 .category-tooltip-short {
   font-size: 0.82rem;
   color: var(--white-90);
   font-weight: 500;
-  margin: 0 0 6px 0;
+  margin: 0 0 var(--space-1-5) 0;
   line-height: 1.4;
 }
 
@@ -638,7 +638,7 @@ a.series-nav-title:hover {
 
 .category-tooltip {
   width: 240px;
-  padding: 14px;
+  padding: var(--space-3-5);
   background: rgba(18, 16, 30, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -667,7 +667,7 @@ a.series-nav-title:hover {
 .category-tooltip-desc {
   font-size: 0.74rem;
   color: var(--white-50);
-  margin: 0 0 10px 0;
+  margin: 0 0 var(--space-2-5) 0;
   line-height: 1.5;
 }
 
@@ -678,12 +678,12 @@ a.series-nav-title:hover {
   font-size: 0.7rem;
   color: var(--white-35);
   border-top: 1px solid var(--white-06);
-  padding-top: 8px;
+  padding-top: var(--space-2);
 }
 
 .toc-item.level-3,
 .toc-item.level-4 {
-  padding-left: 1rem;
+  padding-left: var(--space-4);
   font-size: 0.74rem;
 }
 
@@ -692,8 +692,8 @@ a.series-nav-title:hover {
    ═══════════════════════ */
 .post-ai-summary-inline {
   position: relative;
-  margin: -2.5rem -2.5rem 2rem -2.5rem;
-  padding: 2rem 2.5rem 2.5rem;
+  margin: -2.5rem -2.5rem var(--space-8) -2.5rem;
+  padding: var(--space-8) var(--space-10) var(--space-10);
   background: linear-gradient(
     180deg,
     rgba(var(--brand-rgb), 0.08) 0%,
@@ -721,7 +721,7 @@ a.series-nav-title:hover {
 
 .ai-badge {
   font-size: 0.65rem;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem var(--space-2);
   border-radius: 4px;
   background: rgba(var(--brand-rgb), 0.15);
   color: var(--post-accent);
@@ -763,8 +763,8 @@ a.series-nav-title:hover {
 
 /* 腳註樣式 + hover 浮窗（remark-gfm footnotes） */
 .post-content .footnotes {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
   border-top: 1px dashed var(--white-15);
   font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.65);
@@ -774,15 +774,15 @@ a.series-nav-title:hover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--white-50);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 .post-content sup a[data-footnote-ref],
 .post-content a.footnote-ref,
 .post-content a[id^="user-content-fnref-"] {
   position: relative;
   display: inline-block;
-  padding: 0 4px;
-  margin: 0 1px;
+  padding: 0 var(--space-1);
+  margin: 0 var(--space-px);
   border-radius: 4px;
   background: rgba(var(--brand-rgb), 0.12);
   color: var(--brand-light);
@@ -835,8 +835,8 @@ a.series-nav-title:hover {
    由 remark-github-blockquote-alert 轉出 <div class="markdown-alert markdown-alert-{type}">
    ═══════════════════════ */
 .post-content .markdown-alert {
-  padding: 12px 16px;
-  margin: 1.5rem 0;
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-6) 0;
   border-left: 3px solid var(--alert-accent, rgba(var(--brand-rgb), 0.6));
   border-radius: 0 10px 10px 0;
   background: var(--alert-bg, rgba(var(--brand-rgb), 0.06));
@@ -845,10 +845,10 @@ a.series-nav-title:hover {
 .post-content .markdown-alert-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   font-weight: 600;
   font-size: 0.92rem;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   color: var(--alert-accent, var(--brand-light));
   letter-spacing: 0.02em;
 }
@@ -859,7 +859,7 @@ a.series-nav-title:hover {
   fill: var(--alert-accent, var(--brand-light));
 }
 .post-content .markdown-alert p {
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   color: inherit;
   font-size: 0.98rem;
 }
@@ -915,7 +915,7 @@ a.series-nav-title:hover {
   flex-direction: column;
   align-items: center;
   position: relative;
-  margin: 1.5rem auto;
+  margin: var(--space-6) auto;
   width: fit-content;
   max-width: 100%;
 }
@@ -928,8 +928,8 @@ a.series-nav-title:hover {
   transform: translateX(-50%) translateY(10px);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 7px 16px;
+  gap: var(--space-3);
+  padding: 7px var(--space-4);
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(16px);
   border-radius: 10px;
@@ -967,7 +967,7 @@ a.series-nav-title:hover {
   border-radius: 12px;
   overflow: hidden;
   background: var(--black-40);
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
 }
 
 /* Code block custom scrollbar */
@@ -1000,7 +1000,7 @@ a.series-nav-title:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 1rem 0.35rem;
+  padding: 0.6rem var(--space-4) 0.35rem;
   background: transparent;
 }
 
@@ -1039,7 +1039,7 @@ a.series-nav-title:hover {
 /* ── 終端機渲染（bash/shell 類）：macOS 風視窗，紅黃綠燈 + 標題列，無行號，唯讀 ── */
 /* biome-ignore lint/style/noDescendingSpecificity: 前面的 `.blog-post-container .terminal-block` 只設 user-select（防複製），跟這裡的版面／配色零屬性重疊，不是覆蓋關係。詳見檔案開頭 Copy protection 那段。 */
 .terminal-block {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   border-radius: 12px;
   overflow: hidden;
   background: #0b0c11;
@@ -1049,7 +1049,7 @@ a.series-nav-title:hover {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.5rem 0.85rem;
+  padding: var(--space-2) 0.85rem;
   background: rgba(255, 255, 255, 0.035);
   border-bottom: 1px solid var(--white-05);
 }
@@ -1072,7 +1072,7 @@ a.series-nav-title:hover {
 }
 .terminal-body {
   overflow-x: auto;
-  padding: 0.9rem 0 1rem;
+  padding: 0.9rem 0 var(--space-4);
 }
 .terminal-body .shiki-output,
 .terminal-body .shiki-fallback {
@@ -1119,7 +1119,7 @@ a.series-nav-title:hover {
   display: flex;
   align-items: center;
   gap: 0.5em;
-  padding: 0.25rem 1.1rem 0;
+  padding: var(--space-1) 1.1rem 0;
 }
 .terminal-prompt-sym {
   color: #4ade80;
@@ -1209,7 +1209,7 @@ a.series-nav-title:hover {
 
 /* Link Card with text description above */
 .link-card-with-text {
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
 }
 
 /* YouTube card styling */
@@ -1251,7 +1251,7 @@ a.series-nav-title:hover {
   transform: translateY(50%);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   z-index: 100;
 }
 
@@ -1291,7 +1291,7 @@ a.series-nav-title:hover {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: var(--space-px);
   background: linear-gradient(
     135deg,
     rgba(224, 195, 252, 0.55),
@@ -1384,7 +1384,7 @@ a.series-nav-title:hover {
   padding: 0.35rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   min-width: 168px;
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
@@ -1398,7 +1398,7 @@ a.series-nav-title:hover {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.55rem 0.75rem;
+  padding: 0.55rem var(--space-3);
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.78);
@@ -1441,7 +1441,7 @@ a.series-nav-title:hover {
   background: rgba(20, 18, 34, 0.95);
   border: 1px solid rgba(var(--brand-rgb), 0.2);
   border-radius: 16px;
-  padding: 2rem;
+  padding: var(--space-8);
   text-align: center;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -1463,19 +1463,19 @@ a.series-nav-title:hover {
 }
 
 .subscribe-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .subscribe-icon {
   font-size: 2rem;
   color: var(--post-accent);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .subscribe-header h3 {
   font-size: 1.2rem;
   color: #fff;
-  margin: 0.5rem 0 0.3rem;
+  margin: var(--space-2) 0 0.3rem;
 }
 
 .subscribe-header p {
@@ -1487,11 +1487,11 @@ a.series-nav-title:hover {
 .subscribe-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .subscribe-form input {
-  padding: 0.7rem 1rem;
+  padding: 0.7rem var(--space-4);
   border-radius: 8px;
   border: 1px solid var(--white-10);
   background: var(--white-04);
@@ -1542,18 +1542,18 @@ a.series-nav-title:hover {
 /* Email chip shown in 已訂閱 confirmation copy */
 .subscribe-email-chip {
   display: inline-block;
-  padding: 1px 8px;
+  padding: var(--space-px) var(--space-2);
   background: rgba(var(--brand-rgb), 0.12);
   border: 1px solid rgba(var(--brand-rgb), 0.25);
   border-radius: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.85em;
   color: rgba(199, 184, 255, 0.95);
-  margin: 0 2px;
+  margin: 0 var(--space-0-5);
 }
 
 .subscribe-msg {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
   font-size: 0.82rem;
 }
 
@@ -1566,7 +1566,7 @@ a.series-nav-title:hover {
 }
 
 .subscribe-privacy {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
   font-size: 0.72rem;
   color: var(--white-25);
 }
@@ -1612,7 +1612,7 @@ a.series-nav-title:hover {
   background: rgba(20, 18, 34, 0.95);
   border: 1px solid var(--white-10);
   border-radius: 12px;
-  padding: 0.5rem;
+  padding: var(--space-2);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -1622,7 +1622,7 @@ a.series-nav-title:hover {
 }
 
 .font-option {
-  padding: 0.5rem 0.8rem;
+  padding: var(--space-2) 0.8rem;
   border: none;
   background: none;
   color: var(--white-60);
@@ -1647,9 +1647,9 @@ a.series-nav-title:hover {
 .back-to-blog-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  padding: 0.6rem 1.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: 0.6rem var(--space-6);
   border-radius: 8px;
   background: rgba(var(--brand-rgb), 0.15);
   border: 1px solid rgba(var(--brand-rgb), 0.3);
@@ -1682,23 +1682,23 @@ a.series-nav-title:hover {
 
 .error-icon {
   font-size: 3rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .error-content h1 {
   font-size: 1.6rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .error-content p {
   color: var(--post-muted);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 @media (max-width: 950px) {
   .post-ai-summary-inline {
-    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-    padding: 1.5rem 1.5rem 2rem;
+    margin: -1.5rem -1.5rem var(--space-6) -1.5rem;
+    padding: var(--space-6) var(--space-6) var(--space-8);
   }
 
   .floating-actions {
@@ -1807,8 +1807,8 @@ a.series-nav-title:hover {
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  margin: 0 0 1.5rem;
-  padding: 0.7rem 1rem;
+  margin: 0 0 var(--space-6);
+  padding: 0.7rem var(--space-4);
   border: 1px solid rgba(252, 211, 77, 0.25);
   border-radius: 10px;
   background: rgba(252, 211, 77, 0.06);

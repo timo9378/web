@@ -8,7 +8,7 @@
   z-index: 2;
   min-height: 100vh;
   background: transparent;
-  padding: 120px 24px 120px;
+  padding: 120px var(--space-6) 120px;
 }
 
 .tk-scrim {
@@ -35,7 +35,7 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   color: rgba(244, 244, 245, 0.98);
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2-5);
 }
 .tk-subtitle {
   font-size: 0.98rem;
@@ -54,8 +54,8 @@
 /* 卡片：柔玻璃底 + 細邊（不裁切，讓「已編輯」tooltip 能溢出） */
 .tk-card {
   position: relative;
-  padding: 20px 22px;
-  margin-bottom: 18px;
+  padding: var(--space-5) var(--space-5-5);
+  margin-bottom: var(--space-4-5);
   border-radius: 16px;
   background: rgba(15, 12, 24, 0.48);
   border: 1px solid var(--white-06);
@@ -82,8 +82,8 @@
 .tk-card-head {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-2-5);
 }
 .tk-author {
   font-size: 0.9rem;
@@ -108,7 +108,7 @@
   bottom: calc(100% + 8px);
   transform: translateX(-50%);
   white-space: nowrap;
-  padding: 6px 10px;
+  padding: var(--space-1-5) var(--space-2-5);
   border-radius: 8px;
   background: rgba(30, 24, 45, 0.96);
   border: 1px solid var(--white-08);
@@ -137,9 +137,9 @@
   position: relative;
   overflow: hidden;
   display: flex;
-  gap: 16px;
-  margin-top: 14px;
-  padding: 14px 16px;
+  gap: var(--space-4);
+  margin-top: var(--space-3-5);
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--white-06);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.22);
@@ -182,7 +182,7 @@
 /* 媒體類型：極淡中性 chip（取代飽和左色條） */
 .tk-embed-kind {
   display: inline-block;
-  padding: 2px 8px;
+  padding: var(--space-0-5) var(--space-2);
   border: 1px solid var(--white-12);
   border-radius: 6px;
   font-size: 0.66rem;
@@ -191,13 +191,13 @@
   color: rgba(229, 229, 245, 0.7);
 }
 .tk-embed-title {
-  margin: 4px 0 6px;
+  margin: var(--space-1) 0 var(--space-1-5);
   font-size: 1rem;
   font-weight: 700;
   color: rgba(244, 244, 245, 0.95);
 }
 .tk-embed-desc {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: 0.84rem;
   line-height: 1.6;
   color: rgba(229, 229, 245, 0.6);
@@ -212,7 +212,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .tk-embed-site {
   color: rgba(229, 229, 245, 0.6);
@@ -242,25 +242,25 @@
 .tk-divider {
   height: 1px;
   background: var(--white-07);
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 .tk-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 .tk-stats {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
 }
 /* 互動 icon：hover 變色 + 放大；按下後依讚/倒讚上色 */
 .tk-ic {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
+  gap: var(--space-1-5);
+  padding: var(--space-1) 9px;
   border: none;
   border-radius: 8px;
   background: none;
@@ -332,8 +332,8 @@
 
 /* admin 發文框 */
 .tk-compose {
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
   border-radius: 14px;
   background: rgba(15, 12, 24, 0.5);
   border: 1px solid var(--white-07);
@@ -349,7 +349,7 @@
   border-radius: 9px;
   color: rgba(244, 244, 245, 0.95);
   font: inherit;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
 }
 .tk-compose-text {
   min-height: 56px;
@@ -357,7 +357,7 @@
   resize: vertical;
 }
 .tk-compose-url {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   font-size: 0.86rem;
 }
 .tk-compose-text:focus,
@@ -369,9 +369,9 @@
 .tk-compose-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 5px 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: 5px var(--space-2-5);
   border-radius: 8px;
   background: rgba(216, 180, 254, 0.1);
   border: 1px solid rgba(216, 180, 254, 0.22);
@@ -384,7 +384,7 @@
   box-shadow: none;
   color: rgba(229, 229, 245, 0.6);
   cursor: pointer;
-  padding: 0 2px;
+  padding: 0 var(--space-0-5);
   font-size: 0.9rem;
   line-height: 1;
 }
@@ -402,10 +402,10 @@
 .tk-compose-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
 }
 .tk-compose-send {
-  padding: 8px 20px;
+  padding: var(--space-2) var(--space-5);
   border: none;
   border-radius: 9999px;
   background: var(--brand);
@@ -429,13 +429,13 @@
 .tk-foot-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .tk-act {
   background: transparent;
   border: none;
   box-shadow: none;
-  padding: 2px 6px;
+  padding: var(--space-0-5) var(--space-1-5);
   cursor: pointer;
   font-size: 0.8rem;
   color: rgba(229, 229, 245, 0.5);
@@ -475,7 +475,7 @@
   color: rgba(244, 244, 245, 0.95);
   font: inherit;
   line-height: 1.7;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   resize: vertical;
 }
 .tk-edit-text:focus {
@@ -484,12 +484,12 @@
 }
 .tk-edit-row {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .tk-edit-save,
 .tk-edit-cancel {
-  padding: 6px 16px;
+  padding: var(--space-1-5) var(--space-4);
   border-radius: 8px;
   border: none;
   font-size: 0.82rem;
@@ -531,7 +531,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 8vh 16px 16px;
+  padding: 8vh var(--space-4) var(--space-4);
   overflow-y: auto;
   animation: tk-modal-fade 0.2s ease;
 }
@@ -566,7 +566,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--white-07);
   font-weight: 700;
   color: rgba(244, 244, 245, 0.95);
@@ -578,7 +578,7 @@
   color: rgba(229, 229, 245, 0.6);
   font-size: 1.1rem;
   cursor: pointer;
-  padding: 2px 8px;
+  padding: var(--space-0-5) var(--space-2);
   line-height: 1;
 }
 .tk-modal-close:hover,
@@ -592,18 +592,18 @@
   outline: none;
 }
 .tk-modal-body {
-  padding: 16px 20px 20px;
+  padding: var(--space-4) var(--space-5) var(--space-5);
 }
 
 .tk-empty {
-  margin: 3rem 0;
+  margin: var(--space-12) 0;
   text-align: center;
   color: rgba(229, 229, 245, 0.45);
   font-style: italic;
 }
 
 .tk-ending {
-  margin: 2.5rem 0 0;
+  margin: var(--space-10) 0 0;
   font-size: 0.96rem;
   color: rgba(229, 229, 245, 0.5);
   text-align: center;
@@ -615,8 +615,8 @@
 .tk-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2-5);
 }
 .tk-title-row .tk-title {
   margin: 0;
@@ -643,7 +643,7 @@
 }
 .tk-back {
   display: inline-block;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   color: rgba(216, 180, 254, 0.7);
   text-decoration: none;
   font-size: 0.9rem;
@@ -653,19 +653,19 @@
   color: #d8b4fe;
 }
 .tk-comments {
-  margin-top: 28px;
+  margin-top: var(--space-7);
 }
 
 /* ════════ RWD ════════ */
 @media (max-width: 640px) {
   .tk-page {
-    padding: 100px 18px 90px;
+    padding: 100px var(--space-4-5) 90px;
   }
   .tk-header {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
   }
   .tk-card {
-    padding: 18px 18px;
+    padding: var(--space-4-5) var(--space-4-5);
   }
   .tk-media-poster {
     width: 54px;

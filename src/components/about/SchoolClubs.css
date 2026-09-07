@@ -1,7 +1,7 @@
 .clubs-v2 .clubs-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 /* 卡片：無 accent bar（之前左側色條反饋偏突兀）。
@@ -61,8 +61,8 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 18px;
-  padding: 18px 22px;
+  gap: var(--space-4-5);
+  padding: var(--space-4-5) var(--space-5-5);
   background: transparent;
   border: none;
   outline: none;
@@ -83,7 +83,7 @@
 .club-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   min-width: 0;
   flex-wrap: wrap;
 }
@@ -97,7 +97,7 @@
 
 .club-role-badge {
   font-size: 0.72rem;
-  padding: 3px 10px;
+  padding: 3px var(--space-2-5);
   background: rgba(var(--brand-rgb), 0.14);
   border: 1px solid rgba(var(--brand-rgb), 0.3);
   border-radius: 999px;
@@ -117,7 +117,7 @@
 .club-count {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-size: 0.78rem;
   color: var(--white-45);
   font-variant-numeric: tabular-nums;
@@ -151,14 +151,14 @@
 /* 展開：hairline 分隔 + 桌面雙欄活動格（吉他社 8 項不再拖成長串） */
 .club-activities-list {
   min-height: 0;
-  margin: 0 22px;
-  padding: 14px 0 18px 60px;
+  margin: 0 var(--space-5-5);
+  padding: var(--space-3-5) 0 var(--space-4-5) 60px;
   border-top: 1px solid var(--white-07);
   list-style: none;
   overflow: hidden;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px 32px;
+  gap: 7px var(--space-8);
 }
 
 /* ── 紙張折疊感 ──
@@ -170,7 +170,7 @@
 
 .club-activity-item {
   position: relative;
-  padding-left: 14px;
+  padding-left: var(--space-3-5);
   font-size: 0.85rem;
   line-height: 1.6;
   color: var(--white-70);
@@ -241,8 +241,8 @@
      `42px 193px 0px 0px`、gap 18px（該 14px）、padding 18px 22px（該 16px 18px）。 */
   .clubs-v2 .club-row-head {
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 14px;
-    padding: 16px 18px;
+    gap: var(--space-3-5);
+    padding: var(--space-4) var(--space-4-5);
   }
   .club-period,
   .club-count {
@@ -250,8 +250,8 @@
     justify-self: start;
   }
   .club-activities-list {
-    margin: 0 18px;
-    padding: 12px 0 16px 0;
+    margin: 0 var(--space-4-5);
+    padding: var(--space-3) 0 var(--space-4) 0;
     grid-template-columns: 1fr;
   }
 }

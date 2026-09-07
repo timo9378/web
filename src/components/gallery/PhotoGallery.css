@@ -4,7 +4,7 @@
 .photo-gallery-section {
   min-height: 100vh;
   position: relative;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
   /* Transparent background to show global 3D stars, with a much darker subtle glow */
   background: radial-gradient(circle at 50% 50%, rgba(90, 60, 180, 0.08) 0%, rgba(2, 2, 7, 0.95) 100%);
   background-attachment: fixed;
@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-4);
   position: relative;
   z-index: 1;
 }
@@ -113,7 +113,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 1.5rem;
+  padding: var(--space-6);
   backdrop-filter: blur(4px);
 }
 
@@ -126,7 +126,7 @@
 .photo-date {
   font-size: 1.75rem;
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -148,15 +148,15 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-bottom: 3rem;
-  padding-top: 6rem;
+  margin-bottom: var(--space-12);
+  padding-top: var(--space-24);
 }
 
 .afilmory-hero-title {
   font-size: 3.5rem;
   font-weight: 300;
   color: #fff;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   letter-spacing: 0.05em;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-shadow:
@@ -169,7 +169,7 @@
   font-size: 1rem;
   color: var(--white-60);
   line-height: 1.6;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
   max-width: 600px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -178,7 +178,7 @@
 .afilmory-photo-count {
   display: inline-flex;
   align-items: center;
-  padding: 0.4rem 1rem;
+  padding: 0.4rem var(--space-4);
   background: var(--white-05);
   border: 1px solid var(--white-10);
   border-radius: 9999px;
@@ -192,19 +192,19 @@
 .category-tabs-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 4rem;
+  margin-bottom: var(--space-16);
   width: 100%;
 }
 
 .category-tabs {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .category-tab {
-  padding: 0.5rem 1.5rem;
+  padding: var(--space-2) var(--space-6);
   background: var(--white-03);
   border: 1px solid var(--white-08);
   border-radius: 9999px;
@@ -246,11 +246,11 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .photo-gallery-section {
-    padding: 1.5rem 0.5rem;
+    padding: var(--space-6) var(--space-2);
   }
 
   .masonry-container {
-    padding: 0 0.5rem;
+    padding: 0 var(--space-2);
   }
 
   .photo-date {
@@ -264,7 +264,7 @@
 
 @media (max-width: 640px) {
   .photo-info-overlay {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .photo-date {

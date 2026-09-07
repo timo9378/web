@@ -13,14 +13,14 @@
   gap: 1.6rem;
   position: relative;
   z-index: 2;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
 .koim-loader-shell--fullscreen {
   min-height: 80vh;
   gap: 2.2rem;
 }
 .koim-loader-shell--inline {
-  padding: 1rem;
+  padding: var(--space-4);
   gap: 0.8rem;
   min-height: auto;
 }
@@ -150,7 +150,7 @@
 .koim-loader-text {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   margin: 0;
   font-size: 0.92rem;
   letter-spacing: 0.08em;
@@ -178,7 +178,7 @@
   display: inline-flex;
   align-items: flex-end;
   gap: 3px;
-  margin-left: 2px;
+  margin-left: var(--space-0-5);
 }
 .koim-loader-dots i {
   width: 4px;

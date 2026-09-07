@@ -2,8 +2,8 @@
 .portfolio-page {
   position: relative;
   z-index: 2;
-  padding-top: 64px; /* fixed header 偏移 */
-  padding-bottom: 40px;
+  padding-top: var(--space-16); /* fixed header 偏移 */
+  padding-bottom: var(--space-10);
   min-height: 100vh;
 }
 
@@ -46,7 +46,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   overflow: hidden;
-  margin-bottom: 28px;
+  margin-bottom: var(--space-7);
   border-radius: 20px;
 }
 
@@ -70,17 +70,17 @@
 }
 
 .portfolio-feature-body {
-  padding: 32px 36px;
+  padding: var(--space-8) var(--space-9);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .portfolio-feature-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .portfolio-status {
@@ -113,7 +113,7 @@
 .portfolio-secondary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .portfolio-secondary {
@@ -193,23 +193,23 @@
 }
 
 .portfolio-secondary-body {
-  padding: 22px 24px 24px;
+  padding: var(--space-5-5) var(--space-6) var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
   flex: 1;
 }
 
 .portfolio-secondary--code .portfolio-secondary-body {
-  padding-top: 18px;
+  padding-top: var(--space-4-5);
 }
 
 /* 多個連結時並排（譬如 Frontend + Backend repo） */
 .portfolio-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
 }
 .portfolio-link--secondary {
   opacity: 0.7;
@@ -245,8 +245,8 @@
 .portfolio-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1);
 }
 
 .portfolio-tag {
@@ -263,11 +263,11 @@
    Replaces the heavy purple→pink gradient which felt dated. */
 .portfolio-link {
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 18px 9px 20px;
+  gap: var(--space-2);
+  padding: 9px var(--space-4-5) 9px var(--space-5);
   background: var(--white-04);
   border: 1px solid var(--white-12);
   color: var(--white-90);
@@ -311,13 +311,13 @@
     aspect-ratio: 16 / 9;
   }
   .portfolio-feature-body {
-    padding: 24px 24px 28px;
+    padding: var(--space-6) var(--space-6) var(--space-7);
   }
   .portfolio-feature-title {
     font-size: 1.35rem;
   }
   .portfolio-secondary-grid {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: var(--space-4-5);
   }
 }

@@ -1,7 +1,7 @@
 .about-me-v2 .about-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 48px;
+  gap: var(--space-12);
   align-items: start;
 }
 
@@ -18,13 +18,13 @@
 }
 
 .about-facts {
-  padding: 28px 28px 24px;
+  padding: var(--space-7) var(--space-7) var(--space-6);
   position: sticky;
   top: 96px;
 }
 
 .about-facts-label {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--space-5);
   color: rgba(199, 184, 255, 0.55);
 }
 
@@ -32,14 +32,14 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .about-fact-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-bottom: 14px;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3-5);
   border-bottom: 1px solid var(--white-05);
 }
 
@@ -66,7 +66,7 @@
 @media (max-width: 900px) {
   .about-me-v2 .about-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: var(--space-8);
   }
   .about-facts {
     position: static;

@@ -25,7 +25,7 @@
 }
 .ctx-nav {
   display: flex;
-  gap: 0.25rem;
+  gap: var(--space-1);
   padding: 0.05rem;
 }
 .ctx-nav-btn {
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 0.6rem;
   width: 100%;
-  padding: 0.5rem 0.7rem;
+  padding: var(--space-2) 0.7rem;
   border: none;
   border-radius: 8px;
   background: transparent;
